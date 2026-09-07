@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexKart - Dashboard & Home</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* ---------------- TOP HEADER SECTION ---------------- */
+        .top-header {
+            background: #ffffff;
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            gap: 20px;
+        }
+
+        .header-logo img {
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .search-box {
+            flex: 1.5;
+            max-width: 750px;
+            display: flex;
+            align-items: center;
+            background: #f3f3f3;
+            border: 1.5px solid #ffccd5;
+            border-radius: 30px;
+            padding: 10px 22px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            background: #fff;
+            border-color: #ff4b6e;
+            box-shadow: 0 0 8px rgba(255, 75, 110, 0.2);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .search-box button {
+            background: transparent;
+            border: none;
+            color: #ff4b6e;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .language-select select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .auth-buttons a {
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-signin {
+            color: #ff4b6e;
+            border: 1px solid #ff4b6e;
+        }
+
+        .btn-signin:hover {
+            background: #fff5f7;
+        }
+
+        .btn-signup {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(255, 75, 110, 0.3);
+        }
+
+        .btn-signup:hover {
+            opacity: 0.9;
+        }
+
+        .user-profile-container {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-greeting {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ff4b6e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: #fff5f7;
+            border: 1px solid #ffccd5;
+            transition: background 0.2s;
+        }
+
+        .user-greeting:hover {
+            background: #ffe0e6;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 260px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            border: 1px solid #eee;
+            list-style: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            z-index: 9999;
+            padding: 10px 0;
+        }
+
+        .user-profile-container:hover .user-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-menu .welcome-text {
+            padding: 10px 20px;
+            font-size: 13px;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+            font-weight: 500;
+        }
+
+        .user-dropdown-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 13px;
+            color: #444;
+            transition: all 0.2s ease;
+        }
+
+        .user-dropdown-menu li a:hover {
+            background: #fff5f7;
+            color: #ff4b6e;
+            padding-left: 25px;
+        }
+
+        .user-dropdown-menu li a i {
+            width: 16px;
+            color: #ff4b6e;
+            text-align: center;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: #eee;
+            margin: 6px 0;
+        }
+
+        /* SMS / Message Icon Container Styles */
+        .sms-icon-container {
+            position: relative;
+            font-size: 20px;
+            color: #333;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .sms-icon-container:hover {
+            color: #ff4b6e;
+        }
+
+        .sms-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ff4b6e;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-icon-container {
+            position: relative;
+            font-size: 20px;
+            color: #333;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .cart-icon-container:hover {
+            color: #ff4b6e;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ff4b6e;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        /* কার্টে ০টি আইটেম থাকলে গ্রিন ব্যাকগ্রাউন্ড দেখানোর স্টাইল */
+        .cart-badge.zero-cart {
+            background: #28a745 !important;
+        }
+        /* SMS এ ০টি মেসেজ থাকলে গ্রিন ব্যাকগ্রাউন্ড দেখানোর স্টাইল */
+        .sms-badge.zero-sms {
+            background: #28a745 !important;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        /* ---------------- SUB BAR & CATEGORIES SECTION ---------------- */
+        .sub-bar {
+            background: #ffffff;
+            padding: 0 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .all-categories-container {
+            position: relative;
+        }
+
+        .all-categories-btn {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            padding: 12px 25px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            box-shadow: 0 -3px 10px rgba(255, 75, 110, 0.2);
+            flex-shrink: 0;
+            margin-right: 70px;
+        }
+
+        .category-drawer {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 280px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 12px 12px;
+            border: 1px solid #eee;
+            list-style: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-in-out;
+            z-index: 999;
+        }
+
+        .all-categories-container:hover .category-drawer {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .category-drawer li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-size: 14px;
+            color: #444;
+            border-bottom: 1px solid #f5f5f5;
+            transition: all 0.2s ease;
+        }
+
+        .category-drawer li:last-child a {
+            border-bottom: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .category-drawer li a:hover {
+            background: #fff5f7;
+            color: #ff4b6e;
+            padding-left: 25px;
+        }
+
+        .category-drawer li a i {
+            color: #ff4b6e;
+            width: 18px;
+        }
+
+        .nav-links-list {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            list-style: none;
+            overflow-x: auto;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .nav-links-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-links-list li a {
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            transition: all 0.3s ease;
+            padding: 15px 0;
+            display: inline-block;
+        }
+
+        .nav-links-list li a:hover {
+            color: #ff4b6e;
+            transform: translateY(-2px);
+        }
+
+        .nav-links-list li a.super-deal {
+            color: #ff4b6e;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ---------------- AUTO SLIDING BANNER SECTION ---------------- */
+        .banner-section {
+            padding: 20px 40px;
+        }
+
+        .slider-container {
+            width: 100%;
+            height: 380px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 50px;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .slide-content {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 420px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .slide-content h2 {
+            font-size: 24px;
+            color: #ff4b6e;
+            margin-bottom: 8px;
+        }
+
+        .slide-content p {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 12px;
+        }
+
+        .slide-btn {
+            display: inline-block;
+            background: #ff4b6e;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .banner-star-badge {
+            background: linear-gradient(135deg, #ff3366, #ff6b8b);
+            color: #fff;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 50%;
+            box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4);
+            border: 3px dashed #fff;
+            padding: 15px;
+            animation: pulseAndRotate 3s infinite ease-in-out;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .banner-star-badge:hover {
+            transform: scale(1.08) rotate(3deg);
+        }
+
+        .banner-star-badge .offer-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .banner-star-badge .coupon-code {
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            word-break: break-all;
+        }
+
+        .banner-star-badge .discount-text {
+            font-size: 11px;
+            margin-top: 3px;
+            font-weight: 600;
+            color: #ffe6ea;
+        }
+
+        @keyframes pulseAndRotate {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.08) rotate(3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* ---------------- FEATURES HIGHLIGHT SECTION ---------------- */
+        .features-section {
+            padding: 10px 40px 20px 40px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eee;
+        }
+
+        .feature-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .feature-card i {
+            font-size: 28px;
+            color: #ff4b6e;
+        }
+
+        .feature-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .feature-info p {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* ---------------- PRODUCTS SECTION ---------------- */
+        .products-section {
+            padding: 20px 40px 40px 40px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title h2 {
+            font-size: 22px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .section-title .view-all {
+            color: #ff4b6e;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .section-title .view-all:hover {
+            text-decoration: underline;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 75, 110, 0.15);
+            border-color: #ffccd5;
+        }
+
+        .product-badges-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .product-badge {
+            background: #ff4b6e;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .discount-badge {
+            background: #28a745;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-left: auto;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .product-category {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin: 5px 0 8px 0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            height: 40px;
+        }
+
+        .product-rating {
+            color: #ffb400;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .product-rating span {
+            color: #777;
+            margin-left: 5px;
+        }
+
+        .product-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .price-box {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .current-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff4b6e;
+        }
+
+        .old-price {
+            font-size: 13px;
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .add-cart-btn {
+            background: #fff5f7;
+            color: #ff4b6e;
+            border: 1px solid #ff4b6e;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-cart-btn:hover {
+            background: #ff4b6e;
+            color: #fff;
+        }
+
+        @media(max-width: 992px) {
+            .top-header, .sub-bar, .banner-section, .features-section, .products-section {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            .all-categories-btn {
+                margin-right: 30px;
+            }
+            .nav-links-list {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+   <!-- ১. টপ হেডার সেকশন -->
+<header class="top-header">
+    <div class="header-logo">
+        <a href="/"><img src="/images/logo.png" alt="NexKart Logo"></a>
+    </div>
+
+    <div class="search-box">
+        <input type="text" placeholder="Search for cosmetics, skincare, brands and more...">
+        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </div>
+
+    <div class="header-actions">
+        <div class="language-select">
+            <select id="langChange">
+                <option value="en">English</option>
+                <option value="bn">বাংলা</option>
+            </select>
+        </div>
+
+        <div id="authButtonsContainer" class="auth-buttons">
+            <a href="/user/cslogin" class="btn-signin">Sign In</a>
+            <a href="/user/cssignup" class="btn-signup">Sign Up</a>
+        </div>
+
+        <div id="userProfileContainer" class="user-profile-container d-none">
+            <div class="user-greeting">
+                <i class="fa-solid fa-circle-user"></i> Hi, User <i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i>
+            </div>
+            <ul class="user-dropdown-menu">
+                <div class="welcome-text">Welcome back</div>
+                
+                <li><a href="/user/profile"><i class="fa-solid fa-user"></i> Profile</a></li>
+                <li><a href="/user/my-Order"><i class="fa-solid fa-box-archive"></i> My Orders</a></li>
+                <li><a href="/user/returns"><i class="fa-solid fa-rotate-left"></i> Return & Refund Requests</a></li>
+                <li><a href="/user/coins"><i class="fa-solid fa-coins"></i> My Coins</a></li>
+                <li><a href="/user/coupons"><i class="fa-solid fa-ticket"></i> My Coupons</a></li>
+                
+                <div class="menu-divider"></div>
+                
+                <li><a href="/user/settings"><i class="fa-solid fa-gear"></i> Setting</a></li>
+                <li><a href="/admin/login.html"><i class="fa-solid fa-store"></i> Seller Log In</a></li>
+                <li><a href="/user/return-policy.html"><i class="fa-solid fa-file-contract"></i> Return & refund policy</a></li>
+                <li><a href="/user/message-center.html"><i class="fa-solid fa-headset"></i> Help Center</a></li>
+                <li><a href="/user/ipr-report.html"><i class="fa-solid fa-shield-halved"></i> Report IPR infringement</a></li>
+                <li><a href="/user/penalties.html"><i class="fa-solid fa-triangle-exclamation"></i> Penalties information</a></li>
+                
+                <div class="menu-divider"></div>
+                
+                <li><a href="#" onclick="logoutUser(event)"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a></li>
+            </ul>
+        </div>
+
+        <!-- SMS / Message Icon Container -->
+        <div class="sms-icon-container" title="Messages" onclick="checkAuthAndRedirect('sms')">
+            <i class="fa-solid fa-envelope"></i>
+            <span class="sms-badge zero-sms" id="sms-count-badge">0</span>
+        </div>
+
+        <!-- Cart Icon Container -->
+        <div class="cart-icon-container" title="Shopping Cart" onclick="checkAuthAndRedirect('cart')">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-badge zero-cart" id="cart-count-badge">0</span>
+        </div>
+    </div>
+</header>
+
+    <!-- ২. সাব-বার ও ক্যাটাগরি সেকশন -->
+    <div class="sub-bar">
+        <div class="all-categories-container">
+            <div class="all-categories-btn">
+                <i class="fa-solid fa-bars"></i> All Categories
+            </div>
+            <ul class="category-drawer">
+                <li><a href="#"><i class="fa-solid fa-pump-medical"></i> Skincare (স্কিনকেয়ার)</a></li>
+                <li><a href="#"><i class="fa-solid fa-wand-magic-sparkles"></i> Makeup (মেকআপ)</a></li>
+                <li><a href="#"><i class="fa-solid fa-scissors"></i> Hair Care (হেয়ার কেয়ার)</a></li>
+                <li><a href="#"><i class="fa-solid fa-pump-soap"></i> Body Care (বডি কেয়ার)</a></li>
+                <li><a href="#"><i class="fa-solid fa-spray-can-sparkles"></i> Fragrance / Perfume</a></li>
+                <li><a href="#"><i class="fa-solid fa-gift"></i> Combo & Offers (কম্বো)</a></li>
+                <li><a href="#"><i class="fa-solid fa-user-tie"></i> Men's Care (মেন্স কেয়ার)</a></li>
+                <li><a href="#"><i class="fa-solid fa-paintbrush"></i> Tools & Accessories</a></li>
+            </ul>
+        </div>
+
+        <ul class="nav-links-list">
+            <li><a href="#" class="super-deal"><i class="fa-solid fa-bolt"></i> Super Deals</a></li>
+            <li><a href="#">Skincare</a></li>
+            <li><a href="#">Makeup</a></li>
+            <li><a href="#">Hair Care</a></li>
+            <li><a href="#">Body Care</a></li>
+            <li><a href="#">Fragrance</a></li>
+            <li><a href="#">Combo & Offers</a></li>
+            <li><a href="#">Men's Care</a></li>
+            <li><a href="#">Tools & Accessories</a></li>
+            <li><a href="#">New Arrivals</a></li>
+        </ul>
+    </div>
+
+    <!-- ৩. ডায়নামিক স্লাইডিং ব্যানার সেকশন -->
+    <section class="banner-section">
+        <div class="slider-container" id="dynamicBannerSlider">
+            <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80');">
+                <div class="slide-content">
+                    <h2>Glow Up Your Skin</h2>
+                    <p>Loading exclusive products...</p>
+                    <a href="#" class="slide-btn">Shop Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ৪. সার্ভিস হাইলাইটস সেকশন -->
+    <section class="features-section">
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-truck-fast"></i>
+                <div class="feature-info">
+                    <h4>Fast Shipping</h4>
+                    <p>On orders over $50</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-shield-halved"></i>
+                <div class="feature-info">
+                    <h4>100% Authentic</h4>
+                    <p>Guaranteed genuine items</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-rotate-left"></i>
+                <div class="feature-info">
+                    <h4>7 Days Return</h4>
+                    <p>Easy return policy</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-headset"></i>
+                <div class="feature-info">
+                    <h4>24/7 Support</h4>
+                    <p>Dedicated customer care</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ৫. প্রোডাক্ট সেকশন (Featured Products) -->
+    <section class="products-section">
+        <div class="section-title">
+            <h2>Featured Products</h2>
+            <a href="#" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+            <!-- JS দিয়ে ডায়নামিকালি প্রোডাক্ট লোড হবে -->
+        </div>
+    </section>
+
+  <script>
+    // ব্যানার এবং কুপন প্রোডাক্ট লোড করার ফাংশন
+    async function loadBannerProducts() {
+        const sliderContainer = document.getElementById('dynamicBannerSlider');
+        if (!sliderContainer) return;
+
+        try {
+            const [prodRes, couponRes] = await Promise.all([
+                fetch('/user/banner-products'),
+                fetch('/user/get-coupons')
+            ]);
+            
+            const data = await prodRes.json();
+            const couponData = await couponRes.json();
+
+            if (data.success && data.products.length > 0) {
+                const coupons = couponData.success ? couponData.coupons : [];
+
+                sliderContainer.innerHTML = data.products.map((product, index) => {
+                    let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
+                    if (product.primary_image) {
+                        let rawImg = product.primary_image.trim();
+                        if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+                            imageSrc = rawImg;
+                        } else {
+                            let cleanPath = rawImg.replace(/^(\/uploads\/|\/)+/, '');
+                            imageSrc = '/uploads/' + cleanPath;
+                        }
+                    }
+
+                    // প্রোডাক্ট আইডি ম্যাচিং
+                    let matchedCoupon = coupons.find(c => 
+                        String(c.product_id) === String(product.id) || 
+                        String(c.product_id) === String(product.product_id)
+                    );
+
+                    let badgeHTML = '';
+                    if (matchedCoupon) {
+                        badgeHTML = `
+                            <div class="banner-star-badge" onclick="copyCouponCode('${matchedCoupon.coupon_name}')" title="Click to copy coupon">
+                                <span class="offer-title">Get Special Offer</span>
+                                <span class="coupon-code">${matchedCoupon.coupon_name}</span>
+                                <span class="discount-text">৳ ${matchedCoupon.discount_amount} OFF</span>
+                            </div>
+                        `;
+                    }
+
+                    const isActive = index === 0 ? 'active' : '';
+                    const targetId = product.product_id || product.id;
+
+                    return `
+                        <div class="slide ${isActive}" style="background-image: url('${imageSrc}');">
+                            <div class="slide-content">
+                                <h2>${product.title}</h2>
+                                <p>Special Price: ৳ ${product.sale_price}</p>
+                                <a href="#" onclick="checkLoginAndRedirect('${targetId}')" class="slide-btn">Shop Now</a>
+                            </div>
+                            ${badgeHTML}
+                        </div>
+                    `;
+                }).join('');
+
+                initSlider();
+            }
+        } catch (error) {
+            console.error("Error loading banner products or coupons:", error);
+        }
+    }
+    
+    // কুপন কোড ক্লিপবোর্ডে কপি করার ফাংশন
+    function copyCouponCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert(`Coupon code "${code}" copied to clipboard!`);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    function initSlider() {
+        const slides = document.querySelectorAll('.slide');
+        if (slides.length === 0) return;
+        let currentSlide = 0;
+
+        if (window.bannerInterval) clearInterval(window.bannerInterval);
+
+        window.bannerInterval = setInterval(() => {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }, 4000);
+    }
+
+    // কার্ট কাউন্ট আপডেট ফাংশন
+    function updateCartBadge() {
+        fetch('/user/get-cart-count')
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    const badgeElement = document.getElementById('cart-count-badge');
+                    if(badgeElement) {
+                        badgeElement.innerText = data.count;
+                        if (data.count === 0) {
+                            badgeElement.classList.add('zero-cart');
+                        } else {
+                            badgeElement.classList.remove('zero-cart');
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error("Error fetching cart count:", err));
+    }
+    
+    document.addEventListener("DOMContentLoaded", async function() {
+        const authButtons = document.getElementById('authButtonsContainer');
+        const userProfile = document.getElementById('userProfileContainer');
+        const greetingText = document.querySelector('.user-greeting');
+        const welcomeText = document.querySelector('.welcome-text');
+
+        loadBannerProducts();
+        updateCartBadge(); // পেজ লোডে কার্ট কাউন্ট আপডেট হবে
+        updateSmsBadge();  // পেজ লোডে SMS কাউন্ট আপডেট হবে
+
+        try {
+            const res = await fetch('/user/current_user', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include',
+                cache: 'no-cache'
+            });
+            
+            if (res.ok) {
+                const userData = await res.json();
+                if (greetingText) {
+                    greetingText.innerHTML = `<i class="fa-solid fa-user"></i> Hi, ${userData.name || 'User'} <i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i>`;
+                }
+                if (welcomeText) welcomeText.innerText = `Welcome back, ${userData.name || 'User'}`;
+                if (authButtons) authButtons.classList.add('d-none');
+                if (userProfile) userProfile.classList.remove('d-none');
+            } else {
+                if (authButtons) authButtons.classList.remove('d-none');
+                if (userProfile) userProfile.classList.add('d-none');
+            }
+        } catch (err) {
+            if (authButtons) authButtons.classList.remove('d-none');
+            if (userProfile) userProfile.classList.add('d-none');
+        }
+
+        loadDashboardProducts();
+    });
+
+async function loadDashboardProducts() {
+    const productGrid = document.getElementById('productGrid');
+    if (!productGrid) return;
+
+    try {
+        const response = await fetch('/user/dashProduct'); 
+        const data = await response.json();
+
+        if (data.success && data.products.length > 0) {
+            productGrid.innerHTML = data.products.map(product => {
+                
+                let discountBadge = '';
+                if (product.promo_badge && product.promo_badge !== 'none') {
+                    discountBadge = product.promo_badge.toUpperCase();
+                }
+
+                let oldPrice = parseFloat(product.old_price);
+                let salePrice = parseFloat(product.sale_price);
+                let discountPercentTag = '';
+                let oldPriceHTML = '';
+
+                if (!isNaN(oldPrice) && !isNaN(salePrice) && oldPrice > salePrice) {
+                    let discountPercent = Math.round(((oldPrice - salePrice) / oldPrice) * 100);
+                    if (discountPercent > 0) {
+                        discountPercentTag = `<span class="discount-badge">-${discountPercent}%</span>`;
+                    }
+                    oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
+                }
+
+                let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+                if (product.primary_image) {
+                    let rawImg = product.primary_image.trim();
+                    if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+                        imageSrc = rawImg;
+                    } else {
+                        let cleanPath = rawImg.replace(/^(\/uploads\/|\/)+/, '');
+                        imageSrc = '/uploads/' + cleanPath;
+                    }
+                }
+
+                const targetId = product.product_id || product.id;
+
+                // ডাইনামিক রেটিং গণনা
+                const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
+                const starsHTML = renderStars(parseFloat(avgRating));
+
+                return `
+                    <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetId}')">
+                        <div class="product-badges-container">
+                            ${discountBadge ? `<span class="product-badge">${discountBadge}</span>` : '<span></span>'}
+                            ${discountPercentTag}
+                        </div>
+                        <div>
+                            <img src="${imageSrc}" 
+                                 alt="${product.title}" 
+                                 class="product-img" 
+                                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
+                            <span class="product-category">${product.category || 'General'}</span>
+                            <h3 class="product-title" title="${product.title}">${product.title}</h3>
+                            
+                            <!-- এখানে [0] রিভিউ সংখ্যা বাদ দেয়া হয়েছে -->
+                            <div class="product-rating">
+                                ${starsHTML}
+                                <span>(${avgRating})</span>
+                            </div>
+                        </div>
+
+                        <div class="product-bottom">
+                            <div class="price-box">
+                                <span class="current-price">৳ ${product.sale_price}</span>
+                                ${oldPriceHTML}
+                            </div>
+                            <button class="add-cart-btn" onclick="event.stopPropagation(); addToCart('${targetId}')" title="Add to Cart">
+                              <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">কোনো প্রোডাক্ট পাওয়া যায়নি!</div>`;
+        }
+
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: red;">প্রোডাক্ট লোড করতে ব্যর্থ হয়েছে।</div>`;
+    }
+}  
+
+function checkLoginAndRedirect(productId) {
+        window.location.href = `/user/product-details?id=${productId}&t=${new Date().getTime()}`;
+    }
+
+    async function addToCart(productId) {
+        try {
+            const response = await fetch('/user/add-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 401 || data.message === 'unauthorized') {
+                window.location.href = '/user/cslogin';
+                return;
+            }
+
+            if (data.success) {
+                alert(data.message);
+                updateCartBadge(); // কার্টে প্রোডাক্ট সফলভাবে অ্যাড হলে সাথেই সাথেই কাউন্ট আপডেট হবে
+            } else {
+                alert(data.message || 'Failed to add product to cart.');
+            }
+        } catch (error) {
+            console.error("Cart Error:", error);
+            alert("Something went wrong! Check your network connection.");
+        }
+    }
+
+    // SMS এবং Cart আইকনের জন্য লগইন স্ট্যাটাস চেক করে রিডাইরেক্ট করা
+    async function checkAuthAndRedirect(type) {
+        try {
+            const res = await fetch('/user/current_user', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include',
+                cache: 'no-cache'
+            });
+
+            if (res.ok) {
+                if (type === 'sms') {
+                    window.location.href = '/user/customer-inbox';
+                } else if (type === 'cart') {
+                    window.location.href = '/user/cart-html';
+                }
+            } else {
+                window.location.href = '/user/cslogin';
+            }
+        } catch (err) {
+            console.error("Auth check error:", err);
+            window.location.href = '/user/cslogin';
+        }
+    }
+
+    function logoutUser(e) {
+        e.preventDefault();
+        window.location.href = '/user/logout';
+    }
+  
+    // SMS কাউন্ট আপডেট ফাংশন
+function updateSmsBadge() {
+    fetch('/user/get-unread-sms-count')
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                const badgeElement = document.getElementById('sms-count-badge');
+                if(badgeElement) {
+                    badgeElement.innerText = data.count;
+                    if (data.count === 0) {
+                        badgeElement.classList.add('zero-sms');
+                    } else {
+                        badgeElement.classList.remove('zero-sms'); // ০ এর বেশি হলে আগের কালার হয়ে যাবে
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Error fetching SMS count:", err));
+}
+  
+
+// স্টার আইকন ডাইনামিক তৈরি করার হেল্পার ফাংশন
+function renderStars(rating) {
+    let starsHtml = '';
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    for (let i = 0; i < fullStars; i++) {
+        starsHtml += '<i class="fa-solid fa-star"></i>';
+    }
+    if (hasHalfStar) {
+        starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        starsHtml += '<i class="fa-regular fa-star"></i>';
+    }
+
+    return starsHtml;
+}
+  </script>
+
+</body>
+</html>
