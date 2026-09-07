@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKartBD - Withdraw Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Top Header -->
+    <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div class="flex items-center space-x-4">
+        <!-- Profile Image -->
+        <img id="userProfileImg" src="https://via.placeholder.com/150" alt="Profile" class="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm">
+        <div>
+          <!-- Admin Name -->
+          <h1 class="text-xl font-bold text-slate-800" id="userName">Loading...</h1>
+          <p class="text-xs text-slate-500">উত্তোলন পোর্টাল (Withdraw Portal)</p>
+        </div>
+      </div>
+      <a href="/admin/home.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold transition">
+        <i class="fa-solid fa-arrow-left mr-1"></i> ব্যাক
+      </a>
+    </div>
+
+    <!-- Balance & Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-gradient-to-br from-pink-500 to-rose-600 text-white p-6 rounded-2xl shadow-md">
+        <p class="text-xs text-pink-100 font-medium">Available Balance</p>
+        <h3 class="text-3xl font-extrabold mt-2">৳ <span id="availableBalance">0</span></h3>
+        <span class="inline-block mt-3 bg-white/20 text-xs px-2.5 py-1 rounded-lg">উত্তোলনযোগ্য</span>
+      </div>
+      
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <p class="text-xs text-slate-400 font-medium">Total Sales</p>
+        <h3 class="text-2xl font-bold text-slate-700 mt-2">৳ <span id="totalSales">0</span></h3>
+        <span class="inline-block mt-3 bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-lg font-medium">সর্বমোট বিক্রয়</span>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <p class="text-xs text-slate-400 font-medium">Total Withdrawn</p>
+        <h3 class="text-2xl font-bold text-slate-700 mt-2">৳ <span id="totalWithdrawn">0</span></h3>
+        <span class="inline-block mt-3 bg-emerald-50 text-emerald-600 text-xs px-2.5 py-1 rounded-lg font-medium">সফলভাবে পরিশোধিত</span>
+      </div>
+    </div>
+
+    <!-- Main Withdraw Form Section -->
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100">
+      <h2 class="text-lg font-bold text-slate-800 mb-2">New Withdrawal Request</h2>
+      
+      <!-- Warning Message Box -->
+      <div class="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+        <p class="font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> সতর্কবার্তা ও নিয়মাবলী:</p>
+        <p>১. সর্বনিম্ন উত্তোলনের পরিমাণ <strong>১০০০ টাকা</strong>।</p>
+        <p>২. আপনার পেমেন্ট ইনফরমেশন (নম্বর বা ব্যাংক অ্যাকাউন্ট) সঠিক আছে কিনা ভালোভাবে যাচাই করে নিন। ভুল তথ্যের কারণে পেমেন্ট ভুল নম্বরে চলে গেলে বা ফেইল করলে <strong>কর্তৃপক্ষ বা এডমিন দায়ী থাকবে না</strong>।</p>
+        <p>৩. উত্তোলনের স্ট্যাটাস ডিফল্টভাবে <strong>Pending</strong> থাকবে এবং যাচাই শেষে পরিশোধ করা হবে।</p>
+      </div>
+
+      <div id="alertMsg" class="hidden mb-4 p-3 rounded-xl text-xs font-medium text-center"></div>
+
+      <form id="withdrawForm" onsubmit="handleWithdraw(event)" class="space-y-4">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Amount -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">উত্তোলনের পরিমাণ (BDT - সর্বনিম্ন ১০০০)</label>
+            <input type="number" id="amount" required min="1000" placeholder="সর্বনিম্ন ১০০০ টাকা" 
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">পেমেন্ট মেথড</label>
+            <select id="paymentType" onchange="togglePaymentFields()" required 
+              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm bg-white">
+              <option value="">মেথড সিলেক্ট করুন</option>
+              <option value="bkash">Bkash</option>
+              <option value="nagad">Nagad</option>
+              <option value="rocket">Rocket</option>
+              <option value="bank">Bank Transfer</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Fields for Mobile Banking -->
+        <div id="mobileFields" class="hidden">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">মোবাইল ব্যাংকিং নম্বর (বিকাশ/নগদ/রকেট)</label>
+          <input type="text" id="mobileNumber" placeholder="01XXXXXXXXX" 
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+        </div>
+
+        <!-- Dynamic Fields for Bank Transfer -->
+        <div id="bankFields" class="hidden space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">অ্যাকাউন্ট হোল্ডারের নাম (Bank Acc Name)</label>
+              <input type="text" id="bankAccName" placeholder="Account Holder Name" 
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">অ্যাকাউন্ট নম্বর (Bank Acc Number)</label>
+              <input type="text" id="bankAccNumber" placeholder="Account Number" 
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ব্যাংকের নাম (Bank Name)</label>
+              <input type="text" id="bankName" placeholder="e.g. Sonali Bank / EBL" 
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ব্রাঞ্চের নাম (Bank Branch)</label>
+              <input type="text" id="bankBranch" placeholder="Branch Name" 
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">রাউটিং নম্বর (Routing Number)</label>
+              <input type="text" id="routingNumber" placeholder="Routing Number" 
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-pink-500 text-sm">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3.5 rounded-xl transition shadow-lg shadow-pink-200 cursor-pointer text-sm mt-2">
+          উত্তোলনের অনুরোধ পাঠান (Submit Request)
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Withdraw History Table -->
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-6">
+  <h2 class="text-lg font-bold text-slate-800 mb-4">উত্তোলনের ইতিহাস (History)</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-xs text-slate-600">
+      <thead class="bg-slate-50 border-b">
+        <tr>
+          <th class="p-3">তারিখ</th>
+          <th class="p-3">পরিমাণ</th>
+          <th class="p-3">মেথড</th>
+          <th class="p-3">ট্রানজেকশন আইডি</th>
+          <th class="p-3">স্ট্যাটাস</th>
+        </tr>
+      </thead>
+      <tbody id="withdrawHistoryBody">
+        <!-- ডাটা এখানে লোড হবে -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+    let globalData = {};
+
+    async function fetchWithdrawInfo() {
+      try {
+        const res = await fetch('/admin/api/withdraw/info');
+        const data = await res.json();
+        
+        if (data.success) {
+          globalData = data.paymentDetails;
+
+          document.getElementById('userName').innerText = globalData.name || 'Admin';
+          if (globalData.picture) {
+            document.getElementById('userProfileImg').src = globalData.picture;
+          }
+
+          document.getElementById('availableBalance').innerText = data.balanceInfo.availableBalance.toLocaleString();
+          document.getElementById('totalSales').innerText = data.balanceInfo.totalSales.toLocaleString();
+          document.getElementById('totalWithdrawn').innerText = data.balanceInfo.totalWithdrawn.toLocaleString();
+
+          const pType = globalData.payment_type;
+          if (pType) {
+            document.getElementById('paymentType').value = pType;
+            togglePaymentFields();
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching withdraw info:', err);
+      }
+    }
+
+    function togglePaymentFields() {
+      const method = document.getElementById('paymentType').value;
+      const mobileFields = document.getElementById('mobileFields');
+      const bankFields = document.getElementById('bankFields');
+
+      mobileFields.classList.add('hidden');
+      bankFields.classList.add('hidden');
+
+      if (method === 'bkash' || method === 'nagad' || method === 'rocket') {
+        mobileFields.classList.remove('hidden');
+        document.getElementById('mobileNumber').value = globalData.mobile_number || '';
+      } else if (method === 'bank') {
+        bankFields.classList.remove('hidden');
+        document.getElementById('bankAccName').value = globalData.bank_acc_name || '';
+        document.getElementById('bankAccNumber').value = globalData.bank_acc_number || '';
+        document.getElementById('bankName').value = globalData.bank_name || '';
+        document.getElementById('bankBranch').value = globalData.bank_branch || '';
+        document.getElementById('routingNumber').value = globalData.routing_number || '';
+      }
+    }
+
+    async function handleWithdraw(event) {
+      event.preventDefault();
+      const amount = Number(document.getElementById('amount').value);
+      const payment_type = document.getElementById('paymentType').value;
+
+      if (amount < 1000) {
+        showAlert("সর্বনিম্ন ১০০০ টাকা উত্তোলন করতে হবে!", "red");
+        return;
+      }
+
+      let requestData = { amount, payment_type };
+
+      if (payment_type === 'bank') {
+        requestData.bank_acc_name = document.getElementById('bankAccName').value;
+        requestData.bank_acc_number = document.getElementById('bankAccNumber').value;
+        requestData.bank_name = document.getElementById('bankName').value;
+        requestData.bank_branch = document.getElementById('bankBranch').value;
+        requestData.routing_number = document.getElementById('routingNumber').value;
+      } else {
+        requestData.mobile_number = document.getElementById('mobileNumber').value;
+      }
+
+      try {
+        const res = await fetch('/admin/api/withdraw/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestData)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          showAlert(`${result.message} (Transaction ID: ${result.transactionId})`, "emerald");
+          document.getElementById('withdrawForm').reset();
+          fetchWithdrawInfo();
+          fetchWithdrawHistory(); // <-- রিকোয়েস্ট সফল হওয়ার সাথে সাথে হিস্ট্রি রিফ্রেশ হবে
+        } else {
+          showAlert(result.message, "red");
+        }
+      } catch (err) {
+        console.error('Submit error:', err);
+        showAlert("সার্ভার ত্রুটি ঘটেছে!", "red");
+      }
+    }
+
+    async function fetchWithdrawHistory() {
+      try {
+        const res = await fetch('/admin/api/withdraw/history');
+        const result = await res.json();
+        
+        if (result.success) {
+          const tbody = document.getElementById('withdrawHistoryBody');
+          tbody.innerHTML = '';
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">কোনো উত্তোলনের ইতিহাস পাওয়া যায়নি</td></tr>`;
+            return;
+          }
+
+          result.data.forEach(item => {
+            tbody.innerHTML += `
+              <tr class="border-b">
+                <td class="p-3">${new Date(item.created_at).toLocaleDateString()}</td>
+                <td class="p-3 font-semibold">৳${item.amount}</td>
+                <td class="p-3 uppercase">${item.payment_type}</td>
+                <td class="p-3 text-slate-400">${item.transaction_id}</td>
+                <td class="p-3">
+                  <span class="px-2 py-1 rounded-full text-[10px] font-semibold ${item.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">
+                    ${item.status}
+                  </span>
+                </td>
+              </tr>
+            `;
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching history:', err);
+      }
+    }
+
+    function showAlert(msg, type) {
+      const alertMsg = document.getElementById('alertMsg');
+      if (type === 'emerald') {
+        alertMsg.className = "mb-4 p-4 rounded-xl text-xs font-medium text-center bg-emerald-100 border border-emerald-300 text-emerald-700";
+      } else {
+        alertMsg.className = "mb-4 p-4 rounded-xl text-xs font-medium text-center bg-red-100 border border-red-300 text-red-700";
+      }
+      alertMsg.innerText = msg;
+      alertMsg.classList.remove('hidden');
+    }
+
+    // পেজ লোড হওয়ার সময় ইনফো এবং হিস্ট্রি দুটোই একসাথে কল হবে
+    window.onload = () => {
+      fetchWithdrawInfo();
+      fetchWithdrawHistory();
+    };
+  </script>
+</body>
+</html>

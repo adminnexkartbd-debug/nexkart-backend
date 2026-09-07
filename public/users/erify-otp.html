@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexKart - OTP Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/core-js/6.4.0/minified.js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085); }
+        .main-container { background: rgba(255, 255, 255, 0.9); padding: 40px 30px; border-radius: 30px; width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(255, 75, 110, 0.3); }
+        .brand-logo { font-size: 24px; font-weight: 700; color: #d63384; margin-bottom: 10px; }
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group input { width: 100%; padding: 12px; border: 1.5px solid #ffccd5; border-radius: 12px; font-size: 18px; letter-spacing: 5px; text-align: center; outline: none; }
+        .btn-submit { width: 100%; padding: 12px; background: linear-gradient(135deg, #ff4b6e, #ff758c); border: none; color: white; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i> Verify OTP</div>
+        <p style="color: #666; font-size: 13px; margin-bottom: 20px;">আপনার ইমেইলে পাঠানো ৬ ডিজিটের ওটিপি কোডটি লিখুন।</p>
+
+        <form id="otpForm">
+            <div class="input-group">
+                <input type="text" id="otp" placeholder="------" maxlength="6" required>
+            </div>
+            <button type="submit" class="btn-submit">Verify Code</button>
+        </form>
+    </div>
+
+    <script>
+        const email = localStorage.getItem('reg_email'); // সাইনআপের সময় সেভ করা ইমেইল
+
+        document.getElementById('otpForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const otp = document.getElementById('otp').value;
+
+            const res = await fetch('/user/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp })
+            });
+            const data = await res.json();
+            alert(data.message);
+
+            if(data.success) {
+                window.location.href = data.redirect;
+            }
+        });
+    </script>
+</body>
+</html>

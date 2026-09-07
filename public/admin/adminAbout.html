@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKart BD - Seller Settings & System Center</title>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* CSS Variables & Global Reset */
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --glass-bg: rgba(255, 255, 255, 0.85);
+      --glass-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.01);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    /* Top Action Bar Layout */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-back {
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .btn-back:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      transform: translateX(-3px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+    }
+
+    .header-title h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .header-title p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Language Toggle Switcher */
+    .lang-switcher {
+      background: #ffffff;
+      padding: 4px;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      gap: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+    }
+
+    /* Main Content Layout (Grid) */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 868px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      padding: 16px;
+      height: fit-content;
+    }
+
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .nav-item button {
+      width: 100%;
+      border: none;
+      background: transparent;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+    }
+
+    .nav-item button i {
+      font-size: 1.1rem;
+      width: 20px;
+    }
+
+    .nav-item button:hover {
+      background: rgba(241, 245, 249, 0.8);
+      color: var(--text-main);
+      transform: translateX(4px);
+    }
+
+    .nav-item button.active {
+      background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Tab Content Section Control */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    /* Forms Layout */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+      background: #ffffff;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Toggle Switch UI for 24 Hours Service */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--success);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Danger Zone */
+    .danger-zone {
+      margin-top: 24px;
+      background: var(--danger-light);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .danger-zone h5 {
+      color: var(--danger);
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .danger-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-warning:hover {
+      background: #d97706;
+      transform: translateY(-1px);
+    }
+
+    .deletion-banner {
+      background: var(--warning-light);
+      border: 1px solid var(--warning);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Policy & Terms Layout */
+    .policy-box {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      padding: 16px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 24px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title i {
+      color: var(--primary);
+    }
+
+    .section-title.danger i {
+      color: var(--danger);
+    }
+
+    .policy-list {
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .policy-list li {
+      margin-bottom: 8px;
+    }
+
+    /* Help & Support Cards */
+    .support-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .support-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .support-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text-main);
+      transition: all 0.25s ease;
+      display: block;
+    }
+
+    .support-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      border-color: var(--primary);
+    }
+
+    .support-card i {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .address-box {
+      background: rgba(248, 250, 252, 0.8);
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+
+    /* About App Section */
+    .about-app {
+      text-align: center;
+    }
+
+    .app-logo {
+      width: 70px;
+      height: 70px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      margin: 0 auto 16px;
+      box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin: 12px 0;
+    }
+
+    .about-details {
+      max-width: 400px;
+      margin: 20px auto 0;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+      text-align: left;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Custom Modal Popup */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      transform: translateY(20px);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--danger);
+    }
+
+    .btn-close {
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-light {
+      background: #f1f5f9;
+      color: var(--text-main);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Deletion Notice Banner ( If Pending ) -->
+    <div id="deletionBanner" class="deletion-banner" style="display: none;">
+      <div>
+        <strong style="color: var(--warning);"><i class="fa-solid fa-clock"></i> অ্যাকাউন্ট ডিলিট পেন্ডিং রয়েছে!</strong>
+        <p style="font-size:0.85rem; color:var(--text-muted);">২৪ ঘণ্টার মধ্যে অ্যাকাউন্ট এবং সম্পূর্ণ প্রোডাক্ট ডিলিট হয়ে যাবে। বাতিল করতে পাশে চাপুন।</p>
+      </div>
+      <button class="btn-warning" id="cancelDeleteBtnBanner">
+        <i class="fa-solid fa-rotate-left"></i> ক্যানসেল করুন
+      </button>
+    </div>
+
+    <!-- Top Action Bar -->
+    <div class="top-bar">
+      <div class="header-left">
+        <a href="javascript:history.back()" class="btn-back">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span class="lang-text" data-bn="ফিরে যান" data-en="Back">ফিরে যান</span>
+        </a>
+        <div class="header-title">
+          <h2>NexKart BD Seller Center</h2>
+          <p>Manage merchant profile, legal terms, privacy, pricing policy, and support.</p>
+        </div>
+      </div>
+
+      <!-- Language Toggle -->
+      <div class="lang-switcher">
+        <button id="btn-bn" class="lang-btn active" onclick="setLanguage('bn')">বাংলা</button>
+        <button id="btn-en" class="lang-btn" onclick="setLanguage('en')">English</button>
+      </div>
+    </div>
+
+    <!-- Main Section Grid -->
+    <div class="content-grid">
+      
+      <!-- Sidebar Navigation -->
+      <aside class="glass-card sidebar">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <button class="active" onclick="switchTab(this, 'content-account')">
+              <i class="fa-solid fa-user-gear"></i>
+              <span class="lang-text" data-bn="অ্যাকাউন্ট প্রোফাইল" data-en="Account Profile">অ্যাকাউন্ট প্রোফাইল</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button onclick="switchTab(this, 'content-privacy')">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span class="lang-text" data-bn="প্রাইভেসি পলিসি" data-en="Privacy Policy">প্রাইভেসি পলিসি</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button onclick="switchTab(this, 'content-terms')">
+              <i class="fa-solid fa-file-contract"></i>
+              <span class="lang-text" data-bn="টার্মস অ্যান্ড কন্ডিশনস" data-en="Terms & Conditions">টার্মস অ্যান্ড কন্ডিশনস</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button onclick="switchTab(this, 'content-price-policy')">
+              <i class="fa-solid fa-tags"></i>
+              <span class="lang-text" data-bn="প্রাইস পলিসি" data-en="Pricing Policy">প্রাইস পলিসি</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button onclick="switchTab(this, 'content-help')">
+              <i class="fa-solid fa-headset"></i>
+              <span class="lang-text" data-bn="হেল্প ও সাপোর্ট" data-en="Help & Support">হেল্প ও সাপোর্ট</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button onclick="switchTab(this, 'content-about')">
+              <i class="fa-solid fa-circle-info"></i>
+              <span class="lang-text" data-bn="অ্যাপ সম্পর্কিত তথ্য" data-en="About App">অ্যাপ সম্পর্কিত তথ্য</span>
+            </button>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="main-content">
+
+        <!-- 1. ACCOUNT PROFILE -->
+        <div class="tab-pane active" id="content-account">
+          <div class="glass-card">
+            <h5 class="card-title lang-text" data-bn="সেলার প্রোফাইল তথ্য" data-en="Seller Profile Information">সেলার প্রোফাইল তথ্য</h5>
+            
+            <form id="admin-profile-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="lang-text" data-bn="অ্যাডমিন নাম" data-en="Admin Name">অ্যাডমিন নাম</label>
+                  <input type="text" id="name" placeholder="নাম টাইপ করুন">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="ইমেইল অ্যাড্রেস" data-en="Email Address">ইমেইল অ্যাড্রেস</label>
+                  <input type="email" id="email" readonly style="background:#f1f5f9; cursor:not-allowed;">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="শপ / সেলার নাম" data-en="Shop / Seller Name">শপ / সেলার নাম</label>
+                  <input type="text" id="shop_name" placeholder="শপের নাম টাইপ করুন">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="ফোন নম্বর" data-en="Phone Number">ফোন নম্বর</label>
+                  <input type="text" id="phone" placeholder="ফোন নম্বর টাইপ করুন">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="ঠিকানা" data-en="Address">ঠিকানা</label>
+                  <input type="text" id="address" placeholder="ঠিকানা টাইপ করুন">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="ফেসবুক লিঙ্ক" data-en="Facebook Link">ফেসবুক লিঙ্ক</label>
+                  <input type="text" id="facebook_link" placeholder="ফেসবুক পেজ লিঙ্ক">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="শপ স্লোগান" data-en="Shop Slogan">শপ স্লোগান</label>
+                  <input type="text" id="slogan" placeholder="শপের স্লোগান">
+                </div>
+                <div class="form-group">
+                  <label class="lang-text" data-bn="মোবাইল ব্যাংকিং নম্বর" data-en="Mobile Banking Number">মোবাইল ব্যাংকিং নম্বর</label>
+                  <input type="text" id="mobile_number" placeholder="bKash/Nagad নম্বর">
+                </div>
+
+                <!-- 24/7 Support Toggle Option -->
+                <div class="form-group full-width">
+                  <div class="toggle-container">
+                    <div>
+                      <strong class="lang-text" data-bn="২৪ ঘণ্টা সাপোর্ট সার্ভিস (24/7 Support Active)" data-en="24 Hours Customer Support">২৪ ঘণ্টা সাপোর্ট সার্ভিস (24/7 Support Active)</strong>
+                      <p style="font-size:0.8rem; color:var(--text-muted);" class="lang-text" data-bn="আপনার স্টোর কি ২৪ ঘণ্টা গ্রাহক সেবা প্রদান করে?" data-en="Does your shop provide round-the-clock support?">আপনার স্টোর কি ২৪ ঘণ্টা গ্রাহক সেবা প্রদান করে?</p>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="is_24_7_support" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Shop About Description -->
+                <div class="form-group full-width">
+                  <label class="lang-text" data-bn="শপ বিবরণ / শপ সম্পর্কে" data-en="Shop Description">শপ বিবরণ / শপ সম্পর্কে</label>
+                  <textarea id="shop_about" rows="3" placeholder="আপনার শপ সম্পর্কে সংক্ষেপে লিখুন..."></textarea>
+                </div>
+              </div>
+
+              <!-- Bank Details Subsection -->
+              <h5 class="section-title" style="margin-top: 20px;"><i class="fa-solid fa-building-columns"></i> ব্যাংক অ্যাকাউন্ট বিবরণী</h5>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>ব্যাংক নাম</label>
+                  <input type="text" id="bank_name" placeholder="ব্যাংকের নাম">
+                </div>
+                <div class="form-group">
+                  <label>অ্যাকাউন্ট হোল্ডার নাম</label>
+                  <input type="text" id="bank_acc_name" placeholder="অ্যাকাউন্টের নাম">
+                </div>
+                <div class="form-group">
+                  <label>অ্যাকাউন্ট নম্বর</label>
+                  <input type="text" id="bank_acc_number" placeholder="অ্যাকাউন্ট নম্বর">
+                </div>
+                <div class="form-group">
+                  <label>ব্রাঞ্চ নাম</label>
+                  <input type="text" id="bank_branch" placeholder="শাখার নাম">
+                </div>
+                <div class="form-group">
+                  <label>রাউটিং নম্বর</label>
+                  <input type="text" id="routing_number" placeholder="Routing Number">
+                </div>
+              </div>
+
+              <!-- Save Button -->
+              <div style="margin-top: 20px; text-align: right;">
+                <button type="submit" class="btn-back" style="background: var(--primary); color: white; border: none; cursor: pointer; padding: 12px 24px;">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span class="lang-text" data-bn="তথ্য সেভ করুন" data-en="Save Profile">তথ্য সেভ করুন</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+
+          <div class="glass-card danger-zone">
+            <h5 class="lang-text" data-bn="ডেঞ্জার জোন" data-en="Danger Zone">ডেঞ্জার জোন</h5>
+            <div class="danger-content">
+              <div>
+                <h4 style="font-size:0.95rem;" class="lang-text" data-bn="সেলার অ্যাকাউন্ট ডিলিট করুন" data-en="Delete Seller Account">সেলার অ্যাকাউন্ট ডিলিট করুন</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);" class="lang-text" data-bn="ডিলিট রিকুয়েস্ট পাঠানোর ২৪ ঘণ্টার মধ্যে ক্যানসেল না করলে স্থায়ীভাবে তথ্য মুছে যাবে।" data-en="Account and products will be permanently wiped 24 hours after request unless canceled.">ডিলিট রিকুয়েস্ট পাঠানোর ২৪ ঘণ্টার মধ্যে ক্যানসেল না করলে স্থায়ীভাবে তথ্য মুছে যাবে।</p>
+              </div>
+              <button class="btn-danger" id="deleteBtnAction" onclick="toggleModal(true)">
+                <i class="fa-solid fa-trash-can"></i>
+                <span class="lang-text" data-bn="ডিলিট করুন" data-en="Delete Account">ডিলিট করুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. PRIVACY POLICY -->
+        <div class="tab-pane" id="content-privacy">
+          <div class="glass-card">
+            <h4 class="card-title lang-text" data-bn="সেলার প্রাইভেসি পলিসি" data-en="Seller Privacy Policy">সেলার প্রাইভেসি পলিসি</h4>
+            
+            <div class="policy-box">
+              <p class="lang-text" 
+                 data-bn="NexKart BD প্ল্যাটফর্মে সেলারদের তথ্যের পূর্ণ সুরক্ষা প্রদান করা আমাদের অন্যতম প্রধান দায়িত্ব। আমাদের সিস্টেম কীভাবে আপনার তথ্য সংগ্রহ, সংরক্ষণ, প্রসেস এবং সুরক্ষিত রাখে তা নিচে বিস্তারিত উল্লেখ করা হলো।" 
+                 data-en="Protecting seller information is our utmost priority at NexKart BD. This privacy policy outlines how we collect, store, process, and secure your merchant data safely.">
+                 NexKart BD প্ল্যাটফর্মে সেলারদের তথ্যের পূর্ণ সুরক্ষা প্রদান করা আমাদের অন্যতম প্রধান দায়িত্ব। আমাদের সিস্টেম কীভাবে আপনার তথ্য সংগ্রহ, সংরক্ষণ, প্রসেস এবং সুরক্ষিত রাখে তা নিচে বিস্তারিত উল্লেখ করা হলো।
+              </p>
+            </div>
+
+            <!-- ১. সংগৃহীত তথ্যসমূহ -->
+            <div class="section-title"><i class="fa-solid fa-shield-cat"></i> <span class="lang-text" data-bn="১. সংগৃহীত তথ্যসমূহ (Collected Data)" data-en="1. Information We Collect">১. সংগৃহীত তথ্যসমূহ (Collected Data)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="ব্যবসায়িক তথ্য: সেলার ট্রেড লাইসেন্স, জাতীয় পরিচয়পত্র (NID), শপের নাম, ঠিকানা ও মালিকানা সংক্রান্ত নথি।" data-en="Business Info: Trade license, National ID (NID), shop name, address, and ownership credentials.">ব্যবসায়িক তথ্য: সেলার ট্রেড লাইসেন্স, জাতীয় পরিচয়পত্র (NID), শপের নাম, ঠিকানা ও মালিকানা সংক্রান্ত নথি।</li>
+              <li class="lang-text" data-bn="যোগাযোগের তথ্য: অফিসিয়াল ফোন নম্বর (যেমন: 01312146797) এবং ইমেইল ঠিকানা (admin.nexkartbd@gmail.com)।" data-en="Contact Details: Official phone number (e.g. 01312146797) and email address (admin.nexkartbd@gmail.com).">যোগাযোগের তথ্য: অফিসিয়াল ফোন নম্বর (যেমন: 01312146797) এবং ইমেইল ঠিকানা (admin.nexkartbd@gmail.com)।</li>
+              <li class="lang-text" data-bn="ফাইন্যান্সিয়াল তথ্য: পে-আউট বা পেমেন্ট নিষ্পত্তির জন্য ব্যাঙ্ক অ্যাকাউন্ট বিবরণী, বিকাশ, নগদ বা রকেট ওয়ালেট নম্বর।" data-en="Financial Data: Bank account details, Bkash, Nagad, or Rocket merchant wallet numbers for payouts.">ফাইন্যান্সিয়াল তথ্য: পে-আউট বা পেমেন্ট নিষ্পত্তির জন্য ব্যাঙ্ক অ্যাকাউন্ট বিবরণী, বিকাশ, নগদ বা রকেট ওয়ালেট নম্বর।</li>
+              <li class="lang-text" data-bn="প্রোডাক্ট ডাটা: আপনার আপলোডকৃত পণ্যের ছবি, বিবরণ, প্রাইসিং এবং স্টক সংক্রান্ত সকল তথ্য।" data-en="Product Catalog Data: Uploaded product images, descriptions, pricing structures, and stock updates.">প্রোডাক্ট ডাটা: আপনার আপলোডকৃত পণ্যের ছবি, বিবরণ, প্রাইসিং এবং স্টক সংক্রান্ত সকল তথ্য।</li>
+              <li class="lang-text" data-bn="ডিভাইস ও লগ তথ্য: অ্যাপ ব্যবহারের সেশন, আইপি ঠিকানা (IP Address), ডিভাইস আইডি এবং নেটওয়ার্ক বিবরণী।" data-en="Device & Log Info: App usage sessions, IP address, device identifier, and network logs.">ডিভাইস ও লগ তথ্য: অ্যাপ ব্যবহারের সেশন, আইপি ঠিকানা (IP Address), ডিভাইস আইডি এবং নেটওয়ার্ক বিবরণী।</li>
+            </ul>
+
+            <!-- ২. তথ্যের ব্যবহারের উদ্দেশ্য -->
+            <div class="section-title"><i class="fa-solid fa-sliders"></i> <span class="lang-text" data-bn="২. তথ্যের ব্যবহারের উদ্দেশ্য (Data Usage)" data-en="2. How We Use Your Data">২. তথ্যের ব্যবহারের উদ্দেশ্য (Data Usage)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="সেলার মার্চেন্ট একাউন্ট ভেরিফিকেশন এবং ভুয়া লিস্টিং বা জালিয়াতি প্রতিরোধ করার জন্য।" data-en="To verify merchant identity and eliminate fraudulent store registrations.">সেলার মার্চেন্ট একাউন্ট ভেরিফিকেশন এবং ভুয়া লিস্টিং বা জালিয়াতি প্রতিরোধ করার জন্য।</li>
+              <li class="lang-text" data-bn="অর্ডার প্রসেসিং, কুরিয়ার সংস্থায় পার্সেল হ্যান্ডওভার এবং পে-আউট অ্যাকাউন্ট সেটেলমেন্ট সফলভাবে সম্পন্ন করতে।" data-en="To process order requests, courier parcel handovers, and disburse weekly payouts.">অর্ডার প্রসেসিং, কুরিয়ার সংস্থায় পার্সেল হ্যান্ডওভার এবং পে-আউট অ্যাকাউন্ট সেটেলমেন্ট সফলভাবে সম্পন্ন করতে।</li>
+              <li class="lang-text" data-bn="পণ্য রিটার্ন, কাস্টমার ক্লেম বা ডিসপুট সমাধানের প্রয়োজনে সেলারের সাথে যোগাযোগের জন্য।" data-en="To contact sellers regarding customer dispute resolutions, order returns, and system alerts.">পণ্য রিটার্ন, কাস্টমার ক্লেম বা ডিসপুট সমাধানের প্রয়োজনে সেলারের সাথে যোগাযোগের জন্য।</li>
+              <li class="lang-text" data-bn="সেলার অ্যাপের পারফরম্যান্স বৃদ্ধি, নতুন ফিচার যোগ করা ও সিকিউরিটি অ্যানালাইসিসের জন্য।" data-en="To improve app performance, implement new feature updates, and strengthen security protocols.">সেলার অ্যাপের পারফরম্যান্স বৃদ্ধি, নতুন ফিচার যোগ করা ও সিকিউরিটি অ্যানালাইসিসের জন্য।</li>
+            </ul>
+
+            <!-- ৩. থার্ড-পার্টি ডাটা শেয়ারিং -->
+            <div class="section-title"><i class="fa-solid fa-share-nodes"></i> <span class="lang-text" data-bn="৩. থার্ড-পার্টি ডাটা শেয়ারিং (Third-Party Sharing)" data-en="3. Third-Party Data Sharing">৩. থার্ড-পার্টি ডাটা শেয়ারিং (Third-Party Sharing)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="ডেলিভারি সুবিধা নিশ্চিত করতে অনুমোদিত লজিস্টিকস ও কুরিয়ার পার্টনারদের সাথে শুধুমাত্র পিকআপ ঠিকানা ও কন্টাক্ট নম্বর শেয়ার করা হয়।" data-en="Pickup address and contact numbers are shared exclusively with logistics partners for parcel collection.">ডেলিভারি সুবিধা নিশ্চিত করতে অনুমোদিত লজিস্টিকস ও কুরিয়ার পার্টনারদের সাথে শুধুমাত্র পিকআপ ঠিকানা ও কন্টাক্ট নম্বর শেয়ার করা হয়।</li>
+              <li class="lang-text" data-bn="পেমেন্ট গেটওয়ে বা ব্যাংকিং পার্টনারদের সাথে লেনদেন সম্পন্ন করার জন্য প্রয়োজনীয় ফাইন্যান্সিয়াল ডাটা এনক্রিপ্ট করে পাঠানো হয়।" data-en="Financial logs are transmitted in encrypted format to authorized payment gateways and banks.">পেমেন্ট গেটওয়ে বা ব্যাংকিং পার্টনারদের সাথে লেনদেন সম্পন্ন করার জন্য প্রয়োজনীয় ফাইন্যান্সিয়াল ডাটা এনক্রিপ্ট করে পাঠানো হয়।</li>
+              <li class="lang-text" data-bn="NexKart BD কোনো অবস্থাতেই আপনার ব্যবসায়িক বা ব্যক্তিগত ডাটা থার্ড-পার্টি মার্কেটিং এজেন্সির কাছে বিক্রি বা লিজ দেয় না।" data-en="NexKart BD strictly never sells or rents merchant personal/business data to third-party marketers.">NexKart BD কোনো অবস্থাতেই আপনার ব্যবসায়িক বা ব্যক্তিগত ডাটা থার্ড-পার্টি মার্কেটিং এজেন্সির কাছে বিক্রি বা লিজ দেয় না।</li>
+            </ul>
+
+            <!-- ৪. ডাটা সিকিউরিটি ও সংরক্ষন -->
+            <div class="section-title"><i class="fa-solid fa-lock"></i> <span class="lang-text" data-bn="৪. ডাটা সিকিউরিটি ও সংরক্ষণ নীতি (Storage & Protection)" data-en="4. Security & Data Protection">৪. ডাটা সিকিউরিটি ও সংরক্ষণ নীতি (Storage & Protection)</span></div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);" class="lang-text" 
+               data-bn="আমরা ইন্ডাস্ট্রি স্ট্যান্ডার্ড SSL এনক্রিপশন ও উচ্চ প্রযুক্তির সিকিউর ক্লাউড সার্ভার ব্যবহার করি। সেলারের গুরুত্বপূর্ণ তথ্য ও পেমেন্ট হিস্ট্রি সর্বোচ্চ নিরাপত্তার সাথে এনক্রিপ্ট করে সংরক্ষণ করা হয়।"
+               data-en="We utilize industry-standard SSL encryption and secured cloud infrastructure. Your credentials and payout histories are securely stored with end-to-end encryption.">
+               আমরা ইন্ডাস্ট্রি স্ট্যান্ডার্ড SSL এনক্রিপশন ও উচ্চ প্রযুক্তির সিকিউর ক্লাউড সার্ভার ব্যবহার করি। সেলারের গুরুত্বপূর্ণ তথ্য ও পেমেন্ট হিস্ট্রি সর্বোচ্চ নিরাপত্তার সাথে এনক্রিপ্ট করে সংরক্ষণ করা হয়।
+            </p>
+
+            <!-- ৫. ডাটা মুছে ফেলা ও সেলার অধিকার -->
+            <div class="section-title"><i class="fa-solid fa-user-xmark"></i> <span class="lang-text" data-bn="৫. সেলারের ডাটা মুছে ফেলার অধিকার (Data Erasure Rights)" data-en="5. Data Retention & Deletion Rights">৫. সেলারের ডাটা মুছে ফেলার অধিকার (Data Erasure Rights)</span></div>
+            <p style="font-size: 0.9rem; color: var(--text-muted);" class="lang-text" 
+               data-bn="সেলার চাইলে যেকোনো সময় অ্যাকাউন্ট ডিলিট করার জন্য রিকুয়েস্ট করতে পারেন। অ্যাকাউন্ট ডিলিটের সাথে সাথে প্ল্যাটফর্মের নীতি অনুযায়ী সেলারের ব্যক্তিগত ও ব্যবসায়িক তথ্য সার্ভার থেকে অপসারণ করা হবে (আইনি বা ট্যাক্স অডিটের প্রয়োজনীয় রেকর্ড ব্যতীত)।"
+               data-en="Sellers retain the right to request full store deletion. Upon deletion, personal and shop data will be permanently wiped from active servers (except mandatory tax/audit logs).">
+               সেলার চাইলে যেকোনো সময় অ্যাকাউন্ট ডিলিট করার জন্য রিকুয়েস্ট করতে পারেন। অ্যাকাউন্ট ডিলিটের সাথে সাথে প্ল্যাটফর্মের নীতি অনুযায়ী সেলারের ব্যক্তিগত ও ব্যবসায়িক তথ্য সার্ভার থেকে অপসারণ করা হবে (আইনি বা ট্যাক্স অডিটের প্রয়োজনীয় রেকর্ড ব্যতীত)।
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. TERMS & CONDITIONS -->
+        <div class="tab-pane" id="content-terms">
+          <div class="glass-card">
+            <h4 class="card-title lang-text" data-bn="সেলার টার্মস অ্যান্ড কন্ডিশনস" data-en="Seller Terms & Conditions">সেলার টার্মস অ্যান্ড কন্ডিশনস</h4>
+
+            <!-- ১. রেজিস্ট্রেশন -->
+            <div class="section-title"><i class="fa-solid fa-gavel"></i> <span class="lang-text" data-bn="১. সেলার রেজিস্ট্রেশন ও একাউন্ট ভেরিফিকেশন" data-en="1. Registration & Account Verification">১. সেলার রেজিস্ট্রেশন ও একাউন্ট ভেরিফিকেশন</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="সেলারকে রেজিস্ট্রেশনের সময় সঠিক ও হালনাগাদ তথ্য প্রদান করতে হবে। ভুয়া এনআইডি বা ভুল ঠিকানা প্রদান করলে একাউন্ট সাময়িকভাবে বা স্থায়ীভাবে বাতিল করা হবে।" data-en="Merchants must provide valid documentation. Registrations with fake NIDs or wrong addresses will be terminated immediately.">সেলারকে রেজিস্ট্রেশনের সময় সঠিক ও হালনাগাদ তথ্য প্রদান করতে হবে। ভুয়া এনআইডি বা ভুল ঠিকানা প্রদান করলে একাউন্ট সাময়িকভাবে বা স্থায়ীভাবে বাতিল করা হবে।</li>
+              <li class="lang-text" data-bn="একটি এনআইডি বা ব্যবসার নামে একাধিক অননুমোদিত একাউন্ট খোলা সম্পূর্ণ নিষিদ্ধ।" data-en="Operating multiple unauthorized seller profiles under one NID is strictly prohibited.">একটি এনআইডি বা ব্যবসার নামে একাধিক অননুমোদিত একাউন্ট খোলা সম্পূর্ণ নিষিদ্ধ।</li>
+            </ul>
+
+            <!-- ২. লিস্টিং ও মান নিয়ন্ত্রণ -->
+            <div class="section-title"><i class="fa-solid fa-box"></i> <span class="lang-text" data-bn="২. প্রোডাক্ট লিস্টিং ও মান নিয়ন্ত্রণ" data-en="2. Product Listing & Standards">২. প্রোডাক্ট লিস্টিং ও মান নিয়ন্ত্রণ</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="পণ্যের ছবি, সাইজ, কালার ও ডেসক্রিপশন হুবহু আসল পণ্যের সাথে মিল থাকতে হবে। বিভ্রান্তিকর বিবরণ দিলে ফাইন বা পেনাল্টি চার্জ ধার্য করা হতে পারে।" data-en="Product images, description, and specifications must be 100% accurate to avoid penalty charges.">পণ্যের ছবি, সাইজ, কালার ও ডেসক্রিপশন হুবহু আসল পণ্যের সাথে মিল থাকতে হবে। বিভ্রান্তিকর বিবরণ দিলে ফাইন বা পেনাল্টি চার্জ ধার্য করা হতে পারে।</li>
+              <li class="lang-text" data-bn="স্টক শেষ হয়ে গেলে সাথে সাথে সেলার প্যানেল থেকে ইনভেন্টরি আপডেট/আউট অফ স্টক করে দিতে হবে।" data-en="Stock counts must be kept updated. Out-of-stock items should be hidden promptly.">স্টক শেষ হয়ে গেলে সাথে সাথে সেলার প্যানেল থেকে ইনভেন্টরি আপডেট/আউট অফ স্টক করে দিতে হবে।</li>
+            </ul>
+
+            <!-- ৩. অবৈধ ও নিষিদ্ধ পণ্য -->
+            <div class="section-title danger"><i class="fa-solid fa-ban"></i> <span class="lang-text" data-bn="৩. নিষিদ্ধ ও অবৈধ পণ্য বিক্রয়ে নিষেধাজ্ঞা" data-en="3. Prohibited & Illegal Products Policy">৩. নিষিদ্ধ ও অবৈধ পণ্য বিক্রয়ে নিষেধাজ্ঞা</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="বাংলাদেশের আইন অনুযায়ী যেকোনো ধরনের অবৈধ সামগ্রী (মাদক, অস্ত্র, পাইরেটেড সামগ্রী, জুয়া বা পর্নোগ্রাফি সম্পর্কিত পণ্য) প্ল্যাটফর্মে লিস্টিং করা সম্পূর্ণ নিষিদ্ধ।" data-en="Listing illegal items under Bangladesh law (drugs, weapons, pirated goods, gambling materials) is strictly prohibited.">বাংলাদেশের আইন অনুযায়ী যেকোনো ধরনের অবৈধ সামগ্রী (মাদক, অস্ত্র, পাইরেটেড সামগ্রী, জুয়া বা পর্নোগ্রাফি সম্পর্কিত পণ্য) প্ল্যাটফর্মে লিস্টিং করা সম্পূর্ণ নিষিদ্ধ।</li>
+              <li class="lang-text" data-bn="বিএসটিআই (BSTI) বা সংশ্লিষ্ট সরকারি কর্তৃপক্ষের অনুমোদনহীন ওষুধ, ফুড আইটেম বা কসমোটিকস বিক্রি করা যাবে না।" data-en="Selling food, medicines, or cosmetics without mandatory BSTI or official approvals is prohibited.">বিএসটিআই (BSTI) বা সংশ্লিষ্ট সরকারি কর্তৃপক্ষের অনুমোদনহীন ওষুধ, ফুড আইটেম বা কসমোটিকস বিক্রি করা যাবে না।</li>
+              <li class="lang-text" data-bn="চোরাচালানকৃত (Smuggled/Non-Customs Paid) অথবা সঠিক ট্যাক্স/ভ্যাট ছাড়া আনা মালামাল লিস্টিং করা ধরা পড়লে কঠোর ব্যবস্থা নেওয়া হবে।" data-en="Listing smuggled or non-customs paid products without proper VAT/Tax clearance is illegal.">চোরাচালানকৃত (Smuggled/Non-Customs Paid) অথবা সঠিক ট্যাক্স/ভ্যাট ছাড়া আনা মালামাল লিস্টিং করা ধরা পড়লে কঠোর ব্যবস্থা নেওয়া হবে।</li>
+            </ul>
+
+            <!-- ৪. অর্ডার প্রসেসিং ও ডেলিভারি -->
+            <div class="section-title"><i class="fa-solid fa-truck-fast"></i> <span class="lang-text" data-bn="৪. অর্ডার প্রসেসিং, প্যাকেজিং ও ডেলিভারি" data-en="4. Order Processing & Fulfillment">৪. অর্ডার প্রসেসিং, প্যাকেজিং ও ডেলিভারি</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="অর্ডার নোটিফিকেশন পাওয়ার ২৪-৪৮ ঘণ্টার মধ্যে পণ্য যথাযথভাবে বাবল র্যাপ এবং NexKart BD প্যাকেজিং নিয়ম মেনে রেডি করতে হবে।" data-en="Sellers must pack orders appropriately using bubble wrap within 24-48 hours of notification.">অর্ডার নোটিফিকেশন পাওয়ার ২৪-৪৮ ঘণ্টার মধ্যে পণ্য যথাযথভাবে বাবল র্যাপ এবং NexKart BD প্যাকেজিং নিয়ম মেনে রেডি করতে হবে।</li>
+              <li class="lang-text" data-bn="ভুল, ভাঙা বা ড্যামেজ পণ্য পাঠানোর কারণে কাস্টমার রিটার্ন দিলে উক্ত রিটার্ন কুরিয়ার চার্জ সেলার অ্যাকাউন্ট থেকে কেটে নেওয়া হবে।" data-en="If a customer returns due to defective/damaged items, the return delivery fee will be debited from the seller.">ভুল, ভাঙা বা ড্যামেজ পণ্য পাঠানোর কারণে কাস্টমার রিটার্ন দিলে উক্ত রিটার্ন কুরিয়ার চার্জ সেলার অ্যাকাউন্ট থেকে কেটে নেওয়া হবে।</li>
+            </ul>
+
+            <!-- ৫. প্রতারণা ও কাস্টমার সাপোর্ট নীতি -->
+            <div class="section-title danger"><i class="fa-solid fa-triangle-exclamation"></i> <span class="lang-text" data-bn="৫. জালিয়াতি, প্রতারণা ও কাস্টমার হয়রানি নিরোধ নীতি" data-en="5. Fraud & Customer Protection Policy">৫. জালিয়াতি, প্রতারণা ও কাস্টমার হয়রানি নিরোধ নীতি</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="গ্রাহকের সাথে যেকোনো ধরনের প্রতারণা (যেমন: আসল পণ্যের জায়গায় নকল পণ্য পাঠানো, খালি বক্স পাঠানো বা প্রমিস করা ফিচার না থাকা) কঠোর শাস্তিযোগ্য অপরাধ।" data-en="Fraudulent actions (shipping empty boxes, fake/replica items instead of original) are strictly punishable.">গ্রাহকের সাথে যেকোনো ধরনের প্রতারণা (যেমন: আসল পণ্যের জায়গায় নকল পণ্য পাঠানো, খালি বক্স পাঠানো বা প্রমিস করা ফিচার না থাকা) কঠোর শাস্তিযোগ্য অপরাধ।</li>
+              <li class="lang-text" data-bn="প্ল্যাটফর্মের বাইরে কোনো গ্রাহককে অফলাইনে লেনদেন (Offline Deals/Outside Payment) করতে বলা বা বাধ্য করা সম্পূর্ণ নিষিদ্ধ।" data-en="Persuading customers to make payments outside the NexKart BD platform is strictly forbidden.">প্ল্যাটফর্মের বাইরে কোনো গ্রাহককে অফলাইনে লেনদেন (Offline Deals/Outside Payment) করতে বলা বা বাধ্য করা সম্পূর্ণ নিষিদ্ধ।</li>
+              <li class="lang-text" data-bn="গ্রাহকের ফোন নম্বর বা ঠিকানা অন্য কোনো উদ্দেশ্যে ব্যবহার করা বা গ্রাহকের সাথে বাজে আচরণ/হুমকি দেওয়া সম্পূর্ণ বেআইনি।" data-en="Abusing customer contact information or threatening buyers will result in instant account ban.">গ্রাহকের ফোন নম্বর বা ঠিকানা অন্য কোনো উদ্দেশ্যে ব্যবহার করা বা গ্রাহকের সাথে বাজে আচরণ/হুমকি দেওয়া সম্পূর্ণ বেআইনি।</li>
+            </ul>
+
+            <!-- ৬. পেমেন্ট, কমিশন ও পেনাল্টি -->
+            <div class="section-title"><i class="fa-solid fa-sack-dollar"></i> <span class="lang-text" data-bn="৬. কমিশন, পে-আউট ও পেনাল্টি" data-en="6. Commission, Payouts & Penalties">৬. কমিশন, পে-আউট ও পেনাল্টি</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="NexKart BD প্ল্যাটফর্ম নির্ধারিত কমিশন কেটে বাকি টাকা নির্দিষ্ট সাপ্তাহিক পে-আউট সাইকেলে সেলার ব্যাংক/ওয়ালেটে পাঠাবে।" data-en="NexKart BD deducts platform commission and processes earnings on scheduled weekly payout days.">NexKart BD প্ল্যাটফর্ম নির্ধারিত কমিশন কেটে বাকি টাকা নির্দিষ্ট সাপ্তাহিক পে-আউট সাইকেলে সেলার ব্যাংক/ওয়ালেটে পাঠাবে।</li>
+              <li class="lang-text" data-bn="পরপর ৩টির বেশি অর্ডার আউট অফ স্টক বা সেলারের ভুলের কারণে বাতিল হলে অ্যাকাউন্টে পেনাল্টি স্কোর যোগ হবে।" data-en="Canceling 3 consecutive orders due to stock-out will apply penalties to the seller profile.">পরপর ৩টির বেশি অর্ডার আউট অফ স্টক বা সেলারের ভুলের কারণে বাতিল হলে অ্যাকাউন্টে পেনাল্টি স্কোর যোগ হবে।</li>
+            </ul>
+
+            <!-- ৭. অ্যাডমিনের অধিকার ও আইনি ব্যবস্থা -->
+            <div class="section-title"><i class="fa-solid fa-user-shield"></i> <span class="lang-text" data-bn="৭. অ্যাডমিনের অধিকার ও আইনি পদক্ষেপ" data-en="7. Admin Rights & Legal Actions">৭. অ্যাডমিনের অধিকার ও আইনি পদক্ষেপ</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="প্রতারণা বা বেআইনি কাজের প্রমাণ পাওয়া গেলে অ্যাডমিন প্যানেল কোনো নোটিশ ছাড়াই সেলার স্টোর চিরতরে সাসপেন্ড/ব্লক করার অধিকার রাখে।" data-en="If fraud or illicit activity is found, Admin holds the right to permanently block the store without prior notice.">প্রতারণা বা বেআইনি কাজের প্রমাণ পাওয়া গেলে অ্যাডমিন প্যানেল কোনো নোটিশ ছাড়াই সেলার স্টোর চিরতরে সাসপেন্ড/ব্লক করার অধিকার রাখে।</li>
+              <li class="lang-text" data-bn="প্রতারণার কারণে গ্রাহক ক্ষতিগ্রস্ত হলে সেলারের জমে থাকা টাকা (Payout Hold) সাময়িকভাবে স্থগিত রাখা হবে এবং রিফান্ড দিতে ব্যবহার করা হবে।" data-en="Seller payouts will be put on hold if fraud is detected to compensate affected buyers.">প্রতারণার কারণে গ্রাহক ক্ষতিগ্রস্ত হলে সেলারের জমে থাকা টাকা (Payout Hold) সাময়িকভাবে স্থগিত রাখা হবে এবং রিফান্ড দিতে ব্যবহার করা হবে।</li>
+              <li class="lang-text" data-bn="গুরুতর অপরাধের ক্ষেত্রে বাংলাদেশের প্রচলিত ই-কমার্স ও ভোক্তা অধিকার আইন এবং সাইবার নিরাপত্তা আইনে সেলারের বিরুদ্ধে মামলা করা হতে পারে।" data-en="For severe fraud, legal complaints will be filed under Bangladesh Consumer Rights & Cyber Security Laws.">গুরুতর অপরাধের ক্ষেত্রে বাংলাদেশের প্রচলিত ই-কমার্স ও ভোক্তা অধিকার আইন এবং সাইবার নিরাপত্তা আইনে সেলারের বিরুদ্ধে মামলা করা হতে পারে।</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- NEW: PRICING POLICY SECTION -->
+        <div class="tab-pane" id="content-price-policy">
+          <div class="glass-card">
+            <h4 class="card-title lang-text" data-bn="সেলার প্রাইসিং ও প্রাইস পলিসি" data-en="Seller Pricing Policy">সেলার প্রাইসিং ও প্রাইস পলিসি</h4>
+            
+            <div class="policy-box">
+              <p class="lang-text" 
+                 data-bn="NexKart BD-তে পণ্যের সঠিক মূল্য নির্ধারণ এবং গ্রাহকদের কাছে স্বচ্ছতা বজায় রাখা অত্যন্ত জরুরি। সেলারদের জন্য প্ল্যাটফর্মের কমিশন, ডিসকাউন্ট, ডেলিভারি চার্জ এবং মূল্য নির্ধারণ সম্পর্কিত সকল নিয়মাবলী নিচে দেওয়া হলো।" 
+                 data-en="Maintaining fair product pricing and transparency is mandatory at NexKart BD. Below are the terms regarding platform fees, discounts, delivery charges, and pricing strategies for sellers.">
+                 NexKart BD-তে পণ্যের সঠিক মূল্য নির্ধারণ এবং গ্রাহকদের কাছে স্বচ্ছতা বজায় রাখা অত্যন্ত জরুরি। সেলারদের জন্য প্ল্যাটফর্মের কমিশন, ডিসকাউন্ট, ডেলিভারি চার্জ এবং মূল্য নির্ধারণ সম্পর্কিত সকল নিয়মাবলী নিচে দেওয়া হলো।
+              </p>
+            </div>
+
+            <!-- ১. ফেয়ার প্রাইসিং -->
+            <div class="section-title"><i class="fa-solid fa-tag"></i> <span class="lang-text" data-bn="১. সঠিক মূল্য নির্ধারণ (Fair Pricing Policy)" data-en="1. Fair Pricing Policy">১. সঠিক মূল্য নির্ধারণ (Fair Pricing Policy)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="পণ্যের গায়ের খুচরা মূল্য (MRP)-র চেয়ে বেশি দাম নির্ধারণ করা সম্পূর্ণ নিষিদ্ধ।" data-en="Setting a price higher than the product's Maximum Retail Price (MRP) is strictly prohibited.">পণ্যের গায়ের খুচরা মূল্য (MRP)-র চেয়ে বেশি দাম নির্ধারণ করা সম্পূর্ণ নিষিদ্ধ।</li>
+              <li class="lang-text" data-bn="কৃত্রিমভাবে বাজার দর বাড়াতে পণ্যের অতিরিক্ত দাম বা ভুয়া ডিসকাউন্ট (Fake Discounting) দেখানো যাবে না।" data-en="Artificial price inflation or misleading discounts are strictly forbidden.">কৃত্রিমভাবে বাজার দর বাড়াতে পণ্যের অতিরিক্ত দাম বা ভুয়া ডিসকাউন্ট (Fake Discounting) দেখানো যাবে না।</li>
+            </ul>
+
+            <!-- ২. প্ল্যাটফর্ম কমিশন -->
+            <div class="section-title"><i class="fa-solid fa-percent"></i> <span class="lang-text" data-bn="২. প্ল্যাটফর্ম কমিশন ও ফি (Platform Commission & Fees)" data-en="2. Platform Commission & Fees">২. প্ল্যাটফর্ম কমিশন ও ফি (Platform Commission & Fees)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="প্রতিটি ক্যাটাগরির জন্য নির্ধারিত শতাংশ হারে NexKart BD সার্ভিস কমিশন কেটে নেওয়া হবে।" data-en="NexKart BD will deduct a category-based commission fee from successful order sales.">প্রতিটি ক্যাটাগরির জন্য নির্ধারিত শতাংশ হারে NexKart BD সার্ভিস কমিশন কেটে নেওয়া হবে।</li>
+              <li class="lang-text" data-bn="কোনো হিডেন বা অতিরিক্ত সার্ভিস চার্জ ছাড়াই কমিশন হিসাব সম্পন্ন করা হবে।" data-en="Commissions are transparently calculated with no hidden fees.">কোনো হিডেন বা অতিরিক্ত সার্ভিস চার্জ ছাড়াই কমিশন হিসাব সম্পন্ন করা হবে।</li>
+            </ul>
+
+            <!-- ৩. ডিসকাউন্ট ও প্রোমোশন -->
+            <div class="section-title"><i class="fa-solid fa-bullhorn"></i> <span class="lang-text" data-bn="৩. ডিসকাউন্ট ও প্রমোশন নীতি (Discounts & Campaign Price)" data-en="3. Discounts & Campaign Price">৩. ডিসকাউন্ট ও প্রমোশন নীতি (Discounts & Campaign Price)</span></div>
+            <ul class="policy-list">
+              <li class="lang-text" data-bn="ক্যাম্পেইন চলাকালীন সময় নির্ধারিত বিশেষ ছাড়ে পণ্য বিক্রি করার শর্ত মেনে চলতে হবে।" data-en="Sellers participating in campaigns must strictly honor the agreed promotional discounts.">ক্যাম্পেইন চলাকালীন সময় নির্ধারিত বিশেষ ছাড়ে পণ্য বিক্রি করার শর্ত মেনে চলতে হবে।</li>
+              <li class="lang-text" data-bn="অর্ডার করার পর গ্রাহকের কাছ থেকে অতিরিক্ত কোনো হিডেন চার্জ চাওয়া যাবে না।" data-en="No hidden fees or extra demands can be made from customers after placing an order.">অর্ডার করার পর গ্রাহকের কাছ থেকে অতিরিক্ত কোনো হিডেন চার্জ চাওয়া যাবে না।</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 4. HELP & SUPPORT (Updated with 24 Hours Service) -->
+        <div class="tab-pane" id="content-help">
+          <div class="glass-card">
+            <h4 class="card-title lang-text" data-bn="হেল্প ও সাপোর্ট সেন্টার (২৪/৭ সার্ভিস)" data-en="Help & Support Center (24/7 Service)">হেল্প ও সাপোর্ট সেন্টার (২৪/৭ সার্ভিস)</h4>
+            
+            <div class="support-grid">
+              <a href="mailto:admin.nexkartbd@gmail.com" class="support-card">
+                <i class="fa-solid fa-envelope"></i>
+                <h4 style="font-size:0.95rem; margin-bottom:4px;">Email Support</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">admin.nexkartbd@gmail.com</p>
+              </a>
+              <a href="tel:01312146797" class="support-card">
+                <i class="fa-solid fa-phone"></i>
+                <h4 style="font-size:0.95rem; margin-bottom:4px;">Helpline Number</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">01312146797</p>
+              </a>
+              <!-- 24/7 Support Info Card -->
+              <div class="support-card" style="border-color: var(--success); background: var(--success-light);">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--success);"></i>
+                <h4 style="font-size:0.95rem; margin-bottom:4px; color: var(--success);" class="lang-text" data-bn="২৪/৭ কাস্টমার সাপোর্ট" data-en="24/7 Customer Support">২৪/৭ কাস্টমার সাপোর্ট</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);" class="lang-text" data-bn="দিনরাত ২৪ ঘণ্টা আমাদের হেল্পলাইন সক্রিয় রয়েছে।" data-en="Our helpline & system remain open 24 Hours a day.">দিনরাত ২৪ ঘণ্টা আমাদের হেল্পলাইন সক্রিয় রয়েছে।</p>
+              </div>
+            </div>
+
+            <div class="address-box">
+              <h5 style="font-size:0.9rem; margin-bottom:4px;"><i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:6px;"></i><span class="lang-text" data-bn="অফিসিয়াল ঠিকানা" data-en="Official Address">অফিসিয়াল ঠিকানা</span></h5>
+              <p style="font-size:0.85rem; color:var(--text-muted);">Rupganj, Narayanganj, Bangladesh</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. ABOUT APP -->
+        <div class="tab-pane" id="content-about">
+          <div class="glass-card about-app">
+            <div class="app-logo">N</div>
+            <h3 style="font-size:1.3rem;">NexKart BD Seller App</h3>
+            <span class="badge">Version 1.0.0 (Build 2026)</span>
+            <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 500px; margin: 0 auto;">
+              NexKart BD ই-কমার্স প্ল্যাটফর্মের সেলারদের ব্যবসা আরও দ্রুত, সহজ এবং নিখুঁতভাবে পরিচালনা করার জন্য এই অ্যাপটি তৈরি করা হয়েছে।
+            </p>
+
+            <div class="about-details">
+              <div class="detail-row">
+                <span>Admin Team:</span>
+                <strong style="color:var(--text-main);">NexKart BD Admin</strong>
+              </div>
+              <div class="detail-row">
+                <span>Developer Unit:</span>
+                <strong style="color:var(--text-main);">NexKart BD Tech Team</strong>
+              </div>
+              <div class="detail-row">
+                <span>Headquarters:</span>
+                <strong style="color:var(--text-main);">Rupganj, Narayanganj</strong>
+              </div>
+              <div class="detail-row">
+                <span>System Service:</span>
+                <strong style="color:var(--success);">24/7 Active Support</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Custom Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h5 class="modal-title lang-text" data-bn="অ্যাকাউন্ট ডিলিটের কনফার্মেশন" data-en="Confirm Account Deletion">অ্যাকাউন্ট ডিলিটের কনফার্মেশন</h5>
+        <button class="btn-close" onclick="toggleModal(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem; color:var(--text-muted);" class="lang-text" 
+           data-bn="আপনি কি আপনার অ্যাকাউন্ট ডিলিট করতে চান? ২৪ ঘণ্টার মধ্যে ক্যানসেল না করলে আপনার অ্যাকাউন্ট এবং প্রোডাক্ট স্থায়ীভাবে মুছে যাবে।" 
+           data-en="Are you sure you want to delete your account? If you do not cancel within 24 hours, your account and products will be permanently wiped.">
+           আপনি কি আপনার অ্যাকাউন্ট ডিলিট করতে চান? ২৪ ঘণ্টার মধ্যে ক্যানসেল না করলে আপনার অ্যাকাউন্ট এবং প্রোডাক্ট স্থায়ীভাবে মুছে যাবে।
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-light" onclick="toggleModal(false)">Cancel</button>
+        <button class="btn-danger" id="confirmDeleteBtn" style="padding: 8px 16px;">Yes, Initiate Deletion</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Functionalities -->
+  <script>
+    // 1. Tab Switching Functionality
+    function switchTab(button, tabId) {
+      document.querySelectorAll('.nav-item button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      button.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // 2. Modal Control
+    function toggleModal(show) {
+      const modal = document.getElementById('deleteModal');
+      if (show) modal.classList.add('active');
+      else modal.classList.remove('active');
+    }
+
+    // 3. Language Toggle
+    function setLanguage(lang) {
+      const elements = document.querySelectorAll('.lang-text');
+      elements.forEach(el => {
+        if (lang === 'en') {
+          el.innerText = el.getAttribute('data-en');
+        } else {
+          el.innerText = el.getAttribute('data-bn');
+        }
+      });
+
+      const btnBn = document.getElementById('btn-bn');
+      const btnEn = document.getElementById('btn-en');
+      if (lang === 'en') {
+        btnEn.classList.add('active');
+        btnBn.classList.remove('active');
+      } else {
+        btnBn.classList.add('active');
+        btnEn.classList.remove('active');
+      }
+    }
+
+    // 4. Admin Profile UI Manager Class
+    class AdminSettingUI {
+        constructor(apiBaseUrl = '/api/admin') {
+            this.apiBaseUrl = apiBaseUrl;
+        }
+
+        async mount() {
+            console.log('AdminSetting Module Mounted successfully.');
+            await this.fetchAndSetProfile();
+            this.listenFormSubmit();
+        }
+
+        async fetchAndSetProfile() {
+            try {
+                const res = await fetch(`${this.apiBaseUrl}/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    }
+                });
+
+                const responseData = await res.json();
+
+                if (responseData.success) {
+                    const data = responseData.data;
+                    
+                    // Populate Form Fields
+                    this.setInputValue('name', data.name);
+                    this.setInputValue('email', data.email);
+                    this.setInputValue('shop_name', data.shop_name);
+                    this.setInputValue('phone', data.phone);
+                    this.setInputValue('address', data.address);
+                    this.setInputValue('facebook_link', data.facebook_link);
+                    this.setInputValue('slogan', data.slogan);
+                    this.setInputValue('shop_about', data.shop_about);
+                    this.setInputValue('mobile_number', data.mobile_number);
+                    this.setInputValue('bank_acc_name', data.bank_acc_name);
+                    this.setInputValue('bank_acc_number', data.bank_acc_number);
+                    this.setInputValue('bank_name', data.bank_name);
+                    this.setInputValue('bank_branch', data.bank_branch);
+                    this.setInputValue('routing_number', data.routing_number);
+
+                    // Set 24/7 Support Switch Status
+                    const supportSwitch = document.getElementById('is_24_7_support');
+                    if (supportSwitch) {
+                        supportSwitch.checked = data.is_24_7_support === 1 || data.is_24_7_support === true;
+                    }
+
+                    // Check Deletion Pending Status
+                    if (data.is_deletion_pending) {
+                        document.getElementById('deletionBanner').style.display = 'flex';
+                    } else {
+                        document.getElementById('deletionBanner').style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching admin profile:', err);
+            }
+        }
+
+        setInputValue(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = value || '';
+            }
+        }
+
+        listenFormSubmit() {
+            const form = document.getElementById('admin-profile-form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await this.updateProfile();
+                });
+            }
+        }
+
+        async updateProfile() {
+            const payload = {
+                name: document.getElementById('name')?.value,
+                shop_name: document.getElementById('shop_name')?.value,
+                phone: document.getElementById('phone')?.value,
+                address: document.getElementById('address')?.value,
+                facebook_link: document.getElementById('facebook_link')?.value,
+                slogan: document.getElementById('slogan')?.value,
+                shop_about: document.getElementById('shop_about')?.value,
+                is_24_7_support: document.getElementById('is_24_7_support')?.checked ? 1 : 0,
+                mobile_number: document.getElementById('mobile_number')?.value,
+                bank_acc_name: document.getElementById('bank_acc_name')?.value,
+                bank_acc_number: document.getElementById('bank_acc_number')?.value,
+                bank_name: document.getElementById('bank_name')?.value,
+                bank_branch: document.getElementById('bank_branch')?.value,
+                routing_number: document.getElementById('routing_number')?.value,
+            };
+
+            try {
+                const res = await fetch(`${this.apiBaseUrl}/profile/update`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert('Profile updated successfully!');
+                    await this.fetchAndSetProfile();
+                } else {
+                    alert(result.message || 'Update failed');
+                }
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('An error occurred during update.');
+            }
+        }
+    }
+
+    let adminSetting;
+    // Auto mount on document DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        adminSetting = new AdminSettingUI();
+        adminSetting.mount();
+    });
+
+    // Delete Initiation Handler
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/admin/delete-account', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('২৪ ঘণ্টার ডিলিট প্রসেস শুরু হয়েছে। ২৪ ঘণ্টার মধ্যে লগইন করে ক্যানসেল না করলে স্থায়ীভাবে ডাটা ডিলিট হয়ে যাবে।');
+                if (adminSetting) await adminSetting.fetchAndSetProfile();
+            } else {
+                alert(result.message || 'সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('সার্ভারে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        } finally {
+            toggleModal(false);
+        }
+    });
+
+    // Cancel Deletion Function
+    async function cancelDeletion() {
+        try {
+            const response = await fetch('/api/admin/cancel-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('অ্যাকাউন্ট ডিলিট রিকুয়েস্ট সফলভাবে ক্যানসেল করা হয়েছে।');
+                if (adminSetting) await adminSetting.fetchAndSetProfile();
+            } else {
+                alert(result.message || 'ক্যানসেল করতে সমস্যা হয়েছে।');
+            }
+        } catch (error) {
+            console.error('Cancel delete error:', error);
+            alert('সার্ভারে সমস্যা হয়েছে।');
+        }
+    }
+
+    document.getElementById('cancelDeleteBtnBanner')?.addEventListener('click', cancelDeletion);
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/admin-inbox/seller/profile', { credentials: 'include' });
+    const data = await res.json();
+
+    // যদি ইউজার লগইন না থাকে বা রেসপন্স success না হয়
+    if (!res.ok || !data.success) {
+      window.location.href = '/admin/login.html'; // আপনার লগইন পেজের লিংক দিন
+    }
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    window.location.href = '/admin/login.html';
+  }
+}
+
+// পেজ লোড হওয়ামাত্রই কল হবে
+document.addEventListener('DOMContentLoaded', checkAuth);
+  </script>
+
+</body>
+</html>

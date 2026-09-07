@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Dynamic Titles & Meta Tags -->
+    <title id="seoTitle">NexKart - Category Products & Deals</title>
+    <meta id="seoDescription" name="description" content="Browse quality products on NexKart. Find the best deals on categories, promos, and trending items with fast delivery.">
+    <meta name="robots" content="index, follow">
+    <link id="seoCanonical" rel="canonical" href="https://yourdomain.com/user/category.html">
+
+    <!-- Open Graph / Social Media SEO -->
+    <meta property="og:type" content="website">
+    <meta id="ogTitle" property="og:title" content="NexKart - Category Products">
+    <meta id="ogDescription" property="og:description" content="Explore top-quality products on NexKart. Shop now for high discounts and affordable prices.">
+    <meta id="ogUrl" property="og:url" content="https://yourdomain.com/user/category.html">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json" id="categorySchema">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "NexKart Category Products",
+      "description": "Browse quality products on NexKart."
+    }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* ---------------- Simple Header ---------------- */
+        .top-header {
+            background: #ffffff;
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            gap: 20px;
+        }
+
+        .home-btn {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            opacity: 0.9;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+            background: #f3f3f3;
+            border: 1.5px solid #ffccd5;
+            border-radius: 30px;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            background: #fff;
+            border-color: #ff4b6e;
+            box-shadow: 0 0 8px rgba(255, 75, 110, 0.2);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .search-box button {
+            background: transparent;
+            border: none;
+            color: #ff4b6e;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* ---------------- PRODUCTS SECTION ---------------- */
+        .products-section {
+            padding: 30px 40px 50px 40px;
+        }
+
+        .section-title {
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ffccd5;
+            padding-bottom: 10px;
+        }
+
+        .section-title h1 {
+            font-size: 22px;
+            color: #333;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        /* Product Card Animation & Compression style */
+        .product-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 380px;
+            
+            /* Entrance Animation */
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 75, 110, 0.15);
+            border-color: #ffccd5;
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #28a745;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            z-index: 2;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background-color: #f1f1f1; /* Placeholder color when image loads */
+        }
+
+        .product-category {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin: 5px 0 8px 0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            height: 40px;
+        }
+
+        .product-rating {
+            color: #ffb400;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .product-rating span {
+            color: #777;
+            margin-left: 5px;
+        }
+
+        .product-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #eee;
+        }
+
+        .price-box {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .current-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff4b6e;
+        }
+
+        .old-price {
+            font-size: 13px;
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .load-more-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-load-more {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 75, 110, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-load-more:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 75, 110, 0.4);
+        }
+
+        .d-none {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+   <!-- ১. সাধারণ হেডার (Semantic HTML) -->
+   <header class="top-header">
+        <a href="/user/dashboard" class="home-btn" title="Go to Dashboard Home">
+            <i class="fa-solid fa-house" aria-hidden="true"></i> Home
+        </a>
+
+        <form class="search-box" role="search" onsubmit="event.preventDefault(); handleSearch();">
+            <input type="search" id="searchInput" aria-label="Search products" placeholder="Search products...">
+            <button type="submit" aria-label="Submit Search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        </form>
+   </header>
+
+    <!-- ২. প্রোডাক্ট ক্যাটাগরি সেকশন (Semantic HTML Main Container) -->
+    <main class="products-section">
+        <div class="section-title">
+            <h1 id="categoryNameHeading">Category Products</h1>
+        </div>
+
+        <section class="product-grid" id="categoryProductGrid" aria-live="polite">
+            <!-- ডাইনামিক প্রোডাক্ট কার্ড লোড হবে -->
+        </section>
+
+        <!-- Load More Container -->
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+            <button class="btn-load-more" id="loadMoreBtn" onclick="loadMoreCategoryProducts()">
+                <span>Load More</span> <i class="fa-solid fa-spinner fa-spin d-none" id="btnSpinner" aria-hidden="true"></i>
+            </button>
+        </div>
+    </main>
+
+<script>
+    let currentPage = 1;
+    const limit = 8; 
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cat = urlParams.get('cat');
+        const type = urlParams.get('type');
+        const promo = urlParams.get('promo');
+        const search = urlParams.get('search'); 
+
+        const categoryVal = cat || type;
+
+        let headingText = "All Products";
+        if (search) {
+            headingText = `Search Results for "${search}"`; 
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = search; 
+        } else if (categoryVal && categoryVal !== 'all') {
+            headingText = categoryVal.replace(/_/g, ' ') + " Products";
+        } else if (promo) {
+            headingText = promo.replace(/_/g, ' ') + " Products";
+        }
+
+        const headingElem = document.getElementById('categoryNameHeading');
+        if (headingElem) headingElem.innerText = headingText;
+
+        // Dynamic SEO Tags Updating
+        const seoTitle = document.getElementById('seoTitle');
+        const seoDesc = document.getElementById('seoDescription');
+        const ogTitle = document.getElementById('ogTitle');
+        const ogDesc = document.getElementById('ogDescription');
+        const seoCanonical = document.getElementById('seoCanonical');
+
+        const pageTitle = `${headingText} | NexKart Online Shopping`;
+        const pageDesc = `Discover ${headingText} at NexKart. Best deals, high quality items and fast shipping!`;
+
+        if (seoTitle) seoTitle.innerText = pageTitle;
+        if (ogTitle) ogTitle.setAttribute('content', pageTitle);
+        if (seoDesc) seoDesc.setAttribute('content', pageDesc);
+        if (ogDesc) ogDesc.setAttribute('content', pageDesc);
+        if (seoCanonical) seoCanonical.setAttribute('href', window.location.href);
+
+        fetchCategoryProducts(cat, type, promo, search, currentPage, false);
+    });
+
+    async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadMore = false) {
+    const productGrid = document.getElementById('categoryProductGrid');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    if (btnSpinner) btnSpinner.classList.remove('d-none');
+
+    try {
+        let queryUrl = '/user/get-products-by-category?';
+        if (cat) queryUrl += `cat=${encodeURIComponent(cat)}&`;
+        if (type) queryUrl += `type=${encodeURIComponent(type)}&`;
+        if (promo) queryUrl += `promo=${encodeURIComponent(promo)}&`;
+        if (search) queryUrl += `search=${encodeURIComponent(search)}&`; 
+        
+        queryUrl += `page=${page}&limit=${limit}`;
+
+        const response = await fetch(queryUrl);
+        const data = await response.json();
+
+        if (data.success && data.products.length > 0) {
+            const productsHTML = data.products.map((product, index) => {
+                let oldPrice = parseFloat(product.old_price);
+                let salePrice = parseFloat(product.sale_price);
+                let discountPercentTag = '';
+                let oldPriceHTML = '';
+
+                if (!isNaN(oldPrice) && !isNaN(salePrice) && oldPrice > salePrice) {
+                    let discountPercent = Math.round(((oldPrice - salePrice) / oldPrice) * 100);
+                    if (discountPercent > 0) {
+                        discountPercentTag = `<span class="discount-badge">-${discountPercent}%</span>`;
+                    }
+                    oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
+                }
+
+                // --- Dashboard-এর মতো সঠিক Image Parsing Logic ---
+                let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+                if (product.primary_image) {
+                    let rawImg = product.primary_image.trim();
+                    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
+                        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+                    } else {
+                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = '/uploads/' + cleanPath;
+                    }
+                }
+
+                const targetId = product.product_id || product.id;
+                const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
+                const starsHTML = renderStars(parseFloat(avgRating));
+                const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
+                const animDelay = (index * 0.05) + 's';
+
+                return `
+                    <article class="product-card" style="cursor: pointer; animation-delay: ${animDelay};" onclick="checkLoginAndRedirect('${targetId}')">
+                        ${discountPercentTag}
+                        <div>
+                            <img src="${imageSrc}" 
+                                 alt="${safeTitle}" 
+                                 class="product-img" 
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
+                            <span class="product-category">${product.category || 'General'}</span>
+                            <h2 class="product-title" title="${safeTitle}">${product.title}</h2>
+                            
+                            <div class="product-rating" aria-label="Rating ${avgRating} out of 5">
+                                ${starsHTML}
+                                <span>(${avgRating})</span>
+                            </div>
+                        </div>
+
+                        <div class="product-bottom">
+                            <div class="price-box">
+                                <span class="current-price">৳ ${product.sale_price}</span>
+                                ${oldPriceHTML}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            if (isLoadMore) {
+                productGrid.insertAdjacentHTML('beforeend', productsHTML);
+            } else {
+                productGrid.innerHTML = productsHTML;
+            }
+
+            if (loadMoreContainer) {
+                loadMoreContainer.style.display = data.hasMore ? 'block' : 'none';
+            }
+
+            injectItemListSchema(data.products);
+
+        } else {
+            if (!isLoadMore) {
+                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">কোনো প্রোডাক্ট পাওয়া যায়নি!</div>`;
+                if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching category products:", error);
+        if (!isLoadMore) {
+            productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: red;">প্রোডাক্ট লোড করতে ব্যর্থ হয়েছে।</div>`;
+        }
+    } finally {
+        if (btnSpinner) btnSpinner.classList.add('d-none');
+    }
+}
+    function loadMoreCategoryProducts() {
+        currentPage++;
+        const urlParams = new URLSearchParams(window.location.search);
+        const cat = urlParams.get('cat');
+        const type = urlParams.get('type');
+        const promo = urlParams.get('promo');
+        const search = urlParams.get('search');
+
+        fetchCategoryProducts(cat, type, promo, search, currentPage, true);
+    }
+
+    function renderStars(rating) {
+        let starsHtml = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+        for (let i = 0; i < fullStars; i++) {
+            starsHtml += '<i class="fa-solid fa-star" aria-hidden="true"></i>';
+        }
+        if (hasHalfStar) {
+            starsHtml += '<i class="fa-solid fa-star-half-stroke" aria-hidden="true"></i>';
+        }
+        for (let i = 0; i < emptyStars; i++) {
+            starsHtml += '<i class="fa-regular fa-star" aria-hidden="true"></i>';
+        }
+
+        return starsHtml;
+    }
+
+    function checkLoginAndRedirect(productId) {
+        window.location.href = `/user/product-details?id=${productId}&t=${new Date().getTime()}`;
+    }
+
+    function handleSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        const query = searchInput.value.trim();
+        if (query) {
+            window.location.href = `/user/category.html?search=${encodeURIComponent(query)}`;
+        }
+    }
+
+    // Dynamic Schema Injection for SEO Rich Snippets
+    function injectItemListSchema(products) {
+        const schemaObj = {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "itemListElement": products.map((prod, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "name": prod.title,
+                "url": window.location.origin + `/user/product-details?id=${prod.product_id || prod.id}`
+            }))
+        };
+        const schemaElem = document.getElementById('categorySchema');
+        if (schemaElem) {
+            schemaElem.textContent = JSON.stringify(schemaObj);
+        }
+    }
+</script>
+</body>
+</html>

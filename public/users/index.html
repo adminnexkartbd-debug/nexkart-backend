@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy & Return Policy - NexKartBD</title>
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-hover: #1a4971;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+            --accent-bg: #ebf8ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'SolaimanLipi';
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.7;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .brand h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .brand p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .language-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .language-switcher label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .language-switcher select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .language-switcher select:focus {
+            border-color: var(--primary-color);
+        }
+
+        .last-updated {
+            background-color: var(--accent-bg);
+            color: var(--primary-color);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            font-size: 20px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        .section p {
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .section ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .section ul li {
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .contact-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .contact-card p {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .contact-card strong {
+            color: var(--primary-color);
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 15px;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .language-switcher {
+                width: 100%;
+            }
+            .language-switcher select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand">
+            <h1>NexKartBD</h1>
+            <p id="sub-title">E-Commerce Privacy, Terms & Return Policy</p>
+        </div>
+        <div class="language-switcher">
+            <label for="langSelect" id="langLabel">Language / ভাষা:</label>
+            <select id="langSelect" onchange="switchLanguage(this.value)">
+                <option value="bn" selected>বাংলা (Bangla)</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="last-updated" id="lastUpdated">
+        সর্বশেষ আপডেট: আগস্ট ২০২৬
+    </div>
+
+    <!-- BANGLA CONTENT -->
+    <div id="content-bn">
+        <div class="section">
+            <h2>১. ভূমিকা (Introduction)</h2>
+            <p>স্বাগতম <strong>NexKartBD</strong>-তে! আপনার ব্যক্তিগত তথ্যের গোপনীয়তা এবং সুরক্ষা রক্ষা করা আমাদের অন্যতম প্রধান অগ্রাধিকার। আপনি ক্রেতা (Customer) অথবা বিক্রেতা (Seller/Vendor) যেকোনো হিসেবে আমাদের প্ল্যাটফর্মে যুক্ত থাকুন না কেন, আপনার তথ্য কীভাবে সংগ্রহ, ব্যবহার, সংরক্ষণ এবং সুরক্ষিত করা হয় তা বিস্তারিত জানাতে এই Privacy Policy তৈরি করা হয়েছে। আমাদের সেবা গ্রহণ করে বা একাউন্ট খুলে আপনি এই নীতির শর্তাবলীতে পূর্ণ সম্মতি প্রদান করছেন।</p>
+        </div>
+
+        <div class="section">
+            <h2>২. আমরা যেসকল তথ্য সংগ্রহ করি (Information We Collect)</h2>
+            <p>আপনার অ্যাকাউন্ট ও লেনদেনের সঠিক পরিচালনার জন্য আমরা দুই ধরনের ব্যবহারকারীর তথ্য সংগ্রহ করি:</p>
+            
+            <p><strong>ক. ক্রেতাদের (Customers) ক্ষেত্রে:</strong></p>
+            <ul>
+                <li><strong>ব্যক্তিগত তথ্য:</strong> নাম, ইমেইল ঠিকানা, ফোন নম্বর, শিপিং ও বিলিং ঠিকানা।</li>
+                <li><strong>অ্যাকাউন্ট তথ্য:</strong> ইউজারনেম, পাসওয়ার্ড (এনক্রিপ্টেড) এবং উইশলিস্ট।</li>
+                <li><strong>লেনদেন সংক্রান্ত তথ্য:</strong> অর্ডারের বিবরণ, পেমেন্ট মেথড (যেমন: বিকাশ, নগদ, রকেট, ব্যাংক কার্ড)। <em>(আমরা সরাসরি কোনো পেমেন্ট কার্ড বা পিন নম্বর সংরক্ষণ করি না)</em>।</li>
+            </ul>
+
+            <p><strong>খ. বিক্রেতাদের (Sellers / Vendors) ক্ষেত্রে:</strong></p>
+            <ul>
+                <li><strong>ব্যবসায়িক ও পরিচয় সংক্রান্ত তথ্য:</strong> সোল প্রোপাইটর/স্বত্বাধিকারীর নাম, শপ বা স্টোরের নাম, এনআইডি (NID) নম্বর বা পাসপোর্টের কপি এবং ট্রেড লাইসেন্স (প্রযোজ্য ক্ষেত্রে)।</li>
+                <li><strong>যোগাযোগের বিবরণ:</strong> ব্যবসায়িক ইমেইল, মোবাইল নম্বর, শপ/ওয়্যারহাউজের ঠিকানা।</li>
+                <li><strong>ফাইন্যান্সিয়াল ও পেমেন্ট তথ্য:</strong> সেলস পে-আউটের জন্য ব্যাংক অ্যাকাউন্টের বিবরণ বা মোবাইল ব্যাংকিং নম্বর (বিকাশ/নগদ মারchant বা পার্সোনাল)।</li>
+                <li><strong>পণ্য তালিকা ও সেলস রেকর্ড:</strong> সেলার প্যানেলে আপলোড করা প্রোডাক্ট ক্যাটালগ, ইনভেন্টরি ডাটা এবং অর্ডারের হিসাব।</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>৩. তথ্যের ব্যবহার (How We Use Your Information)</h2>
+            <p>সংগৃহীত তথ্য শুধুমাত্র নির্দিষ্ট এবং আইনসম্মত ব্যবসায়িক উদ্দেশ্যে ব্যবহার করা হয়:</p>
+            <ul>
+                <li>ক্রেতাদের অর্ডার প্রক্রিয়া করা, কুরিয়ার মারফত পণ্য ডেলিভারি দেওয়া এবং ইনভয়েস পাঠানো।</li>
+                <li>যাচাইকরণের মাধ্যমে বিশ্বস্ত <strong>Seller Account</strong> অনুমোদন দেওয়া।</li>
+                <li>বিক্রেতাদের অর্জিত অর্থ (Sales Revenue) সঠিক ব্যাংক বা মোবাইল অ্যাকাউন্টে ট্রান্সফার (Payout) করা।</li>
+                <li>ক্রেতা ও বিক্রেতার মধ্যকার যেকোনো লেনদেন বা পণ্য সংক্রান্ত বিরোধ (Dispute) নিষ্পত্তি করা।</li>
+                <li>প্ল্যাটফর্মের সিকিউরিটি চেক, জালিয়াতি বা প্রতারণামূলক কার্যকলাপ রোধ করা।</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>৪. ডেটা সুরক্ষার নিয়মাবলী (Data Protection & Security)</h2>
+            <p>NexKartBD আপনার তথ্যের সর্বোচ্চ নিরাপত্তা প্রদান করে:</p>
+            <ul>
+                <li><strong>SSL এনক্রিপশন:</strong> সমস্ত সংবেদনশীল ডেটা ট্রান্সফারে শিল্প-মানের সিকিউর সকেট লেয়ার (SSL) এনক্রিপশন ব্যবহার করা হয়।</li>
+                <li><strong>গোপনীয়তা রক্ষা:</strong> আমরা কখনোই ক্রেতা বা বিক্রেতার কোনো ব্যক্তিগত তথ্য, ফোন নম্বর বা ইমেইল কোনো থার্ড পার্টির কাছে বাণিজ্যিক উদ্দেশ্যে বিক্রি বা শেয়ার করি না।</li>
+                <li><strong>কুরিয়ার পার্টনার:</strong> শুধুমাত্র অর্ডার ডেলিভারির স্বার্থে প্রয়োজনীয় নাম, ঠিকানা ও ফোন নম্বর অনুমোদিত ডেলিভারি কোম্পানির কাছে হস্তান্তর করা হয়।</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>৫. রিটার্ন, রিফান্ড ও অর্ডার বাতিল নীতি (Return, Refund & Cancellation Policy)</h2>
+            <p>NexKartBD-তে আমরা কাস্টমার সন্তুষ্টিকে সর্বোচ্চ গুরুত্ব দিই। আমাদের রিটার্ন ও রিফান্ড নীতি নিম্নরূপ:</p>
+            <ul>
+                <li><strong>রিটার্নের শর্তাবলী:</strong> ডেলিভারির সময় পণ্য ভাঙা/নষ্ট থাকলে, ভুল পণ্য বা সাইজ পেলে, অথবা বিবরণীর সাথে পণ্যের মিল না থাকলে ডেলিভারির <strong>৭ দিনের মধ্যে</strong> রিটার্ন রিকোয়েস্ট করতে হবে।</li>
+                <li><strong>পণ্যের অবস্থা:</strong> রিটার্ন করার সময় প্রোডাক্টটি অব্যবহৃত, অরজিনাল প্যাকেজিং, ট্যাগ এবং ইনভয়েস সহ ফেরত দিতে হবে।</li>
+                <li><strong>রিফান্ড প্রক্রিয়া:</strong> রিটার্নকৃত প্রোডাক্টটি সেলার/এডমিন যাচাই করার পর অনুমোদিত হলে <strong>৭ থেকে ১০ কর্মদিবসের</strong> মধ্যে ক্রেতার বিকাশ/নগদ/ব্যাংক অ্যাকাউন্টে রিফান্ড টাকা পাঠিয়ে দেওয়া হবে।</li>
+                <li><strong>অর্ডার বাতিল (Cancellation):</strong> শিপমেন্টের পূর্বে যেকোনো সময় ক্রেতা সম্পূর্ণ ফ্রিতে অর্ডার বাতিল করতে পারবেন। অগ্রিম পেমেন্ট করা থাকলে ৫-৭ দিনের মধ্যে রিফান্ড পাবেন।</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>৬. ইউজার ও সেলার অ্যাকাউন্ট ডিলিট প্রক্রিয়া (Account Deletion & Data Rights)</h2>
+            <p>ক্রেতা এবং বিক্রেতা উভয়ের জন্যই অ্যাকাউন্ট ডিলিট করার সুবিধা রয়েছে:</p>
+            <ul>
+                <li><strong>অ্যাকাউন্ট ডিলিটের অধিকার:</strong> আপনি ক্রেতা বা বিক্রেতা যা-ই হোন না কেন, যেকোনো সময় আপনার NexKartBD অ্যাকাউন্ট ডিলিট করার অনুরোধ পাঠাতে পারেন।</li>
+                <li><strong>কীভাবে ডিলিট করবেন:</strong> অ্যাপ/ওয়েবসাইটের প্রোফাইল সেটিংসের 'Delete Account' অপশন থেকে অথবা সরাসরি অ্যাডমিনের ইমেইলে (admin.nexkartbd@gmail.com) অনুরোধ জানিয়ে ইমেইল করতে পারেন।</li>
+                <li><strong>ডেটা রিমুভাল:</strong> অ্যাকাউন্ট ডিলিট করার অনুরোধ গ্রহণের পর আপনার সমস্ত ব্যক্তিগত প্রোফাইল তথ্য, সেভ করা ঠিকানা ও হিস্ট্রি আমাদের সার্ভার থেকে স্থায়ীভাবে মুছে ফেলা হবে।</li>
+                <li><strong>সেটিং ও বকেয়া থাকলে (For Sellers):</strong> সেলার অ্যাকাউন্টের ক্ষেত্রে কোনো পেন্ডিং অর্ডার, বকেয়া পেমেন্ট (Payout) বা কাস্টমার কমপ্লেন না থাকা সাপেক্ষে অ্যাকাউন্ট বন্ধ করা হবে।</li>
+                <li><strong>আইনগত রেকর্ড (Legal Exceptions):</strong> সরকারী ট্যাক্স, অডিট এবং আইনগত বাধ্যবাধকতার কারণে সফল লেনদেনের প্রাথমিক ইনভয়েস বিবরণ নির্দিষ্ট সময় পর্যন্ত সংরক্ষিত রাখা হবে।</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>৭. কুকিজ নীতি (Cookies Policy)</h2>
+            <p>আমাদের ওয়েবসাইট ব্রাউজিং অভিজ্ঞতা সহজ করতে 'কুকিজ' ব্যবহার করে। এটি আপনার লগইন সেশন মনে রাখতে এবং কার্ট বা সেভিলিস্ট ধরে রাখতে সাহায্য করে। আপনি চাইলে ব্রাউজার থেকে কুকিজ অপশন বন্ধ রাখতে পারেন।</p>
+        </div>
+
+        <div class="section">
+            <h2>৮. নীতিমালার পরিবর্তন (Changes to Policy)</h2>
+            <p>ব্যবসার নিয়মাবলি বা আইনের সাথে সামঞ্জস্য রেখে NexKartBD এই পলিসি যেকোনো সময় সংশোধন করার অধিকার রাখে। বড় কোনো পরিবর্তন করা হলে তা প্ল্যাটফর্মে নোটিশ বা ইমেলের মাধ্যমে জানানো হবে।</p>
+        </div>
+
+        <div class="section">
+            <h2>৯. অ্যাডমিন সাপোর্ট ও যোগাযোগ (Admin Contact Information)</h2>
+            <p>আপনার অ্যাকাউন্ট, সেলার ভেরিফিকেশন, রিটার্ন-রিফান্ড বা ডেটা মুছে ফেলা সংক্রান্ত যেকোনো প্রয়োজনে সরাসরি যোগাযোগ করুন:</p>
+            <div class="contact-card">
+                <p><strong>কোম্পানি/প্ল্যাটফর্ম:</strong> NexKartBD</p>
+                <p><strong>মোবাইল নম্বর:</strong> 01987825699</p>
+                <p><strong>ইমেইল অ্যাড্রেস:</strong> admin.nexkartbd@gmail.com</p>
+                <p><strong>কাস্টমার ও সেলার সাপোর্ট সময়:</strong> সকাল ১০:০০ টা - রাত ৮:০০ টা</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENGLISH CONTENT -->
+    <div id="content-en" style="display: none;">
+        <div class="section">
+            <h2>1. Introduction</h2>
+            <p>Welcome to <strong>NexKartBD</strong>! Protecting the privacy and security of your personal data is our primary commitment. Whether you use our platform as a Customer or register as a <strong>Seller / Vendor</strong>, this Privacy Policy outlines how your information is collected, processed, stored, and protected. By using our services, you agree to the terms mentioned in this policy.</p>
+        </div>
+
+        <div class="section">
+            <h2>2. Information We Collect</h2>
+            <p>We collect information to operate smoothly for both buyers and sellers on our platform:</p>
+
+            <p><strong>A. From Customers:</strong></p>
+            <ul>
+                <li><strong>Personal Data:</strong> Name, email address, mobile number, shipping & billing address.</li>
+                <li><strong>Account Info:</strong> Username, encrypted password, wishlist.</li>
+                <li><strong>Payment Data:</strong> Order details, chosen payment methods (e.g., bKash, Nagad, Cards). <em>(We do not store card credentials directly)</em>.</li>
+            </ul>
+
+            <p><strong>B. From Sellers / Vendors:</strong></p>
+            <ul>
+                <li><strong>Business & Identity Data:</strong> Proprietor's name, Shop/Store name, NID or Passport copy, and Trade License (if applicable).</li>
+                <li><strong>Contact Details:</strong> Business email address, phone number, shop/warehouse pickup location.</li>
+                <li><strong>Financial Details:</strong> Bank account details or Mobile Financial Services (bKash/Nagad) numbers for sales payout.</li>
+                <li><strong>Catalog Data:</strong> Product listings, inventory data, and order history uploaded via Seller Panel.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>3. How We Use Your Information</h2>
+            <p>We process collected data exclusively for legitimate and functional business needs:</p>
+            <ul>
+                <li>To fulfill customer orders, facilitate courier delivery, and issue invoices.</li>
+                <li>To verify and approve authentic <strong>Seller Accounts</strong> on the platform.</li>
+                <li>To disburse sales earnings (Payouts) to seller bank accounts or mobile wallets accurately.</li>
+                <li>To resolve disputes between customers and sellers regarding orders or products.</li>
+                <li>To detect, prevent, and mitigate fraudulent or malicious activities.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>4. Data Protection & Security</h2>
+            <p>NexKartBD maintains high-level data protection standards:</p>
+            <ul>
+                <li><strong>SSL Encryption:</strong> All data transmissions are encrypted using standard SSL (Secure Sockets Layer) technology.</li>
+                <li><strong>Strict Confidentiality:</strong> We NEVER sell, rent, or lease customer or seller personal information to third parties for marketing purposes.</li>
+                <li><strong>Logistics Sharing:</strong> Delivery addresses and contact numbers are strictly shared with authorized logistics/courier partners solely for order fulfillment.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>5. Return, Refund & Cancellation Policy</h2>
+            <p>At NexKartBD, customer satisfaction is our top priority. Our return and refund guidelines include:</p>
+            <ul>
+                <li><strong>Return Eligibility:</strong> If you receive a damaged, defective, wrong product, or missing item, you can request a return within <strong>7 days</strong> of delivery.</li>
+                <li><strong>Item Condition:</strong> Returned items must be unused, unwashed, and in original packaging with tags and invoices included.</li>
+                <li><strong>Refund Process:</strong> Once inspected and approved, refunds will be processed to your original payment method (bKash/Nagad/Bank) within <strong>7 to 10 working days</strong>.</li>
+                <li><strong>Order Cancellation:</strong> Customers can cancel orders free of charge before shipment. Refunds for pre-paid orders will be credited within 5-7 working days.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>6. Account Deletion & Data Rights (Buyers & Sellers)</h2>
+            <p>Both Customers and Sellers retain complete rights over their account data:</p>
+            <ul>
+                <li><strong>Right to Request Deletion:</strong> You have the full right to request deletion of your Customer or Seller account at any time.</li>
+                <li><strong>How to Delete:</strong> You can send an account deletion request through profile settings or directly email <strong>admin.nexkartbd@gmail.com</strong>.</li>
+                <li><strong>Data Removal:</strong> Upon verification and approval, your profile info, saved addresses, and active records will be permanently removed from our active servers.</li>
+                <li><strong>Seller Clearance Requirement:</strong> For Seller Accounts, deletion requires that there are no pending customer orders, unresolved disputes, or unsettled financial payouts.</li>
+                <li><strong>Legal Retention:</strong> Transaction records and invoices will be stored for a legally required period to comply with national auditing and tax regulations.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>7. Cookies Policy</h2>
+            <p>Our website uses Cookies to save your session, remember login states, and store cart items for a seamless browsing experience. You can disable cookies through your web browser options at any time.</p>
+        </div>
+
+        <div class="section">
+            <h2>8. Changes to Policy</h2>
+            <p>NexKartBD reserves the right to modify or update this Policy at any time. Significant updates will be communicated through platform notifications or registered emails.</p>
+        </div>
+
+        <div class="section">
+            <h2>9. Admin Support & Contact Information</h2>
+            <p>For any queries regarding Privacy Policy, Returns, Refunds, Seller Onboarding, or Account Deletion, please reach out to the Admin team:</p>
+            <div class="contact-card">
+                <p><strong>Company/Platform:</strong> NexKartBD</p>
+                <p><strong>Mobile Number:</strong> 01987825699</p>
+                <p><strong>Email Address:</strong> admin.nexkartbd@gmail.com</p>
+                <p><strong>Support Hours:</strong> 10:00 AM - 08:00 PM (Daily)</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 NexKartBD. All Rights Reserved. | Privacy & Return Policy Page
+    </footer>
+</div>
+
+<script>
+    function switchLanguage(lang) {
+        const bnContent = document.getElementById('content-bn');
+        const enContent = document.getElementById('content-en');
+        const subTitle = document.getElementById('sub-title');
+        const lastUpdated = document.getElementById('lastUpdated');
+
+        if (lang === 'en') {
+            bnContent.style.display = 'none';
+            enContent.style.display = 'block';
+            subTitle.innerText = 'E-Commerce Privacy, Terms & Return Policy';
+            lastUpdated.innerText = 'Last Updated: August 2026';
+        } else {
+            bnContent.style.display = 'block';
+            enContent.style.display = 'none';
+            subTitle.innerText = 'ই-কমার্স প্রাইভেসি, টার্মস ও রিটার্ন পলিসি';
+            lastUpdated.innerText = 'সর্বশেষ আপডেট: আগস্ট ২০২৬';
+        }
+    }
+</script>
+
+</body>
+</html>

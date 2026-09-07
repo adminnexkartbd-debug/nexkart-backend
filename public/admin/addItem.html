@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">Add Product - NexKartBD Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Hind Siliguri', 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ec4899; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex min-h-screen selection:bg-pink-500 selection:text-white">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-slate-900/90 backdrop-blur-md text-white flex flex-col justify-between hidden md:flex shrink-0 border-r border-slate-800/80 sticky top-0 h-screen">
+    <div>
+      <div class="h-16 flex items-center gap-3 px-6 bg-slate-950/80 border-b border-slate-800/80">
+        <i class="fa-solid fa-wand-magic-sparkles text-pink-500 text-xl animate-pulse"></i>
+        <span class="font-bold text-lg tracking-wide bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">NexKartBD</span>
+      </div>
+
+      <nav class="mt-6 px-4 space-y-1.5">
+        <a href="/home.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800/60 hover:text-white rounded-xl transition-all duration-200">
+          <i class="fa-solid fa-chart-pie text-slate-400"></i> Dashboard
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 bg-pink-600/10 text-pink-400 border border-pink-500/20 font-medium rounded-xl transition-all duration-200 shadow-sm shadow-pink-500/10">
+          <i class="fa-solid fa-box-open text-pink-500"></i> Products / Add Item
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800/60 hover:text-white rounded-xl transition-all duration-200">
+          <i class="fa-solid fa-cart-shopping text-slate-400"></i> Orders
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800/60 hover:text-white rounded-xl transition-all duration-200">
+          <i class="fa-solid fa-gear text-slate-400"></i> Settings
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
+      <a href="/logout" class="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-800/80 hover:bg-red-600/20 text-red-400 hover:text-red-300 rounded-xl font-medium border border-slate-700/60 transition-all duration-200">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 flex flex-col min-w-0 bg-slate-950">
+    <header class="h-16 border-b border-slate-800/80 flex items-center justify-between px-6 bg-slate-900/60 backdrop-blur-md sticky top-0 z-20">
+      <div class="flex items-center gap-3">
+        <a href="/home.html" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all" title="Back to Dashboard">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+          <h1 id="headerTitle" class="text-lg font-bold text-white leading-tight">Add New Product</h1>
+          <p id="headerSubTitle" class="text-xs text-slate-400 hidden sm:block">যেকোনো ধরনের প্রোডাক্ট আপলোড করুন</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8">
+      <form id="productForm" action="#" method="POST" enctype="multipart/form-data" class="space-y-8">
+
+        <!-- 1. BASIC INFO & UNIQUE ID -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-pink-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-500 font-bold">
+              <i class="fa-solid fa-fingerprint"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Product ID & Basic Information</h2>
+              <p class="text-xs text-slate-400">এই আইডি-র ভেতরেই প্রোডাক্টটির সমস্ত ডেটা সংরক্ষিত থাকবে</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <label class="text-sm font-medium text-slate-300">Product ID <span class="text-pink-500">*</span></label>
+                <button type="button" id="autoGenBtn" onclick="generateProductID()" class="text-xs text-pink-400 hover:text-pink-300 underline font-medium">✨ Auto Generate</button>
+              </div>
+              <input type="text" id="productIdInput" name="product_id" required placeholder="e.g. NK-PROD-8492" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-pink-400 font-mono font-bold placeholder-slate-600 focus:outline-none focus:border-pink-500 transition uppercase text-sm">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Title <span class="text-pink-500">*</span></label>
+              <input type="text" id="titleInput" name="title" required placeholder="e.g. COSRX Snail Essence 100ml" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Brand Name</label>
+              <input type="text" id="brandInput" name="brand_name" placeholder="যেমন: COSRX" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Category <span class="text-pink-500">*</span></label>
+              <select id="categorySelect" name="category" required onchange="handleCategoryChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition">
+                <option value="">Select Category</option>
+                <option value="electronics">1. Electronics & Gadgets (ইলেকট্রনিক্স)</option>
+                <option value="fashion">2. Fashion & Apparel (ফ্যাশন)</option>
+                <option value="home">3. Home, Living & Kitchen (হোম ও কিচেন)</option>
+                <option value="health">4. Health & Beauty (হেলথ ও বিউটি)</option>
+                <option value="baby_toys">5. Baby & Toys (বেবি ও টয়েজ)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Sub-Category</label>
+              <select id="subCategorySelect" name="sub_category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition">
+                <option value="">Select Category First</option>
+              </select>
+            </div>
+
+            <!-- 🔴 এখন এটি সবসময় দৃশ্যমান থাকবে (hidden ক্লাস সরিয়ে দেওয়া হয়েছে) 🔴 -->
+            <div id="variantContainer" class="md:col-span-3">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Variant</label>
+              <input type="text" id="variantInput" name="products_variant" placeholder="যেমন: Red, Blue, Black অথবা 32, 34, XL, 128GB, 256GB" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+              <p class="text-xs text-slate-400 mt-1">সাইজ, কালার বা ভ্যারিয়েন্টগুলো কমা (,) দিয়ে আলাদা করে লিখুন (প্রযোজ্য ক্ষেত্রে)।</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Shipping From (Asian Countries) <span class="text-pink-500">*</span></label>
+              <select id="shippingFromSelect" name="shipping_from" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition">
+                <option value="BD">🇧🇩 বাংলাদেশ (Bangladesh)</option>
+                <option value="IN">🇮🇳 ভারত (India)</option>
+                <option value="CN">🇨🇳 চীন (China)</option>
+                <option value="PK">🇵🇰 পাকিস্তান (Pakistan)</option>
+                <option value="JP">🇯🇵 জাপান (Japan)</option>
+                <option value="KR">🇰🇷 দক্ষিণ কোরিয়া (South Korea)</option>
+                <option value="MY">🇲🇾 মালয়েশিয়া (Malaysia)</option>
+                <option value="TH">🇹🇭 থাইল্যান্ড (Thailand)</option>
+                <option value="AE">🇦🇪 সংযুক্ত আরব আমিরাত (UAE)</option>
+                <option value="SA">🇸🇦 সৌদি আরব (Saudi Arabia)</option>
+                <option value="SG">🇸🇬 সিঙ্গাপুর (Singapore)</option>
+                <option value="VN">🇻🇳 ভিয়েতনাম (Vietnam)</option>
+                <option value="ID">🇮🇩 ইন্দোনেশিয়া (Indonesia)</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-3">
+              <label class="block text-sm font-medium text-slate-300 mb-2">Promotional Badge</label>
+              <select id="promoBadgeSelect" name="promo_badge" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition">
+                <option value="none">⭐ Regular Product (কোনো ব্যাজ নেই)</option>
+                <option value="hot" selected>🔥 HOT Selling (হট সেলিং)</option>
+                <option value="super_deal">⚡ Super Deals / Flash Sale (সুপার ডিল)</option>
+                <option value="best_seller">🏆 Best Seller (বেস্টসেলার)</option>
+                <option value="new_arrival">✨ New Arrival (নতুন রিলিজ)</option>
+                <option value="limited_edition">⏳ Limited Edition (লিমিটেড এডিশন)</option>
+                <option value="trending">📈 Trending Now (ট্রেন্ডিং)</option>
+                <option value="exclusive">💎 NexKart Exclusive (এক্সক্লুসিভ)</option>
+                <option value="free_shipping">🚚 Free Shipping Item (ফ্রি শিপিং)</option>
+                <option value="clearance">🏷️ Clearance Sale (ক্লিয়ারেন্স সেল)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. GUARANTEE & SHIPPING COST -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
+              <i class="fa-solid fa-truck-fast"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Guarantee, Warranty & Shipping Details</h2>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Delivery Charge (৳)</label>
+              <input type="number" id="deliveryChargeInput" name="delivery_charge" placeholder="60" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+          
+              <label class="block text-sm font-medium text-slate-300 mt-4 mb-2">Max Items for this Charge</label>
+              <input type="number" id="deliveryLimitInput" name="delivery_limit" placeholder="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Estimated Delivery Time <span class="text-pink-500">*</span></label>
+              <select id="deliveryTimeSelect" name="delivery_time" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition">
+                <option value="1-2 Days">⚡ Express (1 - 2 Days)</option>
+                <option value="2-3 Days" selected>🚚 Standard (2 - 3 Days)</option>
+                <option value="5-7 Days">🏙️ Outside Dhaka (5 - 7 Days)</option>
+                <option value="21-30 Days">🌍 International Shipping (21 - 30 Days)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Guarantee / Warranty</label>
+              <select id="guaranteeSelect" name="guarantee" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition">
+                <option value="authentic" selected>🛡️ 100% Authentic Product (১০০% আসল প্রোডাক্ট)</option>
+                <option value="official_warranty_1yr">🏅 1 Year Official Brand Warranty (১ বছরের অফিশিয়াল ওয়ারেন্টি)</option>
+                <option value="official_warranty_6mo">⏱️ 6 Months Brand Warranty (৬ মাসের ওয়ারেন্টি)</option>
+                <option value="store_warranty_1yr">🏬 1 Year Store Warranty (১ বছরের শপ ওয়ারেন্টি)</option>
+                <option value="replacement_7days">🔄 7 Days Replacement Guarantee (৭ দিনের রিপ্লেসমেন্ট গ্যারান্টি)</option>
+                <option value="money_back">💰 100% Money Back Guarantee (টাকা ফেরত গ্যারান্টি)</option>
+                <option value="original_imported">🌐 100% Original Imported (বিদেশ থেকে আমদানিকৃত)</option>
+                <option value="no_warranty">❌ No Warranty / Non-Returnable (ওয়ারেন্টি প্রযোজ্য নয়)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Return Policy</label>
+              <select id="returnPolicySelect" name="return_policy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition">
+                <option value="7_days" selected>🔄 7 Days Replacement</option>
+                <option value="3_days">🔄 3 Days Easy Return</option>
+                <option value="14_days">🔄 14 Days Return Policy</option>
+                <option value="no_return">🚫 No Return Applicable</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CHECKBOX OPTIONS -->
+          <div class="mt-6 pt-6 border-t border-slate-800/80">
+            <label class="block text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-emerald-400"></i> Service Options & Features
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/5 transition-all">
+                <input type="checkbox" id="codAvailable" class="w-5 h-5 accent-blue-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                  </div>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-200 block">Cash on Delivery</span>
+                    <span class="text-[11px] text-slate-400">ক্যাশ অন ডেলিভারি প্রযোজ্য</span>
+                  </div>
+                </div>
+              </label>
+
+              <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/60 hover:bg-amber-500/5 transition-all">
+                <input type="checkbox" id="openBoxInspection" class="w-5 h-5 accent-amber-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-box-open"></i>
+                  </div>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-200 block">Open Box Inspection</span>
+                    <span class="text-[11px] text-slate-400">বক্স খুলে দেখে নেয়ার সুবিধা</span>
+                  </div>
+                </div>
+              </label>
+
+              <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-emerald-500/60 hover:bg-emerald-500/5 transition-all">
+                <input type="checkbox" id="freeShipping" class="w-5 h-5 accent-emerald-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                  </div>
+                  <div>
+                    <span class="text-sm font-semibold text-slate-200 block">Free Shipping</span>
+                    <span class="text-[11px] text-slate-400">সম্পূর্ণ বিনামূল্যে ডেলিভারি</span>
+                  </div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. PRICING & INVENTORY -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
+              <i class="fa-solid fa-tags"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Pricing & Stock Inventory</h2>
+              <p class="text-xs text-slate-400">রেগুলার প্রাইজ, সেল প্রাইজ এবং স্টক বিবরণ</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Regular Price (৳) <span class="text-pink-500">*</span></label>
+              <input type="number" id="regularPriceInput" name="regular_price" required placeholder="1800" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-semibold text-lg focus:outline-none focus:border-pink-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Sale Price (৳) <span class="text-pink-500">*</span></label>
+              <input type="number" id="salePriceInput" name="sale_price" required placeholder="1450" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-emerald-400 font-semibold text-lg focus:outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Stock Quantity <span class="text-pink-500">*</span></label>
+              <input type="number" id="stockQtyInput" name="stock_quantity" required placeholder="50" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Stock Status <span class="text-pink-500">*</span></label>
+              <select id="stockStatusSelect" name="stock_status" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500 transition">
+                <option value="in_stock" selected>✅ In Stock (স্টকে আছে)</option>
+                <option value="out_of_stock">❌ Out of Stock (স্টকে নেই)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. HIGHLIGHTS -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-white">Dynamic Specifications & Highlights</h2>
+              </div>
+            </div>
+            <button type="button" onclick="addHighlightField()" class="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-plus"></i> Add Highlight
+            </button>
+          </div>
+
+          <div id="highlightsContainer" class="space-y-3">
+            <div class="flex items-center gap-2">
+              <input type="text" name="highlights[]" placeholder="• যেমন: Premium Quality" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. MEDIA & DESCRIPTION -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
+              <i class="fa-solid fa-images"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Media, Description & SEO Keywords</h2>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Gallery Images (কমপক্ষে ৩ টি) <span class="text-pink-500">*</span></label>
+              <div onclick="document.getElementById('imgInput').click();" class="border-2 border-dashed border-slate-800 hover:border-pink-500/60 bg-slate-950 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center min-h-[160px] transition group">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500 group-hover:scale-110 transition-transform mb-2"></i>
+                <p id="upload-text" class="text-sm font-medium text-slate-200">ছবি সিলেক্ট করতে ক্লিক করুন (কমপক্ষে ৩ টি)</p>
+                <input type="file" id="imgInput" name="images" multiple class="hidden" accept="image/*" onchange="handleImageSelection(this)">
+              </div>
+              <div id="imagePreviewContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-3 mt-4"></div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Description <span class="text-pink-500">*</span></label>
+              <textarea name="description" id="descInput" required rows="8" placeholder="প্রোডাক্টের বিবরণ এখানে লিখুন..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-pink-500 transition"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">SEO Keywords / Tags</label>
+              <input type="text" id="keywordsInput" name="keywords" placeholder="skincare, essence" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-pink-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="flex items-center justify-end gap-4 pt-4 pb-12">
+          <a href="/home.html" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition">Cancel</a>
+          <button type="submit" id="submitBtn" class="px-8 py-3 bg-gradient-to-r from-pink-600 to-pink-500 text-white font-semibold rounded-xl shadow-lg transition">Save Product</button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const subCategoryData = {
+      electronics: [
+        { value: "smartphones_tablets", label: "Smartphones & Tablets (স্মার্টফোন ও ট্যাবলেটস)" },
+        { value: "computers_laptops", label: "Computers & Laptops (কম্পিউটার ও ল্যাপটপ)" },
+        { value: "smart_watches", label: "Smart Watches & Trackers (স্মার্ট ওয়াচ)" },
+        { value: "audio_headphones", label: "Audio & Headphones (হেডফোন ও অডিও)" },
+        { value: "camera_photography", label: "Camera & Photography (ক্যামেরা ও এক্সেসরিজ)" },
+        { value: "gaming_accessories", label: "Gaming Accessories (গেমিং গ্যাজেট)" },
+        { value: "power_banks_chargers", label: "Power Banks & Chargers (পাওয়ার ব্যাংক ও চার্জার)" }
+      ],
+      fashion: [
+        { value: "mens_fashion", label: "Men's Fashion (মেনস ফ্যাশন ও ক্লথিং)" },
+        { value: "womens_fashion", label: "Women's Fashion (উমেন্স ফ্যাশন ও থ্রিপিস)" },
+        { value: "footwear", label: "Footwear (জুতো ও স্যান্ডেল)" },
+        { value: "bags_luggage", label: "Bags & Luggage (ব্যাগ ও ট্রাভেল লাগেজ)" },
+        { value: "watches_accessories", label: "Watches & Accessories (ঘড়ি ও ফ্যাশন এক্সেসরিজ)" },
+        { value: "traditional_wear", label: "Traditional & Ethnic Wear (পাঞ্জাবি ও শাড়ি)" }
+      ],
+      home: [
+        { value: "home_decor", label: "Home Decor (হোম ডেকোর ও লাইটিং)" },
+        { value: "kitchen_dining", label: "Kitchen & Dining (কিচেন ও ডাইনিং ইউটেনসিলস)" },
+        { value: "bedding_bath", label: "Bedding & Bath (বেডিং ও বাথরুম এক্সেসরিজ)" },
+        { value: "home_appliances", label: "Home Appliances (ছোট খাটো হোম অ্যাপ্লায়েন্স)" },
+        { value: "storage_organization", label: "Storage & Organization (স্টোরেজ ও অর্গানাইজার)" }
+      ],
+      health: [
+        { value: "skincare", label: "Skincare (স্কেয়ার কেয়ার ও সিরাম)" },
+        { value: "haircare", label: "Haircare (হেয়ার কেয়ার ও শ্যাম্পু)" },
+        { value: "makeup_cosmetics", label: "Makeup & Cosmetics (মেকআপ ও কসমেটিকস)" },
+        { value: "fragrances_perfumes", label: "Fragrances & Perfumes (পারফিউম ও বডি স্প্রে)" },
+        { value: "personal_care", label: "Personal Care & Grooming (গ্রুমিং ও পার্সোনাল কেয়ার)" },
+        { value: "health_wellness", label: "Health & Wellness (হেলথ ও ওয়েলনেস প্রোডাক্ট)" }
+      ],
+      baby_toys: [
+        { value: "toys_games", label: "Toys & Games (টয়েজ ও ইনডোর গেমস)" },
+        { value: "baby_clothing", label: "Baby Clothing & Shoes (বেবি ক্লথিং ও শুজ)" },
+        { value: "baby_care", label: "Baby Care & Diapering (বেবি কেয়ার ও ডায়াপার)" },
+        { value: "strollers_gear", label: "Strollers & Gear (বেবি স্ট্রোলার ও ওয়াকার)" }
+      ]
+    };
+
+    let editMode = false;
+    let editProductId = null;
+    let existingImages = [];
+    let keptImageIds = [];
+
+    function handleCategoryChange() {
+      const categoryVal = document.getElementById('categorySelect').value;
+      const subCategorySelect = document.getElementById('subCategorySelect');
+      
+      subCategorySelect.innerHTML = '<option value="">Select Sub-Category</option>';
+
+      if (categoryVal && subCategoryData[categoryVal]) {
+        subCategoryData[categoryVal].forEach(sub => {
+          const option = document.createElement('option');
+          option.value = sub.value;
+          option.textContent = sub.label;
+          subCategorySelect.appendChild(option);
+        });
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get('edit') || urlParams.get('id');
+
+      if (editId) {
+        editMode = true;
+        editProductId = editId;
+        setupEditUI();
+        await loadProductData(editId);
+      } else {
+        generateProductID();
+      }
+    });
+
+    function setupEditUI() {
+      document.getElementById('pageTitle').textContent = "Edit Product - NexKartBD Admin";
+      document.getElementById('headerTitle').textContent = "Edit Product";
+      document.getElementById('headerSubTitle').textContent = "প্রোডাক্টটির তথ্য পরিবর্তন বা আপডেট করুন";
+      document.getElementById('submitBtn').textContent = "Update Product";
+      document.getElementById('autoGenBtn').classList.add('hidden');
+    }
+
+    async function loadProductData(id) {
+      try {
+        const response = await fetch(`/api/products/all`, { credentials: 'include' });
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          const product = result.products.find(p => String(p.id) === String(id) || String(p.product_id) === String(id));
+          if (product) {
+            populateForm(product);
+          } else {
+            alert('❌ প্রোডাক্টটি খুঁজে পাওয়া যায়নি!');
+          }
+        } else {
+          alert('❌ প্রোডাক্ট এর তথ্য ফ্রেচ করতে ব্যর্থ হয়েছে!');
+        }
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        alert('⚠️ সার্ভারে যুক্ত হতে ব্যর্থ হয়েছে!');
+      }
+    }
+
+    function populateForm(product) {
+      editProductId = product.id;
+      document.getElementById('productIdInput').value = product.product_id || '';
+      document.getElementById('titleInput').value = product.title || '';
+      document.getElementById('brandInput').value = product.brand_name || '';
+      
+      document.getElementById('categorySelect').value = product.category || '';
+      handleCategoryChange();
+      
+      if (product.sub_category) {
+        document.getElementById('subCategorySelect').value = product.sub_category;
+      }
+
+      if (product.products_variant) {
+        document.getElementById('variantInput').value = product.products_variant;
+      }
+
+      if (product.shipping_from) document.getElementById('shippingFromSelect').value = product.shipping_from;
+      if (product.promo_badge) document.getElementById('promoBadgeSelect').value = product.promo_badge;
+
+      document.getElementById('deliveryChargeInput').value = product.delivery_charge ?? '';
+      document.getElementById('deliveryLimitInput').value = product.delivery_limit ?? '';
+      if (product.delivery_time) document.getElementById('deliveryTimeSelect').value = product.delivery_time;
+      if (product.guarantee) document.getElementById('guaranteeSelect').value = product.guarantee;
+      if (product.return_policy) document.getElementById('returnPolicySelect').value = product.return_policy;
+
+      // Checkbox Values
+      document.getElementById('codAvailable').checked = Boolean(product.cod_available == 1);
+      document.getElementById('openBoxInspection').checked = Boolean(product.open_box_inspection == 1);
+      document.getElementById('freeShipping').checked = Boolean(product.free_shipping == 1);
+
+      // Pricing & Inventory
+      document.getElementById('regularPriceInput').value = product.regular_price ?? '';
+      document.getElementById('salePriceInput').value = product.sale_price ?? '';
+      document.getElementById('stockQtyInput').value = product.stock_quantity ?? '';
+      if (product.stock_status) document.getElementById('stockStatusSelect').value = product.stock_status;
+
+      // Highlights
+      if (product.product_highlights) {
+        const highlightsContainer = document.getElementById('highlightsContainer');
+        highlightsContainer.innerHTML = '';
+        const highlightsArr = product.product_highlights.split(',');
+        highlightsArr.forEach(item => {
+          if (item.trim()) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2';
+            div.innerHTML = `
+              <input type="text" name="highlights[]" value="${item.trim()}" placeholder="• নতুন পয়েন্ট লিখুন..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+              <button type="button" onclick="this.parentElement.remove()" class="p-2.5 text-red-400 hover:bg-red-500/10 rounded-xl transition"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            highlightsContainer.appendChild(div);
+          }
+        });
+      }
+
+      document.getElementById('descInput').value = product.description || '';
+      document.getElementById('keywordsInput').value = product.keywords || '';
+
+      // Existing Images
+      if (product.images && Array.isArray(product.images)) {
+        existingImages = product.images;
+      } else if (product.image_path) {
+        existingImages = [{ id: 'existing-1', image_path: product.image_path }];
+      }
+      
+      keptImageIds = existingImages.map(img => img.id);
+      updateFileInputAndPreview();
+    }
+
+    function generateProductID() {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('productIdInput').value = `NK-PROD-${randomNum}`;
+    }
+
+    function addHighlightField() {
+      const container = document.getElementById('highlightsContainer');
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2';
+      div.innerHTML = `
+        <input type="text" name="highlights[]" placeholder="• নতুন পয়েন্ট লিখুন..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+        <button type="button" onclick="this.parentElement.remove()" class="p-2.5 text-red-400 hover:bg-red-500/10 rounded-xl transition"><i class="fa-solid fa-xmark"></i></button>
+      `;
+      container.appendChild(div);
+    }
+
+    let selectedFiles = [];
+
+    function handleImageSelection(input) {
+      const newFiles = Array.from(input.files);
+      selectedFiles = selectedFiles.concat(newFiles);
+      updateFileInputAndPreview();
+    }
+
+    function updateFileInputAndPreview() {
+      const previewContainer = document.getElementById('imagePreviewContainer');
+      const textContainer = document.getElementById('upload-text');
+      const input = document.getElementById('imgInput');
+
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => {
+        dataTransfer.items.add(file);
+      });
+      input.files = dataTransfer.files;
+
+      previewContainer.innerHTML = '';
+
+      const totalImagesCount = existingImages.length + selectedFiles.length;
+
+      if (totalImagesCount < 3) {
+        textContainer.innerHTML = `⚠️ <span class="text-amber-400">অন্তত ৩টি ছবি দিন (${totalImagesCount}/3 সিলেক্ট হয়েছে)</span>`;
+      } else {
+        textContainer.innerHTML = `✅ <span class="text-emerald-400 font-semibold">${totalImagesCount} টি ছবি সফলভাবে সিলেক্ট করা হয়েছে!</span>`;
+      }
+
+      existingImages.forEach((img, idx) => {
+        const div = document.createElement('div');
+        div.className = 'relative group aspect-square rounded-xl overflow-hidden border border-slate-700 bg-slate-900';
+        div.innerHTML = `
+          <img src="${img.image_path}" class="w-full h-full object-cover">
+          <button type="button" onclick="removeExistingImage(${idx})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        previewContainer.appendChild(div);
+      });
+
+      selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const div = document.createElement('div');
+          div.className = 'relative group aspect-square rounded-xl overflow-hidden border border-pink-500/50 bg-slate-900';
+          div.innerHTML = `
+            <img src="${e.target.result}" class="w-full h-full object-cover">
+            <button type="button" onclick="removeImage(${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow"><i class="fa-solid fa-xmark"></i></button>
+          `;
+          previewContainer.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeExistingImage(index) {
+      existingImages.splice(index, 1);
+      keptImageIds = existingImages.map(img => img.id);
+      updateFileInputAndPreview();
+    }
+
+    function removeImage(index) {
+      selectedFiles.splice(index, 1);
+      updateFileInputAndPreview();
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const totalImagesCount = existingImages.length + selectedFiles.length;
+      if (totalImagesCount < 3) {
+        alert("⚠️ অনুগ্রহ করে কমপক্ষে ৩টি প্রোডাক্টের ছবি সিলেক্ট করুন!");
+        return;
+      }
+
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${editMode ? 'Updating Product...' : 'Saving Product...'}`;
+
+      const formData = new FormData(this);
+      
+      const brandInputEl = document.getElementById('brandInput');
+      const brandValue = brandInputEl ? brandInputEl.value.trim() : '';
+      formData.set('brand_name', brandValue !== '' ? brandValue : 'N/A');
+
+      // 🔴 সব ক্যাটাগরির জন্যই ভ্যারিয়েন্ট ডাটা ব্যাকএন্ডে পাঠানোর ব্যবস্থা 🔴
+      const variantInputEl = document.getElementById('variantInput');
+      const variantValue = variantInputEl ? variantInputEl.value.trim() : '';
+      formData.set('products_variant', variantValue);
+
+      if (document.getElementById('codAvailable').checked) {
+        formData.set('cod_available', "1");
+      } else {
+        formData.delete('cod_available');
+      }
+
+      if (document.getElementById('openBoxInspection').checked) {
+        formData.set('open_box_inspection', "1");
+      } else {
+        formData.delete('open_box_inspection');
+      }
+
+      if (document.getElementById('freeShipping').checked) {
+        formData.set('free_shipping', "1");
+      } else {
+        formData.delete('free_shipping');
+      }
+
+      if (editMode) {
+        formData.append('kept_image_ids', JSON.stringify(keptImageIds));
+      }
+
+      const targetURL = editMode ? `/api/products/update/${editProductId}` : '/api/products/add';
+      const targetMethod = editMode ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(targetURL, {
+            method: targetMethod,
+            body: formData,
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            alert(result.message || (editMode ? "সফলভাবে প্রোডাক্ট আপডেট করা হয়েছে! 🎉" : "সফলভাবে নতুন প্রোডাক্ট যোগ করা হয়েছে! 🎉"));
+            setTimeout(() => { window.location.href = "/home.html"; }, 300);
+        } else {
+            alert('❌ ' + (result.message || 'কিছু সমস্যা হয়েছে!'));
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = editMode ? 'Update Product' : 'Save Product';
+        }
+      } 
+      catch (error) {
+        console.error('Error:', error);
+        alert('⚠️ এরর: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = editMode ? 'Update Product' : 'Save Product';
+      }
+    });
+  </script>
+</body>
+</html>

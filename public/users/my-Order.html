@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - NexKart</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-pink: #ff6b81;
+            --soft-pink: #fff0f3;
+            --card-pink: #fff5f7;
+            --accent-pink: #ff4757;
+            --text-color: #2f3542;
+            --text-muted: #747d8c;
+            --border-color: #ffe1e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #fff9fa;
+            color: var(--text-color);
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 30px;
+            position: relative;
+            text-align: center;
+        }
+
+        /* Back Button Styling */
+        .back-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background-color: var(--soft-pink);
+            color: var(--accent-pink);
+            border-color: var(--primary-pink);
+        }
+
+        .page-header h1 {
+            font-size: 30px;
+            color: #d63031;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* Order Card */
+        .order-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(255, 107, 129, 0.08);
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(255, 107, 129, 0.15);
+        }
+
+        /* Header Portion */
+        .order-header {
+            background-color: var(--soft-pink);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .order-info-group {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .info-item label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .info-item span {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* Copyable Badges */
+        .copy-badge {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .copy-badge:hover {
+            color: var(--accent-pink);
+        }
+
+        .copy-badge i {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Badges */
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: capitalize;
+        }
+
+        .badge-completed { background-color: #d4edda; color: #155724; }
+        .badge-pending { background-color: #fff3cd; color: #856404; }
+        .badge-cancelled { background-color: #f8d7da; color: #721c24; }
+        .badge-processing { background-color: #e2e3e5; color: #383d41; }
+
+        /* Return Policy Badge */
+        .return-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-top: 5px;
+            font-weight: 500;
+            background-color: #e6fffa;
+            color: #0d9488;
+            border: 1px solid #99f6e4;
+        }
+
+        /* Order Details Body */
+        .order-body {
+            padding: 20px 24px;
+        }
+
+        .product-row {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .product-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+        }
+
+        .product-details {
+            flex-grow: 1;
+        }
+
+        .product-details h4 {
+            font-size: 16px;
+            color: var(--text-color);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .product-details p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .price-tag {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-pink);
+        }
+
+        /* User Given Review Box Inside Card */
+        .user-submitted-review {
+            margin-top: 15px;
+            background-color: #fff8f9;
+            border: 1px dashed var(--primary-pink);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .user-submitted-review .review-stars {
+            color: #ffbe76;
+        }
+
+        .user-submitted-review .review-content {
+            color: #4b5563;
+            font-style: italic;
+            word-break: break-word;
+        }
+
+        .review-img-wrapper {
+            margin-top: 4px;
+        }
+
+        .review-attached-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .review-attached-img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Help Notice Box */
+        .support-notice {
+            margin-top: 15px;
+            padding: 10px 14px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .support-notice i {
+            color: #0284c7;
+            font-size: 14px;
+        }
+
+        /* Order Footer */
+        .order-footer {
+            padding: 16px 24px;
+            background-color: #ffffff;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .amount-summary {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .amount-summary strong {
+            color: var(--text-color);
+            font-size: 17px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-review {
+            background-color: #ff6b81;
+            color: #ffffff;
+        }
+
+        .btn-review:hover {
+            background-color: #ff4757;
+        }
+
+        .btn-track {
+            background-color: #f1f2f6;
+            color: #2f3542;
+            cursor: pointer;
+        }
+
+        .btn-track:hover {
+            background-color: #e4e5ea;
+        }
+
+        .btn-return {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+        }
+
+        .btn-return:hover {
+            background-color: #c7d2fe;
+        }
+
+        /* Disabled Return Button Style */
+        .btn-return:disabled, .btn-return.disabled {
+            background-color: #f1f2f6;
+            color: #a4b0be;
+            border-color: #dfe4ea;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Review Modal & Return Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-box h3 {
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            margin: 15px 0;
+        }
+
+        .star-rating .fa-star.active {
+            color: #ffbe76;
+        }
+
+        .modal-box textarea, .modal-box select, .modal-box input[type="file"] {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            outline: none;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .modal-box textarea {
+            height: 80px;
+            resize: none;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        /* Toast Popup Notification */
+        .toast-msg {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2f3542;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+        }
+
+        /* Empty State */
+        .empty-orders {
+            text-align: center;
+            padding: 50px 20px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-orders i {
+            font-size: 50px;
+            color: var(--primary-pink);
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .page-header {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            .back-btn {
+                position: static;
+                transform: none;
+                align-self: flex-start;
+            }
+            .order-header, .order-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .product-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .price-tag {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <!-- Back Button -->
+            <button onclick="window.history.back()" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+
+            <h1><i class="fa-solid fa-heart"></i> My Order History</h1>
+            <p>View all your current and previous purchases in one place</p>
+        </div>
+
+        <!-- Orders List Container -->
+        <div id="orders-container">
+            <p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading your orders...</p>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeReviewModal()"></i>
+            <h3 id="modal-title">Write a Review</h3>
+            <p style="font-size: 13px; color: var(--text-muted);" id="modal-product-name">Product Name</p>
+            
+            <div class="star-rating" id="starContainer">
+                <i class="fa-solid fa-star active" data-value="1"></i>
+                <i class="fa-solid fa-star active" data-value="2"></i>
+                <i class="fa-solid fa-star active" data-value="3"></i>
+                <i class="fa-solid fa-star active" data-value="4"></i>
+                <i class="fa-solid fa-star active" data-value="5"></i>
+            </div>
+
+            <textarea id="reviewText" placeholder="Share your experience with this product..."></textarea>
+            
+            <!-- Review Image Input Field Added -->
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px;">Upload Product Image (Optional):</label>
+            <input type="file" id="reviewImageFile" accept="image/*">
+            
+            <button class="btn btn-review" style="width: 100%; justify-content: center;" onclick="submitReview()">
+                <i class="fa-solid fa-paper-plane"></i> Save Review
+            </button>
+        </div>
+    </div>
+
+    <!-- Return & Refund Modal with Proof Upload -->
+    <div class="modal-overlay" id="returnModal">
+        <div class="modal-box">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeReturnModal()"></i>
+            <h3>Request Return & Refund</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="return-modal-product-name">Product Name</p>
+            
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px;">Select Reason for Return:</label>
+            <select id="returnReason">
+                <option value="Damaged Product">Damaged / Defective Product</option>
+                <option value="Wrong Item Received">Wrong Item Received</option>
+                <option value="Size/Fit Issue">Size or Fit Issue</option>
+                <option value="Quality not as expected">Quality not as expected</option>
+                <option value="Other">Other reason</option>
+            </select>
+
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px;">Additional Details (Optional):</label>
+            <textarea id="returnDetails" placeholder="Describe the issue in detail..."></textarea>
+
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 5px; color: #d63031;">Upload Proof (Image/Video Required) *</label>
+            <input type="file" id="returnProofFile" accept="image/*,video/*" required>
+            
+            <button class="btn btn-return" style="width: 100%; justify-content: center; background-color: #4338ca; color: white;" onclick="submitReturnRequest()">
+                <i class="fa-solid fa-paper-plane"></i> Submit Return Request
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Alert for Copying -->
+    <div id="toast" class="toast-msg">
+        <i class="fa-solid fa-circle-check" style="color: #2ed573;"></i> <span id="toast-text">Copied!</span>
+    </div>
+
+    <script>
+        let selectedRating = 5;
+        let activeProductId = null;
+        let activeOrderId = null;
+        let activeSellerId = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchOrders();
+            setupStarRating();
+        });
+
+        // ১. অর্ডার ডাটা লোড
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/user/get-my-orders');
+                const data = await response.json();
+
+                const container = document.getElementById('orders-container');
+
+                if (!data.success) {
+                    container.innerHTML = `<div class="empty-orders"><i class="fa-solid fa-lock"></i><h3>${data.message}</h3></div>`;
+                    return;
+                }
+
+                if (data.orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-orders">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            <h3>No Orders Found!</h3>
+                            <p>Looks like you haven't placed any orders yet.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                data.orders.forEach(order => {
+                    const createdDate = new Date(order.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+
+                    let badgeClass = 'badge-pending';
+                    let statusText = order.order_status || 'Pending';
+                    
+                    if (statusText.toLowerCase() === 'completed' || statusText.toLowerCase() === 'delivered') {
+                        badgeClass = 'badge-completed';
+                        statusText = 'Delivered';
+                    } else if (statusText.toLowerCase() === 'cancelled') {
+                        badgeClass = 'badge-cancelled';
+                    } else if (statusText.toLowerCase() === 'processing') {
+                        badgeClass = 'badge-processing';
+                    }
+
+                    const isDelivered = (statusText.toLowerCase() === 'delivered' || statusText.toLowerCase() === 'completed');
+                    const hasReviewed = order.user_rating !== null && order.user_rating !== undefined;
+                    const hasAlreadyReturned = Number(order.has_returned) > 0; // চেক করা হচ্ছে ইতিপূর্বে রিটার্ন রিকোয়েস্ট সাবমিট হয়েছে কিনা
+
+                    // স্টার রেটিং জেনারেটর
+                    let starsHTML = '';
+                    if (hasReviewed) {
+                        for (let i = 1; i <= 5; i++) {
+                            if (i <= order.user_rating) {
+                                starsHTML += '<i class="fa-solid fa-star"></i>';
+                            } else {
+                                starsHTML += '<i class="fa-regular fa-star"></i>';
+                            }
+                        }
+                    }
+
+                    const orderCard = `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div class="order-info-group">
+                                    <div class="info-item">
+                                        <label>Order ID (Click to Copy)</label>
+                                        <span class="copy-badge" onclick="copyToClipboard('${order.order_id}', 'Order ID')">
+                                            #${order.order_id} <i class="fa-regular fa-copy"></i>
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Date Placed</label>
+                                        <span>${createdDate}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Payment Method</label>
+                                        <span>${(order.payment_method || 'COD').toUpperCase()}</span>
+                                    </div>
+                                </div>
+                                <span class="status-badge ${badgeClass}">
+                                    <i class="fa-solid fa-circle-check"></i> ${statusText}
+                                </span>
+                            </div>
+
+                            <div class="order-body">
+                                <div class="product-row">
+<img src="${order.product_image || '/images/no-image.png'}" alt="Product Image" class="product-img">                                    <div class="product-details">
+                                        <h4>${order.product_title || 'Product Title Unavailable'}</h4>
+                                        <p>Quantity: ${order.quantity} ${order.variant ? '| Variant: ' + order.variant : ''}</p>
+                                        <p style="font-size: 12px; margin-top:3px;">Ship to: ${order.shipping_address}</p>
+                                        ${isDelivered ? `<div><span class="return-tag"><i class="fa-solid fa-rotate-left"></i> ${hasAlreadyReturned ? 'Return Requested / Processed' : 'Return & Refund Available'}</span></div>` : ''}
+                                    </div>
+                                    <div class="price-tag">৳${order.total_amount}</div>
+                                </div>
+
+                                ${hasReviewed ? `
+                                    <div class="user-submitted-review">
+                                        <div class="review-stars">${starsHTML}</div>
+                                        <div class="review-content">"${escapeHtml(order.user_review || 'No written review')}"</div>
+                                        ${order.user_review_img ? `
+                                            <div class="review-img-wrapper">
+                                                <a href="${order.user_review_img}" target="_blank">
+                                                    <img src="${order.user_review_img}" class="review-attached-img" alt="Review Image">
+                                                </a>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
+
+                                <!-- Help Notice -->
+                                <div class="support-notice">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <span>ত্রুটিপূর্ণ বা ক্ষতিগ্রস্ত পণ্যের ক্ষেত্রে প্রয়োজনীয় ছবি/ভিডিও প্রমাণসহ রিটার্ন রিকোয়েস্ট সাবমিট করুন।</span>
+                                </div>
+                            </div>
+
+                            <div class="order-footer">
+                                <div class="amount-summary">
+                                    Delivery Charge: ৳${order.delivery_charge} | Total Paid: <strong>৳${order.total_amount}</strong>
+                                </div>
+                                <div class="action-btns">
+                                    ${order.tracking_number ? `
+                                        <span class="btn btn-track" onclick="copyToClipboard('${order.tracking_number}', 'Tracking Number')">
+                                            <i class="fa-solid fa-truck"></i> ${order.tracking_number} <i class="fa-regular fa-copy"></i>
+                                        </span>
+                                    ` : ''}
+
+                                    <!-- রিটার্ন বাটন -->
+                                    ${isDelivered ? `
+                                        <button class="btn btn-return ${hasAlreadyReturned ? 'disabled' : ''}" ${hasAlreadyReturned ? 'disabled' : ''} onclick="openReturnModal('${order.order_id}', '${order.product_id}', '${order.seller_id}', '${escapeHtml(order.product_title)}')">
+                                            <i class="fa-solid fa-arrow-rotate-left"></i> ${hasAlreadyReturned ? 'Return Requested' : 'Return & Refund'}
+                                        </button>
+                                    ` : ''}
+
+                                    <!-- একবার রিভিউ দেওয়া হয়ে গেলে বাটন রিমুভ হয়ে যাবে -->
+                                    ${isDelivered && !hasReviewed ? `
+                                        <button class="btn btn-review" onclick="openReviewModal('${order.product_id}', '${order.order_id}', '${escapeHtml(order.product_title)}')">
+                                            <i class="fa-solid fa-star"></i> Rate & Review
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += orderCard;
+                });
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('orders-container').innerHTML = `<div class="empty-orders"><h3>Error loading order history!</h3></div>`;
+            }
+        }
+
+        // ক্লিপবোর্ডে কপি করার ফাংশন
+        function copyToClipboard(text, type) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`${type} copied: ${text}`);
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        }
+
+        // নোটিফিকেশন দেখানোর ফাংশন
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = message;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2500);
+        }
+
+        // রিটার্ন মোডাল ওপেন ও ক্লোজ ফাংশন
+        function openReturnModal(orderId, productId, sellerId, productTitle) {
+            activeOrderId = orderId;
+            activeProductId = productId;
+            activeSellerId = sellerId;
+            document.getElementById('return-modal-product-name').innerText = productTitle;
+            document.getElementById('returnModal').style.display = 'flex';
+        }
+
+        function closeReturnModal() {
+            document.getElementById('returnModal').style.display = 'none';
+            document.getElementById('returnDetails').value = '';
+            document.getElementById('returnProofFile').value = '';
+        }
+
+        // রিটার্ন রিকোয়েস্ট সাবমিট API কল
+        async function submitReturnRequest() {
+            const returnReason = document.getElementById('returnReason').value;
+            const returnDetails = document.getElementById('returnDetails').value;
+            const proofFile = document.getElementById('returnProofFile').files[0];
+
+            if (!proofFile) {
+                alert('দয়া করে রিটার্নের পক্ষে একটি ছবি বা ভিডিও (Proof) আপলোড করুন!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('order_id', activeOrderId);
+            formData.append('product_id', activeProductId);
+            formData.append('seller_id', activeSellerId);
+            formData.append('return_reason', returnReason);
+            formData.append('return_details', returnDetails);
+            formData.append('proof_file', proofFile); 
+
+            try {
+                const response = await fetch('/user/submit-return-request', {
+                    method: 'POST',
+                    body: formData 
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    closeReturnModal();
+                    fetchOrders();
+                } else {
+                    alert(result.message || 'Failed to submit return request!');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error! Please try again later.');
+            }
+        }
+
+        // ২. স্টার রেটিং ক্লিক হ্যান্ডলার
+        function setupStarRating() {
+            const stars = document.querySelectorAll('#starContainer i');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.getAttribute('data-value'));
+                    updateStarUI(selectedRating);
+                });
+            });
+        }
+
+        function updateStarUI(rating) {
+            const stars = document.querySelectorAll('#starContainer i');
+            stars.forEach(s => {
+                const val = parseInt(s.getAttribute('data-value'));
+                if (val <= rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        }
+
+        // ৩. রিভিউ মোডাল কন্ট্রোল
+        function openReviewModal(productId, orderId, productTitle) {
+            activeProductId = productId;
+            activeOrderId = orderId;
+            selectedRating = 5;
+
+            document.getElementById('modal-title').innerText = 'Write a Review';
+            document.getElementById('modal-product-name').innerText = productTitle;
+            document.getElementById('reviewText').value = '';
+            
+            const reviewImgInput = document.getElementById('reviewImageFile');
+            if (reviewImgInput) reviewImgInput.value = '';
+
+            updateStarUI(selectedRating);
+            document.getElementById('reviewModal').style.display = 'flex';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+            document.getElementById('reviewText').value = '';
+            const reviewImgInput = document.getElementById('reviewImageFile');
+            if (reviewImgInput) reviewImgInput.value = '';
+        }
+
+        // ৪. রিভিউ সেভ API কল
+        async function submitReview() {
+            const reviewText = document.getElementById('reviewText').value;
+            const reviewImageFile = document.getElementById('reviewImageFile').files[0];
+
+            const formData = new FormData();
+            formData.append('product_id', activeProductId);
+            formData.append('order_id', activeOrderId);
+            formData.append('rating', selectedRating);
+            formData.append('review_text', reviewText);
+            
+            if (reviewImageFile) {
+                formData.append('review_image', reviewImageFile);
+            }
+
+            try {
+                const response = await fetch('/user/submit-review', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    closeReviewModal();
+                    fetchOrders();
+                } else {
+                    alert(result.message || 'Failed to submit review!');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error! Please try again later.');
+            }
+        }
+
+        // Utility: HTML Special Characters Escaper
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

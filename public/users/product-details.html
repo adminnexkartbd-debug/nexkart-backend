@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary SEO Meta Tags -->
+  <title id="seo-title">NexKart - Product Details</title>
+  <meta id="seo-description" name="description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন। দ্রুত ডেলিভারি এবং ক্যাশ অন ডেলিভারি সুবিধা!">
+  <meta id="seo-keywords" name="keywords" content="NexKart, Ecommerce, Buy Online, Shopping Bangladesh, Product Details">
+  <meta name="robots" content="index, follow">
+  <link id="seo-canonical" rel="canonical" href="">
+
+  <!-- Open Graph / Facebook Meta Tags -->
+  <meta property="og:type" content="product">
+  <meta id="og-title" property="og:title" content="NexKart - Product Details">
+  <meta id="og-description" property="og:description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
+  <meta id="og-[#image]" property="og:image" content="">
+  <meta id="og-url" property="og:url" content="">
+  <meta property="og:site_name" content="NexKart">
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta id="tw-title" name="twitter:title" content="NexKart - Product Details">
+  <meta id="tw-description" name="twitter:description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
+  <meta id="tw-[#image]" name="twitter:image" content="">
+
+  <!-- Schema.org Product Structured Data (JSON-LD for Google Rich Results) -->
+  <script id="product-json-ld" type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "NexKart Product",
+    "description": "NexKart Product Description",
+    "brand": {
+      "@type": "Brand",
+      "name": "NexKart"
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "BDT",
+      "price": "0",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
+ <!-- Tailwind Config Block (Must be placed before the CDN script to remove warnings) -->
+<script>
+  tailwind = {
+    config: {
+      suppressWarnings: true,
+      corePlugins: {
+        preflight: true,
+      }
+    }
+  }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- DaisyUI CDN -->
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * {
+      font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    body { 
+      background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
+      min-height: 100vh;
+    }
+
+    .theme-glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.15);
+    }
+
+    .theme-glass-input {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #ffccd5;
+    }
+
+    .horizontal-scroll-slider {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      padding-bottom: 8px;
+    }
+
+    .horizontal-scroll-slider::-webkit-scrollbar {
+      height: 5px;
+    }
+    .horizontal-scroll-slider::-webkit-scrollbar-track {
+      background: rgba(255, 204, 213, 0.5);
+      border-radius: 10px;
+    }
+    .horizontal-scroll-slider::-webkit-scrollbar-thumb {
+      background: #ff758c;
+      border-radius: 10px;
+    }
+
+    .thumb-slide-item {
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
+    .img-zoom-container {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .bg-animations {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    .floating-item {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      list-style: none;
+      width: 35px;
+      height: 35px;
+      background: rgba(255, 255, 255, 0.3);
+      bottom: -150px;
+      border-radius: 50%;
+      animation: animate 18s linear infinite;
+      color: #fff;
+      font-size: 18px;
+      backdrop-filter: blur(4px);
+    }
+
+    .floating-item:nth-child(1) { left: 10%; width: 45px; height: 45px; animation-delay: 0s; animation-duration: 14s; }
+    .floating-item:nth-child(2) { left: 25%; width: 40px; height: 40px; animation-delay: 2s; animation-duration: 12s; }
+    .floating-item:nth-child(3) { left: 45%; width: 50px; height: 50px; animation-delay: 4s; animation-duration: 16s; }
+    .floating-item:nth-child(4) { left: 65%; width: 40px; height: 40px; animation-delay: 1s; animation-duration: 13s; }
+    .floating-item:nth-child(5) { left: 80%; width: 48px; height: 48px; animation-delay: 3s; animation-duration: 15s; }
+
+    @keyframes animate {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
+      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 30%; }
+    }
+  </style>
+</head>
+<body class="text-gray-800 antialiased relative pb-10">
+
+  <ul class="bg-animations">
+    <li class="floating-item"><i class="fa-solid fa-wand-magic-sparkles"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-heart"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-spray-can-sparkles"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-gem"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-star"></i></li>
+  </ul>
+
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+    
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between py-2">
+      <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+        <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
+      </a>
+
+      <button class="theme-glass-card hover:bg-white text-[#d63384] w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-sm">
+        <i class="fa-solid fa-share-nodes"></i>
+      </button>
+    </div>
+
+    <!-- Product Main Section -->
+    <div id="product-main-section" class="theme-glass-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8 items-start">
+      
+      <!-- Left Column -->
+      <div class="space-y-4 md:sticky md:top-6">
+        <div id="img-zoom-box" class="img-zoom-container relative rounded-2xl overflow-hidden border border-pink-200 bg-white/80 h-[480px] md:h-[620px] flex items-center justify-center p-4 shadow-sm group">
+          <img id="main-product-image" src="" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+          <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+            <i class="fa-solid fa-expand"></i> Click to Fullscreen
+          </div>
+        </div>
+        
+        <div id="thumbnail-container" class="horizontal-scroll-slider p-1"></div>
+
+        <div id="variant-section" class="space-y-2 hidden pt-2">
+          <div class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-[#ff4b6e]"></i> Select Option / Size:
+          </div>
+          <div id="variant-container" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-5">
+        <div>
+          <span id="product-category" class="text-[11px] uppercase tracking-widest font-bold text-[#d63384] bg-pink-100/90 px-3.5 py-1 rounded-full border border-pink-200"></span>
+          <h1 id="product-title" class="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 leading-snug"></h1>
+        </div>
+
+        <div class="flex items-center justify-between theme-glass-input p-4 rounded-2xl shadow-sm">
+          <div>
+            <div class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Price</div>
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span id="product-sale-price" class="text-3xl font-extrabold text-[#ff4b6e]"></span>
+              <span id="product-old-price" class="text-base text-gray-400 line-through hidden"></span>
+              <span id="product-regular-price" class="text-sm text-gray-400 line-through"></span>
+            </div>
+          </div>
+          <div id="stock-status-badge" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">In Stock</div>
+        </div>
+
+        <div class="border-t border-pink-100 pt-4 space-y-2">
+          <h3 class="text-xs uppercase tracking-wider font-bold text-[#d63384] mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-truck-fast text-[#ff4b6e]"></i> Service & Delivery
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center gap-2.5 p-2.5 bg-blue-50/80 border border-blue-200 rounded-xl text-blue-900">
+              <i class="fa-solid fa-location-dot text-blue-600"></i>
+              <span>Ships From: <strong id="shipping-from-loc">Standard Warehouse</strong></span>
+            </div>
+            <div class="flex items-center gap-2.5 p-2.5 bg-purple-50/80 border border-purple-200 rounded-xl text-purple-900">
+              <i class="fa-solid fa-tag text-purple-600"></i>
+              <span>SKU: <strong id="product-sku" class="font-mono">N/A</strong></span>
+            </div>
+            <div class="flex items-center gap-2.5 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 sm:col-span-2">
+              <i class="fa-regular fa-clock text-amber-600"></i>
+              <span>Estimated Delivery: <strong id="estimated-delivery-time">3-5 Business Days</strong></span>
+            </div>
+          </div>
+          <div id="delivery-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1"></div>
+        </div>
+
+        <!-- Seller Information -->
+        <div class="border-t border-pink-100 pt-4">
+          <h3 class="text-xs uppercase tracking-wider font-bold text-[#d63384] mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-shop text-[#ff4b6e]"></i> Seller Information
+          </h3>
+          <div class="theme-glass-input p-3.5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3">
+              <img id="seller-avatar" src="" class="w-12 h-12 rounded-xl object-cover border border-pink-200" alt="Seller Avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>';">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 id="seller-shop-name" class="font-bold text-gray-900 text-sm">NexKart Store</h4>
+                  <span id="seller-verified-status"></span>
+                </div>
+                <p id="seller-slogan" class="text-xs text-gray-500 mt-0.5">Be Your Own Kind of Beautiful</p>
+              </div>
+            </div>
+            <a id="visit-store-btn" href="/user/seller-profile" class="w-full sm:w-auto bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-xs font-bold px-4 py-2.5 rounded-xl border border-pink-200 transition-all flex items-center justify-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-store"></i> Visit Store
+            </a>
+          </div>
+        </div>
+
+        <!-- Quantity & Total Price Calculator -->
+        <div class="theme-glass-input p-4 rounded-2xl flex items-center justify-between border-2 border-pink-200 shadow-sm">
+          <div>
+            <div class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Quantity</div>
+            <div class="flex items-center gap-3 mt-1">
+              <button onclick="updateQuantity(-1)" class="w-8 h-8 bg-white rounded-xl border border-pink-200 text-[#ff4b6e] font-bold flex items-center justify-center shadow-sm hover:bg-pink-50 transition-all">-</button>
+              <span id="product-quantity" class="text-base font-bold text-gray-800">1</span>
+              <button onclick="updateQuantity(1)" class="w-8 h-8 bg-white rounded-xl border border-pink-200 text-[#ff4b6e] font-bold flex items-center justify-center shadow-sm hover:bg-pink-50 transition-all">+</button>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Total Price</div>
+            <div id="product-total-price" class="text-2xl font-extrabold text-[#ff4b6e]">৳ 0</div>
+          </div>
+        </div>
+
+        <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-bag-shopping"></i> Order Now
+          </button>
+
+          <button onclick="checkLoginAndProceed('cart')" class="bg-white hover:bg-pink-50 text-[#d63384] font-bold py-3.5 px-6 rounded-2xl border border-pink-200 shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-cart-plus text-[#ff4b6e]"></i> Add to Cart
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sticky Navigation Bar -->
+    <div class="sticky top-3 z-40 theme-glass-card rounded-2xl px-6 py-3.5 shadow-md border border-pink-200 my-6">
+      <div class="flex items-center gap-8 text-sm font-medium text-gray-500 overflow-x-auto whitespace-nowrap">
+        <a href="#section-description" id="nav-description" class="hover:text-[#ff4b6e] transition-all pb-1 font-bold text-gray-900 border-b-2 border-[#ff4b6e]">Description</a>
+        <a href="#section-specification" id="nav-specification" class="hover:text-[#ff4b6e] transition-all pb-1">Specifications</a>
+        <a href="#section-reviews" id="nav-reviews" class="hover:text-[#ff4b6e] transition-all pb-1">Customer Reviews</a>
+        <a href="#section-inquiries" id="nav-inquiries" class="hover:text-[#ff4b6e] transition-all pb-1">Product Inquiries</a>
+      </div>
+    </div>
+
+    <!-- Sections -->
+    <div class="space-y-8">
+
+      <!-- 1. Description -->
+      <div id="section-description" class="scroll-mt-20 theme-glass-card rounded-3xl p-6 md:p-8 space-y-4">
+        <h2 class="text-base font-bold text-gray-900 tracking-wide pb-3 border-b border-pink-100 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-[#ff4b6e]"></i> Description
+        </h2>
+        <div id="product-description" class="text-gray-700 text-sm leading-relaxed space-y-3 whitespace-pre-line"></div>
+        <div id="desc-toggle-btn-container" class="hidden text-center pt-2">
+          <button id="desc-toggle-btn" onclick="toggleDescription()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-4 py-2 rounded-xl border border-pink-200 transition-all">
+            <span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 2. Specifications -->
+      <div id="section-specification" class="scroll-mt-20 theme-glass-card rounded-3xl p-6 md:p-8 space-y-6">
+        <h2 class="text-base font-bold text-gray-900 tracking-wide pb-3 border-b border-pink-100 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-[#ff4b6e]"></i> Specifications & Highlights
+        </h2>
+        <ul id="product-highlights" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-700"></ul>
+        <div id="spec-toggle-btn-container" class="hidden text-center pt-2">
+          <button id="spec-toggle-btn" onclick="toggleSpecifications()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-4 py-2 rounded-xl border border-pink-200 transition-all">
+            <span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+        </div>
+        <div id="specification-images-gallery" class="pt-4 space-y-6"></div>
+      </div>
+
+      <!-- 3. Customer Reviews -->
+      <div id="section-reviews" class="scroll-mt-20 theme-glass-card rounded-3xl p-6 md:p-8 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-pink-100 flex-wrap gap-2">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-star text-amber-500"></i> Customer Reviews (<span id="total-reviews-count">0</span>)
+            </h2>
+            <p class="text-xs text-gray-500 mt-0.5">Verified buyer feedback for this product</p>
+          </div>
+          <span id="average-rating-badge" class="bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-amber-200">
+            0.0 / 5.0 Rating
+          </span>
+        </div>
+
+        <div class="space-y-3 max-h-[450px] overflow-y-auto pr-1" id="reviews-container">
+          <p class="text-xs text-gray-500 text-center py-4">Loading reviews...</p>
+        </div>
+
+        <div id="reviews-pagination" class="flex items-center justify-between border-t border-pink-100 pt-3 mt-3 hidden text-xs">
+          <button id="reviews-prev-btn" onclick="changeReviewsPage(-1)" class="px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-[#ff4b6e] font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <span id="reviews-page-info" class="font-semibold text-gray-600">Page 1 of 1</span>
+          <button id="reviews-next-btn" onclick="changeReviewsPage(1)" class="px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-[#ff4b6e] font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Product Inquiries -->
+      <div id="section-inquiries" class="scroll-mt-20 theme-glass-card rounded-3xl p-6 md:p-8 space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-pink-100 flex-wrap gap-2">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-circle-question text-[#ff4b6e]"></i> Questions & Answers (Inquiries)
+            </h2>
+            <p class="text-xs text-gray-500 mt-0.5">Ask questions regarding this product</p>
+          </div>
+        </div>
+
+        <div class="bg-white/80 p-4 rounded-2xl border border-pink-200 space-y-3">
+          <label for="user-inquiry-input" class="block text-xs font-bold text-gray-700">Have a question about this product?</label>
+          <textarea id="user-inquiry-input" rows="2" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="Write your question here..."></textarea>
+          <div class="flex justify-end">
+            <button onclick="submitInquiry()" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md hover:opacity-95 transition-all">
+              <i class="fa-solid fa-paper-plane"></i> Submit Inquiry
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1" id="inquiries-container"></div>
+
+        <div id="inquiries-pagination" class="flex items-center justify-between border-t border-pink-100 pt-3 mt-3 hidden text-xs">
+          <button id="inquiries-prev-btn" onclick="changeInquiriesPage(-1)" class="px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-[#ff4b6e] font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </button>
+          <span id="inquiries-page-info" class="font-semibold text-gray-600">Page 1 of 1</span>
+          <button id="inquiries-next-btn" onclick="changeInquiriesPage(1)" class="px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-[#ff4b6e] font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Same Seller Products -->
+      <div class="theme-glass-card rounded-3xl p-6 md:p-8 space-y-4" id="same-seller-section" style="display: none;">
+        <h2 class="text-base font-bold text-gray-900 tracking-wide pb-3 border-b border-pink-100 flex items-center gap-2">
+          <i class="fa-solid fa-store text-[#ff4b6e]"></i> More Products from this Seller
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="same-seller-grid"></div>
+      </div>
+
+      <!-- 6. Suggested Products -->
+      <div id="section-suggested" class="theme-glass-card rounded-3xl p-6 md:p-8 space-y-4" style="display: none;">
+        <h2 class="text-base font-bold text-gray-900 tracking-wide pb-3 border-b border-pink-100 flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-[#ff4b6e]"></i> Suggested Products (You May Also Like)
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="suggested-grid"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Custom Login Dialog Modal -->
+  <div id="login-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-all duration-300">
+    <div class="theme-glass-card bg-white/95 rounded-3xl max-w-md w-full p-6 md:p-8 space-y-5 relative shadow-2xl border border-pink-200 animate-fadeIn">
+      
+      <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] flex items-center justify-center transition-all">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 bg-pink-100 text-[#ff4b6e] rounded-2xl flex items-center justify-center mx-auto text-xl mb-2">
+          <i class="fa-solid fa-user-lock"></i>
+        </div>
+        <h3 class="text-xl font-extrabold text-gray-900">Sign In to Continue</h3>
+        <p class="text-xs text-gray-500">Please log in to complete your purchase or action.</p>
+      </div>
+
+      <a href="#" onclick="redirectToLogin()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-2xl border border-gray-300 shadow-sm transition-all">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </a>
+
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-gray-200 w-full"></div>
+        <span class="bg-white px-3 text-[10px] font-bold text-gray-400 uppercase absolute">Or</span>
+      </div>
+
+      <form onsubmit="handleModalLogin(event)" class="space-y-3">
+        <div>
+          <label for="modal-email" class="block text-[11px] font-bold text-gray-700 mb-1">Email</label>
+          <input type="email" id="modal-email" required placeholder="Enter email" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]">
+        </div>
+        <div>
+          <label for="modal-password" class="block text-[11px] font-bold text-gray-700 mb-1">Password</label>
+          <input type="password" id="modal-password" required placeholder="Enter password" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]">
+        </div>
+        <button type="submit" id="modal-login-btn" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all text-xs">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Image Fullscreen Modal -->
+  <div id="image-fullscreen-modal" class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 transition-all duration-300">
+    <button onclick="closeFullscreenModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all z-50">
+      <i class="fa-solid fa-xmark text-xl"></i>
+    </button>
+    <img id="fullscreen-modal-image" src="" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    let currentStockPrice = 0;
+    let productQuantity = 1;
+    let selectedVariant = null;
+
+    // Show More / Show Less Global Variables
+    let fullDescriptionText = '';
+    let isDescExpanded = false;
+    let isSpecExpanded = false;
+
+    // Pagination Global Variables
+    let allReviewsData = [];
+    let currentReviewsPage = 1;
+    const reviewsPerPage = 5;
+
+    let allInquiriesData = [];
+    let currentInquiriesPage = 1;
+    const inquiriesPerPage = 5;
+
+    function setupImageFullscreen() {
+      const container = document.getElementById('img-zoom-box');
+      const img = document.getElementById('main-product-image');
+      if (!container || !img) return;
+
+      container.addEventListener('click', () => {
+        const modal = document.getElementById('image-fullscreen-modal');
+        const modalImg = document.getElementById('fullscreen-modal-image');
+        modalImg.src = img.src;
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+          modalImg.classList.remove('scale-95');
+          modalImg.classList.add('scale-100');
+        }, 10);
+      });
+    }
+
+    function closeFullscreenModal() {
+      const modal = document.getElementById('image-fullscreen-modal');
+      const modalImg = document.getElementById('fullscreen-modal-image');
+      modalImg.classList.remove('scale-100');
+      modalImg.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    document.getElementById('image-fullscreen-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeFullscreenModal();
+      }
+    });
+
+    function redirectToLogin() {
+      const currentUrl = window.location.href;
+      fetch('/user/save-redirect-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirectTo: currentUrl })
+      }).then(() => {
+        window.location.href = `/user/auth/google`; 
+      }).catch(err => {
+        window.location.href = `/user/auth/google`;
+      });
+    }
+
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
+
+    // Updated updateQuantity method with stock limit validation logic
+    function updateQuantity(change) {
+      const maxStock = Number(window.currentProductStock || 0);
+      const newQuantity = productQuantity + change;
+
+      if (change > 0 && maxStock > 0 && newQuantity > maxStock) {
+        alert(`Sorry! Out of stock. Maximum available quantity is ${maxStock}.`);
+        return;
+      }
+
+      productQuantity = newQuantity;
+      if (productQuantity < 1) {
+        productQuantity = 1;
+      }
+      document.getElementById('product-quantity').innerText = productQuantity;
+      calculateTotalPrice();
+    }
+
+    function calculateTotalPrice() {
+      const total = currentStockPrice * productQuantity;
+      document.getElementById('product-total-price').innerText = `৳ ${total.toLocaleString()}`;
+    }
+
+    function selectVariant(element, variantName) {
+      document.querySelectorAll('.variant-btn').forEach(btn => {
+        btn.classList.remove('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
+        btn.classList.add('bg-white', 'text-gray-700', 'border-pink-200');
+      });
+      element.classList.remove('bg-white', 'text-gray-700', 'border-pink-200');
+      element.classList.add('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
+      selectedVariant = variantName;
+    }
+
+    function openLoginModal() {
+      document.getElementById('login-modal').classList.remove('hidden');
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    async function handleModalLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('modal-email').value.trim();
+      const password = document.getElementById('modal-password').value.trim();
+      const loginBtn = document.getElementById('modal-login-btn');
+
+      if (!email || !password) {
+        alert('Please provide email and password!');
+        return;
+      }
+
+      loginBtn.innerText = 'Signing in...';
+      loginBtn.disabled = true;
+
+      try {
+        const response = await fetch('/user/cslogin-ajax', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+
+        if (data.success) {
+          window.location.reload(); 
+        } else {
+          alert(data.message || 'Incorrect email or password!');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Server error! Please try again.');
+      } finally {
+        loginBtn.innerText = 'Sign In';
+        loginBtn.disabled = false;
+      }
+    }
+
+    function executeOrderRedirect() {
+      if (!productId) return;
+      let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
+      if (selectedVariant) {
+        orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
+      }
+      window.location.href = orderUrl;
+    }
+
+    async function checkLoginAndProceed(actionType) {
+      try {
+        const response = await fetch('/user/current_user');
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData && (userData.id || userData.userId)) {
+            if (actionType === 'order') {
+              executeOrderRedirect();
+            } else if (actionType === 'cart') {
+              addToDatabaseCart();
+            }
+            return;
+          }
+        }
+        openLoginModal();
+      } catch (error) {
+        console.error("Auth check error:", error);
+        openLoginModal();
+      }
+    }
+
+    async function addToDatabaseCart() {
+      if (!productId) return;
+      try {
+        const response = await fetch('/user/add-to-cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            product_id: productId, 
+            quantity: productQuantity,
+            variant: selectedVariant 
+          })
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('Product successfully added to cart!');
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Cart Error:', error);
+        alert('Server error!');
+      }
+    }
+
+    async function submitInquiry() {
+      const input = document.getElementById('user-inquiry-input');
+      const questionText = input.value.trim();
+      
+      if (!questionText) {
+        alert('Please write your question!');
+        return;
+      }
+
+      try {
+        const response = await fetch('/user/inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: productId,
+            question: questionText,
+            user_name: 'Valued Customer'
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          alert('Inquiry submitted successfully!');
+          input.value = '';
+          loadInquiries();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error submitting inquiry:', error);
+      }
+    }
+
+    async function loadInquiries() {
+      if (!productId) return;
+
+      try {
+        const response = await fetch(`/user/inquiries/${productId}`);
+        const data = await response.json();
+
+        if (data.success && data.inquiries) {
+          allInquiriesData = data.inquiries;
+          currentInquiriesPage = 1;
+          renderInquiriesPage();
+        }
+      } catch (error) {
+        console.error('Error loading inquiries:', error);
+      }
+    }
+
+    function renderInquiriesPage() {
+      const container = document.getElementById('inquiries-container');
+      const paginationElem = document.getElementById('inquiries-pagination');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!allInquiriesData || allInquiriesData.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500 text-center py-3">No questions asked yet. Be the first to ask!</p>`;
+        if (paginationElem) paginationElem.classList.add('hidden');
+        return;
+      }
+
+      const totalPages = Math.ceil(allInquiriesData.length / inquiriesPerPage);
+      const startIndex = (currentInquiriesPage - 1) * inquiriesPerPage;
+      const paginatedInquiries = allInquiriesData.slice(startIndex, startIndex + inquiriesPerPage);
+
+      paginatedInquiries.forEach(item => {
+        let answerSection = item.answer 
+          ? `<div class="ml-4 sm:ml-6 pl-3 border-l-2 border-[#ff4b6e] space-y-1 bg-white/60 p-3 rounded-r-xl mt-2">
+               <div class="flex items-center justify-between">
+                 <span class="font-bold text-[11px] text-[#ff4b6e]"><i class="fa-solid fa-store"></i> Store Admin (Reply)</span>
+               </div>
+               <p class="text-xs text-gray-600">${item.answer}</p>
+             </div>`
+          : `<p class="text-[11px] text-[#d63384] italic mt-2">Admin will reply to this question soon.</p>`;
+
+        container.innerHTML += `
+          <div class="theme-glass-input p-4 rounded-2xl space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-gray-800"><i class="fa-solid fa-user-circle text-[#ff4b6e]"></i> ${item.user_name || 'Customer'}</span>
+              <span class="text-[10px] text-gray-400 font-mono">${new Date(item.created_at).toLocaleDateString()}</span>
+            </div>
+            <p class="text-xs font-medium text-gray-800 bg-pink-50/60 p-2.5 rounded-xl border border-pink-100">
+              <strong>Q:</strong> ${item.question}
+            </p>
+            ${answerSection}
+          </div>
+        `;
+      });
+
+      if (totalPages > 1 && paginationElem) {
+        paginationElem.classList.remove('hidden');
+        document.getElementById('inquiries-page-info').innerText = `Page ${currentInquiriesPage} of ${totalPages}`;
+        document.getElementById('inquiries-prev-btn').disabled = currentInquiriesPage === 1;
+        document.getElementById('inquiries-next-btn').disabled = currentInquiriesPage === totalPages;
+      } else if (paginationElem) {
+        paginationElem.classList.add('hidden');
+      }
+    }
+
+    function changeInquiriesPage(direction) {
+      const totalPages = Math.ceil(allInquiriesData.length / inquiriesPerPage);
+      currentInquiriesPage += direction;
+      if (currentInquiriesPage < 1) currentInquiriesPage = 1;
+      if (currentInquiriesPage > totalPages) currentInquiriesPage = totalPages;
+      renderInquiriesPage();
+    }
+
+    window.addEventListener('scroll', () => {
+      const sections = ['section-description', 'section-specification', 'section-reviews', 'section-inquiries'];
+      const navLinks = {
+        'section-description': document.getElementById('nav-description'),
+        'section-specification': document.getElementById('nav-specification'),
+        'section-reviews': document.getElementById('nav-reviews'),
+        'section-inquiries': document.getElementById('nav-inquiries')
+      };
+
+      let currentSection = '';
+
+      sections.forEach(sectionId => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 160 && rect.bottom >= 160) {
+            currentSection = sectionId;
+          }
+        }
+      });
+
+      Object.keys(navLinks).forEach(key => {
+        if (navLinks[key]) {
+          if (key === currentSection) {
+            navLinks[key].classList.add('text-gray-900', 'font-bold', 'border-b-2', 'border-[#ff4b6e]');
+            navLinks[key].classList.remove('text-gray-500');
+          } else {
+            navLinks[key].classList.remove('text-gray-900', 'font-bold', 'border-b-2', 'border-[#ff4b6e]');
+            navLinks[key].classList.add('text-gray-500');
+          }
+        }
+      });
+    });
+
+    function changeMainImage(imageUrl, element) {
+      const mainImg = document.getElementById('main-product-image');
+      if (!mainImg) return;
+
+      mainImg.style.opacity = '0.3';
+      setTimeout(() => {
+        mainImg.src = imageUrl;
+        mainImg.style.opacity = '1';
+      }, 150);
+
+      document.querySelectorAll('.thumb-btn').forEach(btn => {
+        btn.classList.remove('border-[#ff4b6e]', 'opacity-100');
+        btn.classList.add('border-pink-200', 'opacity-60');
+      });
+      if(element) {
+        element.classList.remove('border-pink-200', 'opacity-60');
+        element.classList.add('border-[#ff4b6e]', 'opacity-100');
+      }
+    }
+
+    function renderGallery(images) {
+      const container = document.getElementById('thumbnail-container');
+      const specImageContainer = document.getElementById('specification-images-gallery');
+      
+      if (!container) return;
+
+      container.innerHTML = '';
+      if (specImageContainer) specImageContainer.innerHTML = '';
+
+      if (!images || images.length === 0) {
+        images = [''];
+      }
+      
+      images.forEach((imgUrl, index) => {
+        let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
+        if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+          formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
+        }
+        
+        const isActive = index === 0;
+        if(isActive && document.getElementById('main-product-image')) {
+          document.getElementById('main-product-image').src = formattedUrl;
+        }
+
+        container.innerHTML += `
+          <div class="thumb-slide-item">
+            <button onclick="changeMainImage('${formattedUrl}', this)" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${isActive ? 'border-[#ff4b6e] opacity-100' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all shadow-sm">
+              <img src="${formattedUrl}" alt="Thumbnail ${index + 1}" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
+            </button>
+          </div>
+        `;
+
+        if (specImageContainer && formattedUrl) {
+          specImageContainer.innerHTML += `
+            <div class="w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center">
+              <img src="${formattedUrl}" alt="Specification Gallery Image" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.style.display='none';">
+            </div>
+          `;
+        }
+      });
+    }
+
+    function createMiniProductCard(product) {
+      let rawImg = product.primary_image ? product.primary_image.trim() : '';
+      let imageSrc = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='250' height='180' viewBox='0 0 250 180'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='14'>No Image</text></svg>";
+
+      if (rawImg) {
+          let cleanRawImg = rawImg.replace(/^(\/?uploads\/)+/, '');
+
+          if (cleanRawImg.startsWith('http://') || cleanRawImg.startsWith('https://')) {
+              imageSrc = cleanRawImg;
+          } else if (cleanRawImg.includes('cloudinary.com')) {
+              imageSrc = 'https://' + cleanRawImg.replace(/^https?:\/\//, '');
+          } else {
+              imageSrc = '/uploads/' + cleanRawImg;
+          }
+      }
+      
+      let discountBadge = '';
+      if (Number(product.regular_price) > Number(product.sale_price)) {
+          const discount = Math.round(((product.regular_price - product.sale_price) / product.regular_price) * 100);
+          discountBadge = `<span class="absolute top-3 left-3 bg-[#ff4b6e] text-white text-[11px] font-semibold px-2 py-0.5 rounded-md z-10">${discount}% OFF</span>`;
+      }
+
+      const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
+      const reviewCount = product.review_count || 0;
+
+      return `
+        <div onclick="window.location.href='/user/product-details?id=${product.product_id || product.id}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+            ${discountBadge}
+            <div>
+                <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
+                    
+                    <div class="flex items-center gap-1 text-xs">
+                        <i class="fa-solid fa-star text-amber-400 text-[11px]"></i>
+                        <span class="font-bold text-gray-700 text-[11px]">${avgRating}</span>
+                        <span class="text-gray-400 text-[10px]">(${reviewCount})</span>
+                    </div>
+                </div>
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 my-1 h-10" title="${product.title}">${product.title}</h3>
+            </div>
+
+            <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                <div class="flex flex-col">
+                    <span class="text-sm sm:text-base font-bold text-[#ff4b6e]">৳ ${product.sale_price}</span>
+                    ${Number(product.regular_price) > Number(product.sale_price) ? `<span class="text-[11px] text-gray-400 line-through">৳ ${product.regular_price}</span>` : ''}
+                </div>
+                <button class="bg-pink-50 text-[#ff4b6e] hover:bg-[#ff4b6e] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border border-pink-200 transition-all shadow-sm">
+                    <i class="fa-solid fa-cart-plus text-xs"></i>
+                </button>
+            </div>
+        </div>
+      `;
+    }
+    function updateDynamicSEO(product, galleryImages) {
+      if (!product) return;
+
+      const title = product.title ? `${product.title} - NexKart` : 'NexKart Product Details';
+      const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
+      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফার!`;
+      const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKart`;
+      const pageUrl = window.location.href;
+
+      let imageUrl = '';
+      if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
+        imageUrl = galleryImages[0];
+      } else if (product.primary_image) {
+        imageUrl = product.primary_image;
+      }
+      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        imageUrl = window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+      }
+
+      document.title = title;
+      document.getElementById('seo-title').innerText = title;
+      document.getElementById('seo-description').setAttribute('content', metaDescription);
+      document.getElementById('seo-keywords').setAttribute('content', keywords);
+      document.getElementById('seo-canonical').setAttribute('href', pageUrl);
+
+      document.getElementById('og-title').setAttribute('content', title);
+      document.getElementById('og-description').setAttribute('content', metaDescription);
+      document.getElementById('og-[#image]').setAttribute('content', imageUrl);
+      document.getElementById('og-url').setAttribute('content', pageUrl);
+
+      document.getElementById('tw-title').setAttribute('content', title);
+      document.getElementById('tw-description').setAttribute('content', metaDescription);
+      document.getElementById('tw-[#image]').setAttribute('content', imageUrl);
+
+      const schemaData = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.title || "NexKart Product",
+        "image": imageUrl ? [imageUrl] : [],
+        "description": metaDescription,
+        "sku": product.sku || product.product_id || product.id || "N/A",
+        "brand": {
+          "@type": "Brand",
+          "name": product.brand_name || product.seller_shop_name || "NexKart"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": pageUrl,
+          "priceCurrency": "BDT",
+          "price": product.sale_price || "0",
+          "itemCondition": "https://schema.org/NewCondition",
+          "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+        }
+      };
+
+      if (product.avg_rating && Number(product.avg_rating) > 0) {
+        schemaData.aggregateRating = {
+          "@type": "AggregateRating",
+          "ratingValue": Number(product.avg_rating).toFixed(1),
+          "reviewCount": product.review_count || 1
+        };
+      }
+
+      const schemaScript = document.getElementById('product-json-ld');
+      if (schemaScript) {
+        schemaScript.textContent = JSON.stringify(schemaData);
+      }
+    }
+
+    function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts) {
+      document.getElementById('product-title').innerText = product.title || 'Untitled Product';
+      document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
+      document.getElementById('product-category').innerText = product.category || 'General';
+
+      window.currentProductStock = Number(product.stock_quantity || 0);
+
+      updateDynamicSEO(product, galleryImages);
+
+      currentStockPrice = parseFloat(product.sale_price || 0);
+
+      const stockQty = Number(product.stock_quantity || 0);
+      const stockBadge = document.getElementById('stock-status-badge');
+      const actionButtonsContainer = document.querySelector('.pt-2.grid.grid-cols-1.sm\\:grid-cols-2');
+
+      if (stockQty <= 0) {
+          if (stockBadge) {
+              stockBadge.innerText = 'Out of Stock';
+              stockBadge.className = 'bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full border border-red-200';
+          }
+
+          if (actionButtonsContainer) {
+              actionButtonsContainer.innerHTML = `
+                  <button disabled class="w-full sm:col-span-2 bg-gray-300 text-gray-500 font-bold py-3.5 px-6 rounded-2xl shadow-none cursor-not-allowed flex items-center justify-center gap-2">
+                      <i class="fa-solid fa-ban"></i> Out of Stock
+                  </button>
+              `;
+          }
+          productQuantity = 0;
+          document.getElementById('product-quantity').innerText = '0';
+          document.getElementById('product-total-price').innerText = '৳ 0';
+      } else {
+          if (stockBadge) {
+              stockBadge.innerText = 'In Stock';
+              stockBadge.className = 'bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200';
+          }
+
+          if (actionButtonsContainer) {
+              actionButtonsContainer.innerHTML = `
+                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-bag-shopping"></i> Order Now
+                  </button>
+
+                  <button onclick="checkLoginAndProceed('cart')" class="bg-white hover:bg-pink-50 text-[#d63384] font-bold py-3.5 px-6 rounded-2xl border border-pink-200 shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i class="fa-solid fa-cart-plus text-[#ff4b6e]"></i> Add to Cart
+                  </button>
+              `;
+          }
+          productQuantity = 1;
+          calculateTotalPrice();
+      }
+
+      const suggestedSection = document.getElementById('section-suggested');
+      const suggestedGrid = document.getElementById('suggested-grid');
+      if (suggestedProducts && suggestedProducts.length > 0) {
+        suggestedSection.style.display = 'block';
+        suggestedGrid.innerHTML = suggestedProducts.map(p => createMiniProductCard(p)).join('');
+      } else {
+        suggestedSection.style.display = 'none';
+      }
+
+      const sellerSection = document.getElementById('same-seller-section');
+      const sellerGrid = document.getElementById('same-seller-grid');
+      if (sellerProducts && sellerProducts.length > 0) {
+        sellerSection.style.display = 'block';
+        sellerGrid.innerHTML = sellerProducts.map(p => createMiniProductCard(p)).join('');
+      } else {
+        sellerSection.style.display = 'none';
+      }
+      
+      document.getElementById('product-sale-price').innerText = `৳ ${currentStockPrice.toLocaleString()}`;
+      
+      const oldPriceElem = document.getElementById('product-old-price');
+      if (product.old_price && parseFloat(product.old_price) > 0) {
+        oldPriceElem.innerText = `৳ ${parseFloat(product.old_price).toLocaleString()}`;
+        oldPriceElem.classList.remove('hidden');
+      } else {
+        oldPriceElem.classList.add('hidden');
+      }
+
+      if (Number(product.regular_price) > Number(product.sale_price)) {
+        document.getElementById('product-regular-price').innerText = `৳ ${parseFloat(product.regular_price).toLocaleString()}`;
+      } else {
+        document.getElementById('product-regular-price').innerText = '';
+      }
+
+      const variantSection = document.getElementById('variant-section');
+      const variantContainer = document.getElementById('variant-container');
+      variantContainer.innerHTML = '';
+      
+      const rawVariants = product.products_variant || product.product_variants || '';
+      if (rawVariants && rawVariants.trim() !== '') {
+        const variantList = rawVariants.split(',').map(v => v.trim()).filter(v => v !== '');
+        if (variantList.length > 0) {
+          variantSection.classList.remove('hidden');
+          variantList.forEach((v, index) => {
+            const isFirst = index === 0;
+            if (isFirst) selectedVariant = v;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `variant-btn uppercase font-semibold text-xs px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFirst 
+                ? 'bg-[#ff4b6e] text-white border-[#ff4b6e] shadow-md' 
+                : 'bg-white text-gray-700 border-pink-200 hover:border-[#ff4b6e]'
+            }`;
+            btn.innerText = v;
+            btn.onclick = () => selectVariant(btn, v);
+            variantContainer.appendChild(btn);
+          });
+        } else {
+          variantSection.classList.add('hidden');
+        }
+      } else {
+        variantSection.classList.add('hidden');
+      }
+
+      document.getElementById('shipping-from-loc').innerText = product.shipping_from || 'Main Warehouse';
+      document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+
+      document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKart Official';
+      document.getElementById('seller-slogan').innerText = product.seller_slogan || 'Best Quality Guaranteed';
+
+      const visitStoreBtn = document.getElementById('visit-store-btn');
+      const sellerId = product.admin_id || product.seller_id;
+      if (visitStoreBtn && sellerId) {
+        visitStoreBtn.href = `/user/store/${sellerId}`;
+      }
+
+      const sellerAvatar = document.getElementById('seller-avatar');
+      if (product.seller_picture && product.seller_picture.trim() !== '') {
+        let picUrl = product.seller_picture.trim();
+        if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://')) {
+          picUrl = picUrl.startsWith('/') ? picUrl : '/' + picUrl;
+        }
+        sellerAvatar.src = picUrl;
+      } else {
+        sellerAvatar.src = 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>';
+      }
+
+      const verifiedBadgeContainer = document.getElementById('seller-verified-status');
+      if (product.seller_is_verified == 1 || product.is_verified == 1) {
+        verifiedBadgeContainer.innerHTML = `
+          <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i> Verified
+          </span>`;
+      } else {
+        verifiedBadgeContainer.innerHTML = `
+          <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-300">
+            Unverified
+          </span>`;
+      }
+
+      const deliveryContainer = document.getElementById('delivery-options');
+      deliveryContainer.innerHTML = '';
+      
+      if (Number(product.free_shipping) === 1) {
+        deliveryContainer.innerHTML += `
+          <div class="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
+            <i class="fa-solid fa-truck-fast text-emerald-600"></i> Free Shipping
+          </div>`;
+      } else {
+        deliveryContainer.innerHTML += `
+          <div class="flex items-center gap-2 p-2 bg-pink-50 border border-pink-200 rounded-xl text-pink-900">
+            <i class="fa-solid fa-truck-ramp-box text-[#ff4b6e]"></i> Delivery Charge: ৳${product.delivery_charge || '60'}
+          </div>`;
+      }
+
+      if (Number(product.cod_available) === 1) {
+        deliveryContainer.innerHTML += `
+          <div class="flex items-center gap-2 p-2 bg-[#ff4b6e]/10 border border-pink-200 rounded-xl text-pink-900">
+            <i class="fa-solid fa-hand-holding-dollar text-[#ff4b6e]"></i> Cash on Delivery Available
+          </div>`;
+      }
+
+      fullDescriptionText = product.description || 'No description available for this product.';
+      const descContainer = document.getElementById('product-description');
+      const descBtnContainer = document.getElementById('desc-toggle-btn-container');
+
+      if (fullDescriptionText.length > 180) {
+        descContainer.innerHTML = fullDescriptionText.substring(0, 180) + '...';
+        descBtnContainer.classList.remove('hidden');
+        isDescExpanded = false;
+      } else {
+        descContainer.innerHTML = fullDescriptionText;
+        descBtnContainer.classList.add('hidden');
+      }
+
+      const highlightsContainer = document.getElementById('product-highlights');
+      let specItems = [];
+
+      const brandName = product.brand_name ? product.brand_name : 'N/A';
+      specItems.push(`
+        <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
+          <span class="text-gray-500">Brand Name:</span>
+          <span class="text-gray-900 font-bold">${brandName}</span>
+        </li>
+      `);
+
+      if (product.product_highlights) {
+        let highlightsList = typeof product.product_highlights === 'string' 
+                              ? product.product_highlights.split(',') 
+                              : product.product_highlights;
+
+        if (Array.isArray(highlightsList) && highlightsList.length > 0) {
+          highlightsList.forEach(text => {
+            specItems.push(`
+              <li class="spec-item flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
+                <i class="fa-solid fa-circle-check text-[#ff4b6e]"></i> ${String(text).trim()}
+              </li>
+            `);
+          });
+        }
+      }
+
+      if (product.return_policy) {
+        specItems.push(`
+          <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
+            <span class="text-gray-500">Return Policy:</span>
+            <span class="text-gray-900 font-bold">${product.return_policy}</span>
+          </li>
+        `);
+      }
+
+      if (Number(product.open_box_inspection) === 1) {
+        const openBoxText = product.open_box_condition || product.open_box_text || 'Open Box Inspection Allowed';
+        specItems.push(`
+          <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
+            <span class="text-gray-500">Open Box Inspection:</span>
+            <span class="text-emerald-700 font-bold">${openBoxText}</span>
+          </li>
+        `);
+      }
+
+      highlightsContainer.innerHTML = specItems.join('');
+
+      const specBtnContainer = document.getElementById('spec-toggle-btn-container');
+      const allSpecElements = document.querySelectorAll('.spec-item');
+
+      if (allSpecElements.length > 3) {
+        specBtnContainer.classList.remove('hidden');
+        allSpecElements.forEach((el, index) => {
+          if (index >= 3) {
+            el.classList.add('hidden');
+          }
+        });
+        isSpecExpanded = false;
+      } else {
+        specBtnContainer.classList.add('hidden');
+      }
+
+      renderGallery(galleryImages);
+      setupImageFullscreen();
+    }
+
+    function toggleDescription() {
+      const descContainer = document.getElementById('product-description');
+      const btn = document.getElementById('desc-toggle-btn');
+
+      if (isDescExpanded) {
+        descContainer.innerHTML = fullDescriptionText.substring(0, 180) + '...';
+        btn.innerHTML = `<span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
+        isDescExpanded = false;
+      } else {
+        descContainer.innerHTML = fullDescriptionText;
+        btn.innerHTML = `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
+        isDescExpanded = true;
+      }
+    }
+
+    function toggleSpecifications() {
+      const allSpecElements = document.querySelectorAll('.spec-item');
+      const btn = document.getElementById('spec-toggle-btn');
+
+      if (isSpecExpanded) {
+        allSpecElements.forEach((el, index) => {
+          if (index >= 3) el.classList.add('hidden');
+        });
+        btn.innerHTML = `<span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
+        isSpecExpanded = false;
+      } else {
+        allSpecElements.forEach(el => el.classList.remove('hidden'));
+        btn.innerHTML = `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
+        isSpecExpanded = true;
+      }
+    }
+
+    async function fetchProductData() {
+      if (!productId) return;
+
+      try {
+        const response = await fetch(`/user/product/${productId}`);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        
+        const data = await response.json();
+        if (data.success && data.product) {
+          renderProductDetails(data.product, data.gallery_images, data.seller_products, data.suggested_products);
+        }
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+      }
+    }
+
+    async function loadProductReviews() {
+      if (!productId) return;
+
+      try {
+        const response = await fetch(`/user/reviews/${productId}`);
+        const data = await response.json();
+
+        const totalCountElem = document.getElementById('total-reviews-count');
+        const avgRatingBadge = document.getElementById('average-rating-badge');
+
+        if (data.success && data.reviews && data.reviews.length > 0) {
+          allReviewsData = data.reviews;
+          totalCountElem.innerText = allReviewsData.length;
+
+          let totalRatingSum = 0;
+          allReviewsData.forEach(review => {
+            totalRatingSum += Number(review.rating) || 5;
+          });
+
+          const avgRating = (totalRatingSum / allReviewsData.length).toFixed(1);
+          avgRatingBadge.innerText = `${avgRating} / 5.0 Rating`;
+
+          currentReviewsPage = 1;
+          renderReviewsPage();
+        } else {
+          totalCountElem.innerText = '0';
+          avgRatingBadge.innerText = '0.0 / 5.0 Rating';
+          allReviewsData = [];
+          renderReviewsPage();
+        }
+
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+        const container = document.getElementById('reviews-container');
+        if (container) {
+          container.innerHTML = `<p class="text-xs text-red-500 text-center py-3">Failed to load reviews!</p>`;
+        }
+      }
+    }
+
+    function renderReviewsPage() {
+      const container = document.getElementById('reviews-container');
+      const paginationElem = document.getElementById('reviews-pagination');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!allReviewsData || allReviewsData.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 bg-pink-50/50 rounded-2xl border border-pink-100">
+            <i class="fa-regular fa-comment-dots text-pink-300 text-2xl mb-1"></i>
+            <p class="text-xs text-gray-500 font-medium">No reviews given for this product yet.</p>
+          </div>
+        `;
+        if (paginationElem) paginationElem.classList.add('hidden');
+        return;
+      }
+
+      const totalPages = Math.ceil(allReviewsData.length / reviewsPerPage);
+      const startIndex = (currentReviewsPage - 1) * reviewsPerPage;
+      const paginatedReviews = allReviewsData.slice(startIndex, startIndex + reviewsPerPage);
+
+      paginatedReviews.forEach(review => {
+        const ratingNum = Number(review.rating) || 5;
+
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          if (i <= ratingNum) {
+            starsHtml += `<i class="fa-solid fa-star text-amber-400"></i>`;
+          } else {
+            starsHtml += `<i class="fa-regular fa-star text-gray-300"></i>`;
+          }
+        }
+
+        let userImg = review.profile_image ? review.profile_image.trim() : '';
+        const fallbackSvg = `https://via.placeholder.com/100`;
+
+        if (userImg && !userImg.startsWith('http://') && !userImg.startsWith('https://')) {
+          userImg = userImg.startsWith('/') ? userImg : '/' + userImg;
+        }
+        const finalProfilePic = userImg || fallbackSvg;
+
+        const reviewDate = review.created_at 
+          ? new Date(review.created_at).toLocaleDateString() 
+          : 'Unknown Date';
+
+        let reviewImageHtml = '';
+        if (review.review_imgUrl && review.review_imgUrl.trim() !== '') {
+          let reviewImg = review.review_imgUrl.trim();
+          if (!reviewImg.startsWith('http://') && !reviewImg.startsWith('https://')) {
+            reviewImg = reviewImg.startsWith('/') ? reviewImg : '/' + reviewImg;
+          }
+          reviewImageHtml = `
+            <div class="mt-2.5">
+              <a href="${reviewImg}" target="_blank" class="inline-block">
+                <img src="${reviewImg}" 
+                     alt="Review Image" 
+                     class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-pink-200 hover:scale-105 transition-transform duration-200 shadow-sm"
+                     onerror="this.style.display='none';">
+              </a>
+            </div>
+          `;
+        }
+
+        let reviewReplyHtml = '';
+        if (review.review_reply && review.review_reply.trim() !== '') {
+          reviewReplyHtml = `
+            <div class="ml-4 sm:ml-6 pl-3 border-l-2 border-[#ff4b6e] space-y-1 bg-pink-50/60 p-3 rounded-r-xl mt-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[11px] text-[#ff4b6e] flex items-center gap-1.5">
+                  <i class="fa-solid fa-reply text-xs"></i> Store Admin / Seller (Reply)
+                </span>
+              </div>
+              <p class="text-xs text-gray-700 leading-relaxed mt-1">${review.review_reply}</p>
+            </div>
+          `;
+        }
+
+        container.innerHTML += `
+          <div class="theme-glass-input p-4 rounded-2xl space-y-2 border border-pink-100 hover:shadow-sm transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <img src="${finalProfilePic}" 
+                     class="w-8 h-8 rounded-full object-cover border border-pink-200" 
+                     onerror="this.onerror=null; this.src='${fallbackSvg}';" 
+                     alt="User Profile">
+                <div>
+                  <h4 class="font-bold text-xs text-gray-800">${review.user_name || 'Anonymous User'}</h4>
+                  <div class="flex text-[10px] gap-0.5 mt-0.5">
+                    ${starsHtml}
+                  </div>
+                </div>
+              </div>
+              <span class="text-[10px] text-gray-400 font-mono bg-[#ff4b6e]/10 px-2 py-1 rounded-md border border-pink-100">${reviewDate}</span>
+            </div>
+            
+            <p class="text-xs text-gray-600 leading-relaxed pt-1">${review.review_text || 'No written feedback provided.'}</p>
+            
+            ${reviewImageHtml}
+            
+            ${reviewReplyHtml}
+          </div>
+        `;
+      });
+
+      if (totalPages > 1 && paginationElem) {
+        paginationElem.classList.remove('hidden');
+        document.getElementById('reviews-page-info').innerText = `Page ${currentReviewsPage} of ${totalPages}`;
+        document.getElementById('reviews-prev-btn').disabled = currentReviewsPage === 1;
+        document.getElementById('reviews-next-btn').disabled = currentReviewsPage === totalPages;
+      } else if (paginationElem) {
+        paginationElem.classList.add('hidden');
+      }
+    }
+
+    function changeReviewsPage(direction) {
+      const totalPages = Math.ceil(allReviewsData.length / reviewsPerPage);
+      currentReviewsPage += direction;
+      if (currentReviewsPage < 1) currentReviewsPage = 1;
+      if (currentReviewsPage > totalPages) currentReviewsPage = totalPages;
+      renderReviewsPage();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (productId) {
+        fetchProductData();
+        loadInquiries();
+        loadProductReviews();
+      }
+    });
+  </script>
+</body>
+</html>

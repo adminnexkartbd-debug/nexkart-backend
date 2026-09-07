@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Order List</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background-color: #E5E7EB;
+            color: #000;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* Controls: Search & Filters */
+        .table-controls {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .filter-select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        /* Table Container */
+        .table-wrapper {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0 0 8px 8px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #F9FAFB;
+            padding: 14px 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background-color: #F9FAFB;
+        }
+
+        /* Badges & Status */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-paid { background: #DEF7EC; color: #03543F; }
+        .status-unpaid { background: #FDE8E8; color: #9B1C1C; }
+
+        .select-status {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .tracking-input {
+            width: 130px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .btn-action {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-action:hover {
+            background-color: #F3F4F6;
+        }
+
+        .btn-print {
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-print:hover {
+            background-color: #047857;
+        }
+
+        .customer-info strong {
+            display: block;
+            color: var(--text-main);
+        }
+        .customer-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .product-title {
+            font-weight: 600;
+            color: #111827;
+            max-width: 200px;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        /* Popup Modal Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .btn-close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-body-item {
+            margin-bottom: 12px;
+        }
+
+        .modal-body-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .modal-body-item p {
+            font-size: 14px;
+            color: var(--text-main);
+            background: #f9fafb;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            word-break: break-word;
+        }
+
+        /* 🖨️ PRINT SLIP STYLING (Screen-এ হিডেন থাকবে) */
+        #printableArea {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableArea, #printableArea * {
+                visibility: visible;
+            }
+            #printableArea {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .shipping-label-box {
+                width: 400px;
+                margin: 0 auto;
+                border: 2px solid #000;
+                padding: 16px;
+                background: #fff;
+                font-family: Arial, sans-serif;
+                color: #000;
+            }
+            .website-domain {
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                letter-spacing: 1px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 4px;
+                margin-bottom: 10px;
+                text-transform: lowercase;
+            }
+            .label-header {
+                text-align: center;
+                border-bottom: 1px solid #000;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+            }
+            .label-header h2 {
+                font-size: 18px;
+                text-transform: uppercase;
+                margin-bottom: 2px;
+            }
+            .label-section {
+                border-bottom: 1px dashed #000;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
+            .label-section-title {
+                font-size: 11px;
+                font-weight: bold;
+                text-transform: uppercase;
+                background: #eee;
+                padding: 2px 4px;
+                display: inline-block;
+                margin-bottom: 6px;
+            }
+            .info-text {
+                font-size: 13px;
+                line-height: 1.4;
+            }
+            .price-breakdown {
+                border: 1px solid #000;
+                padding: 10px;
+                margin-top: 10px;
+                background: #fafafa;
+                font-size: 13px;
+            }
+            .price-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 4px;
+            }
+            .price-row.total {
+                border-top: 1px solid #000;
+                padding-top: 6px;
+                font-weight: bold;
+                font-size: 15px;
+                margin-top: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="page-header">
+        <div class="header-title-group">
+            <a href="javascript:history.back()" class="btn-back" title="Go Back">
+                &#8592; Back
+            </a>
+            <h1 class="page-title">Order Management</h1>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="table-controls">
+        <div class="search-box">
+            <input type="text" id="orderSearch" placeholder="Search by Order ID, Tracking No, Customer Name, Phone...">
+        </div>
+        <div class="filter-group">
+            <select class="filter-select" id="orderStatusFilter">
+                <option value="">Order Status (All)</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <select class="filter-select" id="paymentStatusFilter">
+                <option value="">Payment Status (All)</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Product Details</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Order Status</th>
+                    <th>Tracking Number</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 20px;">অর্ডার লোড হচ্ছে...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 💡 Pop-up Modal Structure -->
+<div class="modal-overlay" id="detailsModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Order Details <span id="modalOrderId" style="color: var(--primary-color);"></span></h3>
+            <button class="btn-close-modal" onclick="closeDetailsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-body-item">
+                <label>Customer Name</label>
+                <p id="modalCustomerName">N/A</p>
+            </div>
+            <div class="modal-body-item">
+                <label>Customer Email</label>
+                <p id="modalCustomerEmail">N/A</p>
+            </div>
+            <div class="modal-body-item">
+                <label>Phone Number</label>
+                <p id="modalCustomerPhone">N/A</p>
+            </div>
+            <div class="modal-body-item">
+                <label>Shipping Address</label>
+                <p id="modalShippingAddress">N/A</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🖨️ Hidden Printable Shipping Slip Structure -->
+<div id="printableArea">
+    <div class="shipping-label-box">
+        <!-- 🌐 WEBSITE NAME AT TOP -->
+        <div class="website-domain">www.nexkartbd.com</div>
+
+        <div class="label-header">
+            <h2 id="printShopHeaderName">SHOP NAME</h2>
+            <p style="font-size:12px; margin-top:2px;">ORDER ID: <b id="printOrderId">#0000</b></p>
+        </div>
+
+        <!-- CUSTOMER DETAILS -->
+        <div class="label-section">
+            <span class="label-section-title">👤 CUSTOMER DETAILS (SHIP TO)</span>
+            <div class="info-text">
+                <b>Name:</b> <span id="printCustomerName">N/A</span><br>
+                <b>Phone:</b> <span id="printCustomerPhone">N/A</span><br>
+                <b>Email:</b> <span id="printCustomerEmail">N/A</span><br>
+                <b>Address:</b> <span id="printCustomerAddress">N/A</span>
+            </div>
+        </div>
+
+        <!-- PRODUCT DETAILS -->
+        <div class="label-section">
+            <span class="label-section-title">📦 PRODUCT DETAILS</span>
+            <div class="info-text">
+                <b>Item:</b> <span id="printProductName">N/A</span><br>
+                <b>Variant:</b> <span id="printVariant">N/A</span> | <b>Qty:</b> <span id="printQuantity">1</span>
+            </div>
+        </div>
+
+        <!-- SELLER DETAILS (From admins table) -->
+        <div class="label-section">
+            <span class="label-section-title">🏪 SELLER DETAILS (SHIP FROM)</span>
+            <div class="info-text">
+                <b>Store Name:</b> <span id="printSellerShop">N/A</span><br>
+                <b>Phone:</b> <span id="printSellerPhone">N/A</span><br>
+                <b>Address:</b> <span id="printSellerAddress">N/A</span>
+            </div>
+        </div>
+
+        <!-- PRICE BREAKDOWN -->
+        <div class="price-breakdown">
+            <div class="price-row">
+                <span>Subtotal Price:</span>
+                <span>৳ <span id="printSubtotalPrice">0</span></span>
+            </div>
+            <div class="price-row">
+                <span>Delivery Charge:</span>
+                <span>৳ <span id="printDeliveryCharge">0</span></span>
+            </div>
+            <div class="price-row total">
+                <span>Total Amount:</span>
+                <span>৳ <span id="printTotalAmount">0</span></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let globalOrders = []; // ফেচ করা অর্ডার ডাটা গ্লোবালি রাখার জন্য
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchSellerOrders();
+
+        // 🔍 Search and Filter Listeners
+        document.getElementById('orderSearch').addEventListener('input', applyFilters);
+        document.getElementById('orderStatusFilter').addEventListener('change', applyFilters);
+        document.getElementById('paymentStatusFilter').addEventListener('change', applyFilters);
+    });
+
+    async function fetchSellerOrders() {
+        try {
+            const response = await fetch('/admin/orders-list/api/get-orders');
+            const result = await response.json();
+
+            if (result.success) {
+                globalOrders = result.data;
+                renderOrdersTable(result.data);
+            } else {
+                document.getElementById('ordersTableBody').innerHTML = 
+                    `<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">${result.message}</td></tr>`;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('ordersTableBody').innerHTML = 
+                `<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">ডাটাবেজ থেকে ডাটা লোড করতে সমস্যা হয়েছে।</td></tr>`;
+        }
+    }
+
+    // 🔍 Search and Filter Function
+    function applyFilters() {
+        const query = document.getElementById('orderSearch').value.toLowerCase().trim();
+        const orderStatus = document.getElementById('orderStatusFilter').value.toLowerCase();
+        const paymentStatus = document.getElementById('paymentStatusFilter').value.toLowerCase();
+
+        const filtered = globalOrders.filter(order => {
+            const orderIdMatches = order.order_id ? String(order.order_id).toLowerCase().includes(query) : false;
+            const customerNameMatches = order.customer_name ? order.customer_name.toLowerCase().includes(query) : false;
+            const customerPhoneMatches = order.customer_phone ? order.customer_phone.toLowerCase().includes(query) : false;
+            const trackingMatches = order.tracking_number ? order.tracking_number.toLowerCase().includes(query) : false;
+
+            const matchesSearch = !query || orderIdMatches || customerNameMatches || customerPhoneMatches || trackingMatches;
+            const matchesOrderStatus = !orderStatus || (order.order_status && order.order_status.toLowerCase() === orderStatus);
+            const matchesPaymentStatus = !paymentStatus || (order.payment_status && order.payment_status.toLowerCase() === paymentStatus);
+
+            return matchesSearch && matchesOrderStatus && matchesPaymentStatus;
+        });
+
+        renderOrdersTable(filtered);
+    }
+
+    function renderOrdersTable(orders) {
+        const tbody = document.getElementById('ordersTableBody');
+        tbody.innerHTML = '';
+
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">কোনো অর্ডার পাওয়া যায়নি।</td></tr>`;
+            return;
+        }
+
+        orders.forEach(order => {
+            const formattedDate = new Date(order.created_at).toLocaleDateString('bn-BD', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>#${order.order_id}</strong></td>
+                <td>
+                    <div class="customer-info">
+                        <strong>${order.customer_name || 'N/A'}</strong>
+                        <span>${order.customer_phone || ''}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="product-title">${order.product_name || 'Unknown Product'}</div>
+                    <small style="color: var(--text-muted);">
+                        ID: #P-${order.product_id} | Var: ${order.variant || 'N/A'} | Qty: ${order.quantity}
+                    </small>
+                </td>
+                <td>
+                    <strong>৳${order.total_amount}</strong> <br>
+                    <small style="color: gray;">Sub: ৳${order.subtotal_price} + Del: ৳${order.delivery_charge}</small>
+                </td>
+                <td>
+                    <span class="badge ${order.payment_status === 'paid' ? 'status-paid' : 'status-unpaid'}">
+                        ${order.payment_status}
+                    </span><br>
+                    <small>${order.payment_method || 'COD'}</small>
+                </td>
+                <td>
+                    <select class="select-status" onchange="updateStatus('${order.order_id}', this.value)">
+                        <option value="pending" ${order.order_status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="processing" ${order.order_status === 'processing' ? 'selected' : ''}>Processing</option>
+                        <option value="shipped" ${order.order_status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                        <option value="delivered" ${order.order_status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="cancelled" ${order.order_status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </td>
+                <td>
+                    <div style="display: flex; align-items: center;">
+                        <input type="text" id="tracking-${order.order_id}" class="tracking-input" value="${order.tracking_number || ''}" placeholder="Tracking No">
+                        <button class="btn-save" onclick="saveTrackingNumber('${order.order_id}')" title="Save Tracking">Save</button>
+                    </div>
+                </td>
+                <td>${formattedDate}</td>
+                <td>
+                    <button class="btn-action" onclick="showOrderDetails('${order.order_id}')">Details</button>
+                    <button class="btn-print" onclick="printOrderSlip('${order.order_id}')">🖨️ Print</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 💡 Details পপ-আপ ওপেন করার ফাংশন
+    function showOrderDetails(orderId) {
+        const order = globalOrders.find(o => o.order_id == orderId);
+        if (order) {
+            document.getElementById('modalOrderId').innerText = `#${order.order_id}`;
+            document.getElementById('modalCustomerName').innerText = order.customer_name || 'N/A';
+            document.getElementById('modalCustomerEmail').innerText = order.customer_email || 'ইমেইল পাওয়া যায়নি';
+            document.getElementById('modalCustomerPhone').innerText = order.customer_phone || 'N/A';
+            document.getElementById('modalShippingAddress').innerText = order.shipping_address || 'শিপিং অ্যাড্রেস পাওয়া যায়নি';
+
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+    }
+
+    // 💡 Details পপ-আপ বন্ধ করার ফাংশন
+    function closeDetailsModal() {
+        document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    async function saveTrackingNumber(orderId) {
+        const trackingInput = document.getElementById(`tracking-${orderId}`).value;
+
+        if (!trackingInput.trim()) {
+            alert("অনুগ্ৰহ করে Tracking Number লিখুন!");
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/orders-list/api/update-tracking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    order_id: orderId, 
+                    tracking_number: trackingInput 
+                })
+            });
+
+            const res = await response.json();
+            alert(res.message);
+            
+            if (res.success) {
+                // গ্লোবাল ডাটাতে ট্র্যাকিং নম্বর আপডেট করে দেওয়া
+                const targetOrder = globalOrders.find(o => o.order_id == orderId);
+                if (targetOrder) targetOrder.tracking_number = trackingInput;
+            }
+        } catch (err) {
+            console.error('Error updating tracking number:', err);
+            alert('সার্ভারে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        }
+    }
+
+    // 🖨️ লেবেল প্রিন্ট করার ডায়ালগ ফাংশন
+    function printOrderSlip(orderId) {
+        const order = globalOrders.find(o => o.order_id == orderId);
+        if (!order) return;
+
+        // Seller data fallback check
+        const shopName = order.seller_shop_name || 'N/A';
+        const sellerPhone = order.seller_phone || 'N/A';
+        const sellerAddress = order.seller_address || 'N/A';
+
+        // Header & Order ID
+        document.getElementById('printShopHeaderName').innerText = shopName;
+        document.getElementById('printOrderId').innerText = '#' + order.order_id;
+        
+        // Customer Info
+        document.getElementById('printCustomerName').innerText = order.customer_name || 'N/A';
+        document.getElementById('printCustomerPhone').innerText = order.customer_phone || 'N/A';
+        document.getElementById('printCustomerEmail').innerText = order.customer_email || 'N/A';
+        document.getElementById('printCustomerAddress').innerText = order.shipping_address || 'N/A';
+
+        // Product Info
+        document.getElementById('printProductName').innerText = order.product_name || 'N/A';
+        document.getElementById('printVariant').innerText = order.variant || 'N/A';
+        document.getElementById('printQuantity').innerText = order.quantity || '1';
+
+        // Seller Info
+        document.getElementById('printSellerShop').innerText = shopName;
+        document.getElementById('printSellerPhone').innerText = sellerPhone;
+        document.getElementById('printSellerAddress').innerText = sellerAddress;
+
+        // Price Breakdown
+        document.getElementById('printSubtotalPrice').innerText = order.subtotal_price || '0';
+        document.getElementById('printDeliveryCharge').innerText = order.delivery_charge || '0';
+        document.getElementById('printTotalAmount').innerText = order.total_amount || '0';
+
+        // Trigger Print Window
+        window.print();
+    }
+
+    // ব্যাকগ্রাউন্ডে ক্লিক করলে পপ-আপ ক্লোজ করার জন্য
+    window.onclick = function(event) {
+        const modal = document.getElementById('detailsModal');
+        if (event.target === modal) {
+            closeDetailsModal();
+        }
+    };
+
+    async function updateStatus(orderId, newStatus) {
+        try {
+            const response = await fetch('/admin/orders-list/api/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_id: orderId, order_status: newStatus })
+            });
+            const res = await response.json();
+            alert(res.message);
+
+            if (res.success) {
+                const targetOrder = globalOrders.find(o => o.order_id == orderId);
+                if (targetOrder) targetOrder.order_status = newStatus;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>

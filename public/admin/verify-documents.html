@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">ডকুমেন্টস ভেরিফিকেশন</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="max-w-7xl mx-auto p-4 lg:p-8">
+        
+        <!-- টপ বার, ব্যাক বাটন এবং ল্যাঙ্গুয়েজ সুইচার -->
+        <div class="flex justify-between items-center mb-6">
+            <a href="/admin/AdminProfile.html" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 transition font-medium flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2 text-blue-600"></i> <span data-i18n="back_btn">প্রোফাইলে ফিরে যান</span>
+            </a>
+
+            <div class="flex items-center space-x-3">
+                <!-- ভাষা পরিবর্তনের ড্রপডাউন -->
+                <div class="relative">
+                    <select id="langSwitcher" onchange="changeLanguage(this.value)" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 outline-none shadow-sm cursor-pointer hover:bg-gray-50 transition">
+                        <option value="bn">🇧🇩 বাংলা</option>
+                        <option value="en">🇺🇸 English</option>
+                    </select>
+                </div>
+
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl font-medium hidden sm:inline-block">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> <span data-i18n="header_badge">অ্যাকাউন্ট ভেরিফিকেশন সেন্টার</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- ফাইল আপলোড ফর্ম -->
+            <div class="lg:col-span-2">
+                <form id="docUploadForm" class="bg-white p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-3 flex items-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-indigo-600 mr-2"></i> <span data-i18n="form_title">ডকুমেন্টস জমা দিন</span>
+                    </h3>
+
+                    <!-- ফিল্ড ১: NID / পাসপোর্ট -->
+                    <div class="mb-6 bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                        <div class="flex items-center mb-3">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center mr-2">১</span>
+                            <h4 class="font-bold text-gray-700 text-sm" data-i18n="field1_title">এনআইডি (NID) অথবা পাসপোর্ট</h4>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-500 mb-1" data-i18n="doc_type_label">ডকুমেন্টের ধরন</label>
+                                <select id="identityType" name="identity_type" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                                    <option value="nid" data-i18n="opt_nid">জাতীয় পরিচয়পত্র (NID Card)</option>
+                                    <option value="passport" data-i18n="opt_passport">পাসপোর্ট (Passport)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-500 mb-1" data-i18n="identity_num_label">এনআইডি / পাসপোর্ট নম্বর</label>
+                                <input type="text" id="identityNumber" name="identity_number" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Ex: 199XXXXXXXXXX" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1" data-i18n="select_image_label">ফাইল নির্বাচন করুন (Image or PDF)</label>
+                            <!-- PDF অনুমতি দেওয়া হয়েছে (accept="image/*,application/pdf") -->
+                            <input type="file" name="identity_file" accept="image/*,application/pdf" class="w-full p-2 bg-white text-sm border border-gray-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 transition" required>
+                        </div>
+                    </div>
+
+                    <!-- ফিল্ড ২: ট্রেড লাইসেন্স -->
+                    <div class="mb-6 bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                        <div class="flex items-center mb-3">
+                            <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center mr-2">২</span>
+                            <h4 class="font-bold text-gray-700 text-sm" data-i18n="field2_title">ট্রেড লাইসেন্স (Trade License)</h4>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1" data-i18n="trade_num_label">ট্রেড লাইসেন্স নম্বর (ঐচ্ছিক)</label>
+                            <input type="text" id="tradeLicenseNumber" name="trade_license_number" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Ex: TR/XXXXXX">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1" data-i18n="select_image_label">ফাইল নির্বাচন করুন (Image or PDF)</label>
+                            <!-- PDF অনুমতি দেওয়া হয়েছে (accept="image/*,application/pdf") -->
+                            <input type="file" name="trade_license_file" accept="image/*,application/pdf" class="w-full p-2 bg-white text-sm border border-gray-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 transition">
+                        </div>
+                    </div>
+
+                    <!-- সাবমিট বাটন -->
+                    <button type="submit" id="submitBtn" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-bold text-sm shadow-sm flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> <span data-i18n="submit_btn">সকল ডকুমেন্ট জমা দিন</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- জমা দেওয়া ডকুমেন্টস ও স্ট্যাটাস সাইডবার -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="text-base font-bold text-gray-800 mb-4 border-b pb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-folder-open text-amber-500 mr-2"></i> <span data-i18n="list_title">জমা দেওয়া ডকুমেন্টস</span></span>
+                        <span id="docCountBadge" class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">0</span>
+                    </h3>
+
+                    <!-- ডকুমেন্টস ও স্ট্যাটাস তালিকা -->
+                    <div id="documentList" class="space-y-4">
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                            <p class="text-xs" data-i18n="loading">ডাটা লোড হচ্ছে...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ল্যাঙ্গুয়েজ অনুবাদ ও পেজ লজিক -->
+    <script>
+        const translations = {
+            bn: {
+                page_title: "ডকুমেন্টস ভেরিফিকেশন",
+                back_btn: "প্রোফাইলে ফিরে যান",
+                header_badge: "অ্যাকাউন্ট ভেরিফিকেশন সেন্টার",
+                form_title: "ডকুমেন্টস জমা দিন",
+                field1_title: "এনআইডি (NID) অথবা পাসপোর্ট",
+                doc_type_label: "ডকুমেন্টের ধরন",
+                opt_nid: "জাতীয় পরিচয়পত্র (NID Card)",
+                opt_passport: "পাসপোর্ট (Passport)",
+                identity_num_label: "এনআইডি / পাসপোর্ট নম্বর",
+                select_image_label: "ফাইল নির্বাচন করুন (Image or PDF)",
+                field2_title: "ট্রেড লাইসেন্স (Trade License)",
+                trade_num_label: "ট্রেড লাইসেন্স নম্বর (ঐচ্ছিক)",
+                submit_btn: "সকল ডকুমেন্ট জমা দিন",
+                list_title: "জমা দেওয়া ডকুমেন্টস",
+                loading: "ডাটা লোড হচ্ছে...",
+                no_docs: "এখনো কোনো ডকুমেন্ট জমা দেওয়া হয়নি।",
+                uploading: "আপলোড হচ্ছে...",
+                number_abbr: "নং:",
+                view_doc: "ডকুমেন্ট দেখুন",
+                approved: "অনুমোদিত",
+                rejected: "বাতিল",
+                pending: "অপেক্ষমাণ"
+            },
+            en: {
+                page_title: "Document Verification",
+                back_btn: "Back to Profile",
+                header_badge: "Account Verification Center",
+                form_title: "Submit Documents",
+                field1_title: "NID Card or Passport",
+                doc_type_label: "Document Type",
+                opt_nid: "National ID Card (NID)",
+                opt_passport: "Passport",
+                identity_num_label: "NID / Passport Number",
+                select_image_label: "Select File (Image or PDF)",
+                field2_title: "Trade License",
+                trade_num_label: "Trade License Number (Optional)",
+                submit_btn: "Submit All Documents",
+                list_title: "Submitted Documents",
+                loading: "Loading data...",
+                no_docs: "No documents submitted yet.",
+                uploading: "Uploading...",
+                number_abbr: "No:",
+                view_doc: "View Document",
+                approved: "Approved",
+                rejected: "Rejected",
+                pending: "Pending"
+            }
+        };
+
+        let currentLang = localStorage.getItem('appLang') || 'bn';
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('appLang', lang);
+            document.getElementById('langSwitcher').value = lang;
+            
+            // Text Content Translation
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    element.innerText = translations[lang][key];
+                }
+            });
+
+            // Document Title
+            document.title = translations[lang].page_title;
+
+            // Re-render submitted document list to update dynamic texts
+            loadSubmittedDocuments();
+        }
+
+        // জমা দেওয়া ডকুমেন্টস লোড করার ফাংশন
+        async function loadSubmittedDocuments() {
+            const container = document.getElementById('documentList');
+            const countBadge = document.getElementById('docCountBadge');
+
+            try {
+                const res = await fetch('/admin/api/profile/documents', { credentials: 'include' });
+                const result = await res.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    countBadge.innerText = `${result.data.length}`;
+                    container.innerHTML = '';
+
+                    result.data.forEach(doc => {
+                        let statusHtml = '';
+                        if (doc.status === 'approved') {
+                            statusHtml = `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[11px] font-bold border border-emerald-200"><i class="fa-solid fa-circle-check mr-1"></i> ${translations[currentLang].approved}</span>`;
+                        } else if (doc.status === 'rejected') {
+                            statusHtml = `<span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-[11px] font-bold border border-red-200"><i class="fa-solid fa-circle-xmark mr-1"></i> ${translations[currentLang].rejected}</span>`;
+                        } else {
+                            statusHtml = `<span class="px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-[11px] font-bold border border-amber-200"><i class="fa-solid fa-clock mr-1"></i> ${translations[currentLang].pending}</span>`;
+                        }
+
+                        // PDF ও ইমেজের ওপর নির্ভর করে আইকন পরিবর্তন
+                        let icon = 'fa-id-card';
+                        if (doc.file_url && doc.file_url.toLowerCase().endsWith('.pdf')) {
+                            icon = 'fa-file-pdf';
+                        } else {
+                            if (doc.document_type === 'passport') icon = 'fa-passport';
+                            if (doc.document_type === 'trade_license') icon = 'fa-file-invoice';
+                        }
+
+                        const docTypeName = doc.document_type === 'trade_license' ? 
+                            (currentLang === 'en' ? 'Trade License' : 'ট্রেড লাইসেন্স') : 
+                            doc.document_type.toUpperCase();
+
+                        const card = `
+                            <div class="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fa-solid ${icon} text-indigo-600 text-lg"></i>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-gray-800 uppercase">${docTypeName}</h4>
+                                            <p class="text-[11px] text-gray-500">${translations[currentLang].number_abbr} ${doc.document_number || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <a href="${doc.file_url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium" title="${translations[currentLang].view_doc}">
+                                        <i class="fa-solid fa-up-right-from-square"></i>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between border-t pt-2 border-gray-200">
+                                    <span class="text-[10px] text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>${new Date(doc.created_at || Date.now()).toLocaleDateString(currentLang === 'bn' ? 'bn-BD' : 'en-US')}</span>
+                                    <div>${statusHtml}</div>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += card;
+                    });
+                } else {
+                    countBadge.innerText = '0';
+                    container.innerHTML = `
+                        <div class="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+                            <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
+                            <p class="text-xs font-medium text-gray-500">${translations[currentLang].no_docs}</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error("Documents fetch error:", err);
+                container.innerHTML = `<p class="text-xs text-red-500 text-center py-4">Error loading data!</p>`;
+            }
+        }
+
+        // ফর্ম সাবমিশন
+        document.getElementById('docUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submitBtn');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> ${translations[currentLang].uploading}`;
+
+            try {
+                const res = await fetch('/admin/api/profile/upload-documents', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    alert(currentLang === 'bn' ? 'ডকুমেন্ট ফাইল সফলভাবে জমা দেওয়া হয়েছে!' : 'Documents uploaded successfully!');
+                    form.reset();
+                    loadSubmittedDocuments();
+                } else {
+                    alert(result.message || (currentLang === 'bn' ? 'আপলোড ব্যর্থ হয়েছে!' : 'Upload failed!'));
+                }
+            } catch (err) {
+                console.error('Submit error:', err);
+                alert(currentLang === 'bn' ? 'সার্ভার এরর!' : 'Server error!');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> <span>${translations[currentLang].submit_btn}</span>`;
+            }
+        });
+
+        // প্রাথমিক ভাষা সেটআপ
+        changeLanguage(currentLang);
+    </script>
+</body>
+</html>

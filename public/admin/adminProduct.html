@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexKart - Admin Products</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col justify-between border-r border-slate-800">
+            <div>
+                <!-- Brand Logo -->
+                <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                    <div class="w-10 h-10 bg-pink-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pink-600/30">
+                        N
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-lg tracking-wide">NexKart</h1>
+                        <p class="text-xs text-slate-400">Admin Dashboard</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="p-4 space-y-2">
+                    <a href="/home.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </a>
+                    <a href="/adminProduct.html" class="flex items-center gap-3 px-4 py-3 bg-pink-600 text-white font-medium rounded-xl shadow-lg shadow-pink-600/20 transition">
+                        <i class="fa-solid fa-box-open"></i> Products
+                    </a>
+                    <a href="/addItem.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+                        <i class="fa-solid fa-plus-circle"></i> Add Product
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Admin Profile Info at Bottom -->
+            <div class="p-4 border-t border-slate-800 flex items-center gap-3">
+                <img id="admin-picture" src="https://via.placeholder.com/40" alt="Admin" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+                <div class="overflow-hidden">
+                    <h4 id="admin-name" class="text-sm font-semibold text-white truncate">Admin</h4>
+                    <p id="admin-email" class="text-xs text-slate-400 truncate">admin@nexkart.com</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ================= MAIN CONTENT AREA ================= -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden text-slate-600 text-xl"><i class="fa-solid fa-bars"></i></button>
+                    <h2 class="text-xl font-bold text-slate-800">All Products</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/addItem.html" class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition">
+                        <i class="fa-solid fa-plus"></i> Add New Product
+                    </a>
+                </div>
+            </header>
+
+            <!-- Page Body / Content -->
+            <main class="p-6 space-y-6">
+                
+                <!-- Product Table Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">Product Inventory</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Manage all your store products from here</p>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search by Product ID or Title..." class="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-pink-500 w-72">
+                            <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-6 font-semibold">Product Info</th>
+                                    <th class="py-3 px-6 font-semibold">Category</th>
+                                    <th class="py-3 px-6 font-semibold">Price</th>
+                                    <th class="py-3 px-6 font-semibold">Stock Quantity</th>
+                                    <th class="py-3 px-6 font-semibold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody" class="divide-y divide-slate-100 text-sm text-slate-600">
+                                <tr>
+                                    <td colspan="5" class="text-center py-6 text-slate-400">প্রোডাক্ট লোড হচ্ছে...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let searchDebounceTimeout = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ১. ভেরিফিকেশন ও ইউজার ডাটা চেক
+            await checkAdminVerification();
+
+            // ২. প্রথমবার প্রোডাক্ট লোড
+            loadProducts();
+
+            // ৩. সার্চ ইনপুট ইভেন্ট লিসেনার (Debounce সহ)
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchDebounceTimeout);
+                    searchDebounceTimeout = setTimeout(() => {
+                        loadProducts(e.target.value.trim());
+                    }, 400); // 400ms ওয়েট করে সার্চ চালাবে
+                });
+            }
+        });
+
+        // প্রোডাক্ট ফেচ করার ফাংশন
+async function loadProducts(searchQuery = '') {
+    try {
+        let url = '/api/products/all';
+        if (searchQuery) {
+            url += `?search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include' 
+        });
+
+        const data = await res.json();
+
+        // সার্ভার থেকে unauthorized বা অন্য কোন এরর আসলে
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || "Server Error Status: " + res.status);
+        }
+
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = ''; 
+
+        const productsList = data.products || [];
+
+        if (productsList.length > 0) {
+            productsList.forEach(product => {
+                let imgUrl = 'https://placehold.co/40';
+                
+                if (product.image_path) {
+                    if (product.image_path.startsWith('http://') || product.image_path.startsWith('https://')) {
+                        imgUrl = product.image_path;
+                    } else {
+                        imgUrl = product.image_path.startsWith('/') ? product.image_path : `/${product.image_path}`;
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-4 px-6 flex items-center gap-3">
+                        <img src="${imgUrl}" class="w-10 h-10 rounded-lg object-cover border" alt="Product" onerror="this.src='https://placehold.co/40'">
+                        <div>
+                            <p class="font-semibold text-slate-800">${product.title || 'Untitled'}</p>
+                            <p class="text-xs text-slate-400">ID: ${product.product_id || product.id || 'N/A'}</p>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">${product.category || 'N/A'}</td>
+                    <td class="py-4 px-6 font-semibold text-slate-800">৳ ${product.regular_price || 0}</td>
+                    <td class="py-4 px-6">
+                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium">
+                            ${product.stock_status || 'In Stock'} (${product.stock_quantity || 0} পিস)
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center space-x-2">
+                        <button onclick="editProduct(${product.id})" class="w-8 h-8 bg-slate-100 hover:bg-pink-50 hover:text-pink-600 rounded-xl transition" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteProduct(${product.id})" class="w-8 h-8 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-xl transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">কোনো প্রোডাক্ট পাওয়া যায়নি!</td></tr>`;
+        }
+    } catch (error) {
+        console.error('Failed to load products:', error);
+        document.getElementById('productTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-500">${error.message || 'প্রোডাক্ট লোড করতে সমস্যা হয়েছে!'}</td></tr>`;
+    }
+}
+
+// এডিট ও ডিলিট হ্যান্ডলার
+        function editProduct(id) {
+            window.location.href = `/editProduct.html?id=${id}`;
+        }
+
+        async function deleteProduct(id) {
+            const confirmDelete = confirm("আপনি কি নিশ্চিতভাবে এই প্রোডাক্টটি ডিলিট করতে চান?");
+            if (!confirmDelete) return;
+
+            try {
+                const res = await fetch(`/api/products/delete/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    alert(data.message || "প্রোডাক্টটি সফলভাবে ডিলিট করা হয়েছে!");
+                    loadProducts(); 
+                } else {
+                    alert(data.message || 'প্রোডাক্ট ডিলিট করতে সমস্যা হয়েছে!');
+                }
+            } catch (err) {
+                console.error('Error deleting product:', err);
+                alert('সার্ভারে যোগাযোগ করতে সমস্যা হয়েছে!');
+            }
+        }
+ 
+        // ইউজার ও ভেরিফিকেশন চেক
+        async function checkAdminVerification() {
+            try {
+                const response = await fetch('/auth/current_user', { credentials: 'include' });
+                if (response.ok) {
+                    const user = await response.json();
+                    
+                    document.getElementById('admin-name').innerText = user.name || 'Admin';
+                    document.getElementById('admin-email').innerText = user.email || '';
+                    if (user.picture) document.getElementById('admin-picture').src = user.picture;
+
+                    if (user && (user.is_verified === 0 || user.is_verified === '0' || user.is_verified === false)) {
+                        if (!window.location.pathname.includes('home.html')) {
+                            alert("⚠️ আপনার অ্যাকাউন্টটি এখনো ভেরিফাই করা হয়নি!");
+                            window.location.href = '/home.html';
+                        }
+                    }
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Verification Check Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

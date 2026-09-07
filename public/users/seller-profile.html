@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKart - Seller Profile</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * {
+      font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+      scroll-behavior: smooth;
+    }
+    body { 
+      background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
+      min-height: 100vh;
+    }
+    .theme-glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
+    }
+  </style>
+</head>
+<body class="text-gray-800 antialiased relative pb-10">
+
+  <script>
+    const safeImagePlaceholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' font-family='sans-serif' font-size='12' fill='%239ca3af' text-anchor='middle' dy='.3em'>No Image</text></svg>";
+  </script>
+
+  <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+    
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between py-2">
+      <a href="javascript:history.back()" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+        <i class="fa-solid fa-arrow-left text-[#ff4b6e]"></i> <span data-lang="back">Back</span>
+      </a>
+      <h1 class="text-lg md:text-xl font-extrabold text-white drop-shadow-sm" data-lang="sellerProfile">Seller Profile</h1>
+      
+      <!-- Language Toggle Switcher -->
+      <button onclick="toggleLanguage()" class="theme-glass-card hover:bg-white text-[#ff4b6e] font-bold px-4 py-2 rounded-2xl transition-all duration-300 flex items-center gap-2 text-xs shadow-sm">
+        <i class="fa-solid fa-globe"></i> <span id="lang-btn-text">English</span>
+      </button>
+    </div>
+
+    <!-- Seller Header Info Card -->
+    <div class="theme-glass-card rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-start gap-6">
+      <img id="seller-picture" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' font-family='sans-serif' font-size='12' fill='%239ca3af' text-anchor='middle' dy='.3em'>Seller Avatar</text></svg>" alt="Seller" class="w-28 h-28 object-cover rounded-full border-4 border-pink-200 shadow-md mx-auto md:mx-0">
+      
+      <div class="flex-1 text-center md:text-left space-y-2.5 w-full">
+        <div class="flex flex-col md:flex-row md:items-center gap-2 justify-between">
+          <h2 id="seller-shop-name" class="text-xl font-bold text-gray-900">Shop Name Loading...</h2>
+          
+          <span id="seller-verification-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full border items-center gap-1 w-max mx-auto md:mx-0">
+            <i id="badge-icon" class="fa-solid"></i> <span id="verification-text">Loading...</span>
+          </span>
+        </div>
+
+        <!-- Overall Rating Display (4.2/5 rating formatting) -->
+        <div class="flex items-center justify-center md:justify-start gap-2 pt-1">
+          <div class="flex items-center text-amber-400 text-sm">
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <span class="text-sm font-extrabold text-gray-800">
+            <span data-lang="rating">Rating</span> <span id="seller-overall-rating">0</span>/5
+          </span>
+          <span class="text-xs text-gray-500 font-medium">
+            (<span id="seller-overall-reviews">0</span> <span data-lang="reviews">reviews</span>)
+          </span>
+        </div>
+
+        <!-- Slogan -->
+        <p id="seller-slogan" class="text-xs text-gray-600 italic font-medium"></p>
+
+        <!-- Shop About Section -->
+        <div id="about-container" class="bg-pink-50/60 p-3.5 rounded-xl border border-pink-100/80 text-left mt-2">
+          <h4 class="text-[11px] font-bold text-[#ff4b6e] uppercase tracking-wide flex items-center gap-1.5 mb-1">
+            <i class="fa-solid fa-circle-info"></i> <span data-lang="aboutShop">About Shop</span>
+          </h4>
+          <p id="seller-about" class="text-xs text-gray-800 leading-relaxed whitespace-pre-line min-h-[20px] font-normal">Loading about info...</p>
+        </div>
+        
+        <p class="text-xs text-gray-500 flex items-center justify-center md:justify-start gap-1.5 pt-1">
+          <i class="fa-solid fa-shield-halved text-[#ff4b6e]"></i> <span data-lang="status">Status</span>: <span id="seller-status" class="font-semibold text-gray-700">Active</span>
+        </p>
+
+        <div class="pt-2">
+          <button onclick="openMessageModal()" class="bg-[#ff4b6e] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md hover:bg-[#e03e5d] transition-all inline-flex items-center gap-2">
+            <i class="fa-solid fa-comment-sms"></i> <span data-lang="sendMessage">সেলারকে মেসেজ পাঠান</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seller Products Section -->
+    <div class="theme-glass-card rounded-3xl p-6 md:p-8 space-y-4">
+      <h3 class="text-base font-bold text-gray-900 border-b border-pink-100 pb-3 flex items-center gap-2">
+        <i class="fa-solid fa-box-open text-[#ff4b6e]"></i> <span data-lang="productsFromSeller">Products from this Seller</span>
+      </h3>
+      
+      <div id="seller-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <p class="text-xs text-gray-500 col-span-full text-center py-4">Loading products...</p>
+      </div>
+
+      <!-- Load More Container -->
+      <div id="load-more-container" class="text-center pt-4 hidden">
+        <button id="load-more-btn" onclick="fetchMoreProducts()" class="bg-white border border-[#ff4b6e] text-[#ff4b6e] hover:bg-[#ff4b6e] hover:text-white text-xs font-bold px-6 py-2.5 rounded-xl transition-all shadow-sm inline-flex items-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i> <span data-lang="loadMore">Load More Products</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal -->
+  <div id="messageModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+          <i class="fa-solid fa-paper-plane text-[#ff4b6e]"></i> <span data-lang="contactSeller">সেলারের সাথে যোগাযোগ করুন</span>
+        </h3>
+        <button onclick="closeMessageModal()" class="text-gray-400 hover:text-gray-600 text-sm font-bold">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="sellerMsgForm" onsubmit="sendSMSecure(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1" data-lang="yourMessage">আপনার মেসেজ:</label>
+          <textarea id="smsText" rows="4" required placeholder="আপনার প্রোডাক্ট বা অর্ডার সম্পর্কে কিছু জানতে চান..." class="w-full text-xs border border-gray-300 rounded-xl p-3 focus:outline-none focus:border-[#ff4b6e]"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-[#ff4b6e] text-white text-xs font-bold py-2.5 rounded-xl shadow-md hover:bg-[#e03e5d] transition-all" data-lang="send">
+          সেন্ড করুন
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let globalSellerId = null;
+    let currentPage = 1;
+    const limitPerPage = 8;
+    let currentLang = localStorage.getItem('appLang') || 'bn';
+
+    const translations = {
+      bn: {
+        back: "পিছনে",
+        sellerProfile: "সেলার প্রোফাইল",
+        rating: "রেটিং",
+        reviews: "রিভিউ",
+        aboutShop: "শপ বিবরণ",
+        status: "স্ট্যাটাস",
+        sendMessage: "সেলারকে মেসেজ পাঠান",
+        productsFromSeller: "এই সেলারের সকল প্রোডাক্ট",
+        loadMore: "আরো প্রোডাক্ট দেখুন",
+        contactSeller: "সেলার এর সাথে যোগাযোগ করুন",
+        yourMessage: "আপনার মেসেজ:",
+        send: "সেন্ড করুন",
+        verified: "ভেরিফায়েড সেলার",
+        unverified: "আনভেরিফায়েড",
+        noAbout: "এই শপটির কোনো বিবরণ বা শপ তথ্য এখনো যোগ করা হয়নি।",
+        noProducts: "এই সেলারের আন্ডারে এখনো কোনো প্রোডাক্ট যোগ করা হয়নি।",
+        langBtn: "English"
+      },
+      en: {
+        back: "Back",
+        sellerProfile: "Seller Profile",
+        rating: "Rating",
+        reviews: "reviews",
+        aboutShop: "About Shop",
+        status: "Status",
+        sendMessage: "Message Seller",
+        productsFromSeller: "Products from this Seller",
+        loadMore: "Load More Products",
+        contactSeller: "Contact Seller",
+        yourMessage: "Your Message:",
+        send: "Send",
+        verified: "Verified Seller",
+        unverified: "Unverified",
+        noAbout: "No about info or store description provided yet.",
+        noProducts: "No products available from this seller yet.",
+        langBtn: "বাংলা"
+      }
+    };
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('appLang', lang);
+      document.getElementById('lang-btn-text').innerText = translations[lang].langBtn;
+
+      document.querySelectorAll('[data-lang]').forEach(element => {
+        const key = element.getAttribute('data-lang');
+        if (translations[lang][key]) {
+          element.innerText = translations[lang][key];
+        }
+      });
+    }
+
+    function toggleLanguage() {
+      const nextLang = currentLang === 'bn' ? 'en' : 'bn';
+      applyLanguage(nextLang);
+    }
+
+    function getSellerIdFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let id = urlParams.get('id');
+      
+      if (!id) {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        for (let i = pathSegments.length - 1; i >= 0; i--) {
+          if (!isNaN(pathSegments[i])) {
+            id = pathSegments[i];
+            break;
+          }
+        }
+      }
+      return id;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      applyLanguage(currentLang);
+      const sellerId = getSellerIdFromURL();
+
+      if (sellerId && !isNaN(sellerId)) {
+        globalSellerId = sellerId;
+        fetchSellerProfile(sellerId);
+      } else {
+        console.error("❌ Invalid or missing Seller ID!");
+        document.getElementById('seller-shop-name').innerText = 'Invalid Store ID!';
+      }
+    });
+
+  async function fetchSellerProfile(id) {
+    try {
+        currentPage = 1;
+        const response = await fetch(`/user/api/seller-data/${id}?page=${currentPage}&limit=${limitPerPage}`);
+
+        if (!response.ok) {
+            throw new Error(`Server status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.seller) {
+            const seller = data.seller;
+
+            // ১. Shop Name
+            document.getElementById('seller-shop-name').innerText =
+                seller.seller_shop_name || seller.shop_name || 'NexKart Vendor';
+
+            // ২. Verification Badge
+            const badgeContainer = document.getElementById('seller-verification-badge');
+            const badgeIcon = document.getElementById('badge-icon');
+            const verificationText = document.getElementById('verification-text');
+
+            if (Number(seller.is_verified) === 1) {
+                badgeContainer.className = "text-xs font-bold px-3 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-600 flex items-center gap-1 w-max mx-auto md:mx-0 shadow-sm";
+                badgeIcon.className = "fa-solid fa-circle-check text-blue-500";
+                verificationText.innerText = translations[currentLang].verified;
+            } else {
+                badgeContainer.className = "text-xs font-bold px-3 py-1 rounded-full border border-gray-200 bg-gray-50 text-gray-500 flex items-center gap-1 w-max mx-auto md:mx-0";
+                badgeIcon.className = "fa-solid fa-clock text-gray-400";
+                verificationText.innerText = translations[currentLang].unverified;
+            }
+
+            // ৩. Slogan
+            const sloganElem = document.getElementById('seller-slogan');
+            if (seller.seller_slogan && String(seller.seller_slogan).trim() !== '') {
+                sloganElem.innerText = `"${String(seller.seller_slogan).trim()}"`;
+                sloganElem.style.display = 'block';
+            } else {
+                sloganElem.style.display = 'none';
+            }
+
+            // ৪. Shop About
+            const aboutElem = document.getElementById('seller-about');
+            let textAbout = seller.shop_about ? String(seller.shop_about).trim() : '';
+            aboutElem.innerText = textAbout.length > 0 
+                ? textAbout 
+                : translations[currentLang].noAbout;
+
+            // ৫. Status
+            document.getElementById('seller-status').innerText = seller.seller_status || 'Active';
+
+            // ৬. Profile Picture
+            if (seller.seller_picture) {
+                let picUrl = String(seller.seller_picture).trim();
+                if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://')) {
+                    picUrl = picUrl.startsWith('/') ? picUrl : '/' + picUrl;
+                }
+                document.getElementById('seller-picture').src = picUrl;
+            }
+
+            // ৭. Products Grid Render & Product Rating Aggregation
+            const grid = document.getElementById('seller-products-grid');
+
+            if (data.seller_products && data.seller_products.length > 0) {
+                grid.innerHTML = '';
+                renderProducts(data.seller_products);
+                handleLoadMoreButton(data.has_more);
+
+                // Calculate overall rating from products if backend gives 0
+                let totalRev = Number(data.seller_reviews_count) || 0;
+                let avgRat = Number(data.seller_rating) || 0;
+
+                if (totalRev === 0) {
+                    let totalProductRatingSum = 0;
+                    let validRatingProductsCount = 0;
+
+                    data.seller_products.forEach(prod => {
+                        let reviews = Number(prod.total_reviews) || 0;
+                        let rating = Number(prod.avg_rating) || 0;
+                        if (reviews > 0) {
+                            totalRev += reviews;
+                            totalProductRatingSum += rating;
+                            validRatingProductsCount++;
+                        }
+                    });
+
+                    if (validRatingProductsCount > 0) {
+                        avgRat = (totalProductRatingSum / validRatingProductsCount).toFixed(1);
+                    }
+                }
+
+                document.getElementById('seller-overall-rating').innerText = avgRat;
+                document.getElementById('seller-overall-reviews').innerText = totalRev;
+
+            } else {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fa-solid fa-box-open text-3xl text-pink-300 mb-2"></i>
+                        <p class="text-xs text-gray-500">${translations[currentLang].noProducts}</p>
+                    </div>
+                `;
+                document.getElementById('load-more-container').classList.add('hidden');
+                document.getElementById('seller-overall-rating').innerText = "0";
+                document.getElementById('seller-overall-reviews').innerText = "0";
+            }
+
+        } else {
+            document.getElementById('seller-shop-name').innerText = 'Seller profile not found!';
+        }
+
+    } catch (err) {
+        console.error("❌ Error loading seller profile:", err);
+    }
+}
+
+async function fetchMoreProducts() {
+    const btn = document.getElementById('load-more-btn');
+    btn.innerText = "Loading...";
+    btn.disabled = true;
+
+    currentPage++;
+    try {
+        const response = await fetch(`/user/api/seller-data/${globalSellerId}?page=${currentPage}&limit=${limitPerPage}`);
+        const data = await response.json();
+
+        if (data.success && data.seller_products && data.seller_products.length > 0) {
+            renderProducts(data.seller_products);
+            handleLoadMoreButton(data.has_more);
+        } else {
+            document.getElementById('load-more-container').classList.add('hidden');
+        }
+    } catch (err) {
+        console.error("❌ Error loading more products:", err);
+    } finally {
+        btn.innerText = translations[currentLang].loadMore;
+        btn.disabled = false;
+    }
+}
+
+function renderProducts(products) {
+    const grid = document.getElementById('seller-products-grid');
+    products.forEach(item => {
+        let imageSrc = item.primary_image || safeImagePlaceholder;
+        
+        let oldPriceVal = Number(item.old_price) || 0;
+        let salePriceVal = Number(item.sale_price) || Number(item.regular_price) || 0;
+        
+        let currentPrice = salePriceVal;
+        let previousPrice = null;
+        let discountPercent = 0;
+
+        if (oldPriceVal > salePriceVal && salePriceVal > 0) {
+            previousPrice = oldPriceVal;
+            discountPercent = Math.round(((oldPriceVal - salePriceVal) / oldPriceVal) * 100);
+        }
+
+        let avgRating = item.avg_rating || 0;
+        let totalReviews = item.total_reviews || 0;
+
+        grid.innerHTML += `
+            <div class="bg-white border border-pink-100 rounded-2xl p-3 flex flex-col justify-between hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                 onclick="window.location.href='/user/product-details?id=${item.product_id || item.id}'">
+                <div>
+                    <!-- Image Container with Discount Badge -->
+                    <div class="relative overflow-hidden rounded-xl mb-3">
+                        <img src="${imageSrc}" 
+                             alt="${item.title}" 
+                             class="w-full h-44 md:h-48 object-cover rounded-xl border border-pink-50 group-hover:scale-105 transition-transform duration-300" 
+                             onerror="this.src='${safeImagePlaceholder}'">
+                        
+                        ${discountPercent > 0 ? `
+                            <span class="absolute top-2 right-2 bg-[#28a745] text-white text-[11px] font-extrabold px-2 py-0.5 rounded-md shadow-sm z-10">
+                                -${discountPercent}%
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <!-- Title -->
+                    <h4 class="text-xs md:text-sm font-bold text-gray-800 line-clamp-2 min-h-[36px] group-hover:text-[#ff4b6e] transition-colors leading-snug mb-2">
+                        ${item.title}
+                    </h4>
+
+                    <!-- Ratings -->
+                    <div class="flex items-center gap-1 mb-2">
+                        <div class="flex items-center text-amber-400 text-xs">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700">${avgRating}</span>
+                        <span class="text-[11px] text-gray-400">(${totalReviews})</span>
+                    </div>
+                </div>
+
+                <!-- Price Area -->
+                <div class="flex items-center justify-between mt-2 pt-2 border-t border-pink-50">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-sm font-extrabold text-[#ff4b6e]">৳ ${currentPrice}</span>
+                        ${previousPrice ? `<span class="text-xs text-gray-400 line-through">৳ ${previousPrice}</span>` : ''}
+                    </div>
+                    <span class="w-7 h-7 rounded-full bg-pink-50 border border-pink-200 text-[#ff4b6e] flex items-center justify-center hover:bg-[#ff4b6e] hover:text-white transition-colors">
+                        <i class="fa-solid fa-cart-shopping text-xs"></i>
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function handleLoadMoreButton(hasMore) {
+    const container = document.getElementById('load-more-container');
+    if (hasMore) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
+}
+
+    async function openMessageModal() {
+      try {
+        const res = await fetch('/user/current_user');
+        if (res.ok) {
+          const user = await res.json();
+          if (user && (user.id || user.email)) {
+            document.getElementById('messageModal').classList.remove('hidden');
+            document.getElementById('messageModal').classList.add('flex');
+            return;
+          }
+        }
+        window.location.href = '/user/cslogin';
+      } catch (error) {
+        window.location.href = '/user/cslogin';
+      }
+    }
+
+    function closeMessageModal() {
+      document.getElementById('messageModal').classList.remove('flex');
+      document.getElementById('messageModal').classList.add('hidden');
+    }
+
+    async function sendSMSecure(event) {
+      event.preventDefault();
+      const message = document.getElementById('smsText').value;
+
+      try {
+        const response = await fetch('/user/send-seller-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seller_id: globalSellerId,
+            message: message
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert(result.message);
+          document.getElementById('smsText').value = '';
+          closeMessageModal();
+        } else {
+          alert(result.message || 'মেসেজ পাঠানো ব্যর্থ হয়েছে!');
+        }
+      } catch (err) {
+        alert('সার্ভার ত্রুটি! আবার চেষ্টা করুন।');
+      }
+    }
+  </script>
+
+</body>
+</html>

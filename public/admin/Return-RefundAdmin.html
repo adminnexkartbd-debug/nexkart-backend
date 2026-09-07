@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return & Refund Admin Panel</title>
+    <!-- Bootstrap 5 CSS CDN (cdnjs used for CSP compatibility) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light">
+
+    <!-- Top Navbar with Back Button & Search Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
+        <div class="container-fluid">
+            <!-- Back Button & Brand -->
+            <div class="d-flex align-items-center">
+                <a href="javascript:history.back()" class="btn btn-outline-light btn-sm me-3">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <a class="navbar-brand fw-bold mb-0" href="#"><i class="bi bi-shield-lock-fill me-2"></i>Admin Panel</a>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="d-flex ms-auto" style="width: 300px;">
+                <div class="input-group input-group-sm">
+                    <input type="text" id="searchInput" class="form-control" placeholder="সার্চ করুন (নাম, অর্ডার আইডি)..." onkeyup="filterTable()">
+                    <button class="btn btn-outline-light" type="button"><i class="bi bi-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="container-fluid py-4 px-4">
+        
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="fw-bold text-dark">রিটার্ন এবং রিফান্ড লিস্ট</h2>
+                <p class="text-muted">গ্রাহকদের রিটার্ন রিকোয়েস্টগুলো এখান থেকে ম্যানেজ করুন।</p>
+            </div>
+        </div>
+
+        <!-- Data Table Card -->
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-semibold text-secondary"><i class="bi bi-list-task me-2"></i>সকল রিটার্ন রিকোয়েস্ট</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-nowrap" id="returnTable">
+                        <thead class="table-dark text-uppercase fs-7">
+                            <tr>
+                                <th>ID</th>
+                                <th>User Profile & Name</th>
+                                <th>Order ID</th>
+                                <th>Product Details</th>
+                                <th>Return Reason & Details</th>
+                                <th>Proof File</th>
+                                <th>Status</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">ডাটা লোড হচ্ছে...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Frontend Script for Fetching and Dynamic Rendering -->
+   <script>
+    async function loadReturnRefunds() {
+        try {
+            const response = await fetch('/admin/api/return-refunds');
+            const result = await response.json();
+            
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (result.success && result.data.length > 0) {
+                result.data.forEach(item => {
+                    // ইউজারের ছবি (Google OpaqueResponseBlocking এড়াতে referrerpolicy যোগ করা হয়েছে)
+                    let userImg = item.user_profile ? item.user_profile : 'https://via.placeholder.com/35';
+                    
+                    // প্রোডাক্টের ছবি (ডাটাবেজ থেকে আসা ইমেজ অথবা ফলব্যাক প্লেসহোল্ডার)
+                    let prodImg = item.product_image ? item.product_image : 'https://via.placeholder.com/35';
+
+                    let formattedDate = 'N/A';
+                    if (item.created_at) {
+                        let d = new Date(item.created_at);
+                        formattedDate = d.toLocaleDateString('bn-BD') + '<br>' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    let proofHtml = '<span class="text-muted">ফাইল নেই</span>';
+                    if (item.proof_file) {
+                        proofHtml = `<a href="${item.proof_file}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i> ফাইল দেখুন</a>`;
+                    }
+
+                    let statusColorClass = 'bg-warning-subtle text-warning-emphasis border-warning';
+                    if (item.status === 'approved') statusColorClass = 'bg-success-subtle text-success-emphasis border-success';
+                    if (item.status === 'rejected') statusColorClass = 'bg-danger-subtle text-danger-emphasis border-danger';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="fw-bold">#${item.return_id}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="${userImg}" alt="User" width="35" height="35" class="rounded-circle me-2 border object-fit-cover" referrerpolicy="no-referrer" onerror="this.src='https://via.placeholder.com/35'">
+                                <div>
+                                    <div class="fw-semibold">${item.user_name || 'অজ্ঞাত ইউজার'}</div>
+                                    <small class="text-muted">usr_${item.user_id}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">${item.order_id}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <div class="fw-semibold text-truncate" style="max-width: 150px;">${item.product_title || 'প্রোডাক্ট'}</div>
+                                    <small class="text-muted">Code: ${item.product_code || 'N/A'}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-danger fw-semibold d-block">${item.return_reason || 'কারণ উল্লেখ নেই'}</span>
+                            <small class="text-muted text-wrap" style="max-width: 200px; display:inline-block;">${item.return_details || ''}</small>
+                        </td>
+                        <td>${proofHtml}</td>
+                        <td>
+                            <select class="form-select form-select-sm fw-semibold status-select ${statusColorClass}" onchange="updateStatus(${item.return_id}, this)">
+                                <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="approved" ${item.status === 'approved' ? 'selected' : ''}>Approved</option>
+                                <option value="rejected" ${item.status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </td>
+                        <td><small class="text-muted">${formattedDate}</small></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">কোনো রিটার্ন রিকোয়েস্ট পাওয়া যায়নি।</td></tr>`;
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+    }
+
+    async function updateStatus(returnId, selectElem) {
+        try {
+            const response = await fetch(`/admin/api/return-refunds/update-status/${returnId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: selectElem.value })
+            });
+            const result = await response.json();
+            if (!result.success) {
+                alert('স্ট্যাটাস আপডেট করতে সমস্যা হয়েছে!');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    }
+
+    window.onload = loadReturnRefunds;
+
+    async function checkAuth() {
+  try {
+    const res = await fetch('/api/admin-inbox/seller/profile', { credentials: 'include' });
+    const data = await res.json();
+
+    // যদি ইউজার লগইন না থাকে বা রেসপন্স success না হয়
+    if (!res.ok || !data.success) {
+      window.location.href = '/admin/login.html'; // আপনার লগইন পেজের লিংক দিন
+    }
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    window.location.href = '/admin/login.html';
+  }
+}
+
+// পেজ লোড হওয়ামাত্রই কল হবে
+document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+
+</body>
+</html>

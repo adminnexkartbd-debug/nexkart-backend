@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexKart - Welcome Beauty</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
+            position: relative;
+        }
+
+        /* ব্যাকগ্রাউন্ড ফ্লোটিং অ্যানিমেশন */
+        .bg-animations {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .floating-item {
+            position: absolute;
+            display: block;
+            list-style: none;
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.25);
+            bottom: -150px;
+            border-radius: 50%;
+            animation: animate 18s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            backdrop-filter: blur(4px);
+        }
+
+        .floating-item:nth-child(1) { left: 10%; width: 45px; height: 45px; animation-delay: 0s; animation-duration: 14s; }
+        .floating-item:nth-child(2) { left: 25%; width: 40px; height: 40px; animation-delay: 2s; animation-duration: 12s; }
+        .floating-item:nth-child(3) { left: 45%; width: 50px; height: 50px; animation-delay: 4s; animation-duration: 16s; }
+        .floating-item:nth-child(4) { left: 65%; width: 40px; height: 40px; animation-delay: 1s; animation-duration: 13s; }
+        .floating-item:nth-child(5) { left: 80%; width: 48px; height: 48px; animation-delay: 3s; animation-duration: 15s; }
+        .floating-item:nth-child(6) { left: 92%; width: 38px; height: 38px; animation-delay: 5s; animation-duration: 11s; }
+
+        @keyframes animate {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+                border-radius: 50%;
+            }
+            100% {
+                transform: translateY(-900px) rotate(720deg);
+                opacity: 0;
+                border-radius: 30%;
+            }
+        }
+
+        /* মেইন কন্টেইনার */
+        .main-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            width: 900px;
+            max-width: 95%;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(255, 75, 110, 0.3);
+            overflow: hidden;
+        }
+
+        /* বাম পাশের লোগো ও ব্র্যান্ড সেকশন */
+        .cartoon-section {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(255, 117, 140, 0.15), rgba(254, 214, 227, 0.6));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .cartoon-img-box {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: floatLogo 3s ease-in-out infinite;
+        }
+
+        .cartoon-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 15px rgba(255, 75, 110, 0.3));
+        }
+
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .cartoon-section h2 {
+            font-size: 22px;
+            color: #d63384;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .cartoon-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        /* ডান পাশের লগইন ফর্ম সেকশন */
+        .login-section {
+            flex: 1;
+            padding: 40px 35px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .brand-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #d63384;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-logo i {
+            color: #ff4b6e;
+            margin-right: 6px;
+        }
+
+        .login-section > p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        /* ইনপুট ফিল্ড স্টাইল */
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #ff4b6e;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 11px 15px 11px 42px;
+            border: 1.5px solid #ffccd5;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            outline: none;
+            font-size: 13px;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #ff4b6e;
+            box-shadow: 0 0 10px rgba(255, 75, 110, 0.3);
+            background: #fff;
+        }
+
+        /* ফোরগট পাসওয়ার্ড */
+        .options {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .options a {
+            color: #d63384;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .options a:hover {
+            text-decoration: underline;
+            color: #ff4b6e;
+        }
+
+        /* লগইন বাটন */
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            border: none;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 75, 110, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #ff758c, #ff4b6e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 75, 110, 0.6);
+        }
+
+        /* ডিভাইডার */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 15px 0;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ffd1dc;
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: .75em;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: .75em;
+        }
+
+        /* গুগল ওঅথ বাটন */
+        .btn-google {
+            width: 100%;
+            padding: 10px;
+            background: #ffffff;
+            border: 1.5px solid #ffd1dc;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #444;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-google img {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-google:hover {
+            background: #fff5f7;
+            border-color: #ff4b6e;
+        }
+
+        /* সাইন আপ লিংক ও প্রাইভেসি পলিসি */
+        .signup-link {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .signup-link a {
+            color: #ff4b6e;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .privacy-policy {
+            margin-top: 10px;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+
+        .privacy-policy a, .privacy-policy span {
+            color: #888;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .privacy-policy a:hover, .privacy-policy span:hover {
+            color: #ff4b6e;
+        }
+
+        /* Modal CSS */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 750px;
+            max-width: 90%;
+            height: 80vh;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: #fff0f3;
+            border-bottom: 1px solid #ffd1dc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #d63384;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            color: #ff4b6e;
+        }
+
+        .modal-body {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* রেসপন্সিভ ডিজাইন */
+        @media(max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                width: 95%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .cartoon-section {
+                padding: 20px;
+            }
+            .cartoon-img-box {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ব্যাকগ্রাউন্ড ফ্লোটিং অ্যানিমেশন -->
+    <ul class="bg-animations">
+        <li class="floating-item"><i class="fa-solid fa-wand-magic-sparkles"></i></li>
+        <li class="floating-item"><i class="fa-solid fa-heart"></i></li>
+        <li class="floating-item"><i class="fa-solid fa-spray-can-sparkles"></i></li>
+        <li class="floating-item"><i class="fa-solid fa-gem"></i></li>
+        <li class="floating-item"><i class="fa-solid fa-heart"></i></li>
+        <li class="floating-item"><i class="fa-solid fa-star"></i></li>
+    </ul>
+
+    <!-- মেইন বক্স -->
+    <div class="main-container">
+        
+        <!-- বাম পাশে লোগো ও ব্র্যান্ড শোকেস সেকশন -->
+        <div class="cartoon-section">
+            <div class="cartoon-img-box">
+                <img src="/images/logo.png" alt="NexKart Logo">
+            </div>
+            <h2>Be Your Own Kind of Beautiful</h2>
+            <p>Discover trendy cosmetics, skincare, and exclusive beauty products tailored just for you!</p>
+        </div>
+
+        <!-- ডান পাশের লগইন ফর্ম সেকশন -->
+        <div class="login-section">
+            <div class="brand-logo">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>NexKart Beauty
+            </div>
+            <p>Welcome back! Please login to your account.</p>
+
+            <form action="/user/login" method="POST">
+                <div class="input-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="options">
+                    <a href="/user/psrst">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn-submit">Login</button>
+            </form>
+
+            <div class="divider">or continue with</div>
+
+            <!-- গুগল ওঅথ বাটন -->
+            <a href="/user/auth/google" class="btn-google">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+                Sign in with Google
+            </a>
+
+            <!-- সাইন আপ পেজে যাওয়ার লিঙ্ক -->
+            <div class="signup-link">
+                Don't have an account? <a href="/user/cssignup">Sign Up</a>
+            </div>
+
+            <div class="privacy-policy">
+                By logging in, you agree to NexKart's <span onclick="openPrivacyModal()">Privacy Policy</span> & <span onclick="openTermsModal()">Terms</span>.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa-solid fa-shield-halved"></i> Privacy Policy</span>
+                <button class="modal-close-btn" onclick="closePrivacyModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <iframe src="https://adminnexkartbd-debug.github.io/nexkartbd-privacy/"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="fa-solid fa-file-contract"></i> Terms & Conditions</span>
+                <button class="modal-close-btn" onclick="closeTermsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <iframe src="https://adminnexkartbd-debug.github.io/nexkartbd-privacy/"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPrivacyModal() {
+            document.getElementById('privacyModal').style.display = 'flex';
+        }
+
+        function closePrivacyModal() {
+            document.getElementById('privacyModal').style.display = 'none';
+        }
+
+        function openTermsModal() {
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

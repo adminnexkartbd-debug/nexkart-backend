@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penalties Policy - NexKart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: #fff0f5; min-height: 100vh; padding: 40px 20px; display: flex; justify-content: center; align-items: center; }
+        .container { background: #ffffff; width: 100%; max-width: 850px; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(230, 100, 150, 0.15); border: 1px solid #fcddec; }
+        
+        /* Dynamic Back Button Style */
+        .back-btn-container { margin-bottom: 20px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #d63384; background: #ffe6f0; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: 0.3s; }
+        .back-btn:hover { background: #ffd1e3; }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header i { font-size: 40px; color: #d63384; margin-bottom: 10px; }
+        .header h2 { color: #d63384; font-size: 24px; font-weight: 700; }
+        .header p { color: #666; font-size: 13px; margin-top: 5px; }
+        .policy-card { background: #fff5f9; border: 1px solid #fcddec; padding: 20px; border-radius: 12px; margin-bottom: 16px; }
+        .policy-card h3 { color: #d63384; font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .policy-card h3 span.title-text { display: flex; align-items: center; gap: 10px; }
+        .policy-card p { font-size: 13px; color: #555; line-height: 1.6; }
+        .badge-warning { background: #ffc107; color: #000; font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: bold; }
+        .badge-danger { background: #dc3545; color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: bold; }
+        .badge-info { background: #17a2b8; color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ইউনিভার্সাল ব্যাক বাটন (কোনো নির্দিষ্ট HTML ফাইল অ্যাসাইন করার প্রয়োজন নেই) -->
+    <div class="back-btn-container">
+        <button onclick="goBack()" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+    </div>
+
+    <div class="header">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <h2>Penalties & Violations Policy</h2>
+        <p>Overview of enforcement actions, penalties, and platform guidelines</p>
+    </div>
+
+    <!-- ১. নকল পণ্য -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-triangle-exclamation"></i> Counterfeit & Fake Products</span>
+            <span class="badge-danger">Severe</span>
+        </h3>
+        <p>Listing replica or fake branded products is strictly prohibited. Violators face instant product removal, fine penalty, and immediate seller account termination.</p>
+    </div>
+
+    <!-- ২. ভুল বা বিভ্রান্তিকর তথ্য -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-circle-info"></i> Misleading Product Information</span>
+            <span class="badge-info">Low</span>
+        </h3>
+        <p>Using incorrect specifications, fake images, or misleading titles will result in temporary product delisting until verified details are provided.</p>
+    </div>
+
+    <!-- ৩. লেট ডেলিভারি -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-truck-fast"></i> Late Order Processing & Cancellation</span>
+            <span class="badge-warning">Moderate</span>
+        </h3>
+        <p>Sellers who fail to dispatch orders within the promised timeframe or frequently cancel orders will incur penalty fees per order and reduced search visibility.</p>
+    </div>
+
+    <!-- ৪. ভুয়া রিভিউ -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-star-half-stroke"></i> Fake Reviews & Rating Manipulation</span>
+            <span class="badge-warning">Moderate</span>
+        </h3>
+        <p>Posting fake positive reviews or artificially boosting ratings is banned. Discovered fake reviews will be purged, and store rank will be downgraded.</p>
+    </div>
+
+    <!-- ৫. প্ল্যাটফর্মের বাইরে ট্রানজ্যাকশন -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-comments"></i> Off-Platform Transactions & Abuse</span>
+            <span class="badge-danger">Severe</span>
+        </h3>
+        <p>Attempting to redirect customers outside NexKart for payments or sending abusive messages will result in an immediate permanent account ban.</p>
+    </div>
+
+    <!-- ৬. গ্রাহকের জালিয়াতি -->
+    <div class="policy-card">
+        <h3>
+            <span class="title-text"><i class="fa-solid fa-user-shield"></i> Buyer Fraud & Fake Claims</span>
+            <span class="badge-danger">Severe</span>
+        </h3>
+        <p>Buyers making fraudulent refund requests or returning damaged/swapped items will be blacklisted and face permanent account suspension.</p>
+    </div>
+</div>
+
+<script>
+    function goBack() {
+        // যদি ব্রাউজার হিস্ট্রি বা রেফারার থাকে তবে আগের পেজে নিয়ে যাবে
+        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            window.history.back();
+        } else {
+            // ইতিহাস না থাকলে অটোমেটিক ড্যাশবোর্ডে রিডাইরেক্ট করবে
+            window.location.href = '/user/dashboard';
+        }
+    }
+</script>
+
+</body>
+</html>

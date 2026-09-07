@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return & Refund Policy - NexKart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: #fff0f5; min-height: 100vh; padding: 40px 20px; display: flex; justify-content: center; align-items: center; }
+        .container { background: #ffffff; width: 100%; max-width: 850px; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(230, 100, 150, 0.15); border: 1px solid #fcddec; }
+        
+        .back-btn-container { margin-bottom: 20px; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #d63384; background: #ffe6f0; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: 0.3s; }
+        .back-btn:hover { background: #ffd1e3; }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header i { font-size: 40px; color: #d63384; margin-bottom: 10px; }
+        .header h2 { color: #d63384; font-size: 24px; font-weight: 700; }
+        .header p { color: #666; font-size: 13px; margin-top: 5px; }
+        
+        .policy-card { background: #fff5f9; border: 1px solid #fcddec; padding: 20px; border-radius: 12px; margin-bottom: 16px; }
+        .policy-card h3 { color: #d63384; font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .policy-card ul { margin-left: 20px; color: #555; font-size: 13px; line-height: 1.8; }
+        .policy-card p { font-size: 13px; color: #555; line-height: 1.6; }
+        
+        .timeline-box { display: flex; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
+        .timeline-item { background: #fff; border: 1px solid #fcddec; padding: 10px 15px; border-radius: 8px; flex: 1; min-width: 200px; }
+        .timeline-item strong { color: #d63384; display: block; font-size: 13px; }
+        .timeline-item span { font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Back Button -->
+    <div class="back-btn-container">
+        <button onclick="goBack()" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </button>
+    </div>
+
+    <div class="header">
+        <i class="fa-solid fa-rotate-left"></i>
+        <h2>Return & Refund Policy</h2>
+        <p>Hassle-free returns and transparent refund guidelines for NexKart shoppers</p>
+    </div>
+
+    <!-- 1. Return Window -->
+    <div class="policy-card">
+        <h3><i class="fa-solid fa-calendar-check"></i> 7-Day Return Policy</h3>
+        <p>You can request a return within <strong>7 days</strong> of receiving your delivery. Requests submitted after 7 days will not be eligible for return or exchange.</p>
+    </div>
+
+    <!-- 2. Conditions for Return -->
+    <div class="policy-card">
+        <h3><i class="fa-solid fa-box-open"></i> Eligible Conditions for Return</h3>
+        <ul>
+            <li>Received a damaged, defective, or wrong product.</li>
+            <li>Product does not match the description or image shown on NexKart.</li>
+            <li>Missing items, accessories, or parts from the package.</li>
+            <li>Item must be unused, unwashed, and in original brand packaging with all tags intact.</li>
+        </ul>
+    </div>
+
+    <!-- 3. Non-Returnable Items -->
+    <div class="policy-card">
+        <h3><i class="fa-solid fa-ban"></i> Non-Returnable Items</h3>
+        <ul>
+            <li>Innerwear, lingerie, and swimwear due to hygiene reasons.</li>
+            <li>Opened cosmetics, skincare, and personal care items.</li>
+            <li>Digital gift cards and software licenses.</li>
+            <li>Clearance sale or promotional discount items.</li>
+        </ul>
+    </div>
+
+    <!-- 4. Refund Timeline -->
+    <div class="policy-card">
+        <h3><i class="fa-solid fa-wallet"></i> Refund Method & Processing Time</h3>
+        <p>Once your returned item is inspected and approved by our quality team, your refund will be processed via the original payment method:</p>
+        <div class="timeline-box">
+            <div class="timeline-item">
+                <strong>bKash / Nagad / MFS</strong>
+                <span>3 - 5 Business Days</span>
+            </div>
+            <div class="timeline-item">
+                <strong>Debit / Credit Card</strong>
+                <span>7 - 10 Business Days</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Shipping Charges -->
+    <div class="policy-card">
+        <h3><i class="fa-solid fa-truck-ramp-box"></i> Return Shipping Fees</h3>
+        <p>If the return is due to a seller error or damaged product, NexKart covers full shipping costs. For mind-change or incorrect size selection, standard return shipping fees apply.</p>
+    </div>
+</div>
+
+<script>
+    function goBack() {
+        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            window.history.back();
+        } else {
+            window.location.href = '/user/dashboard';
+        }
+    }
+</script>
+
+</body>
+</html>

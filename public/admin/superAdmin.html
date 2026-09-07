@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
+    <div>
+      <div class="h-16 flex items-center gap-3 px-6 bg-slate-950 border-b border-slate-800">
+        <i class="fa-solid fa-shield-halved text-purple-500 text-xl"></i>
+        <span class="font-bold text-lg tracking-wide">Super Admin</span>
+      </div>
+
+      <nav class="mt-6 px-4 space-y-2">
+        <a href="/home.html" class="flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-xl font-medium shadow-lg shadow-purple-600/30">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+
+        <!-- DROPDOWN MENU FOR REGISTER & VERIFICATION -->
+        <div class="space-y-1">
+          <button onclick="toggleDropdown('registerDropdown', 'dropdownArrow')" class="w-full flex items-center justify-between px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-user-plus"></i> Register & Verify
+            </div>
+            <i id="dropdownArrow" class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+          </button>
+          
+          <!-- Dropdown Items -->
+          <div id="registerDropdown" class="hidden pl-4 space-y-1">
+            <button onclick="openRegisterModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
+              <i class="fa-solid fa-user-plus text-xs"></i> New Register Requests
+            </button>
+            <button onclick="openVerificationModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
+              <i class="fa-solid fa-user-check text-xs"></i> Verification Requests
+            </button>
+          </div>
+        </div>
+
+        <button onclick="openOrderModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-boxes-packing"></i> All Order List
+        </button>
+        <button onclick="openCommissionModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-percent"></i> Commission Reports
+        </button>
+        <button onclick="openTicketModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-ticket"></i> Support & Complains
+        </button>
+        <!-- NEW IPR REPORT BUTTON -->
+        <button onclick="openIprModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-file-shield"></i> IPR Reports
+        </button>
+        <!-- NEW SELLER STATUS BUTTON -->
+        <button onclick="openSellerStatusModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-store"></i> Seller Status List
+        </button>
+        <!-- NEW WITHDRAWAL REQUESTS BUTTON (পরের লাইনে) -->
+<button onclick="openWithdrawalModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+  <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
+</button>
+      </nav>
+    </div>
+
+    <!-- LOGOUT BUTTON -->
+    <div class="p-4 border-t border-slate-800">
+      <button onclick="openModal('logoutModal')" class="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-800 hover:bg-red-600/20 text-red-400 hover:text-red-300 rounded-xl font-medium border border-slate-700 transition">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+    
+    <!-- HEADER -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-crown text-amber-500"></i> Super Admin Portal
+      </h1>
+      
+      <!-- DYNAMIC SUPER ADMIN PROFILE -->
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden sm:block">
+          <p id="adminName" class="text-sm font-semibold text-slate-700">Loading...</p>
+          <span class="text-xs text-purple-600 font-medium">Super Admin</span>
+        </div>
+        <img id="adminImage" src="/default-avatar.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-purple-500 object-cover shadow" />
+      </div>
+    </header>
+
+    <!-- MAIN BODY CARDS -->
+    <main class="p-6 space-y-6">
+      
+      <div class="bg-purple-950 text-white rounded-2xl p-6 shadow-xl flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold mb-1">স্বাগতম, Super Admin Portal ✨</h2>
+          <p class="text-purple-200 text-sm">যেকোনো কার্ড অথবা বামপাশের মেনুতে ক্লিক করে পপআপ উইন্ডো চালু করুন।</p>
+        </div>
+      </div>
+
+      <!-- CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+        
+        <!-- 1. New Register Request Card -->
+        <div onclick="openRegisterModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Requests</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">New Register Request</h3>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition">
+              <i class="fa-solid fa-user-plus"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Verification Card -->
+        <div onclick="openVerificationModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Verification</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">User Verification Request</h3>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. All Order Card -->
+        <div onclick="openOrderModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Orders</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">All Order List</h3>
+            </div>
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
+              <i class="fa-solid fa-boxes-packing"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Commission Report Card -->
+        <div onclick="openCommissionModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Earnings</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">Commission Report</h3>
+            </div>
+            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition">
+              <i class="fa-solid fa-percent"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Support & Complains Ticket Card -->
+        <div onclick="openTicketModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Complains</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">Support & Tickets</h3>
+            </div>
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-amber-600 group-hover:text-white transition">
+              <i class="fa-solid fa-ticket"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. NEW IPR Reports Card -->
+        <div onclick="openIprModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Reports</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">IPR Reports</h3>
+            </div>
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-rose-600 group-hover:text-white transition">
+              <i class="fa-solid fa-file-shield"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. NEW Seller Status Card -->
+        <div onclick="openSellerStatusModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Sellers</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">Seller Status List</h3>
+            </div>
+            <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-teal-600 group-hover:text-white transition">
+              <i class="fa-solid fa-store"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. NEW Withdrawal Requests Card (পরের লাইনে) -->
+<div onclick="openWithdrawalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs font-semibold text-slate-400 uppercase">Payouts</p>
+      <h3 class="text-lg font-bold text-slate-800 mt-1">Withdrawal Requests</h3>
+    </div>
+    <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition">
+      <i class="fa-solid fa-money-bill-transfer"></i>
+    </div>
+  </div>
+</div>
+
+
+      </div>
+    </main>
+  </div>
+
+  <!-- POPUP MODALS -->
+
+  <!-- POPUP 1: Dynamic New Register Requests Modal -->
+  <div id="registerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-plus text-purple-600"></i> New Register Requests</h3>
+        <button onclick="closeModal('registerModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+            <tr>
+              <th class="p-3">Profile</th>
+              <th class="p-3">Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Shop</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="registerRequestsBody" class="divide-y divide-slate-100">
+            <!-- Dynamic data will render here -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('registerModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 2: User Verification Modal -->
+  <div id="verificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-check text-blue-600"></i> User Verification Requests</h3>
+        <button onclick="closeModal('verificationModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+            <tr>
+              <th class="p-3">User</th>
+              <th class="p-3">Doc Type</th>
+              <th class="p-3">Doc No</th>
+              <th class="p-3">File</th>
+              <th class="p-3">Verified Status</th>
+              <th class="p-3">Doc Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="verificationRequestsBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Data Render -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('verificationModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 3: Order List Modal -->
+  <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-boxes-packing text-emerald-600"></i> All Order List
+        </h3>
+        
+        <div class="flex items-center gap-2 w-full md:w-auto">
+          <div class="relative w-full md:w-72">
+            <input type="text" id="orderSearchInput" onkeyup="filterOrders()" placeholder="Search by Order ID or Phone..." class="w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 border-slate-300">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          </div>
+          <button onclick="closeModal('orderModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Order Info</th>
+              <th class="p-3">Customer</th>
+              <th class="p-3">Qty / Var</th>
+              <th class="p-3">Total Amount</th>
+              <th class="p-3">Payment Method</th>
+              <th class="p-3">Payment Status</th>
+              <th class="p-3">Order Status</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody id="orderListTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Orders Render -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('orderModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 4: COMMISSION REPORT MODAL -->
+  <div id="commissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      
+      <!-- Top Section with Search & Total Commission Summary -->
+      <div class="border-b pb-4 space-y-4">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-percent text-indigo-600"></i> Commission Reports
+          </h3>
+          
+          <button onclick="closeModal('commissionModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold hidden md:block">&times;</button>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="relative w-48 sm:w-60">
+              <input type="text" id="commOrderSearch" onkeyup="filterCommissionData()" placeholder="Search by Order Number..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-300">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+
+            <!-- Month Dropdown -->
+            <select id="commMonthFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">All Months</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+
+            <!-- Year Dropdown -->
+            <select id="commYearFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="all">All Years</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+
+          <!-- Total Earned Commission Display -->
+          <div class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <span>Filtered Total Commission:</span>
+            <span id="totalCommissionSum" class="text-sm font-bold">৳0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commission Table Body -->
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Order Number</th>
+              <th class="p-3">Seller Details</th>
+              <th class="p-3">Rate</th>
+              <th class="p-3">Commission Amount</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody id="commissionTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Commission Rows Render -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('commissionModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 5: SUPPORT & COMPLAINS (TICKETS) MODAL -->
+  <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-ticket text-amber-600"></i> Support Tickets & Complains
+        </h3>
+        <button onclick="closeModal('ticketModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <!-- Ticket Management Layout -->
+      <div class="flex-1 flex overflow-hidden border rounded-xl my-3 bg-slate-50">
+        
+        <!-- Left Sidebar: Ticket List -->
+        <div class="w-1/3 md:w-80 border-r bg-white flex flex-col">
+          <div class="p-3 border-b space-y-2">
+            <div class="relative">
+              <input type="text" id="ticketSearchInput" onkeyup="filterTickets()" placeholder="Search Ticket No, Email, Category..." class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+            
+            <!-- Status Filter -->
+            <select id="ticketStatusFilter" onchange="filterTickets()" class="w-full border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="all">All Statuses</option>
+              <option value="open">Open / Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="closed">Closed / Solved</option>
+            </select>
+          </div>
+
+          <div id="ticketList" class="flex-1 overflow-y-auto divide-y divide-slate-100">
+            <!-- Dynamic Ticket List Items -->
+          </div>
+        </div>
+
+        <!-- Right Side: Ticket Detail View & Reply Panel -->
+        <div class="flex-1 flex flex-col bg-white overflow-hidden">
+          
+          <div id="activeTicketHeader" class="p-3 border-b bg-slate-50 flex items-center justify-between">
+            <div>
+              <p id="ticketHeaderNo" class="font-bold text-slate-800 text-sm">Select a ticket to view details</p>
+              <p id="ticketHeaderCategory" class="text-xs text-slate-500">N/A</p>
+            </div>
+            <div id="ticketHeaderStatus"></div>
+          </div>
+
+          <!-- Ticket Content & Discussion Container -->
+          <div id="ticketBodyContainer" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
+            <div class="text-center text-slate-400 text-xs mt-10">
+              বামপাশ থেকে একটি টিকেট সিলেক্ট করুন অভিযোগের বিষয়বস্তু পড়তে ও উত্তর প্রদান করতে।
+            </div>
+          </div>
+
+          <!-- Admin Reply Form -->
+          <form id="ticketReplyForm" onsubmit="sendTicketReply(event)" class="p-3 border-t bg-white flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <select id="ticketStatusSelect" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" disabled>
+                <option value="open">Open</option>
+                <option value="in_progress">In Progress</option>
+                <option value="closed">Closed / Solved</option>
+              </select>
+              <span class="text-xs text-slate-400">Update Status along with reply</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <textarea id="ticketReplyText" placeholder="Write official admin reply..." class="flex-1 px-3 py-2 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300 resize-none h-12" disabled required></textarea>
+              <button type="submit" id="ticketReplyBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50 h-12" disabled>
+                <i class="fa-solid fa-paper-plane"></i> Send Reply
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('ticketModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 6: IPR REPORTS MODAL -->
+  <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-file-shield text-rose-600"></i> IPR Reports & Complaints
+        </h3>
+        <button onclick="closeModal('iprModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Brand Info</th>
+              <th class="p-3">Contact Email</th>
+              <th class="p-3">Infringement Type</th>
+              <th class="p-3">Product URL</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="iprTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic IPR Data Render -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('iprModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP 8: SELLER STATUS MODAL -->
+  <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+      
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-store text-teal-600"></i> Seller Status List
+        </h3>
+        <button onclick="closeModal('sellerStatusModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto my-4">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Seller Name</th>
+              <th class="p-3">Shop Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Phone</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="sellerStatusTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Seller Data Render -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('sellerStatusModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP: WITHDRAWAL REQUESTS MODAL -->
+<div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+    
+    <!-- Top Header & Filters -->
+    <div class="border-b pb-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-transfer text-violet-600"></i> Withdrawal Requests Management
+        </h3>
+        <button onclick="closeModal('withdrawalModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <!-- Search & Time/Status Filters -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Transaction ID Search -->
+          <div class="relative w-48 sm:w-60">
+            <input type="text" id="withdrawSearchInput" onkeyup="filterWithdrawals()" placeholder="Search by Transaction ID..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 border-slate-300">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+          </div>
+
+          <!-- Time Filter (7 Days, 1 Month, 1 Year, All) -->
+          <select id="withdrawTimeFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <option value="all">All Time</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 1 Month</option>
+            <option value="365">Last 1 Year</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="withdrawStatusFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <option value="all">All Status</option>
+            <option value="pending">Pending Only</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <!-- Total Withdrawal Sum Display -->
+        <div class="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+          <span>Total Withdrawal:</span>
+          <span id="totalWithdrawSum" class="text-sm font-bold">৳0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Body -->
+    <div class="flex-1 overflow-y-auto my-4">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+          <tr>
+            <th class="p-3">Seller / User</th>
+            <th class="p-3">Amount</th>
+            <th class="p-3">Payment Info</th>
+            <th class="p-3">Transaction ID</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Date</th>
+          </tr>
+        </thead>
+        <tbody id="withdrawalTableBody" class="divide-y divide-slate-100">
+          <!-- Dynamic Data -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="border-t pt-3 text-right">
+      <button onclick="closeModal('withdrawalModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- POPUP 7: LOGOUT MODAL -->
+  <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center relative">
+      <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-slate-800">লগআউট করতে চান?</h3>
+        <p class="text-sm text-slate-500 mt-1">আপনি কি নিশ্চিত যে সিস্টেম থেকে লগআউট করতে চান?</p>
+      </div>
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeModal('logoutModal')" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition">
+          No
+        </button>
+        <a href="/logout" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition inline-block">
+          Yes
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT SECTION -->
+  <script>
+    let allOrdersData = [];
+    let allCommissionData = [];
+
+    // Support Ticket State Variables
+    let allTicketsData = [];
+    let activeTicket = null;
+
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Toggle Dropdown Function
+    function toggleDropdown(dropdownId, arrowId) {
+      const dropdown = document.getElementById(dropdownId);
+      const arrow = document.getElementById(arrowId);
+      dropdown.classList.toggle('hidden');
+      arrow.classList.toggle('rotate-180');
+    }
+
+    async function fetchCurrentSuperAdmin() {
+      try {
+        const res = await fetch('/admin/api/current-super-admin');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('adminName').innerText = data.name || 'Super Admin';
+          if (data.picture) {
+            document.getElementById('adminImage').src = data.picture;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching admin profile:', err);
+      }
+    }
+
+    async function openRegisterModal() {
+      openModal('registerModal');
+      const tableBody = document.getElementById('registerRequestsBody');
+      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading...</td></tr>`;
+
+      try {
+        const res = await fetch('/admin/api/pending-requests');
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error("Server returned non-JSON response:", text);
+          tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Server Error: Unauthorized or Route Not Found.</td></tr>`;
+          return;
+        }
+
+        const requests = await res.json();
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No pending register requests found.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = requests.map(req => `
+          <tr>
+            <td class="p-3">
+              <img src="${req.picture || '/default-avatar.png'}" class="w-9 h-9 rounded-full object-cover border" alt="profile" />
+            </td>
+            <td class="p-3 font-medium">${req.name || 'N/A'}</td>
+            <td class="p-3">${req.email || 'N/A'}</td>
+            <td class="p-3">${req.shop_name || 'N/A'}</td>
+            <td class="p-3">
+              <span class="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">${req.status || 'pending'}</span>
+            </td>
+            <td class="p-3 text-right space-x-1">
+              <button onclick="updateStatus(${req.id}, 'approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Approve</button>
+              <button onclick="updateStatus(${req.id}, 'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Reject</button>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        console.error('Error fetching requests:', err);
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load requests.</td></tr>`;
+      }
+    }
+
+    async function updateStatus(adminId, status) {
+      try {
+        const res = await fetch('/admin/api/update-request-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminId, status })
+        });
+        const data = await res.json();
+        if (data.success) {
+          openRegisterModal();
+        } else {
+          alert(data.error || 'Failed to update status');
+        }
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
+    }
+
+    async function openVerificationModal() {
+      openModal('verificationModal');
+      const tableBody = document.getElementById('verificationRequestsBody');
+      tableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Loading...</td></tr>`;
+
+      try {
+        const res = await fetch('/admin/api/verification-requests');
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Server Error: Failed to fetch requests.</td></tr>`;
+          return;
+        }
+
+        const requests = await res.json();
+
+        if (!Array.isArray(requests) || requests.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No verification requests found.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = requests.map(req => {
+          const isVerifiedBadge = req.is_verified === 1 
+            ? `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-semibold"><i class="fa-solid fa-check"></i> Verified</span>`
+            : `<span class="bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-semibold"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
+
+          let docStatusBadge = `<span class="bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">Pending</span>`;
+          if (req.doc_status === 'approved') {
+            docStatusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">Approved</span>`;
+          } else if (req.doc_status === 'rejected') {
+            docStatusBadge = `<span class="bg-red-100 text-red-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">Rejected</span>`;
+          }
+
+          return `
+            <tr>
+              <td class="p-3">
+                <div class="flex items-center gap-2">
+                  <img src="${req.picture || '/default-avatar.png'}" class="w-8 h-8 rounded-full object-cover border" alt="profile" />
+                  <div>
+                    <p class="font-medium text-xs text-slate-800">${req.name || 'N/A'}</p>
+                    <p class="text-xs text-slate-400">${req.email || ''}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3 font-medium uppercase text-xs">${req.document_type || 'N/A'}</td>
+              <td class="p-3 text-xs">${req.document_number || 'N/A'}</td>
+              <td class="p-3">
+                ${req.file_url ? `<a href="${req.file_url}" target="_blank" class="text-blue-600 underline text-xs"><i class="fa-solid fa-file-lines"></i> View Document</a>` : 'No file'}
+              </td>
+              <td class="p-3">${isVerifiedBadge}</td>
+              <td class="p-3">${docStatusBadge}</td>
+              <td class="p-3 text-right space-x-1">
+                <button onclick="updateVerificationStatus(${req.doc_id}, ${req.user_id}, 'approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Approve</button>
+                <button onclick="updateVerificationStatus(${req.doc_id}, ${req.user_id}, 'rejected')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Reject</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error fetching verification requests:', err);
+        tableBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Failed to load verification requests.</td></tr>`;
+      }
+    }
+
+    async function updateVerificationStatus(docId, userId, status) {
+      try {
+        const res = await fetch('/admin/api/update-verification-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docId, userId, status })
+        });
+        const data = await res.json();
+        if (data.success) {
+          openVerificationModal();
+        } else {
+          alert(data.error || 'Failed to update verification status');
+        }
+      } catch (err) {
+        console.error('Error updating verification status:', err);
+      }
+    }
+
+    async function openOrderModal() {
+      openModal('orderModal');
+      const tableBody = document.getElementById('orderListTableBody');
+      tableBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">Loading Orders...</td></tr>`;
+
+      try {
+        const res = await fetch('/admin/api/all-orders');
+        if (!res.ok) throw new Error('Failed to fetch orders');
+        
+        allOrdersData = await res.json();
+        renderOrdersTable(allOrdersData);
+      } catch (err) {
+        console.error('Error loading orders:', err);
+        tableBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-red-500">Failed to load orders list.</td></tr>`;
+      }
+    }
+
+    function renderOrdersTable(orders) {
+      const tableBody = document.getElementById('orderListTableBody');
+      if (!orders || orders.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">No orders found.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = orders.map(order => `
+        <tr>
+          <td class="p-3">
+            <p class="font-bold text-slate-800">#${order.order_id}</p>
+            <span class="text-[10px] text-slate-400">Trk: ${order.tracking_number || 'N/A'}</span>
+          </td>
+          <td class="p-3">
+            <p class="font-semibold text-slate-800 text-xs">${order.customer_name || 'N/A'}</p>
+            <p class="text-xs text-slate-500">${order.customer_phone || 'N/A'}</p>
+          </td>
+          <td class="p-3 text-xs">
+            <p><span class="font-semibold">Qty:</span> ${order.quantity}</p>
+            <p class="text-slate-400">${order.variant || ''}</p>
+          </td>
+          <td class="p-3 font-bold text-emerald-600 text-xs">
+            ৳${order.total_amount}
+          </td>
+          <td class="p-3 text-xs uppercase font-medium text-slate-600">
+            ${order.payment_method || 'COD'}
+          </td>
+          <td class="p-3">
+            <select onchange="changeOrderState(${order.id}, 'payment_status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border focus:outline-none ${
+              order.payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+              order.payment_status === 'failed' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'
+            }">
+              <option value="pending" ${order.payment_status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="paid" ${order.payment_status === 'paid' ? 'selected' : ''}>Paid</option>
+              <option value="failed" ${order.payment_status === 'failed' ? 'selected' : ''}>Failed</option>
+            </select>
+          </td>
+          <td class="p-3">
+            <select onchange="changeOrderState(${order.id}, 'order_status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-lg border focus:outline-none ${
+              order.order_status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+              order.order_status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-300' :
+              order.order_status === 'shipped' ? 'bg-blue-50 text-blue-700 border-blue-300' : 'bg-purple-50 text-purple-700 border-purple-300'
+            }">
+              <option value="pending" ${order.order_status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="processing" ${order.order_status === 'processing' ? 'selected' : ''}>Processing</option>
+              <option value="shipped" ${order.order_status === 'shipped' ? 'selected' : ''}>Shipped</option>
+              <option value="delivered" ${order.order_status === 'delivered' ? 'selected' : ''}>Delivered</option>
+              <option value="cancelled" ${order.order_status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </td>
+          <td class="p-3 text-xs text-slate-400">
+            ${new Date(order.created_at).toLocaleDateString()}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterOrders() {
+      const query = document.getElementById('orderSearchInput').value.toLowerCase().trim();
+      const filtered = allOrdersData.filter(order => 
+        (order.order_id && String(order.order_id).toLowerCase().includes(query)) ||
+        (order.customer_phone && String(order.customer_phone).toLowerCase().includes(query)) ||
+        (order.customer_name && order.customer_name.toLowerCase().includes(query))
+      );
+      renderOrdersTable(filtered);
+    }
+
+    async function changeOrderState(id, field, value) {
+      try {
+        const res = await fetch('/admin/api/update-order-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, field, value })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          alert(data.error || 'Failed to update order');
+        }
+      } catch (err) {
+        console.error('Error updating order:', err);
+        alert('Network error while updating status');
+      }
+    }
+
+    // ================= COMMISSION REPORT LOGIC =================
+    async function openCommissionModal() {
+      openModal('commissionModal');
+      const tableBody = document.getElementById('commissionTableBody');
+      tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Loading Commissions...</td></tr>`;
+
+      try {
+        const res = await fetch('/admin/api/all-commissions');
+        if (!res.ok) throw new Error('Failed to fetch commissions');
+
+        allCommissionData = await res.json();
+        filterCommissionData();
+      } catch (err) {
+        console.error('Error loading commissions:', err);
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Failed to load commission data.</td></tr>`;
+      }
+    }
+
+    function filterCommissionData() {
+      const searchQuery = document.getElementById('commOrderSearch').value.toLowerCase().trim();
+      const selectedMonth = document.getElementById('commMonthFilter').value;
+      const selectedYear = document.getElementById('commYearFilter').value;
+
+      let filtered = allCommissionData.filter(item => {
+        const matchOrder = !searchQuery || String(item.order_number).toLowerCase().includes(searchQuery);
+        
+        const dateObj = new Date(item.date);
+        const itemMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const itemYear = String(dateObj.getFullYear());
+
+        const matchMonth = selectedMonth === 'all' || itemMonth === selectedMonth;
+        const matchYear = selectedYear === 'all' || itemYear === selectedYear;
+
+        return matchOrder && matchMonth && matchYear;
+      });
+
+      renderCommissionTable(filtered);
+    }
+
+    function renderCommissionTable(items) {
+      const tableBody = document.getElementById('commissionTableBody');
+      let totalAmount = 0;
+
+      if (!items || items.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No commission records found.</td></tr>`;
+        document.getElementById('totalCommissionSum').innerText = `৳0.00`;
+        return;
+      }
+
+      tableBody.innerHTML = items.map(item => {
+        const commVal = parseFloat(item.commission_amount) || 0;
+        totalAmount += commVal;
+
+        return `
+          <tr>
+            <td class="p-3 font-bold text-slate-800">#${item.order_number}</td>
+            <td class="p-3">
+              <p class="font-semibold text-slate-800 text-xs">${item.seller_name || 'Unknown Seller'}</p>
+              <p class="text-xs text-slate-400">${item.seller_email || 'ID: ' + item.seller_id}</p>
+            </td>
+            <td class="p-3 text-xs font-medium text-slate-600">${item.commission_rate}%</td>
+            <td class="p-3 font-bold text-indigo-600 text-xs">৳${commVal.toFixed(2)}</td>
+            <td class="p-3 text-xs text-slate-500">${new Date(item.date).toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('totalCommissionSum').innerText = `৳${totalAmount.toFixed(2)}`;
+    }
+
+    // ================= TICKETS & COMPLAINS LOGIC =================
+    async function openTicketModal() {
+      openModal('ticketModal');
+      await fetchTickets();
+    }
+
+    async function fetchTickets() {
+      const listContainer = document.getElementById('ticketList');
+      listContainer.innerHTML = `<p class="p-4 text-center text-xs text-slate-400">Loading tickets...</p>`;
+
+      try {
+        const res = await fetch('/admin/api/tickets');
+        if (!res.ok) throw new Error('Failed to load tickets');
+        allTicketsData = await res.json();
+        filterTickets();
+      } catch (err) {
+        console.error('Error fetching tickets:', err);
+        listContainer.innerHTML = `<p class="p-4 text-center text-xs text-red-500">Failed to load tickets list.</p>`;
+      }
+    }
+
+    function filterTickets() {
+      const query = document.getElementById('ticketSearchInput').value.toLowerCase().trim();
+      const status = document.getElementById('ticketStatusFilter').value;
+
+      const filtered = allTicketsData.filter(ticket => {
+        const matchQuery = !query || 
+          (ticket.ticket_number && ticket.ticket_number.toLowerCase().includes(query)) ||
+          (ticket.full_name && ticket.full_name.toLowerCase().includes(query)) ||
+          (ticket.email && ticket.email.toLowerCase().includes(query)) ||
+          (ticket.issue_category && ticket.issue_category.toLowerCase().includes(query));
+
+        const matchStatus = status === 'all' || ticket.status === status;
+
+        return matchQuery && matchStatus;
+      });
+
+      renderTicketList(filtered);
+    }
+
+    function renderTicketList(tickets) {
+      const listContainer = document.getElementById('ticketList');
+      if (!tickets || tickets.length === 0) {
+        listContainer.innerHTML = `<p class="p-4 text-center text-xs text-slate-400">No tickets found.</p>`;
+        return;
+      }
+
+      listContainer.innerHTML = tickets.map(ticket => {
+        let badgeColor = 'bg-amber-100 text-amber-700';
+        if (ticket.status === 'closed') badgeColor = 'bg-emerald-100 text-emerald-700';
+        if (ticket.status === 'in_progress') badgeColor = 'bg-blue-100 text-blue-700';
+
+        return `
+          <div onclick="selectTicket(${ticket.id})" 
+               class="p-3 hover:bg-slate-100 cursor-pointer transition flex flex-col gap-1 ${activeTicket && activeTicket.id === ticket.id ? 'bg-amber-50 border-l-4 border-amber-500' : ''}">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-slate-800">#${ticket.ticket_number || ticket.id}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase ${badgeColor}">
+                ${ticket.status || 'Open'}
+              </span>
+            </div>
+            <p class="text-xs font-semibold text-slate-700 truncate">${ticket.full_name || 'Anonymous'}</p>
+            <div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span class="truncate">${ticket.issue_category || 'General'}</span>
+              <span>${ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : ''}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectTicket(id) {
+      activeTicket = allTicketsData.find(t => t.id === id);
+      if (!activeTicket) return;
+
+      document.getElementById('ticketHeaderNo').innerText = `Ticket #${activeTicket.ticket_number || activeTicket.id} - ${activeTicket.full_name}`;
+      document.getElementById('ticketHeaderCategory').innerText = `Category: ${activeTicket.issue_category || 'N/A'} | Email: ${activeTicket.email || 'N/A'}`;
+      
+      let badgeColor = 'bg-amber-100 text-amber-700';
+      if (activeTicket.status === 'closed') badgeColor = 'bg-emerald-100 text-emerald-700';
+      if (activeTicket.status === 'in_progress') badgeColor = 'bg-blue-100 text-blue-700';
+
+      document.getElementById('ticketHeaderStatus').innerHTML = `<span class="text-xs px-2.5 py-1 rounded-full font-bold uppercase ${badgeColor}">${activeTicket.status}</span>`;
+
+      // Form enablement
+      document.getElementById('ticketReplyText').disabled = false;
+      document.getElementById('ticketReplyBtn').disabled = false;
+      
+      const statusSelect = document.getElementById('ticketStatusSelect');
+      statusSelect.disabled = false;
+      statusSelect.value = activeTicket.status || 'open';
+
+      renderTicketDetails(activeTicket);
+      filterTickets();
+    }
+
+    function renderTicketDetails(ticket) {
+      const container = document.getElementById('ticketBodyContainer');
+
+      let attachmentHTML = '';
+      if (ticket.attachment_path) {
+        attachmentHTML = `
+          <div class="mt-3 pt-2 border-t text-xs">
+            <span class="font-semibold text-slate-600"><i class="fa-solid fa-paperclip"></i> Attachment:</span>
+            <a href="${ticket.attachment_path}" target="_blank" class="text-blue-600 underline ml-1">View Attached File (${ticket.attachment_type || 'file'})</a>
+          </div>
+        `;
+      }
+
+      let replyHTML = '';
+      if (ticket.admin_reply) {
+        replyHTML = `
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-800"><i class="fa-solid fa-user-shield"></i> Official Admin Reply</span>
+              <span class="text-[10px] text-slate-400">${ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : ''}</span>
+            </div>
+            <p class="text-xs text-slate-700 whitespace-pre-wrap">${ticket.admin_reply}</p>
+          </div>
+        `;
+      } else {
+        replyHTML = `
+          <div class="text-center py-3 text-xs text-slate-400 italic">
+            এখনও পর্যন্ত এডমিন থেকে কোনো রিপ্লাই দেয়া হয়নি।
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <!-- Original User Complaint -->
+        <div class="bg-white border rounded-xl p-4 shadow-sm space-y-2">
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="text-xs font-bold text-slate-800">${ticket.full_name}</p>
+              <p class="text-[10px] text-slate-400">${ticket.email}</p>
+            </div>
+            <span class="text-[10px] text-slate-400">${new Date(ticket.created_at).toLocaleString()}</span>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">User Message / Issue:</span>
+            <p class="text-xs text-slate-800 mt-1 whitespace-pre-wrap">${ticket.message || 'No description provided.'}</p>
+          </div>
+          ${attachmentHTML}
+        </div>
+
+        <!-- Admin Reply Box Section -->
+        ${replyHTML}
+      `;
+    }
+
+    async function sendTicketReply(e) {
+      e.preventDefault();
+      if (!activeTicket) return;
+
+      const replyText = document.getElementById('ticketReplyText').value.trim();
+      const statusValue = document.getElementById('ticketStatusSelect').value;
+
+      if (!replyText) {
+        alert('Please enter a reply message.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/admin/api/update-ticket-reply', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            ticketId: activeTicket.id,
+            adminReply: replyText,
+            status: statusValue
+          })
+        });
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          console.error("Server returned non-JSON response:", text);
+          alert(`Server Error (${res.status}): Route not found or invalid response.`);
+          return;
+        }
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('ticketReplyText').value = '';
+          alert('Reply sent successfully!');
+          await fetchTickets();
+          selectTicket(activeTicket.id);
+        } else {
+          alert(data.error || 'Failed to send reply');
+        }
+      } catch (err) {
+        console.error('Error sending reply:', err);
+        alert('Network error while sending reply');
+      }
+    }
+
+    // IPR Reports Modal Open & Render
+    async function openIprModal() {
+      openModal('iprModal');
+      const tableBody = document.getElementById('iprTableBody');
+      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading IPR Reports...</td></tr>`;
+
+      try {
+        const res = await fetch('/admin/api/ipr-reports');
+        if (!res.ok) throw new Error('Failed to fetch IPR reports');
+        
+        const reports = await res.json();
+        
+        if (!Array.isArray(reports) || reports.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No IPR reports found.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = reports.map(item => `
+          <tr>
+            <td class="p-3 font-semibold text-slate-800">${item.brand_name || 'N/A'}</td>
+            <td class="p-3 text-slate-600">${item.contact_email || 'N/A'}</td>
+            <td class="p-3 font-medium text-slate-700">${item.infringement_type || 'N/A'}</td>
+            <td class="p-3">
+              ${item.product_url ? `<a href="${item.product_url}" target="_blank" class="text-blue-600 underline text-xs">View Product</a>` : 'N/A'}
+            </td>
+            
+            <td class="p-3">
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${
+                item.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+              }">
+                ${item.status || 'pending'}
+              </span>
+            </td>
+
+            <td class="p-3 text-right">
+              ${item.status !== 'resolved' ? 
+                `<button onclick="updateIprStatus(${item.id}, '${item.contact_email}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Process & Send Mail</button>` 
+                : `<span class="text-xs text-emerald-600 font-semibold"><i class="fa-solid fa-circle-check"></i> Resolved</span>`}
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        console.error('Error loading IPR reports:', err);
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load IPR reports.</td></tr>`;
+      }
+    }
+
+    async function updateIprStatus(id, email) {
+      if (!confirm('Are you sure you want to process this report? A confirmation mail will be sent and status will be updated to RESOLVED.')) return;
+      
+      try {
+        const res = await fetch('/admin/api/update-ipr-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Mail sent successfully & Status updated to RESOLVED!');
+          openIprModal();
+        } else {
+          alert(data.error || 'Failed to update status');
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        alert('Network error while processing');
+      }
+    }
+
+    // ================= SELLER STATUS LIST LOGIC =================
+async function openSellerStatusModal() {
+  openModal('sellerStatusModal');
+  const tableBody = document.getElementById('sellerStatusTableBody');
+  tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Seller Actions...</td></tr>`;
+
+  try {
+    const res = await fetch('/admin/api/seller-status-list');
+    if (!res.ok) throw new Error('Failed to fetch seller actions');
+    
+    const sellers = await res.json();
+    
+    if (!Array.isArray(sellers) || sellers.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No sellers found.</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = sellers.map(seller => {
+      // এখানে status-এর বদলে seller.action ব্যবহার করা হয়েছে
+      const currentAction = seller.action ? seller.action.toLowerCase() : 'active';
+      
+      let actionBadgeColor = 'bg-emerald-100 text-emerald-700';
+      if (currentAction === 'warning') actionBadgeColor = 'bg-amber-100 text-amber-700';
+      else if (currentAction === 'suspended') actionBadgeColor = 'bg-red-100 text-red-700';
+      else if (currentAction === 'inactive') actionBadgeColor = 'bg-slate-200 text-slate-700';
+
+      return `
+        <tr>
+          <td class="p-3 font-semibold text-slate-800">${seller.name || 'N/A'}</td>
+          <td class="p-3 text-slate-700 font-medium">${seller.shop_name || 'N/A'}</td>
+          <td class="p-3 text-slate-600">${seller.email || 'N/A'}</td>
+          <td class="p-3 text-slate-600">${seller.phone || 'N/A'}</td>
+          <td class="p-3">
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase ${actionBadgeColor}">${currentAction}</span>
+          </td>
+          <td class="p-3 text-right">
+            <select onchange="updateSellerStatus(${seller.id}, this.value)" class="text-xs font-semibold px-2 py-1.5 rounded-lg border focus:outline-none bg-white border-slate-300">
+              <option value="" disabled selected>Change Action</option>
+              <option value="active" ${currentAction === 'active' ? 'selected' : ''}>Active</option>
+              <option value="warning" ${currentAction === 'warning' ? 'selected' : ''}>Warning</option>
+              <option value="suspended" ${currentAction === 'suspended' ? 'selected' : ''}>Suspended</option>
+              <option value="delete" ${currentAction === 'inactive' ? 'selected' : ''}>Delete</option>
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Error loading seller actions:', err);
+    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load seller action list.</td></tr>`;
+  }
+}
+
+async function updateSellerStatus(sellerId, targetStatus) {
+  if (!confirm(`Are you sure you want to change seller action to ${targetStatus.toUpperCase()}?`)) {
+    openSellerStatusModal();
+    return;
+  }
+
+  try {
+    const res = await fetch('/admin/api/update-seller-status', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ sellerId, status: targetStatus })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert('Seller action updated and notification email sent successfully!');
+      openSellerStatusModal();
+    } else {
+      alert(data.error || 'Failed to update action');
+      openSellerStatusModal();
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Network error while updating seller action');
+    openSellerStatusModal();
+  }
+}
+
+
+let allWithdrawalsData = [];
+
+async function openWithdrawalModal() {
+  openModal('withdrawalModal');
+  const tableBody = document.getElementById('withdrawalTableBody');
+  tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Withdrawals...</td></tr>`;
+
+  try {
+    const res = await fetch('/admin/api/withdrawal-requests');
+    if (!res.ok) throw new Error('Failed to fetch withdrawal requests');
+    
+    allWithdrawalsData = await res.json();
+    filterWithdrawals();
+  } catch (err) {
+    console.error('Error:', err);
+    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load withdrawal list.</td></tr>`;
+  }
+}
+
+function filterWithdrawals() {
+  const searchQuery = document.getElementById('withdrawSearchInput').value.toLowerCase().trim();
+  const timeFilter = document.getElementById('withdrawTimeFilter').value;
+  const statusFilter = document.getElementById('withdrawStatusFilter').value;
+
+  const now = new Date();
+
+  let filtered = allWithdrawalsData.filter(item => {
+    // 1. Transaction ID Search
+    const matchSearch = !searchQuery || (item.transaction_id && String(item.transaction_id).toLowerCase().includes(searchQuery));
+
+    // 2. Status Filter
+    const matchStatus = statusFilter === 'all' || (item.status && item.status.toLowerCase() === statusFilter);
+
+    // 3. Time Filter (7 days, 1 month, 1 year)
+    let matchTime = true;
+    if (timeFilter !== 'all') {
+      const itemDate = new Date(item.created_at || item.created_at);
+      const diffTime = Math.abs(now - itemDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      matchTime = diffDays <= parseInt(timeFilter);
+    }
+
+    return matchSearch && matchStatus && matchTime;
+  });
+
+  renderWithdrawalTable(filtered);
+}
+
+function renderWithdrawalTable(items) {
+  const tableBody = document.getElementById('withdrawalTableBody');
+  let totalSum = 0;
+
+  if (!items || items.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No withdrawal requests found.</td></tr>`;
+    document.getElementById('totalWithdrawSum').innerText = `৳0.00`;
+    return;
+  }
+
+  tableBody.innerHTML = items.map(item => {
+    const amount = parseFloat(item.amount) || 0;
+    totalSum += amount;
+    const currentStatus = item.status ? item.status.toLowerCase() : 'pending';
+
+    return `
+      <tr>
+        <td class="p-3">
+          <p class="font-bold text-slate-800 text-xs">${item.user_name || 'N/A'}</p>
+          <span class="text-[10px] text-slate-400">ID: ${item.admin_id || item.user_id || 'N/A'}</span>
+        </td>
+        <td class="p-3 font-bold text-violet-600 text-xs">৳${amount.toFixed(2)}</td>
+        <td class="p-3 text-xs text-slate-600">
+          <p><span class="font-semibold">Type:</span> ${item.payment_type || 'N/A'}</p>
+          <p>${item.mobile_number || item.bank_acc_number || ''}</p>
+        </td>
+        <td class="p-3 text-xs font-mono text-slate-700">${item.transaction_id || 'N/A'}</td>
+        <td class="p-3">
+         <select onchange="updateWithdrawalStatus(${item.id}, this.value)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border focus:outline-none ${
+    currentStatus === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+    currentStatus === 'rejected' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'
+}">
+    <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+    <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
+    <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+</select>
+        </td>
+        <td class="p-3 text-xs text-slate-400">
+          ${new Date(item.created_at || item.created_at).toLocaleDateString()}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('totalWithdrawSum').innerText = `৳${totalSum.toFixed(2)}`;
+}
+
+async function updateWithdrawalStatus(id, newStatus) {
+  try {
+    const res = await fetch('/admin/api/update-withdrawal-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: newStatus })
+    });
+    const data = await res.json();
+    if (data.success) {
+      // ডেটা সফলভাবে আপডেট হলে লোকাল অ্যারে আপডেট করে টেবিল রিফ্রেশ করা
+      const item = allWithdrawalsData.find(w => w.id === id);
+      if (item) item.status = newStatus;
+      filterWithdrawals();
+    } else {
+      alert(data.error || 'Failed to update status');
+    }
+  } catch (err) {
+    console.error('Error updating withdrawal status:', err);
+    alert('Network error while updating status');
+  }
+}
+
+
+window.onload = function() {
+      fetchCurrentSuperAdmin();
+    };
+
+    window.onclick = function(event) {
+      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal'];
+      modals.forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) {
+          closeModal(id);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

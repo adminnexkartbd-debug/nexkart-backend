@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+
+  <!-- Outer Container -->
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f9; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        
+        <!-- Main Card Wrapper -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 650px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #2c3e50; padding: 30px; text-align: center; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.5px;">Order Confirmation</h1>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #bdc3c7;">Thank you for your purchase!</p>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 30px;">
+              
+              <!-- Greeting & Order Status -->
+              <p style="margin: 0 0 10px 0; font-size: 16px; color: #333333;">Hello <b>${order.customer_name}</b>,</p>
+              <p style="margin: 0 0 25px 0; font-size: 14px; color: #666666; line-height: 1.5;">
+                We have received your order and it is currently being prepared for shipment. Below are the details of your order.
+              </p>
+
+              <!-- Order Overview Table -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8f9fa; border-radius: 6px; padding: 15px; margin-bottom: 25px; border: 1px solid #e9ecef;">
+                <tr>
+                  <td style="font-size: 13px; color: #555555; padding-bottom: 5px;">
+                    <strong>Order ID:</strong> #${order.order_id}
+                  </td>
+                  <td align="right" style="font-size: 13px; color: #555555; padding-bottom: 5px;">
+                    <strong>Payment Status:</strong> <span style="color: #27ae60; font-weight: bold;">${order.payment_status}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 13px; color: #555555;">
+                    <strong>Payment Method:</strong> ${order.payment_method}
+                  </td>
+                  <td align="right" style="font-size: 13px; color: #555555;">
+                    <strong>Order Status:</strong> ${order.order_status}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Product Table Header -->
+              <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #2c3e50;">Order Summary</h3>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse; margin-bottom: 25px;">
+                <thead>
+                  <tr style="background-color: #f1f3f5; border-bottom: 2px solid #dee2e6;">
+                    <th align="left" style="padding: 12px 10px; font-size: 12px; text-transform: uppercase; color: #6c757d;">Product</th>
+                    <th align="center" style="padding: 12px 10px; font-size: 12px; text-transform: uppercase; color: #6c757d;">Qty</th>
+                    <th align="right" style="padding: 12px 10px; font-size: 12px; text-transform: uppercase; color: #6c757d;">Unit Price</th>
+                    <th align="right" style="padding: 12px 10px; font-size: 12px; text-transform: uppercase; color: #6c757d;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                  <!-- Product Row -->
+                  <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 14px 10px;">
+                      <div style="font-size: 14px; font-weight: 600; color: #212529;">Product ID: ${order.product_id}</div>
+                      <div style="font-size: 12px; color: #868e96; margin-top: 2px;">Variant: ${order.variant || 'Default'}</div>
+                    </td>
+                    <td align="center" style="padding: 14px 10px; font-size: 14px; color: #333333;">${order.quantity}</td>
+                    <td align="right" style="padding: 14px 10px; font-size: 14px; color: #333333;">৳${order.subtotal_price}</td>
+                    <td align="right" style="padding: 14px 10px; font-size: 14px; font-weight: 600; color: #212529;">৳${order.subtotal_price * order.quantity}</td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+              <!-- Financials & Shipping Split -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  
+                  <!-- Shipping Address (Left Column) -->
+                  <td width="55%" valign="top" style="padding-right: 15px;">
+                    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px;">
+                      <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #2c3e50; text-transform: uppercase;">Shipping Address</h4>
+                      <p style="margin: 0; font-size: 13px; color: #555555; line-height: 1.5;">
+                        <b>${order.customer_name}</b><br>
+                        ${order.shipping_address}<br>
+                        <strong>Phone:</strong> ${order.customer_phone}<br>
+                        <strong>Email:</strong> ${order.customer_email}
+                      </p>
+                    </div>
+                  </td>
+
+                  <!-- Subtotals & Grand Total (Right Column) -->
+                  <td width="45%" valign="top">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="font-size: 13px; color: #555555;">
+                      <tr>
+                        <td style="padding: 4px 0;">Subtotal:</td>
+                        <td align="right" style="padding: 4px 0; font-weight: 500;">৳${order.subtotal_price * order.quantity}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0;">Delivery Charge:</td>
+                        <td align="right" style="padding: 4px 0; font-weight: 500;">৳${order.delivery_charge}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0;">Discount:</td>
+                        <td align="right" style="padding: 4px 0; font-weight: 500; color: #e74c3c;">-৳${order.discount_amount}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding: 8px 0;"><div style="border-top: 2px solid #dee2e6;"></div></td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 15px; font-weight: 700; color: #2c3e50;">Total Amount:</td>
+                        <td align="right" style="font-size: 15px; font-weight: 700; color: #27ae60;">৳${order.total_amount}</td>
+                      </tr>
+                    </table>
+                  </td>
+
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer Section -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="margin: 0 0 5px 0; font-size: 13px; color: #6c757d;">Have a question? Reply to this email or contact customer support.</p>
+              <p style="margin: 0; font-size: 12px; color: #adb5bd;">© 2026 Your E-Commerce Store. All rights reserved.</p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

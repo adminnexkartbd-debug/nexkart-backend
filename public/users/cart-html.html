@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKart - Shopping Cart & Checkout</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * { font-family: 'Poppins', 'Hind Siliguri', sans-serif; scroll-behavior: smooth; }
+    body { background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085); min-height: 100vh; }
+    .theme-glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
+    }
+    .theme-glass-input { background: rgba(255, 255, 255, 0.9); border: 1.5px solid #ffccd5; }
+    .gateway-card { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; cursor: pointer; }
+    .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
+    .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
+  </style>
+</head>
+<body class="text-gray-800 antialiased relative pb-10">
+
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+    
+    <div class="flex items-center justify-between py-2">
+      <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+        <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
+      </a>
+      <h1 class="text-xl md:text-2xl font-extrabold text-white drop-shadow-sm">My Cart & Checkout</h1>
+      <div class="w-16"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <div class="lg:col-span-7 space-y-6">
+        
+        <div class="theme-glass-card rounded-3xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-gray-900 pb-3 border-b border-pink-100 flex items-center gap-2">
+            <i class="fa-solid fa-cart-shopping text-[#ff4b6e]"></i> Cart Items
+          </h2>
+
+          <div id="cart-items-container" class="space-y-3">
+            <p class="text-center text-xs text-gray-500 py-4">Loading cart items...</p>
+          </div>
+        </div>
+
+        <div class="theme-glass-card rounded-3xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-gray-900 pb-3 border-b border-pink-100 flex items-center gap-2">
+            <i class="fa-solid fa-truck-fast text-[#ff4b6e]"></i> Shipping & Contact Info
+          </h2>
+
+          <form id="checkout-form" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                <input type="text" id="cust-name" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="আপনার নাম">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                <input type="email" id="cust-email" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="email@domain.com">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="cust-phone" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="০১৭xxxxxxxx">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Division</label>
+                <input type="text" id="cust-division" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="যেমন: ঢাকা">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">District</label>
+                <input type="text" id="cust-district" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="জেলা">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Upazilla</label>
+                <input type="text" id="cust-upazilla" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="উপজেলা">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Post Code</label>
+                <input type="text" id="cust-postcode" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="পোস্ট কোড">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Union / Area</label>
+                <input type="text" id="cust-union" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="এলাকা">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Block / House / Road</label>
+                <input type="text" id="cust-blockhouse" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="বাসা ও রোড নং">
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <label class="block text-xs font-bold text-gray-700 mb-2">Payment Method</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label id="cod-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-[#ff4b6e] bg-white transition-all">
+                  <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                  <span class="text-xs font-bold text-gray-800">COD</span>
+                </label>
+                
+                <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
+                  <input type="radio" name="payment" value="paysuite" id="payment-paysuite" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                  <span class="text-xs font-bold text-gray-800">PaySuite</span>
+                </label>
+
+                <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
+                  <input type="radio" name="payment" value="bdgate" id="payment-bdgate" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                  <span class="text-xs font-bold text-gray-800">BDGate</span>
+                </label>
+              </div>
+              <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">Cash on Delivery (COD) is disabled for some products in the cart, please select an online payment gateway.</p>
+            </div>
+
+            <div id="paysuite-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+              <label class="block text-xs font-bold text-gray-800">Select PaySuite Payment Method:</label>
+              <div id="paysuite-gateways-grid" class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                <div class="text-xs text-gray-500 col-span-full">Loading PaySuite gateways...</div>
+              </div>
+              <p class="text-[10px] text-gray-500 italic">* Payment will be processed via PaySuite API.</p>
+            </div>
+
+            <div id="bdgate-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+              <label class="block text-xs font-bold text-gray-800">Select BDGate Payment Method:</label>
+              <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                <label class="gateway-card selected p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                  <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
+                  <i class="fa-solid fa-mobile-screen text-pink-600 text-lg mb-1"></i>
+                  <span class="text-[11px] font-bold text-gray-800">bKash</span>
+                </label>
+                <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                  <input type="radio" name="online_gateway" value="nagad" class="hidden" onchange="highlightGateway(this)">
+                  <i class="fa-solid fa-wallet text-orange-600 text-lg mb-1"></i>
+                  <span class="text-[11px] font-bold text-gray-800">Nagad</span>
+                </label>
+                <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                  <input type="radio" name="online_gateway" value="rocket" class="hidden" onchange="highlightGateway(this)">
+                  <i class="fa-solid fa-credit-card text-purple-600 text-lg mb-1"></i>
+                  <span class="text-[11px] font-bold text-gray-800">Rocket</span>
+                </label>
+                <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                  <input type="radio" name="online_gateway" value="upay" class="hidden" onchange="highlightGateway(this)">
+                  <i class="fa-solid fa-credit-card text-blue-600 text-lg mb-1"></i>
+                  <span class="text-[11px] font-bold text-gray-800">Upay</span>
+                </label>
+              </div>
+              <p class="text-[10px] text-gray-500 italic">* Payment will be processed via BDGate API.</p>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="lg:col-span-5 theme-glass-card rounded-3xl p-6 space-y-5 lg:sticky lg:top-6">
+        <h2 class="text-base font-bold text-gray-900 pb-3 border-b border-pink-100 flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-[#ff4b6e]"></i> Order Summary
+        </h2>
+
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-gray-700">Have a Coupon?</label>
+          <div class="flex gap-2">
+            <input type="text" id="coupon-code-input" placeholder="Enter coupon code" class="w-full theme-glass-input p-2.5 rounded-xl text-xs uppercase focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]">
+            <button type="button" onclick="applyCoupon()" class="bg-[#ff4b6e] hover:bg-[#e03a5b] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all">Apply</button>
+          </div>
+          <p id="coupon-message" class="text-[11px] hidden"></p>
+        </div>
+
+        <div class="space-y-2.5 text-xs text-gray-600 pt-3 border-t border-pink-100">
+          <div class="flex justify-between">
+            <span>Subtotal Price:</span>
+            <span id="summary-subtotal" class="font-bold text-gray-900">৳ 0</span>
+          </div>
+          <div id="discount-row" class="flex justify-between text-green-600 hidden">
+            <span>Discount (<span id="coupon-name-display"></span>):</span>
+            <span class="font-bold">- ৳ <span id="summary-discount">0</span></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Total Delivery Charge:</span>
+            <span id="summary-delivery" class="font-bold text-gray-900">৳ 0</span>
+          </div>
+          <div class="flex justify-between text-sm pt-3 border-t border-pink-100 font-extrabold text-gray-900">
+            <span>Grand Total:</span>
+            <span id="summary-total" class="text-[#ff4b6e] text-lg">৳ 0</span>
+          </div>
+        </div>
+
+        <button onclick="submitCartOrder()" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
+          <i class="fa-solid fa-check-to-slot"></i> Place Order Now
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    let globalCartItems = [];
+    let appliedDiscount = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchCartItems();
+      loadUserProfileData();
+      fetchPaySuiteGateways();
+    });
+
+    async function fetchCartItems() {
+      try {
+        const response = await fetch('/user/api/cart-items');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          globalCartItems = result.data;
+          renderCart();
+        }
+      } catch (err) {
+        console.error("Cart Fetch Error:", err);
+      }
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      if (globalCartItems.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">Your cart is empty!</p>`;
+        updateTotals();
+        return;
+      }
+
+      let html = '';
+      let hasNonCod = false;
+
+      globalCartItems.forEach(item => {
+        if (Number(item.cod_available) === 0) hasNonCod = true;
+        const stockQty = parseInt(item.stock_quantity) || 0;
+        const isOutOfStock = stockQty <= 0 || item.stock_status === 'out_of_stock';
+
+        html += `
+          <div class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
+            <img src="${item.primary_image || ''}" class="w-14 h-14 object-cover rounded-xl border border-pink-200" onerror="this.style.display='none';">
+            <div class="flex-1 overflow-hidden">
+              <h4 class="text-xs font-bold text-gray-900 truncate">${item.product_name}</h4>
+              <div class="text-[#ff4b6e] font-extrabold text-xs mt-1">৳ ${item.price}</div>
+              ${isOutOfStock ? `<span class="text-[10px] text-red-500 font-bold">Out of Stock</span>` : `<span class="text-[10px] text-gray-500">Stock: ${stockQty}</span>`}
+            </div>
+            
+            <div class="flex items-center border border-pink-300 rounded-lg bg-white overflow-hidden shadow-sm">
+              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity - 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">-</button>
+              <span class="px-2 text-xs font-bold text-[#ff4b6e]">${item.cart_quantity}</span>
+              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity + 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">+</button>
+            </div>
+
+            <button onclick="removeItem(${item.cart_id})" class="text-red-500 hover:text-red-700 text-xs px-2"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      const codRadio = document.getElementById('payment-cod');
+      const codNotice = document.getElementById('cod-notice');
+      if (hasNonCod) {
+        codRadio.disabled = true;
+        codNotice.classList.remove('hidden');
+        document.getElementById('payment-paysuite').checked = true;
+        togglePaymentGateways();
+      } else {
+        codRadio.disabled = false;
+        codNotice.classList.add('hidden');
+      }
+
+      updateTotals();
+    }
+
+    async function changeQty(cartId, newQty, stockQty) {
+      if (newQty < 1) return removeItem(cartId);
+      
+      if (newQty > stockQty) {
+        alert(`Cannot order more than available stock (${stockQty} items left).`);
+        return;
+      }
+
+      try {
+        await fetch('/user/api/cart/update-qty', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cart_id: cartId, quantity: newQty })
+        });
+        fetchCartItems();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function removeItem(cartId) {
+      try {
+        await fetch(`/user/api/cart/remove/${cartId}`, { method: 'DELETE' });
+        fetchCartItems();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadUserProfileData() {
+      try {
+        const res = await fetch('/user/get-user-profile');
+        if (res.ok) {
+          const user = await res.json();
+          if (user.name) document.getElementById('cust-name').value = user.name;
+          if (user.email) document.getElementById('cust-email').value = user.email;
+          if (user.phone_number) document.getElementById('cust-phone').value = user.phone_number;
+          if (user.division) document.getElementById('cust-division').value = user.division;
+          if (user.district) document.getElementById('cust-district').value = user.district;
+          if (user.upazilla) document.getElementById('cust-upazilla').value = user.upazilla;
+          if (user.union_area) document.getElementById('cust-union').value = user.union_area;
+          if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
+          if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
+        }
+      } catch (e) {}
+    }
+
+    function togglePaymentGateways() {
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      const paysuiteContainer = document.getElementById('paysuite-gateways-container');
+      const bdgateContainer = document.getElementById('bdgate-gateways-container');
+
+      paysuiteContainer.classList.add('hidden');
+      bdgateContainer.classList.add('hidden');
+
+      if (paymentMethod === 'paysuite') {
+        paysuiteContainer.classList.remove('hidden');
+      } else if (paymentMethod === 'bdgate') {
+        bdgateContainer.classList.remove('hidden');
+      }
+    }
+
+    async function fetchPaySuiteGateways() {
+      try {
+        const res = await fetch('/user/get-paysuite-gateways');
+        const data = await res.json();
+        const grid = document.getElementById('paysuite-gateways-grid');
+        if (!grid) return;
+
+        if (data.success && data.gateways && data.gateways.length > 0) {
+          grid.innerHTML = '';
+          data.gateways.forEach((gw, index) => {
+            const isChecked = index === 0 ? 'checked' : '';
+            const cardSelected = index === 0 ? 'selected' : '';
+            const iconClass = gw.icon || 'fa-wallet';
+            const colorClass = gw.color || 'text-pink-600';
+            
+            const html = `
+              <label class="gateway-card ${cardSelected} p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                <input type="radio" name="online_gateway" value="${gw.id || gw.gateway}" ${isChecked} class="hidden" onchange="highlightGateway(this)">
+                <i class="fa-solid ${iconClass} ${colorClass} text-lg mb-1"></i>
+                <span class="text-[11px] font-bold text-gray-800">${gw.name || gw.gateway_name}</span>
+              </label>
+            `;
+            grid.insertAdjacentHTML('beforeend', html);
+          });
+        } else {
+          grid.innerHTML = `<p class="text-xs text-gray-500 col-span-full text-center">No online gateways found.</p>`;
+        }
+      } catch (err) {
+        console.error("Error fetching gateways:", err);
+      }
+    }
+
+    function highlightGateway(element) {
+      document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
+      element.closest('.gateway-card').classList.add('selected');
+    }
+
+    async function applyCoupon() {
+      const code = document.getElementById('coupon-code-input').value.trim();
+      const msgElem = document.getElementById('coupon-message');
+
+      if (!code) return;
+
+      try {
+        const res = await fetch('/user/api/cart/apply-coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coupon_code: code })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          appliedDiscount = parseFloat(data.discount_amount || 0);
+          msgElem.className = "text-[11px] mt-1 text-green-600 font-bold";
+          msgElem.innerText = `Coupon applied successfully!`;
+          msgElem.classList.remove('hidden');
+
+          document.getElementById('discount-row').classList.remove('hidden');
+          document.getElementById('coupon-name-display').innerText = data.coupon_name;
+          document.getElementById('summary-discount').innerText = appliedDiscount;
+        } else {
+          appliedDiscount = 0;
+          msgElem.className = "text-[11px] mt-1 text-red-500";
+          msgElem.innerText = data.message;
+          msgElem.classList.remove('hidden');
+        }
+        updateTotals();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateTotals() {
+      let subtotal = 0;
+      let deliveryTotal = 0;
+
+      globalCartItems.forEach(item => {
+        subtotal += item.price * item.cart_quantity;
+
+        let baseDelivery = Number(item.delivery_charge) || 60;
+        if (Number(item.free_shipping) === 1) baseDelivery = 0;
+
+        let limit = Number(item.delivery_limit) || 1;
+        if (limit > 0 && baseDelivery > 0) {
+          deliveryTotal += baseDelivery * Math.ceil(item.cart_quantity / limit);
+        } else {
+          deliveryTotal += baseDelivery;
+        }
+      });
+
+      const grandTotal = Math.max(0, subtotal - appliedDiscount) + deliveryTotal;
+
+      document.getElementById('summary-subtotal').innerText = `৳ ${subtotal.toLocaleString()}`;
+      document.getElementById('summary-delivery').innerText = deliveryTotal === 0 ? 'Free' : `৳ ${deliveryTotal.toLocaleString()}`;
+      document.getElementById('summary-total').innerText = `৳ ${grandTotal.toLocaleString()}`;
+    }
+
+    async function submitCartOrder() {
+      const name = document.getElementById('cust-name').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+      const district = document.getElementById('cust-district').value.trim();
+      const block_house = document.getElementById('cust-blockhouse').value.trim();
+
+      if (!name || !phone || !district || !block_house) {
+        alert('Please enter your shipping name, mobile number, district, and house/road number!');
+        return;
+      }
+
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      let selectedGateway = null;
+      if (paymentMethod === 'paysuite' || paymentMethod === 'bdgate') {
+        const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
+        if (selectedGatewayRadio) {
+          selectedGateway = selectedGatewayRadio.value;
+        }
+      }
+
+      const payload = {
+        payment_method: paymentMethod,
+        selected_gateway: selectedGateway,
+        name, email, phone,
+        division: document.getElementById('cust-division').value.trim(),
+        district,
+        upazilla: document.getElementById('cust-upazilla').value.trim(),
+        union_area: document.getElementById('cust-union').value.trim(),
+        post_code: document.getElementById('cust-postcode').value.trim(),
+        block_house,
+        discount_amount: appliedDiscount
+      };
+
+      try {
+        const response = await fetch('/user/api/cart/place-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          if (result.payment_url) {
+            window.location.href = result.payment_url;
+          } else {
+            alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
+            window.location.href = '/user/dashboard';
+          }
+        } else {
+          alert(result.message || 'Error processing order!');
+        }
+      } catch (err) {
+        console.error("Order Submit Error:", err);
+        alert('Server error! Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>

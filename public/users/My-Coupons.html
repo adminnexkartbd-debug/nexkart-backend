@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>My Coupons & Discount Vouchers | User Dashboard</title>
+  <meta name="description" content="Check and claim your personal discount coupons, promo codes, and special offers on your profile.">
+  <meta name="robots" content="noindex, nofollow"> <!-- প্রাইভেট ইউজার পেজ হওয়ায় গুগলে সার্চ ইন্ডেক্স অফ রাখা হয়েছে -->
+  
+  <!-- Open Graph / Social Media Meta Tags -->
+  <meta property="og:title" content="My Exclusive Coupons & Discounts">
+  <meta property="og:description" content="View your available discount codes and save on your purchases.">
+  <meta property="og:type" content="website">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', 'Segoe UI', sans-serif; }
+    
+    body { 
+      background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%); 
+      min-height: 100vh;
+      padding: 30px 15px; 
+    }
+
+    .container { max-width: 850px; margin: 0 auto; }
+
+    /* Header & Back Button Area */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+      gap: 15px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #e11d48;
+      border: 1px solid #fecdd3;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: #e11d48;
+      color: #ffffff;
+      transform: translateX(-3px);
+    }
+
+    .page-title { 
+      font-size: 26px; 
+      color: #881337; 
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* Coupon Layout Grid */
+    .coupon-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); 
+      gap: 22px; 
+    }
+
+    /* Card Box */
+    .coupon-card { 
+      background: #ffffff; 
+      border-radius: 18px; 
+      display: flex; 
+      box-shadow: 0 10px 25px rgba(225, 29, 72, 0.06); 
+      position: relative; 
+      overflow: hidden; 
+      border: 1px solid #ffe4e6;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .coupon-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(225, 29, 72, 0.12);
+    }
+
+    .coupon-card.expired { 
+      filter: grayscale(0.8); 
+      opacity: 0.7; 
+    }
+
+    /* Card Left Banner */
+    .coupon-left { 
+      background: linear-gradient(135deg, #fb7185, #e11d48); 
+      color: white; 
+      padding: 20px 15px; 
+      width: 35%; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center; 
+      text-align: center;
+      position: relative;
+    }
+
+    .coupon-left.expired-bg { 
+      background: linear-gradient(135deg, #94a3b8, #64748b); 
+    }
+
+    .discount-amount { font-size: 24px; font-weight: 800; line-height: 1; }
+    .off-text { font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-top: 2px; }
+
+    .scope-badge { 
+      font-size: 9px; 
+      background: rgba(255, 255, 255, 0.25); 
+      backdrop-filter: blur(4px);
+      padding: 3px 8px; 
+      border-radius: 12px; 
+      margin-top: 8px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px;
+    }
+
+    /* Card Right Content */
+    .coupon-right { 
+      padding: 18px; 
+      width: 65%; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+    }
+
+    .product-title { 
+      font-size: 14px; 
+      font-weight: 700; 
+      color: #4c0519; 
+      margin-bottom: 6px;
+      line-height: 1.3;
+      text-decoration: none;
+      display: block;
+      transition: color 0.2s ease;
+    }
+
+    .product-title:hover {
+      color: #e11d48;
+      text-decoration: underline;
+    }
+
+    .price-box { font-size: 13px; margin-bottom: 8px; }
+    .old-price { text-decoration: line-through; color: #9f1239; opacity: 0.5; margin-right: 6px; }
+    .new-price { color: #15803d; font-weight: 700; }
+    .save-tag { font-size: 11px; color: #e11d48; font-weight: 600; margin-top: 2px; }
+
+    .coupon-expiry { font-size: 11px; font-weight: 600; margin-bottom: 12px; }
+    .text-expired { color: #f43f5e; }
+    .text-active { color: #16a34a; }
+
+    /* Action & Copy Box */
+    .coupon-action { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      background: #fff1f2; 
+      border: 1px dashed #fecdd3; 
+      padding: 6px 12px; 
+      border-radius: 10px; 
+    }
+
+    .coupon-code { 
+      font-family: 'Courier New', monospace; 
+      font-size: 13px; 
+      font-weight: 700; 
+      color: #881337; 
+    }
+
+    .copy-btn { 
+      background: #e11d48; 
+      color: white; 
+      border: none; 
+      padding: 6px 14px; 
+      font-size: 12px; 
+      font-weight: 600;
+      border-radius: 8px; 
+      cursor: pointer; 
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover { background: #be123c; }
+    .copy-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+
+    /* Decorative Coupon Circles */
+    .coupon-card::before, .coupon-card::after { 
+      content: ''; 
+      position: absolute; 
+      width: 18px; 
+      height: 18px; 
+      background-color: #ffe4e1; 
+      border-radius: 50%; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      z-index: 2;
+    }
+    .coupon-card::before { left: -9px; }
+    .coupon-card::after { right: -9px; }
+  </style>
+</head>
+<body>
+
+  <header class="container">
+    <div class="header-bar">
+      <!-- Back Button: আগের পেজে ফেরার জন্য -->
+      <a href="javascript:history.back()" class="back-btn">
+        <span>←</span> Back
+      </a>
+      <h1 class="page-title">🌸 My Coupons</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="coupon-grid" id="couponContainer">
+      <p style="color: #9f1239;">Loading your special offer coupons...</p>
+    </div>
+  </main>
+
+  <script>
+    async function fetchCoupons() {
+      const container = document.getElementById('couponContainer');
+      try {
+        const response = await fetch('/my-coupons'); 
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          const errMsg = (data && data.error) ? data.error : (data && data.message ? data.message : response.statusText);
+          throw new Error(`Server Error (${response.status}): ${errMsg}`);
+        }
+
+        if (data && data.success && data.coupons.length > 0) {
+          container.innerHTML = '';
+
+          data.coupons.forEach(coupon => {
+            const dateFormatted = coupon.expiry_date 
+              ? new Date(coupon.expiry_date).toLocaleDateString('en-GB') 
+              : 'N/A';
+
+            let priceHTML = '';
+            if (!coupon.is_expired && coupon.original_price > 0) {
+              priceHTML = `
+                <div class="price-box">
+                  <span>Price: </span>
+                  <span class="old-price">৳${coupon.original_price}</span>
+                  <span class="new-price">৳${coupon.final_price}</span>
+                  <div class="save-tag">✨ You Save: ৳${coupon.discount_amount}</div>
+                </div>
+              `;
+            }
+
+            const statusHTML = coupon.is_expired 
+              ? `<span class="text-expired">❌ Status: EXPIRED (${coupon.status_reason})</span>`
+              : `<span class="text-active">⏳ Valid Till: ${dateFormatted}</span>`;
+
+            // Dynamic Product Details Page Link Setup
+            const targetId = coupon.product_id || '';
+            const productLink = targetId 
+              ? `/user/product-details?id=${targetId}&t=${new Date().getTime()}` 
+              : '#';
+
+            const couponCard = `
+              <article class="coupon-card ${coupon.is_expired ? 'expired' : ''}">
+                <div class="coupon-left ${coupon.is_expired ? 'expired-bg' : ''}">
+                  <div class="discount-amount">৳${coupon.discount_amount}</div>
+                  <div class="off-text">OFF</div>
+                  <span class="scope-badge">${coupon.coupon_scope}</span>
+                </div>
+                <div class="coupon-right">
+                  <div>
+                    <a href="${productLink}" class="product-title">🛍️ ${coupon.product_name}</a>
+                    ${priceHTML}
+                    <div class="coupon-expiry">${statusHTML}</div>
+                  </div>
+                  <div class="coupon-action">
+                    <span class="coupon-code" id="code_${coupon.id}">${coupon.coupon_name}</span>
+                    <button 
+                      class="copy-btn" 
+                      ${coupon.is_expired ? 'disabled' : ''} 
+                      onclick="copyCode('code_${coupon.id}', this)">
+                      ${coupon.is_expired ? 'Expired' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            `;
+
+            container.innerHTML += couponCard;
+          });
+        } else {
+          container.innerHTML = '<p style="color: #881337;">No coupons found for you right now.</p>';
+        }
+      } catch (error) {
+        console.error('Error fetching coupons:', error);
+        container.innerHTML = `<p style="color:#e11d48; font-weight: bold; padding: 12px; background: #ffe4e6; border-radius: 10px;">${error.message}</p>`;
+      }
+    }
+
+    function copyCode(elementId, btn) {
+      const codeText = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(codeText);
+      btn.innerText = "Copied! 💕";
+      setTimeout(() => { btn.innerText = "Copy"; }, 2000);
+    }
+
+    window.onload = fetchCoupons;
+  </script>
+
+</body>
+</html>

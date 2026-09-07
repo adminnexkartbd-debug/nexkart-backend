@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Support Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #fff0f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .main-wrapper { display: flex; gap: 20px; width: 100%; max-width: 1100px; flex-wrap: wrap; }
+        .container, .reply-container { background-color: #ffffff; flex: 1; min-width: 320px; padding: 28px; border-radius: 16px; box-shadow: 0 8px 25px rgba(230, 100, 150, 0.12); border: 1px solid #fcddec; }
+        .header { text-align: center; margin-bottom: 22px; }
+        .header h2 { color: #d63384; font-size: 22px; margin-bottom: 6px; }
+        .header p { color: #7a6873; font-size: 13px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; color: #4a3e45; font-weight: 600; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px; border: 1px solid #f3b0cd; border-radius: 10px; font-size: 14px; outline: none; background-color: #fffafc; }
+        .form-group input:read-only { background-color: #f5f5f5; color: #666; cursor: not-allowed; }
+        .file-upload-wrapper { border: 2px dashed #f3b0cd; padding: 16px; text-align: center; border-radius: 10px; background-color: #fffafc; cursor: pointer; }
+        .file-upload-wrapper input[type="file"] { display: none; }
+        .file-preview { margin-top: 8px; font-size: 12px; color: #e83e8c; font-weight: 600; }
+        .submit-btn { width: 100%; background-color: #e83e8c; color: white; padding: 13px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .submit-btn:hover { background-color: #d63384; }
+        .reply-header { border-bottom: 2px solid #ffe6f0; padding-bottom: 12px; margin-bottom: 18px; }
+        .reply-header h3 { color: #d63384; font-size: 18px; }
+        .msg-box { background-color: #fff5f9; border: 1px solid #fcddec; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+        .msg-title { font-weight: bold; font-size: 14px; color: #4a3e45; margin-bottom: 4px; }
+        .msg-time { font-size: 11px; color: #998893; margin-bottom: 8px; }
+        .msg-body { font-size: 13px; color: #555; line-height: 1.4; }
+        .admin-reply-box { margin-top: 10px; padding: 10px; border-top: 1px dashed #f3b0cd; background-color: #ffffff; border-radius: 8px; }
+        .admin-badge { display: inline-block; background-color: #d63384; color: white; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-bottom: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <!-- Left Column: Form -->
+    <div class="container">
+        <div class="header">
+            <h2>Help & Support Center</h2>
+            <p>Send your message and attachments directly to the admin</p>
+        </div>
+
+        <form id="helpForm">
+            <!-- Hidden field for actual logged-in user_id -->
+            <input type="hidden" id="userId" name="user_id">
+
+            <div class="form-group">
+                <label for="name">Your Name</label>
+                <input type="text" id="name" name="full_name" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Issue Category</label>
+                <select id="subject" name="issue_category" required>
+                    <option value="" disabled selected>Select a category</option>
+                    <option value="Account & Profile Issue">Account & Profile Issue</option>
+                    <option value="Payment & Billing Problem">Payment & Billing Problem</option>
+                    <option value="Refund & Cancellation Request">Refund & Cancellation Request</option>
+                    <option value="Order Tracking & Delivery">Order Tracking & Delivery</option>
+                    <option value="Technical Bug / Error">Technical Bug / Error</option>
+                    <option value="Security & Privacy Concern">Security & Privacy Concern</option>
+                    <option value="Feature Request & Suggestion">Feature Request & Suggestion</option>
+                    <option value="General Feedback">General Feedback</option>
+                    <option value="Other Query">Other Query</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Your Message</label>
+                <textarea id="message" name="message" rows="4" placeholder="Describe your issue in detail..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Attachment (Image or Video)</label>
+                <div class="file-upload-wrapper" onclick="document.getElementById('fileInput').click();">
+                    <p class="file-upload-label">
+                        Click here to <span>Upload</span> file <br>
+                        <small>(PNG, JPG, MP4, WEBM - Max 100MB)</small>
+                    </p>
+                    <input type="file" id="fileInput" name="attachment" accept="image/*,video/*" onchange="showFileName()">
+                </div>
+                <div id="fileNameDisplay" class="file-preview"></div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="btn-submit">Send Message to Admin</button>
+        </form>
+    </div>
+
+    <!-- Right Column: Dynamic Admin Responses & Inbox -->
+    <div class="reply-container">
+        <div class="reply-header">
+            <h3>Admin Responses & Inbox</h3>
+            <p style="font-size: 12px; color: #7a6873;">Your submitted tickets and admin replies</p>
+        </div>
+
+        <div id="ticketsList">
+            <p id="emptyText" style="font-size: 13px; color: #888;">Loading messages...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:5000/api/message-center'; 
+
+    // ১. সার্ভার ব্যাকএন্ড সেশন চেক
+    fetch('/user/current_user')
+        .then(res => {
+            if (!res.ok) {
+                window.location.href = '/user/cslogin';
+            }
+            return res.json();
+        })
+        .then(userData => {
+            if (userData && userData.id) {
+                initPageWithUser(userData);
+            }
+        })
+        .catch(err => {
+            console.error('Session verification error:', err);
+            window.location.href = '/user/cslogin';
+        });
+
+    // ২. লোকাল স্টোরেজ থেকেও ব্যাকআপ রিড করা
+    function getCurrentUserFallback() {
+        const possibleKeys = ['user', 'currentUser', 'userData', 'auth', 'userInfo'];
+        
+        for (let key of possibleKeys) {
+            const data = localStorage.getItem(key) || sessionStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    const id = parsed.id || parsed._id || parsed.user_id || parsed.userId;
+                    if (id) {
+                        return {
+                            id: id,
+                            name: parsed.name || parsed.full_name || parsed.username || '',
+                            email: parsed.email || ''
+                        };
+                    }
+                } catch (e) {}
+            }
+        }
+
+        const directId = localStorage.getItem('userId') || localStorage.getItem('user_id') || localStorage.getItem('id') ||
+                         sessionStorage.getItem('userId') || sessionStorage.getItem('user_id') || sessionStorage.getItem('id');
+
+        if (directId) {
+            return {
+                id: directId,
+                name: localStorage.getItem('userName') || localStorage.getItem('name') || '',
+                email: localStorage.getItem('userEmail') || localStorage.getItem('email') || ''
+            };
+        }
+
+        return null;
+    }
+
+    function showFileName() {
+        const input = document.getElementById('fileInput');
+        const display = document.getElementById('fileNameDisplay');
+        display.innerText = input.files.length > 0 ? "Selected file: " + input.files[0].name : "";
+    }
+
+    // ইউজার ভ্যালিড থাকলে পেজ ইনিশিয়ালাইজ করার ফাংশন
+    function initPageWithUser(serverUser) {
+        const fallbackUser = getCurrentUserFallback() || {};
+        
+        const activeUser = {
+            id: serverUser.id || fallbackUser.id,
+            name: serverUser.name || serverUser.full_name || fallbackUser.name || '',
+            email: serverUser.email || fallbackUser.email || ''
+        };
+
+        if (!activeUser.id) {
+            window.location.href = '/user/cslogin';
+            return;
+        }
+
+        // ফর্ম ফিল্ডে ইউজারের ডাটা অটো-ফিল করা
+        const userIdElem = document.getElementById('userId');
+        const nameElem = document.getElementById('name');
+        const emailElem = document.getElementById('email');
+
+        if (userIdElem) userIdElem.value = activeUser.id;
+        if (nameElem && activeUser.name) nameElem.value = activeUser.name;
+        if (emailElem && activeUser.email) emailElem.value = activeUser.email;
+
+        // ইউজারের জন্য নির্দিষ্ট টিকিট ডাটা লোড
+        fetchUserTickets(activeUser.id);
+    }
+
+    // ব্যাকএন্ড থেকে নির্দিষ্ট user_id অনুযায়ী টিকিট আনা
+    async function fetchUserTickets(userId) {
+        try {
+            const response = await fetch(`${API_BASE}/my-tickets?user_id=${userId}`);
+            
+            if (!response.ok) {
+                throw new Error(`Server status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                renderTickets(data.tickets);
+            }
+        } catch (error) {
+            console.error('Error fetching tickets:', error);
+            const ticketsList = document.getElementById('ticketsList');
+            if (ticketsList) {
+                ticketsList.innerHTML = '<p style="font-size: 13px; color: red;">Failed to load messages from server.</p>';
+            }
+        }
+    }
+
+    // নতুন টিকিট সাবমিট হ্যান্ডলার
+    const helpForm = document.getElementById('helpForm');
+    if (helpForm) {
+        helpForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                alert('User session expired. Please log in again.');
+                window.location.href = '/user/cslogin';
+                return;
+            }
+
+            const submitBtn = document.getElementById('btn-submit');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Sending...';
+            
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('full_name', document.getElementById('name').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('issue_category', document.getElementById('subject').value);
+            formData.append('message', document.getElementById('message').value);
+            
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput && fileInput.files[0]) {
+                formData.append('attachment', fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/create-ticket`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server status: ${response.status}`);
+                }
+
+                const resData = await response.json();
+                
+                if (resData.success) {
+                    alert(`Ticket created successfully! Ticket Number: ${resData.ticket.ticket_number}`);
+                    
+                    prependSingleTicket(resData.ticket);
+                    
+                    document.getElementById('message').value = '';
+                    document.getElementById('subject').selectedIndex = 0;
+                    if (fileInput) fileInput.value = '';
+                    const fileNameDisplay = document.getElementById('fileNameDisplay');
+                    if (fileNameDisplay) fileNameDisplay.innerText = "";
+                } else {
+                    alert('Error: ' + resData.message);
+                }
+            } catch (error) {
+                console.error('Error sending ticket:', error);
+                alert('Failed to send ticket. Please check console.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Send Message to Admin';
+            }
+        });
+    }
+
+    // টিকিট রেন্ডারিং ফাংশন
+    function renderTickets(tickets) {
+        const ticketsContainer = document.getElementById('ticketsList');
+        if (!ticketsContainer) return;
+
+        ticketsContainer.innerHTML = '';
+
+        if (!tickets || tickets.length === 0) {
+            ticketsContainer.innerHTML = '<p style="font-size: 13px; color: #888;">No tickets submitted yet for this account.</p>';
+            return;
+        }
+
+        tickets.forEach(ticket => {
+            ticketsContainer.insertAdjacentHTML('beforeend', createTicketCardHTML(ticket));
+        });
+    }
+
+    function prependSingleTicket(ticket) {
+        const ticketsContainer = document.getElementById('ticketsList');
+        if (!ticketsContainer) return;
+
+        const emptyText = document.getElementById('emptyText');
+        if (emptyText) emptyText.remove();
+
+        ticketsContainer.insertAdjacentHTML('afterbegin', createTicketCardHTML(ticket));
+    }
+
+    function createTicketCardHTML(ticket) {
+        const createdDate = new Date(ticket.created_at).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+
+        const hasReply = ticket.admin_reply && ticket.admin_reply.trim() !== '';
+
+        return `
+            <div class="msg-box">
+                <div class="msg-title">Ticket #${ticket.ticket_number} - ${ticket.issue_category}</div>
+                <div class="msg-time">Sent: ${createdDate} | User ID: ${ticket.user_id}</div>
+                <p class="msg-body"><b>Message:</b> ${ticket.message}</p>
+
+                <div class="admin-reply-box">
+                    <span class="admin-badge" style="background-color: ${hasReply ? '#d63384' : '#888'};">
+                        ${hasReply ? 'Admin Response' : 'Pending Response'}
+                    </span>
+                    <p class="msg-body" style="${!hasReply ? 'font-style: italic; color: #888;' : ''}">
+                        ${hasReply ? ticket.admin_reply : 'Admin has not replied to this message yet.'}
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>

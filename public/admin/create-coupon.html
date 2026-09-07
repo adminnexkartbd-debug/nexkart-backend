@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Coupon - NexKartBD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-4xl w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+        <i class="fa-solid fa-ticket text-pink-600"></i> নতুন কুপন তৈরি ও ম্যানেজ করুন
+      </h2>
+      <p class="text-slate-500 mt-2">আপনার নির্দিষ্ট পণ্যের জন্য ডিসকাউন্ট কোড সেটআপ করুন এবং নিচের তালিকা থেকে ম্যানেজ করুন।</p>
+    </div>
+
+    <!-- Form -->
+    <form id="couponForm" class="space-y-6 mb-10 pb-8 border-b border-slate-200">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Coupon Name -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">কুপন নাম (কোড)</label>
+          <input type="text" id="code" name="coupon_name" placeholder="যেমন: EID2026" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500 transition">
+        </div>
+        
+        <!-- Discount Amount -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">ডিসকাউন্ট পরিমাণ (Fixed Amount ৳)</label>
+          <input type="number" id="discount_amount" name="discount_amount" placeholder="যেমন: 100" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500 transition">
+        </div>
+
+        <!-- Expiry Date -->
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">মেয়াদ শেষ হওয়ার তারিখ</label>
+          <input type="date" id="expiry_date" name="expiry_date" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500 transition">
+        </div>
+      </div>
+
+      <!-- Specific Product Selection -->
+      <div id="specificProductBox" class="space-y-2">
+        <label class="block text-sm font-semibold text-slate-700">প্রোডাক্ট সিলেক্ট করুন (নির্দিষ্ট পণ্য)</label>
+        <select id="productSelect" name="product_id" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500 transition bg-white text-slate-700">
+          <option value="" disabled selected>লোড হচ্ছে...</option>
+        </select>
+        <p class="text-[11px] text-slate-400">ড্রপডাউন থেকে প্রোডাক্ট আইডি এবং নাম দেখে বেছে নিন।</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4 pt-4">
+        <a href="/admin/home.html" class="flex-1 py-3 text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+          বাতিল করুন
+        </a>
+        <button type="submit" class="flex-1 py-3 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-xl shadow-lg shadow-pink-600/30 transition">
+          কুপন সেভ করুন
+        </button>
+      </div>
+    </form>
+
+    <!-- Existing Coupons List Section -->
+    <div>
+      <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-list-check text-pink-600"></i> আপনার তৈরি করা কুপনসমূহ
+      </h3>
+
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 text-sm">
+              <th class="p-3 rounded-l-xl">কোড</th>
+              <th class="p-3">ডিসকাউন্ট</th>
+              <th class="p-3">প্রোডাক্ট আইডি</th> <!-- এই কলামটি যোগ করা হয়েছে -->
+              <th class="p-3">প্রোডাক্ট নাম</th>
+              <th class="p-3">মেয়াদ</th>
+              <th class="p-3 text-center rounded-r-xl">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="couponTableBody" class="text-sm text-slate-600 divide-y divide-slate-100">
+            <tr>
+              <td colspan="6" class="p-4 text-center text-slate-400">কুপন লোড হচ্ছে...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+    // ড্রপডাউনের জন্য প্রোডাক্ট লোড করা
+    async function loadAdminProducts() {
+      try {
+        const res = await fetch('/admin/api/products-list', { credentials: 'include' });
+        const result = await res.json();
+        
+        const selectBox = document.getElementById('productSelect');
+        selectBox.innerHTML = '<option value="" disabled selected>প্রোডাক্ট লিস্ট থেকে সিলেক্ট করুন...</option>';
+
+        if (result.success && result.products.length > 0) {
+          result.products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.product_id; 
+            option.textContent = `[ID: ${product.product_id}] - ${product.title}`; 
+            selectBox.appendChild(option);
+          });
+        } else {
+          selectBox.innerHTML = '<option value="" disabled>আপনার কোনো প্রোডাক্ট নেই</option>';
+        }
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    // বর্তমান অ্যাডমিনের কুপন লিস্ট ফেচ করে টেবিলে প্রোডাক্ট আইডি সহ দেখানো
+    async function loadAdminCoupons() {
+      try {
+        const res = await fetch('/admin/api/coupons-list', { credentials: 'include' });
+        const result = await res.json();
+        
+        const tableBody = document.getElementById('couponTableBody');
+        tableBody.innerHTML = '';
+
+        if (result.success && result.coupons.length > 0) {
+          result.coupons.forEach(coupon => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="p-3 font-semibold text-slate-800">${coupon.coupon_name}</td>
+              <td class="p-3">৳${coupon.discount_amount}</td>
+              <td class="p-3">
+                <span class="bg-pink-50 text-pink-600 px-2 py-1 rounded-md text-xs font-bold border border-pink-100">${coupon.product_id}</span>
+              </td>
+              <td class="p-3 max-w-xs truncate">${coupon.product_name}</td>
+              <td class="p-3">${coupon.expiry_date ? coupon.expiry_date.split('T')[0] : 'N/A'}</td>
+              <td class="p-3 text-center">
+                <button onclick="deleteCoupon(${coupon.id})" class="w-8 h-8 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition flex items-center justify-center mx-auto" title="ডিলিট করুন">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </td>
+            `;
+            tableBody.appendChild(tr);
+          });
+        } else {
+          tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">কোনো কুপন পাওয়া যায়নি।</td></tr>`;
+        }
+      } catch (err) {
+        console.error('Error loading coupons:', err);
+      }
+    }
+
+    // কুপন ডিলিট করার ফাংশন
+    async function deleteCoupon(couponId) {
+      const confirmDelete = confirm("আপনি কি এই কুপনটি ডিলিট করতে চান?");
+      if (!confirmDelete) return;
+
+      try {
+        const res = await fetch(`/admin/api/coupon/delete/${couponId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          loadAdminCoupons();
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('ডিলিট করার সময় সমস্যা হয়েছে!');
+      }
+    }
+
+    // ফর্ম সাবমিট হ্যান্ডলার
+    document.getElementById('couponForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const selectedProductId = document.getElementById('productSelect').value;
+
+      const formData = {
+        coupon_name: document.getElementById('code').value,
+        discount_amount: document.getElementById('discount_amount').value,
+        expiry_date: document.getElementById('expiry_date').value,
+        coupon_scope: 'specific',
+        product_id: selectedProductId
+      };
+
+      try {
+        const res = await fetch('/admin/api/coupon/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'include'
+        });
+
+        const result = await res.json();
+        alert(result.message);
+        if (result.success) {
+          document.getElementById('couponForm').reset();
+          loadAdminProducts();
+          loadAdminCoupons();
+        }
+      } catch (err) {
+        console.error('Submission error:', err);
+        alert('সার্ভার এরর!');
+      }
+    });
+
+    loadAdminProducts();
+    loadAdminCoupons();
+  </script>
+
+</body>
+</html>

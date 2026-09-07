@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>সেলার প্রোফাইল ও সেটিংস</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="max-w-7xl mx-auto p-4 lg:p-8">
+        
+        <!-- টপ বার -->
+        <div class="flex justify-between items-center mb-6">
+            <a href="/admin/home.html" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl shadow-sm hover:bg-gray-50 transition font-medium flex items-center">
+                <i class="fa-solid fa-arrow-left mr-2 text-blue-600"></i> ড্যাশবোর্ডে ফিরে যান
+            </a>
+            <span id="loadingStatus" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium"><i class="fa-solid fa-spinner fa-spin mr-1"></i> ডাটা লোড হচ্ছে...</span>
+        </div>
+
+        <!-- স্ট্যাটাস কার্ডস -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
+                <p class="text-gray-500 text-xs uppercase font-semibold">মোট সেল</p>
+                <h3 id="totalSales" class="text-2xl font-bold text-emerald-600 mt-1">৳ ০</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
+                <p class="text-gray-500 text-xs uppercase font-semibold">মোট উইথড্র</p>
+                <h3 id="totalWithdraw" class="text-2xl font-bold text-amber-600 mt-1">৳ ০</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
+                <p class="text-gray-500 text-xs uppercase font-semibold">অ্যাকাউন্ট স্ট্যাটাস</p>
+                <div class="mt-1"><span id="accStatus" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Approved</span></div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center">
+                <p class="text-gray-500 text-xs uppercase font-semibold">প্রোফাইল ভেরিফিকেশন</p>
+                <div class="mt-1" id="verStatusContainer"><span class="text-gray-500 font-semibold text-sm">যাচাই করা হয়নি</span></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- সাইডবার ও ওভারভিউ -->
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center border-b pb-3">
+                        <i class="fa-solid fa-gauge-high mr-2 text-blue-600"></i> ড্যাশবোর্ড মেনু
+                    </h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="/admin/home.html" class="flex items-center p-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition">
+                                <i class="fa-solid fa-house w-6 text-gray-400"></i> হোম ড্যাশবোর্ড
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/AdminProfile.html" class="flex items-center p-3 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl transition">
+                                <i class="fa-solid fa-user-gear w-6"></i> প্রোফাইল ও সেটিংস
+                            </a>
+                        </li>
+                        <!-- উইথড্র বাটন -->
+                        <li>
+                            <a href="/admin/withdraw.html" class="flex items-center p-3 text-sm font-medium text-amber-700 bg-amber-50 rounded-xl hover:bg-amber-100 transition shadow-sm">
+                                <i class="fa-solid fa-wallet w-6 text-amber-600"></i> টাকা উইথড্র করুন
+                            </a>
+                        </li>
+                        <!-- ডকুমেন্টস ভেরিফিকেশন বাটন (উইথড্র বাটনের নিচে যুক্ত করা হলো) -->
+                        <li>
+                            <a href="/admin/verify-documents.html" class="flex items-center p-3 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition shadow-sm">
+                                <i class="fa-solid fa-file-shield w-6 text-indigo-600"></i> ডকুমেন্টস ভেরিফিকেশন
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- ওভারভিউ সেকশন ও অটো ইমেজ আপলোড -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-20 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    
+                    <!-- ছবিতে ক্লিক করলে ফাইল সিলেক্ট করার অপশন আসবে -->
+                    <div class="relative w-24 h-24 mx-auto mt-6 group cursor-pointer" onclick="document.getElementById('hiddenImageInput').click()" title="ছবি পরিবর্তন করতে ক্লিক করুন">
+                        <img id="profilePic" src="https://via.placeholder.com/150" class="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md transition group-hover:opacity-80" alt="Profile Picture">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition text-white text-xs font-semibold">
+                            <i class="fa-solid fa-camera text-lg"></i>
+                        </div>
+                    </div>
+                    <!-- হিডেন ফাইল ইনপুট -->
+                    <input type="file" id="hiddenImageInput" class="hidden" accept="image/*" onchange="uploadProfilePicture(this)">
+
+                    <h2 id="profileName" class="text-lg font-bold text-gray-800 mt-2">লোড হচ্ছে...</h2>
+                    <p id="profileEmail" class="text-gray-500 text-xs mb-4">email@example.com</p>
+                    
+                    <div class="border-t pt-4 text-left bg-gray-50 -mx-6 -mb-6 p-6 rounded-b-2xl">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">প্রোফাইল ওভারভিউ</h4>
+                        <p id="profileSlogan" class="text-xs text-gray-600 italic mb-3">"স্লোগান এখানে প্রদর্শিত হবে"</p>
+                        <div class="text-xs text-gray-600 space-y-2">
+                            <p class="flex items-center bg-white p-2 rounded-lg border border-gray-100"><i class="fa-solid fa-store w-6 text-blue-500"></i> <span id="overviewShop" class="font-medium">শপের নাম</span></p>
+                            <p class="flex items-center bg-white p-2 rounded-lg border border-gray-100"><i class="fa-solid fa-phone w-6 text-emerald-500"></i> <span id="overviewPhone" class="font-medium">ফোন নম্বর</span></p>
+                            <p class="flex items-center bg-white p-2 rounded-lg border border-gray-100"><i class="fa-solid fa-location-dot w-6 text-rose-500"></i> <span id="overviewAddress" class="font-medium">ঠিকানা</span></p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ফর্ম: ডাটা আগে থেকে সেট এবং আপডেট করার জন্য -->
+            <div class="lg:col-span-2">
+                <form id="profileForm" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="text-lg font-bold mb-6 border-b pb-4 text-gray-800 flex items-center">
+                        <i class="fa-solid fa-sliders mr-2 text-blue-600"></i> শপ ও পেমেন্ট সেটিংস
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">নাম</label>
+                            <input type="text" id="name" name="name" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">শপ নাম</label>
+                            <input type="text" id="shop_name" name="shop_name" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">ফোন নম্বর</label>
+                            <input type="text" id="phone" name="phone" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">ফেসবুক লিংক</label>
+                            <input type="text" id="facebook_link" name="facebook_link" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">স্লোগান</label>
+                            <input type="text" id="slogan" name="slogan" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
+                        
+                        <!-- শপ অ্যাবাউট -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">শপ অ্যাবাউট (Shop About)</label>
+                            <textarea id="shop_about" name="shop_about" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" rows="3" placeholder="আপনার শপ সম্পর্কে লিখুন..."></textarea>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">স্টোর অ্যাড্রেস</label>
+                            <textarea id="address" name="address" class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" rows="2"></textarea>
+                        </div>
+                        
+                        <!-- পেমেন্ট মেথড -->
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">পেমেন্ট মেথড</label>
+                            <select id="payment_type" name="payment_type" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white outline-none" onchange="togglePaymentFields()">
+                                <option value="bkash">Bkash</option>
+                                <option value="nagad">Nagad</option>
+                                <option value="rocket">Rocket</option>
+                                <option value="bank">Bank Account</option>
+                            </select>
+                        </div>
+
+                        <!-- মোবাইল ফাইন্যান্সিয়াল সার্ভিস -->
+                        <div id="mfsFields" class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">মোবাইল নম্বর (বিকাশ/নগদ/রকেট)</label>
+                            <input type="text" id="mobile_number" name="mobile_number" class="w-full p-3 text-sm border border-gray-200 rounded-xl" placeholder="নম্বর দিন">
+                        </div>
+
+                        <!-- ব্যাংক ইনফরমেশন -->
+                        <div id="bankFields" class="md:col-span-2 hidden space-y-4 p-5 bg-gray-50 border border-gray-200 rounded-2xl">
+                            <h4 class="font-bold text-sm text-blue-600"><i class="fa-solid fa-bank mr-2"></i> ব্যাংক অ্যাকাউন্ট ইনফরমেশন</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">ব্যাংকের নাম</label>
+                                    <input type="text" id="bank_name" name="bank_name" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">ব্যাংক ব্রাঞ্চ</label>
+                                    <input type="text" id="bank_branch" name="bank_branch" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">অ্যাকাউন্ট হোল্ডারের নাম</label>
+                                    <input type="text" id="bank_acc_name" name="bank_acc_name" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">অ্যাকাউন্ট নম্বর</label>
+                                    <input type="text" id="bank_acc_number" name="bank_acc_number" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">রাউটিং নম্বর</label>
+                                    <input type="text" id="routing_number" name="routing_number" class="w-full p-3 text-sm border border-gray-200 rounded-xl bg-white">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- সেভ বাটন -->
+                    <div class="mt-8 flex justify-between items-center border-t pt-6">
+                        <button type="submit" class="px-8 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-bold text-sm shadow-sm flex items-center">
+                            <i class="fa-solid fa-floppy-disk mr-2"></i> পরিবর্তনসমূহ সেভ করুন
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- জাভাস্ক্রিপ্ট -->
+    <script>
+        async function loadProfileData() {
+            const statusBadge = document.getElementById('loadingStatus');
+            try {
+                const res = await fetch('/admin/api/profile/data', { credentials: 'include' });
+                const textResponse = await res.text();
+                let result;
+                
+                try {
+                    result = JSON.parse(textResponse);
+                } catch (e) {
+                    throw new Error("সার্ভার থেকে সঠিক JSON ডাটা আসেনি।");
+                }
+                
+                if (result.success) {
+                    const d = result.data;
+                    
+                    document.getElementById('name').value = d.name || '';
+                    document.getElementById('shop_name').value = d.shop_name || '';
+                    document.getElementById('phone').value = d.phone || '';
+                    document.getElementById('facebook_link').value = d.facebook_link || '';
+                    document.getElementById('slogan').value = d.slogan || '';
+                    document.getElementById('shop_about').value = d.shop_about || '';
+                    document.getElementById('address').value = d.address || '';
+                    document.getElementById('payment_type').value = d.payment_type || 'bkash';
+                    document.getElementById('mobile_number').value = d.mobile_number || '';
+                    document.getElementById('bank_name').value = d.bank_name || '';
+                    document.getElementById('bank_branch').value = d.bank_branch || '';
+                    document.getElementById('bank_acc_name').value = d.bank_acc_name || '';
+                    document.getElementById('bank_acc_number').value = d.bank_acc_number || '';
+                    document.getElementById('routing_number').value = d.routing_number || '';
+
+                    if (d.picture) {
+                        document.getElementById('profilePic').src = d.picture;
+                    }
+
+                    const verStatusContainer = document.getElementById('verStatusContainer');
+                    if (d.is_verified === 1) {
+                        verStatusContainer.innerHTML = '<span class="text-blue-600 font-semibold text-sm"><i class="fa-solid fa-circle-check"></i> Verified</span>';
+                    } else {
+                        verStatusContainer.innerHTML = '<span class="text-amber-600 font-semibold text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Not Verified</span>';
+                    }
+
+                    document.getElementById('profileName').innerText = d.name || 'অজানা অ্যাডমিন';
+                    document.getElementById('profileEmail').innerText = d.email || '';
+                    document.getElementById('profileSlogan').innerText = d.slogan ? `"${d.slogan}"` : '"স্লোগান সেট করা হয়নি"';
+                    document.getElementById('overviewShop').innerText = d.shop_name || 'শপ নাম নেই';
+                    document.getElementById('overviewPhone').innerText = d.phone || 'ফোন নেই';
+                    document.getElementById('overviewAddress').innerText = d.address || 'ঠিকানা নেই';
+
+                    document.getElementById('totalSales').innerText = '৳ ' + (d.total_sales || 0);
+                    document.getElementById('totalWithdraw').innerText = '৳ ' + (d.total_withdraw || 0);
+                    document.getElementById('accStatus').innerText = d.status || 'Pending';
+                    
+                    statusBadge.className = "text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium";
+                    statusBadge.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> ডাটা সফলভাবে লোড হয়েছে';
+
+                    togglePaymentFields();
+                } else {
+                    alert(result.message || "ডাটা পাওয়া যায়নি।");
+                }
+            } catch (err) {
+                console.error('Data load error:', err);
+                statusBadge.className = "text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium";
+                statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> লোড ব্যর্থ হয়েছে';
+            }
+        }
+
+        // ছবি সিলেক্ট করার পর অটো আপলোড ফাংশন
+        async function uploadProfilePicture(input) {
+            if (input.files && input.files[0]) {
+                const formData = new FormData();
+                formData.append('picture', input.files[0]);
+
+                const statusBadge = document.getElementById('loadingStatus');
+                statusBadge.className = "text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium";
+                statusBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> ছবি আপলোড হচ্ছে...';
+
+                try {
+                    const res = await fetch('/admin/api/profile/upload-picture', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+                    const result = await res.json();
+
+                    if (result.success) {
+                        document.getElementById('profilePic').src = result.pictureUrl;
+                        statusBadge.className = "text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium";
+                        statusBadge.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> ছবি আপডেট হয়েছে';
+                    } else {
+                        alert(result.message || "ছবি আপলোড ব্যর্থ হয়েছে।");
+                    }
+                } catch (err) {
+                    console.error('Upload Error:', err);
+                    alert('সার্ভার এরর!');
+                }
+            }
+        }
+
+        function togglePaymentFields() {
+            const method = document.getElementById('payment_type').value;
+            const mfsFields = document.getElementById('mfsFields');
+            const bankFields = document.getElementById('bankFields');
+
+            if (method === 'bank') {
+                mfsFields.classList.add('hidden');
+                bankFields.classList.remove('hidden');
+            } else {
+                mfsFields.classList.remove('hidden');
+                bankFields.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(e.target).entries());
+
+            try {
+                const res = await fetch('/admin/api/profile/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                    credentials: 'include'
+                });
+                
+                const textResponse = await res.text();
+                let result;
+                try {
+                    result = JSON.parse(textResponse);
+                } catch (e) {
+                    throw new Error("সার্ভার থেকে সঠিক JSON রেসপন্স আসেনি।");
+                }
+
+                alert(result.message);
+                if(result.success) loadProfileData();
+            } catch (err) {
+                console.error('Update error:', err);
+                alert('সার্ভার এরর! আপডেট করা যায়নি।');
+            }
+        });
+
+        loadProfileData();
+    </script>
+</body>
+</html>
