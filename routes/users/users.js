@@ -23,7 +23,8 @@ const upload = multer({ storage: storage });
 passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_USER_CALLBACK_URL
+    callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
+    proxy: true // ক্লাউড বা রিভার্স প্রক্সির জন্য যুক্ত করা হলো
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -146,7 +147,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
 
     try {
         await transporter.sendMail({
-            from: 'mehedi.hasantanvir78@gmail.com',
+            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
             to: orderData.customer_email,
             subject: `NexKart Invoice - Order #${orderData.order_id}`,
             html: emailTemplate
@@ -255,6 +256,53 @@ router.get('/get-coupons', async (req, res) => {
     } catch (err) {
         console.error("Get Coupons Error:", err);
         return res.status(500).json({ success: false, message: "Server Error" });
+    }
+});
+
+// ==================== [ AI ASSISTANT API ROUTE ] ====================
+router.post('/api/ai-chat', async (req, res) => {
+    try {
+        const { message, product_id } = req.body;
+        if (!message) {
+            return res.status(400).json({ success: false, message: 'Message is required!' });
+        }
+
+        let productContext = '';
+        if (product_id) {
+            const [products] = await db.query('SELECT title, description, sale_price, regular_price, category FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
+            if (products.length > 0) {
+                const p = products[0];
+                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description: ${p.description}. `;
+            }
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.json({ 
+                success: true, 
+                reply: "AI Assistant is running in basic mode. How can I help you with NexKart products today?" 
+            });
+        }
+
+        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question: ${message}`;
+        
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+            {
+                contents: [{ parts: [{ text: promptText }] }]
+            },
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const aiReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "I am currently unable to answer. Please try again.";
+        return res.json({ success: true, reply: aiReply });
+
+    } catch (error) {
+        console.error("AI Chat Error:", error.message);
+        return res.json({ 
+            success: true, 
+            reply: "Hello! I am your NexKart AI Assistant. Feel free to ask me anything about this product or delivery process!" 
+        });
     }
 });
 
@@ -550,9 +598,11 @@ router.post('/forgot-password', async (req, res) => {
             [resetToken, tokenExpires, user.id]
         );
 
-        const resetUrl = `http://localhost:5000/user/reset-password/${resetToken}`;
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        const resetUrl = `${baseUrl}/user/reset-password/${resetToken}`;
+
         await transporter.sendMail({
-            from: 'mehedi.hasantanvir78@gmail.com',
+            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
             to: email,
             subject: 'NexKart - Password Reset Request',
             html: `
@@ -678,7 +728,7 @@ router.post('/signup', async (req, res) => {
 
         temporaryUserData[email] = { name, email, password: hashedPassword, otp_code, otp_expires_at };
         await transporter.sendMail({
-            from: 'mehedi.hasantanvir78@gmail.com',
+            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
             to: email,
             subject: 'NexKart - Verification OTP',
             text: `Your OTP is ${otp_code}. Valid for 5 minutes.`
@@ -921,7 +971,8 @@ router.post('/place-order', async (req, res) => {
         );
 
         if (payment_method === 'online') {
-            const callbackUrl = `http://localhost:5000/user/bdgate/callback?order_id=${orderId}`;
+            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+            const callbackUrl = `${baseUrl}/user/bdgate/callback?order_id=${orderId}`;
 
             const bdgatePayload = {
                 amount: totalAmount.toFixed(2),
@@ -929,8 +980,8 @@ router.post('/place-order', async (req, res) => {
                 redirect_url: callbackUrl,
                 success_url: callbackUrl,
                 callback_url: callbackUrl,
-                cancel_url: `http://localhost:5000/user/checkout?status=cancel`,
-                fail_url: `http://localhost:5000/user/checkout?status=fail`,
+                cancel_url: `${baseUrl}/user/checkout?status=cancel`,
+                fail_url: `${baseUrl}/user/checkout?status=fail`,
                 customer_name: name,
                 customer_email: email || 'customer@example.com',
                 customer_phone: phone,
@@ -942,7 +993,7 @@ router.post('/place-order', async (req, res) => {
                 const response = await axios.post('https://api.bdgate.net/api/v1/checkout', bdgatePayload, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': 'bd_live_40d9307632248d56aabb35758971e9b9'
+                        'X-API-Key': process.env.BDGATE_API_KEY || 'bd_live_40d9307632248d56aabb35758971e9b9'
                     }
                 });
 
@@ -971,6 +1022,7 @@ router.post('/place-order', async (req, res) => {
 router.get('/bdgate/callback', async (req, res) => {
     try {
         const { order_id } = req.query;
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         
         if (order_id) {
             const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ?', [order_id]);
@@ -1002,10 +1054,11 @@ router.get('/bdgate/callback', async (req, res) => {
             }
         }
 
-        return res.redirect('http://localhost:5000/user/dashboard');
+        return res.redirect(`${baseUrl}/user/dashboard`);
     } catch (error) {
         console.error("Callback Error:", error);
-        return res.redirect('http://localhost:5000/user/dashboard');
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        return res.redirect(`${baseUrl}/user/dashboard`);
     }
 });
 
@@ -1125,6 +1178,54 @@ router.get('/current_user', (req, res) => {
         return res.status(401).json({ message: 'Not logged in' });
     }
 });
+// Pop-up / Modal Login Callback Router
+router.post('/modal-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        
+        if (users.length === 0) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
+
+        const user = users[0];
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
+
+        // Passport/Express Session setup
+        req.login(user, (err) => {
+            if (err) {
+                return res.json({ success: false, message: 'Session login failed!' });
+            }
+
+            req.session.user = { 
+                id: user.id, 
+                email: user.email,
+                user_type: 'user' 
+            };
+
+            return res.json({ 
+                success: true, 
+                message: 'Login successful!',
+                user: { id: user.id, name: user.name, email: user.email }
+            });
+        });
+
+    } catch (err) {
+        console.error('Modal Login Error:', err);
+        res.status(500).json({ success: false, message: 'Server error!' });
+    }
+});
+router.post('/save-redirect-url', (req, res) => {
+    if (req.body.redirectTo) {
+        req.session.redirectTo = req.body.redirectTo;
+    }
+    res.json({ success: true });
+});
 
 router.get('/logout', (req, res, next) => {
     req.logout(function(err) {
@@ -1146,11 +1247,9 @@ router.get('/dashProduct', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 8;
 
-        // মোট প্রোডাক্টের সংখ্যা বের করা
         const [totalCountResult] = await db.query('SELECT COUNT(*) AS total FROM products');
         const totalProducts = totalCountResult[0].total;
 
-        // হাজার হাজার প্রোডাক্ট থাকলেও স্লো হবে না, সিউডো-র‍্যান্ডম অফসেট ব্যবহার করা হলো
         const maxOffset = Math.max(0, totalProducts - limit);
         const randomOffset = page === 1 ? Math.floor(Math.random() * (maxOffset + 1)) : (parseInt(req.query.offset) || 0);
         const offset = Math.min(randomOffset, maxOffset);
