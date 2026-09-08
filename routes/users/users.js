@@ -1188,7 +1188,6 @@ router.get('/current_user', (req, res) => {
         return res.status(401).json({ message: 'Not logged in' });
     }
 });
-// Pop-up / Modal Login Callback Router
 router.post('/modal-login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -1206,22 +1205,17 @@ router.post('/modal-login', async (req, res) => {
             return res.json({ success: false, message: 'Invalid email or password!' });
         }
 
-        // Passport/Express Session setup
         req.login(user, (err) => {
             if (err) {
                 return res.json({ success: false, message: 'Session login failed!' });
             }
 
-            req.session.user = { 
-                id: user.id, 
-                email: user.email,
-                user_type: 'user' 
-            };
+            req.session.user = { id: user.id, email: user.email, user_type: 'user' };
 
+            // কোন রিডাইরেক্ট ইউআরএল না পাঠিয়ে শুধু সাফল্য নিশ্চিত করুন
             return res.json({ 
                 success: true, 
-                message: 'Login successful!',
-                user: { id: user.id, name: user.name, email: user.email }
+                message: 'Login successful!'
             });
         });
 
@@ -1230,7 +1224,6 @@ router.post('/modal-login', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error!' });
     }
 });
-
 router.post('/save-redirect-url', (req, res) => {
     if (req.body.redirectTo) {
         req.session.redirectTo = req.body.redirectTo;
@@ -1362,7 +1355,6 @@ router.get('/get-products-by-category', async (req, res) => {
         return res.status(500).json({ success: false, message: "Server Error" });
     }
 });
-
 
 
 module.exports = router;
