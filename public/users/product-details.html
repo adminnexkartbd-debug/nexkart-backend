@@ -485,9 +485,7 @@
     let currentStockPrice = 0;
     let productQuantity = 1;
     let selectedVariant = null;
-
-    // Track user action before login modal opens
-    let pendingAction = null;
+    let pendingAction = null; // Stores action: 'order' or 'cart'
 
     // Show More / Show Less Global Variables
     let fullDescriptionText = '';
@@ -524,7 +522,6 @@
             url: shareUrl
           };
 
-          // Try fetching image to convert into File object for native image sharing
           if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
             try {
               const response = await fetch(mainImgSrc);
@@ -547,7 +544,6 @@
           }
         }
       } else {
-        // Fallback: Copy to Clipboard if Web Share API is unavailable
         const fullShareContent = `${shareText}${shareUrl}`;
         navigator.clipboard.writeText(fullShareContent).then(() => {
           alert('Product details and link copied to clipboard!');
@@ -638,11 +634,12 @@
         btn.classList.add('bg-white', 'text-gray-700', 'border-pink-200');
       });
       element.classList.remove('bg-white', 'text-gray-700', 'border-pink-200');
-      element.classList.add('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
+      element.classList.add('bg-[#ff4b6e]', 'text-[#ffffff]', 'border-[#ff4b6e]', 'shadow-md');
       selectedVariant = variantName;
     }
 
-    function openLoginModal() {
+    function openLoginModal(action) {
+      pendingAction = action;
       document.getElementById('login-modal').classList.remove('hidden');
     }
 
@@ -675,13 +672,13 @@
 
         if (data.success) {
           closeLoginModal();
-          // Keep user on the current product page and execute pending action if any
+          // Process saved user intent automatically after login
           if (pendingAction === 'order') {
             executeOrderRedirect();
           } else if (pendingAction === 'cart') {
             addToDatabaseCart();
           } else {
-            window.location.reload(); 
+            window.location.reload();
           }
         } else {
           alert(data.message || 'Incorrect email or password!');
@@ -718,12 +715,10 @@
             return;
           }
         }
-        pendingAction = actionType;
-        openLoginModal();
+        openLoginModal(actionType);
       } catch (error) {
         console.error("Auth check error:", error);
-        pendingAction = actionType;
-        openLoginModal();
+        openLoginModal(actionType);
       }
     }
 
@@ -866,7 +861,7 @@
         'section-description': document.getElementById('nav-description'),
         'section-specification': document.getElementById('nav-specification'),
         'section-reviews': document.getElementById('nav-reviews'),
-        'section-inquiries': document.getElementById('nav-inquiries')
+        'section-inquiries': document.getElementById('nav-[#ff4b6e]')
       };
 
       let currentSection = '';
