@@ -1363,25 +1363,33 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
+// পপ-আপ লগইনের জন্য আলাদা রাউট
 router.post('/cslogin-ajax', async (req, res) => {
+    const { email, password } = req.body;
+
     try {
-        const { email, password } = req.body;
-        // ... পাসওয়ার্ড ভ্যালিডেশন এবং ইউজার চেক ...
+        // ... আপনার ইউজার ভ্যালিডেশন এবং পাসওয়ার্ড চেকের কোড ...
+        // উদাহরণ:
+        // const user = await User.findOne({ email });
+        // if (!user) return res.json({ success: false, message: 'User not found' });
 
-        // লগইন সফল হলে সেশনে ইউজার ডাটা সেট করুন
-        req.session.user = existingUser[0];
+        // সেশনে ইউজার তথ্য সেভ করা
+        req.session.user = {
+            id: user._id,
+            email: user.email
+        };
 
-        // ব্যাকএন্ড থেকে রিটার্ন লিঙ্ক পাঠানো
-        const returnTo = req.session.returnTo || null;
-        delete req.session.returnTo;
-
-        return res.json({ 
-            success: true, 
-            message: 'Login successful!',
-            redirectTo: returnTo 
+        // কোনো রিডাইরেক্ট ছাড়া শুধু Success Response পাঠানো
+        return res.json({
+            success: true,
+            message: 'Logged in successfully'
         });
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Server error' });
+
+    } catch (error) {
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Server error during login' 
+        });
     }
 });
 
