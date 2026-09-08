@@ -638,10 +638,52 @@
       selectedVariant = variantName;
     }
 
-    function openLoginModal(action) {
-      pendingAction = action;
-      document.getElementById('login-modal').classList.remove('hidden');
+  // ১. পপ-আপ ওপেন করার ফাংশন
+function openLoginModal(action) {
+  pendingAction = action;
+  const modal = document.getElementById('login-modal');
+  if (modal) {
+    modal.style.display = 'block'; // পপ-আপ ওপেন হবে
+  }
+}
+
+// ২. পপ-আপ ফর্মের সাবমিট হ্যান্ডলার (AJAX)
+document.getElementById('popup-login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const email = document.getElementById('modal-email').value;
+  const password = document.getElementById('modal-password').value;
+
+  try {
+    // আলাদা রাউটে AJAX রিকোয়েস্ট পাঠানো হচ্ছে
+    const response = await fetch('/user/cslogin-ajax', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // পপ-আপ বন্ধ করা
+      document.getElementById('login-modal').style.display = 'none';
+      
+      // ইউজারকে মেসেজ দেখানো বা স্টেট আপডেট করা
+      alert('Login successful!');
+
+      // যদি আগের কোনো অ্যাকশন (যেমন: Order Now বা Add to Cart) বাকি থাকে
+      if (pendingAction === 'buy') {
+        processOrder(); 
+      } else if (pendingAction === 'cart') {
+        addToCart();
+      }
+    } else {
+      alert(data.message || 'Login failed!');
     }
+  } catch (error) {
+    console.error('Error during login:', error);
+  }
+});
 
     function closeLoginModal() {
       document.getElementById('login-modal').classList.add('hidden');
