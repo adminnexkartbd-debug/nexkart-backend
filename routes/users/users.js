@@ -1353,4 +1353,59 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
+// ==================== [ POPUP / AJAX LOGIN ROUTE ] ====================
+router.post('/cslogin-ajax', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: "ইমেইল এবং পাসওয়ার্ড দেওয়া বাধ্যতামূলক!" });
+    }
+
+    try {
+        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        if (adminCheck.length > 0) {
+            return res.status(400).json({ success: false, message: "Admin email cannot be used for user login!" });
+        }
+
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.status(400).json({ success: false, message: "Invalid email or password!" });
+        }
+
+        const user = users[0];
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.status(400).json({ success: false, message: "এই ইমেইলটি Google দিয়ে তৈরি করা হয়েছে। অনুগ্রহ করে Google দিয়ে লগইন করুন!" });
+        }
+
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid email or password!" });
+        }
+
+        user.user_type = 'user';
+
+        req.login(user, (err) => {
+            if (err) {
+                console.error("Passport Login Error:", err);
+                return res.status(500).json({ success: false, message: "Login Session Error!" });
+            }
+            
+            req.session.user = { id: user.id, user_type: 'user' }; 
+            req.session.userId = user.id; 
+
+            // কোনো Redirect না করে JSON response দেওয়া হবে
+            return res.json({
+                success: true,
+                message: "Login successful!",
+                user: { id: user.id, name: user.name, email: user.email }
+            });
+        });
+
+    } catch (err) {
+        console.error("AJAX Login Server Error:", err);
+        return res.status(500).json({ success: false, message: "Server Error!" });
+    }
+});
+
 module.exports = router;
