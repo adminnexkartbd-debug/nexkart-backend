@@ -594,9 +594,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ redirectTo: currentUrl })
       }).then(() => {
-        window.location.href = `/user/auth/google`; 
+        window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`; 
       }).catch(err => {
-        window.location.href = `/user/auth/google`;
+        window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`;
       });
     }
 
@@ -634,7 +634,7 @@
         btn.classList.add('bg-white', 'text-gray-700', 'border-pink-200');
       });
       element.classList.remove('bg-white', 'text-gray-700', 'border-pink-200');
-      element.classList.add('bg-[#ff4b6e]', 'text-[#ffffff]', 'border-[#ff4b6e]', 'shadow-md');
+      element.classList.add('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
       selectedVariant = variantName;
     }
 
@@ -647,63 +647,68 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-// ফ্রন্টএন্ড মোডাল লগইন সাবমিট ফাংশন (রিডাইরেক্ট বন্ধ করে রিফ্রেশ করবে)
-async function handleModalLogin(event) {
-    event.preventDefault(); // ফর্মের ডিফল্ট সাবমিট ও রিডাইরেক্ট বন্ধ করা
+    // ফ্রন্টএন্ড মোডাল লগইন সাবমিট ফাংশন
+    async function handleModalLogin(event) {
+        event.preventDefault(); 
 
-    // ইনপুট ফিল্ডের সঠিক ID অনুযায়ী ভ্যালু ধরা
-    const emailInput = document.getElementById('modal-email');
-    const passwordInput = document.getElementById('modal-password');
-    const loginBtn = document.getElementById('modal-login-btn');
+        const emailInput = document.getElementById('modal-email');
+        const passwordInput = document.getElementById('modal-password');
+        const loginBtn = document.getElementById('modal-login-btn');
 
-    if (!emailInput || !passwordInput) return;
+        if (!emailInput || !passwordInput) return;
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
 
-    if (!email || !password) {
-        alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
-        return;
-    }
-
-    try {
-        if (loginBtn) {
-            loginBtn.disabled = true;
-            loginBtn.innerText = 'Signing In...';
+        if (!email || !password) {
+            alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
+            return;
         }
 
-        const response = await fetch('/user/modal-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        try {
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.innerText = 'Signing In...';
+            }
 
-        const data = await response.json();
+            // ব্যাকএন্ডের pop-loginRouter.js অনুযায়ী সঠিক URL /user/pop-login ব্যবহার করা হয়েছে
+            const response = await fetch('/user/pop-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (data.success) {
-            // ১. মোডাল বন্ধ করা
-            closeLoginModal();
+            const data = await response.json();
 
-            // ২. কোনো অন্য পেজে রিডাইরেক্ট না হয়ে বর্তমান পেজটি রিফ্রেশ হবে
-            window.location.reload(); 
-        } else {
-            alert(data.message || 'Login failed!');
+            if (data.success) {
+                closeLoginModal();
+
+                // লগইন সফল হওয়ার পরে পেন্ডিং কাজ (Order/Cart) সম্পূর্ণ করবে
+                if (pendingAction === 'order') {
+                    executeOrderRedirect();
+                } else if (pendingAction === 'cart') {
+                    addToDatabaseCart();
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert(data.message || 'Login failed!');
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = 'Sign In';
+                }
+            }
+        } catch (error) {
+            console.error('Modal Login Error:', error);
+            alert('Server error occurred during login!');
             if (loginBtn) {
                 loginBtn.disabled = false;
                 loginBtn.innerText = 'Sign In';
             }
         }
-    } catch (error) {
-        console.error('Modal Login Error:', error);
-        alert('Server error occurred during login!');
-        if (loginBtn) {
-            loginBtn.disabled = false;
-            loginBtn.innerText = 'Sign In';
-        }
-    }
-}   
+    }   
 
-function executeOrderRedirect() {
+    function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
       if (selectedVariant) {
@@ -873,7 +878,7 @@ function executeOrderRedirect() {
         'section-specification': document.getElementById('nav-specification'),
         'section-reviews': document.getElementById('nav-reviews'),
         'section-inquiries': document.getElementById('nav-inquiries')   
-		};
+      };
 
       let currentSection = '';
 
@@ -1466,7 +1471,7 @@ function executeOrderRedirect() {
         }
 
         let userImg = review.profile_image ? review.profile_image.trim() : '';
-        const fallbackSvg = `https://via.placeholder.com/100`;
+        const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>`;
 
         if (userImg && !userImg.startsWith('http://') && !userImg.startsWith('https://')) {
           userImg = userImg.startsWith('/') ? userImg : '/' + userImg;
@@ -1561,46 +1566,6 @@ function executeOrderRedirect() {
         loadProductReviews();
       }
     });
-	
-	function redirectToLogin() {
-  const currentUrl = window.location.href; // বর্তমান পেজের সম্পূর্ণ লিঙ্ক
-  
-  fetch('/user/save-redirect-url', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ redirectTo: currentUrl })
-  }).then(() => {
-    // সেশনে সেভ হওয়ার পর গুগল লগইন পেজে পাঠাবে
-    window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`; 
-  }).catch(err => {
-    window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`;
-  });
-}
-
-async function addToDatabaseCart() {
-  if (!productId) return;
-  try {
-    const response = await fetch('/user/add-to-cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        product_id: productId, 
-        quantity: productQuantity,
-        variant: selectedVariant 
-      })
-    });
-    const data = await response.json();
-    if (data.success) {
-      alert('Product successfully added to cart!');
-    } else {
-      alert('Error: ' + data.message);
-    }
-  } catch (error) {
-    console.error('Cart Error:', error);
-    alert('Server error!');
-  }
-}
-
   </script>
 </body>
 </html>
