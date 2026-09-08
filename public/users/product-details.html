@@ -884,8 +884,8 @@
         'section-description': document.getElementById('nav-description'),
         'section-specification': document.getElementById('nav-specification'),
         'section-reviews': document.getElementById('nav-reviews'),
-        'section-inquiries': document.getElementById('nav-[#ff4b6e]')
-      };
+        'section-inquiries': document.getElementById('nav-inquiries')   
+		};
 
       let currentSection = '';
 
@@ -1573,6 +1573,46 @@
         loadProductReviews();
       }
     });
+	
+	function redirectToLogin() {
+  const currentUrl = window.location.href; // বর্তমান পেজের সম্পূর্ণ লিঙ্ক
+  
+  fetch('/user/save-redirect-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ redirectTo: currentUrl })
+  }).then(() => {
+    // সেশনে সেভ হওয়ার পর গুগল লগইন পেজে পাঠাবে
+    window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`; 
+  }).catch(err => {
+    window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`;
+  });
+}
+
+async function addToDatabaseCart() {
+  if (!productId) return;
+  try {
+    const response = await fetch('/user/add-to-cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        product_id: productId, 
+        quantity: productQuantity,
+        variant: selectedVariant 
+      })
+    });
+    const data = await response.json();
+    if (data.success) {
+      alert('Product successfully added to cart!');
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Cart Error:', error);
+    alert('Server error!');
+  }
+}
+
   </script>
 </body>
 </html>
