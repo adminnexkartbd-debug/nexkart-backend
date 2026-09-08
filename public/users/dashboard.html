@@ -895,6 +895,87 @@
             box-shadow: 0 14px 35px rgba(255, 75, 110, 0.5);
         }
 
+        /* ---------------- COOKIE CONSENT BANNER ---------------- */
+        .cookie-banner {
+            position: fixed;
+            bottom: -200px;
+            left: 20px;
+            right: 20px;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--accent-pink);
+            z-index: 10000;
+            transition: all 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cookie-banner.show {
+            bottom: 20px;
+        }
+
+        .cookie-content h4 {
+            font-size: 16px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cookie-content h4 i {
+            color: #e67e22;
+        }
+
+        .cookie-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .cookie-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-accept-cookie {
+            background: var(--primary-gradient);
+            color: var(--white);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-accept-cookie:hover {
+            opacity: 0.9;
+        }
+
+        .btn-decline-cookie {
+            background: #eee;
+            color: var(--text-muted);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-decline-cookie:hover {
+            background: #e0e0e0;
+        }
+
         /* ==================== RESPONSIVE DESIGN (MEDIA QUERIES) ==================== */
         @media (max-width: 1200px) {
             .top-header, .sub-bar, .banner-section, .features-section, .products-section {
@@ -1023,7 +1104,7 @@
             }
 
             .banner-star-badge {
-                display: none; /* মোবাইলে ক্লিন লুকের জন্য ব্যাজ হাইড করে স্লাইড টেক্সটকে ফোকাস করা */
+                display: none;
             }
 
             .features-grid {
@@ -1051,7 +1132,7 @@
             }
 
             .product-grid {
-                grid-template-columns: repeat(2, 1fr); /* মোবাইলে পাশাপাশি ২ টা করে প্রোডাক্ট কার্ড */
+                grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
             }
 
@@ -1090,6 +1171,11 @@
                 right: -40px;
                 width: 250px;
             }
+
+            .cookie-banner {
+                left: 10px;
+                right: 10px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1117,7 +1203,7 @@
             }
 
             .all-categories-btn span {
-                display: none; /* ছোট স্ক্রিনে ড্রয়ার বাটন ছোট করা */
+                display: none;
             }
 
             .nav-links-list li a {
@@ -1126,7 +1212,7 @@
             }
 
             .features-grid {
-                grid-template-columns: 1fr; /* একদম ছোট স্ক্রিনে সার্ভিস আইটেম নিচে নিচে */
+                grid-template-columns: 1fr;
             }
 
             .slider-container {
@@ -1317,6 +1403,18 @@
         </div>
     </section>
 
+    <!-- ৬. কুকি কনসেন্ট ব্যানার (FIRST VISIT COOKIE BANNER) -->
+    <div class="cookie-banner" id="cookieBanner">
+        <div class="cookie-content">
+            <h4><i class="fa-solid fa-cookie-bite"></i> We Value Your Privacy</h4>
+            <p>We use cookies to improve your browsing experience and analyze site traffic. By clicking "Allow Cookies", you consent to our use of cookies.</p>
+        </div>
+        <div class="cookie-actions">
+            <button class="btn-decline-cookie" onclick="declineCookies()">Decline</button>
+            <button class="btn-accept-cookie" onclick="acceptCookies()">Allow Cookies</button>
+        </div>
+    </div>
+
   <script>
     // ---------------- LANGUAGE TRANSLATION DICTIONARY ----------------
     const translations = {
@@ -1434,6 +1532,31 @@
     let currentDashPage = 1;
     const dashLimit = 8; // প্রতি ক্লিকে লোড হওয়া প্রোডাক্ট সংখ্যা
 
+    // COOKIE CONSENT SYSTEM
+    function checkCookieConsent() {
+        const consent = localStorage.getItem('cookieConsent');
+        if (!consent) {
+            setTimeout(() => {
+                document.getElementById('cookieBanner').classList.add('show');
+            }, 1000); // ১ সেকেন্ড পর পপ-আপ আসবে
+        }
+    }
+
+    function acceptCookies() {
+        localStorage.setItem('cookieConsent', 'accepted');
+        document.getElementById('cookieBanner').classList.remove('show');
+    }
+
+    function declineCookies() {
+        localStorage.setItem('cookieConsent', 'declined');
+        document.getElementById('cookieBanner').classList.remove('show');
+    }
+
+    /* 
+       ডিভাইস তথ্য বা আইপি ট্র্যাকিং সংক্রান্ত ফাংশন পুরোপুরি অফ করা হয়েছে।
+       এখন থেকে ইউজার ঢুকলে অতিরিক্ত ট্র্যাকিং ডেটা ডাটাবেজে সেন্ড হবে না।
+    */
+
     async function loadBannerProducts() {
         const sliderContainer = document.getElementById('dynamicBannerSlider');
         if (!sliderContainer) return;
@@ -1452,19 +1575,17 @@
 
                 sliderContainer.innerHTML = data.products.map((product, index) => {
                     let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
-if (product.primary_image) {
-    let rawImg = product.primary_image.trim();
+                    if (product.primary_image) {
+                        let rawImg = product.primary_image.trim();
+                        if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
+                            let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
+                            imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+                        } else {
+                            let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
+                            imageSrc = '/uploads/' + cleanPath;
+                        }
+                    }
 
-    // ইউআরএল এর মধ্যে কোথাও http/https বা cloudinary আছে কিনা চেক করা
-    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
-        // যদি শুরুতে অতিরিক্ত uploads/ বা /uploads/ থাকে তা মুছে দেওয়া
-        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
-        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
-    } else {
-        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-        imageSrc = '/uploads/' + cleanPath;
-    }
-}
                     let matchedCoupon = coupons.find(c => 
                         String(c.product_id) === String(product.id) || 
                         String(c.product_id) === String(product.product_id)
@@ -1545,6 +1666,9 @@ if (product.primary_image) {
     }
     
     document.addEventListener("DOMContentLoaded", async function() {
+        // Cookie Consent চেক
+        checkCookieConsent();
+
         // Language Listener Setup
         const langSelect = document.getElementById('langChange');
         const savedLang = localStorage.getItem('selectedLang') || 'en';
@@ -1626,20 +1750,17 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     }
                     oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
                 }
-let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
-if (product.primary_image) {
-    let rawImg = product.primary_image.trim();
-
-    // ইউআরএল এর মধ্যে কোথাও http/https বা cloudinary আছে কিনা চেক করা
-    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
-        // যদি শুরুতে অতিরিক্ত uploads/ বা /uploads/ থাকে তা মুছে দেওয়া
-        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
-        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
-    } else {
-        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-        imageSrc = '/uploads/' + cleanPath;
-    }
-}
+                let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
+                if (product.primary_image) {
+                    let rawImg = product.primary_image.trim();
+                    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
+                        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+                    } else {
+                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = '/uploads/' + cleanPath;
+                    }
+                }
                 const targetId = product.product_id || product.id;
                 const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
                 const starsHTML = renderStars(parseFloat(avgRating));
@@ -1683,7 +1804,6 @@ if (product.primary_image) {
                 productGrid.innerHTML = productsHTML;
             }
 
-            // Load More বাটন কন্ট্রোল
             if (loadMoreContainer) {
                 if (!data.hasMore) {
                     loadMoreContainer.style.display = 'none';
