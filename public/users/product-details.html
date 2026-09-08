@@ -647,7 +647,7 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-   async function handleModalLogin(event) {
+  async function handleModalLogin(event) {
   // ১. ব্রাউজারের ডিফোল্ট পেজ রিফ্রেশ / রিডাইরেক্ট বন্ধ রাখা
   if (event) event.preventDefault();
 
@@ -696,6 +696,7 @@
     loginBtn.disabled = false;
   }
 }
+
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
