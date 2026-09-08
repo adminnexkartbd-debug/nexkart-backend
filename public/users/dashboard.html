@@ -270,6 +270,7 @@
             align-items: center;
             justify-content: center;
             transition: var(--transition);
+            flex-shrink: 0;
         }
 
         .sms-icon-container:hover, .cart-icon-container:hover {
@@ -894,20 +895,261 @@
             box-shadow: 0 14px 35px rgba(255, 75, 110, 0.5);
         }
 
-        @media(max-width: 992px) {
+        /* ==================== RESPONSIVE DESIGN (MEDIA QUERIES) ==================== */
+        @media (max-width: 1200px) {
             .top-header, .sub-bar, .banner-section, .features-section, .products-section {
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+            .search-box {
+                max-width: 500px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .top-header {
+                padding: 12px 20px;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            
+            .header-logo img {
+                height: 36px;
+            }
+
+            .search-box {
+                order: 3;
+                flex: 1 1 100%;
+                max-width: 100%;
+                margin-top: 4px;
+            }
+
+            .header-actions {
+                gap: 12px;
+            }
+
+            .sub-bar {
+                padding: 0 20px;
+            }
+
+            .all-categories-btn {
+                margin-right: 15px;
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
+            .banner-section, .features-section, .products-section {
                 padding-left: 20px;
                 padding-right: 20px;
             }
-            .all-categories-btn {
-                margin-right: 20px;
-                padding: 12px 18px;
+
+            .slider-container {
+                height: 360px;
             }
+
             .slide {
                 padding: 30px;
             }
+
+            .slide-content {
+                max-width: 380px;
+                padding: 25px;
+            }
+
+            .slide-content h2 {
+                font-size: 22px;
+            }
+
+            .banner-star-badge {
+                width: 120px;
+                height: 120px;
+                padding: 8px;
+            }
+
+            .banner-star-badge .offer-title {
+                font-size: 8px;
+            }
+
+            .banner-star-badge .coupon-code {
+                font-size: 12px;
+            }
+
+            .banner-star-badge .discount-text {
+                font-size: 9px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-buttons a {
+                padding: 7px 12px;
+                font-size: 12px;
+            }
+
+            .user-greeting {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .sms-icon-container, .cart-icon-container {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
             .slider-container {
-                height: 350px;
+                height: 320px;
+            }
+
+            .slide {
+                flex-direction: column;
+                justify-content: center;
+                gap: 15px;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .slide-content {
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .slide-content p {
+                margin-bottom: 12px;
+            }
+
+            .banner-star-badge {
+                display: none; /* মোবাইলে ক্লিন লুকের জন্য ব্যাজ হাইড করে স্লাইড টেক্সটকে ফোকাস করা */
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .feature-card {
+                padding: 8px;
+                gap: 10px;
+            }
+
+            .feature-card i {
+                font-size: 22px;
+                padding: 10px;
+            }
+
+            .feature-info h4 {
+                font-size: 13px;
+            }
+
+            .feature-info p {
+                font-size: 10px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr); /* মোবাইলে পাশাপাশি ২ টা করে প্রোডাক্ট কার্ড */
+                gap: 12px;
+            }
+
+            .product-card {
+                padding: 10px;
+            }
+
+            .product-img {
+                height: 140px;
+            }
+
+            .product-title {
+                font-size: 12px;
+                height: 34px;
+            }
+
+            .current-price {
+                font-size: 14px;
+            }
+
+            .old-price {
+                font-size: 11px;
+            }
+
+            .add-cart-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+
+            .section-title h2 {
+                font-size: 18px;
+            }
+
+            .user-dropdown-menu {
+                right: -40px;
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-header {
+                padding: 10px 12px;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+
+            .language-select select {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+
+            .sub-bar {
+                padding: 0 10px;
+            }
+
+            .all-categories-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+                margin-right: 10px;
+            }
+
+            .all-categories-btn span {
+                display: none; /* ছোট স্ক্রিনে ড্রয়ার বাটন ছোট করা */
+            }
+
+            .nav-links-list li a {
+                font-size: 12px;
+                padding: 10px 0;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr; /* একদম ছোট স্ক্রিনে সার্ভিস আইটেম নিচে নিচে */
+            }
+
+            .slider-container {
+                height: 280px;
+                border-radius: 12px;
+            }
+
+            .slide-content h2 {
+                font-size: 18px;
+            }
+
+            .slide-content p {
+                font-size: 12px;
+            }
+
+            .slide-btn {
+                padding: 8px 18px;
+                font-size: 12px;
+            }
+
+            .btn-load-more {
+                padding: 10px 25px;
+                font-size: 12px;
             }
         }
     </style>
