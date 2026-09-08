@@ -15,7 +15,7 @@
   <meta property="og:type" content="product">
   <meta id="og-title" property="og:title" content="NexKart - Product Details">
   <meta id="og-description" property="og:description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
-  <meta id="og-[#image]" property="og:image" content="">
+  <meta id="og-image" property="og:image" content="">
   <meta id="og-url" property="og:url" content="">
   <meta property="og:site_name" content="NexKart">
 
@@ -23,7 +23,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta id="tw-title" name="twitter:title" content="NexKart - Product Details">
   <meta id="tw-description" name="twitter:description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
-  <meta id="tw-[#image]" name="twitter:image" content="">
+  <meta id="tw-image" name="twitter:image" content="">
 
   <!-- Schema.org Product Structured Data (JSON-LD for Google Rich Results) -->
   <script id="product-json-ld" type="application/ld+json">
@@ -45,21 +45,21 @@
   }
   </script>
 
- <!-- Tailwind Config Block (Must be placed before the CDN script to remove warnings) -->
-<script>
-  tailwind = {
-    config: {
-      suppressWarnings: true,
-      corePlugins: {
-        preflight: true,
+  <!-- Tailwind Config Block -->
+  <script>
+    tailwind = {
+      config: {
+        suppressWarnings: true,
+        corePlugins: {
+          preflight: true,
+        }
       }
     }
-  }
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- DaisyUI CDN -->
-<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <!-- DaisyUI CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
   
   <!-- Google Fonts & Font Awesome Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -179,7 +179,8 @@
         <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
       </a>
 
-      <button class="theme-glass-card hover:bg-white text-[#d63384] w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-sm">
+      <!-- Share Button with Click Function -->
+      <button onclick="shareProduct()" class="theme-glass-card hover:bg-white text-[#d63384] w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95">
         <i class="fa-solid fa-share-nodes"></i>
       </button>
     </div>
@@ -499,6 +500,40 @@
     let currentInquiriesPage = 1;
     const inquiriesPerPage = 5;
 
+    // -----------------------------------------------------------
+    // Share Product Information Functionality
+    // -----------------------------------------------------------
+    async function shareProduct() {
+      const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
+      const salePrice = document.getElementById('product-sale-price').innerText || '';
+      const shareUrl = window.location.href;
+
+      const shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n💰 Price: ${salePrice}\n\nBuy now: `;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: productTitle,
+            text: shareText,
+            url: shareUrl
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Error sharing:', err);
+          }
+        }
+      } else {
+        // Fallback: Copy to Clipboard if Web Share API is unavailable
+        const fullShareContent = `${shareText}${shareUrl}`;
+        navigator.clipboard.writeText(fullShareContent).then(() => {
+          alert('Product details and link copied to clipboard!');
+        }).catch(err => {
+          console.error('Copy failed:', err);
+          alert('Failed to copy. Share link: ' + shareUrl);
+        });
+      }
+    }
+
     function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
@@ -551,7 +586,6 @@
       }
     });
 
-    // Updated updateQuantity method with stock limit validation logic
     function updateQuantity(change) {
       const maxStock = Number(window.currentProductStock || 0);
       const newQuantity = productQuantity + change;
@@ -944,6 +978,7 @@
         </div>
       `;
     }
+
     function updateDynamicSEO(product, galleryImages) {
       if (!product) return;
 
@@ -971,12 +1006,12 @@
 
       document.getElementById('og-title').setAttribute('content', title);
       document.getElementById('og-description').setAttribute('content', metaDescription);
-      document.getElementById('og-[#image]').setAttribute('content', imageUrl);
+      document.getElementById('og-image').setAttribute('content', imageUrl);
       document.getElementById('og-url').setAttribute('content', pageUrl);
 
       document.getElementById('tw-title').setAttribute('content', title);
       document.getElementById('tw-description').setAttribute('content', metaDescription);
-      document.getElementById('tw-[#image]').setAttribute('content', imageUrl);
+      document.getElementById('tw-image').setAttribute('content', imageUrl);
 
       const schemaData = {
         "@context": "https://schema.org/",
