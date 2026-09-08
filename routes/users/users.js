@@ -1386,7 +1386,7 @@ router.post('/cslogin-ajax', async (req, res) => {
 
         user.user_type = 'user';
 
-        // Passport / Session-এ ইউজার সেটআপ (রিডাইরেক্ট ছাড়া)
+        // Passport/Session Handle
         req.login(user, (err) => {
             if (err) {
                 console.error("Popup Login Session Error:", err);
@@ -1396,7 +1396,7 @@ router.post('/cslogin-ajax', async (req, res) => {
             req.session.user = { id: user.id, email: user.email, user_type: 'user' }; 
             req.session.userId = user.id; 
 
-            // কোনো redirect করা হচ্ছে না, সফল JSON রেসপন্স পাঠানো হচ্ছে
+            // ভুলেও res.redirect() করবেন না, শুধুমাত্র JSON রেসপন্স পাঠাবেন
             return res.json({ 
                 success: true, 
                 message: 'Login successful!',
@@ -1409,5 +1409,6 @@ router.post('/cslogin-ajax', async (req, res) => {
         return res.status(500).json({ success: false, message: "Server Error!" });
     }
 });
+
 
 module.exports = router;
