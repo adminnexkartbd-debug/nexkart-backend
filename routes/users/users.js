@@ -1410,5 +1410,34 @@ router.post('/cslogin-ajax', async (req, res) => {
     }
 });
 
+// ==================== [ POPUP ISOLATED LOGIN ROUTE ] ====================
+router.post('/popup-login', (req, res, next) => {
+    // Custom Passport Callback (যাতে কোনো অটো-রিডাইরেক্ট না হয়)
+    passport.authenticate('popup-local', (err, user, info) => {
+        if (err) {
+            return res.json({ success: false, message: "সার্ভার এরর হয়েছে!" });
+        }
+        if (!user) {
+            return res.json({ success: false, message: info ? info.message : "লগইন ব্যর্থ হয়েছে!" });
+        }
+
+        // ম্যানুয়ালি সেশনে ইউজার স্টোর করা
+        req.login(user, (loginErr) => {
+            if (loginErr) {
+                return res.json({ success: false, message: "Session creation error!" });
+            }
+
+            req.session.user = { id: user.id, email: user.email, user_type: 'user' };
+            req.session.userId = user.id;
+
+            // শুধুমাত্র JSON রেসপন্স যাবে (কোনো redirect হবে না)
+            return res.json({
+                success: true,
+                message: "Login successful!",
+                user: { id: user.id, name: user.name, email: user.email }
+            });
+        });
+    })(req, res, next);
+});
 
 module.exports = router;
