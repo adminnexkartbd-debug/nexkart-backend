@@ -1131,6 +1131,54 @@ router.get('/current_user', (req, res) => {
         return res.status(401).json({ message: 'Not logged in' });
     }
 });
+// Pop-up / Modal Login Callback Router
+router.post('/modal-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        
+        if (users.length === 0) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
+
+        const user = users[0];
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
+
+        // Passport/Express Session setup
+        req.login(user, (err) => {
+            if (err) {
+                return res.json({ success: false, message: 'Session login failed!' });
+            }
+
+            req.session.user = { 
+                id: user.id, 
+                email: user.email,
+                user_type: 'user' 
+            };
+
+            return res.json({ 
+                success: true, 
+                message: 'Login successful!',
+                user: { id: user.id, name: user.name, email: user.email }
+            });
+        });
+
+    } catch (err) {
+        console.error('Modal Login Error:', err);
+        res.status(500).json({ success: false, message: 'Server error!' });
+    }
+});
+router.post('/save-redirect-url', (req, res) => {
+    if (req.body.redirectTo) {
+        req.session.redirectTo = req.body.redirectTo;
+    }
+    res.json({ success: true });
+});
 
 router.get('/logout', (req, res, next) => {
     req.logout(function(err) {
