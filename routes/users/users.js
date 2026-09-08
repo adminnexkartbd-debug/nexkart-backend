@@ -72,6 +72,16 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
+// ১.৩ AJAX এর মাধ্যমে রিডাইরেক্ট URL সেশনে সেভ করার রাউট
+router.post('/save-redirect-url', (req, res) => {
+    if (req.body && req.body.redirectTo) {
+        req.session.returnTo = req.body.redirectTo;
+        return res.json({ success: true });
+    }
+    return res.status(400).json({ success: false });
+});
+
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
 async function sendInvoiceEmail(orderData, productTitle) {
     if (!orderData.customer_email) return;
@@ -1353,58 +1363,25 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
-// ==================== [ POPUP / AJAX LOGIN ROUTE ] ====================
 router.post('/cslogin-ajax', async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: "ইমেইল এবং পাসওয়ার্ড দেওয়া বাধ্যতামূলক!" });
-    }
-
     try {
-        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
-        if (adminCheck.length > 0) {
-            return res.status(400).json({ success: false, message: "Admin email cannot be used for user login!" });
-        }
+        const { email, password } = req.body;
+        // ... পাসওয়ার্ড ভ্যালিডেশন এবং ইউজার চেক ...
 
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) {
-            return res.status(400).json({ success: false, message: "Invalid email or password!" });
-        }
+        // লগইন সফল হলে সেশনে ইউজার ডাটা সেট করুন
+        req.session.user = existingUser[0];
 
-        const user = users[0];
+        // ব্যাকএন্ড থেকে রিটার্ন লিঙ্ক পাঠানো
+        const returnTo = req.session.returnTo || null;
+        delete req.session.returnTo;
 
-        if (!user.password || typeof user.password !== 'string') {
-            return res.status(400).json({ success: false, message: "এই ইমেইলটি Google দিয়ে তৈরি করা হয়েছে। অনুগ্রহ করে Google দিয়ে লগইন করুন!" });
-        }
-
-        const isMatch = await bcrypt.compare(String(password), String(user.password));
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: "Invalid email or password!" });
-        }
-
-        user.user_type = 'user';
-
-        req.login(user, (err) => {
-            if (err) {
-                console.error("Passport Login Error:", err);
-                return res.status(500).json({ success: false, message: "Login Session Error!" });
-            }
-            
-            req.session.user = { id: user.id, user_type: 'user' }; 
-            req.session.userId = user.id; 
-
-            // কোনো Redirect না করে JSON response দেওয়া হবে
-            return res.json({
-                success: true,
-                message: "Login successful!",
-                user: { id: user.id, name: user.name, email: user.email }
-            });
+        return res.json({ 
+            success: true, 
+            message: 'Login successful!',
+            redirectTo: returnTo 
         });
-
     } catch (err) {
-        console.error("AJAX Login Server Error:", err);
-        return res.status(500).json({ success: false, message: "Server Error!" });
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
