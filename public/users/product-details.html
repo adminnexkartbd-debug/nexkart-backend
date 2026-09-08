@@ -645,59 +645,73 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-  async function handleModalLogin(event) {
-  // ১. ফরম সাবমিশন ও পেজ রিডাইরেক্ট পুরোপুরি বন্ধ করা
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  const email = document.getElementById('modal-email').value.trim();
-  const password = document.getElementById('modal-password').value.trim();
-  const loginBtn = document.getElementById('modal-login-btn');
-
-  if (!email || !password) {
-    alert('Please provide email and password!');
-    return;
-  }
-
-  loginBtn.innerText = 'Signing in...';
-  loginBtn.disabled = true;
-
-  try {
-    const response = await fetch('/user/cslogin-ajax', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    
-    const data = await response.json();
-
-    if (data.success) {
-      // ২. পপ-আপ মোডালটি বন্ধ করা
-      closeLoginModal(); 
-
-      // ৩. ড্যাশবোর্ডে না গিয়ে বর্তমান পেজেই পন্ডিং অ্যাকশন চালানো
-      if (pendingAction === 'order') {
-        executeOrderRedirect(); 
-      } else if (pendingAction === 'cart') {
-        addToDatabaseCart();    
-      } else {
-        alert('Login successful!');
-        // পেজ রিফ্রেশ না করে শুধু দরকারি ইউজার ডাটা/UI রিফ্রেস করতে পারেন
-        location.reload(); // বর্তমান পেজেই রিফ্রেশ হবে (ড্যাশবোর্ডে যাবে না)
-      }
-    } else {
-      alert(data.message || 'Incorrect email or password!');
+ async function handleModalLogin(event) {
+    // ১. ফর্ম সাবমিশন ও ডিফল্ট পেজ রিফ্রেশ/রিডাইরেক্ট পুরোপুরি বন্ধ করা
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    alert('Server error! Please try again.');
-  } finally {
-    loginBtn.innerText = 'Sign In';
-    loginBtn.disabled = false;
+
+    const emailInput = document.getElementById('modal-email');
+    const passwordInput = document.getElementById('modal-password');
+    const loginBtn = document.getElementById('modal-login-btn');
+
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value.trim() : '';
+
+    if (!email || !password) {
+      alert('Please provide email and password!');
+      return;
+    }
+
+    if (loginBtn) {
+      loginBtn.innerText = 'Signing in...';
+      loginBtn.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/user/cslogin-ajax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+
+      if (data.success) {
+        // ২. পপ-আপ মোডাল বন্ধ করা
+        closeLoginModal(); 
+
+        // ৩. ড্যাশবোর্ডে না গিয়ে প্রোডাক্ট ডিটেইলস পেজেই আটকে থেকে অ্যাকশন চালানো
+        if (pendingAction === 'order') {
+          if (typeof executeOrderRedirect === 'function') {
+            executeOrderRedirect();
+          } else {
+            // Checkout পেজে নিয়ে যাবে সরাসরি প্রোডাক্ট ডিটেইলস ধরে
+            window.location.href = `/user/checkout?product_id=${productId}&quantity=${productQuantity}${selectedVariant ? '&variant=' + encodeURIComponent(selectedVariant) : ''}`;
+          }
+        } else if (pendingAction === 'cart') {
+          if (typeof addToDatabaseCart === 'function') {
+            addToDatabaseCart();
+          } else {
+            alert('Product added to cart!');
+          }
+        } else {
+          alert('Login successful!');
+        }
+      } else {
+        alert(data.message || 'Login failed!');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('An error occurred during login. Please try again.');
+    } finally {
+      if (loginBtn) {
+        loginBtn.innerText = 'Sign In';
+        loginBtn.disabled = false;
+      }
+    }
   }
-}
 
     function executeOrderRedirect() {
       if (!productId) return;
