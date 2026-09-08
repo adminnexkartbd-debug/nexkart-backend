@@ -486,6 +486,9 @@
     let productQuantity = 1;
     let selectedVariant = null;
 
+    // Track user action before login modal opens
+    let pendingAction = null;
+
     // Show More / Show Less Global Variables
     let fullDescriptionText = '';
     let isDescExpanded = false;
@@ -671,7 +674,15 @@
         const data = await response.json();
 
         if (data.success) {
-          window.location.reload(); 
+          closeLoginModal();
+          // Keep user on the current product page and execute pending action if any
+          if (pendingAction === 'order') {
+            executeOrderRedirect();
+          } else if (pendingAction === 'cart') {
+            addToDatabaseCart();
+          } else {
+            window.location.reload(); 
+          }
         } else {
           alert(data.message || 'Incorrect email or password!');
         }
@@ -707,9 +718,11 @@
             return;
           }
         }
+        pendingAction = actionType;
         openLoginModal();
       } catch (error) {
         console.error("Auth check error:", error);
+        pendingAction = actionType;
         openLoginModal();
       }
     }
