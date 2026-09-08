@@ -647,50 +647,52 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-    async function handleModalLogin(event) {
-      event.preventDefault();
-      const email = document.getElementById('modal-email').value.trim();
-      const password = document.getElementById('modal-password').value.trim();
-      const loginBtn = document.getElementById('modal-login-btn');
+   async function handleModalLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('modal-email').value.trim();
+  const password = document.getElementById('modal-password').value.trim();
+  const loginBtn = document.getElementById('modal-login-btn');
 
-      if (!email || !password) {
-        alert('Please provide email and password!');
-        return;
+  if (!email || !password) {
+    alert('Please provide email and password!');
+    return;
+  }
+
+  loginBtn.innerText = 'Signing in...';
+  loginBtn.disabled = true;
+
+  try {
+    // নতুন আলাদা AJAX Callback রাউটে রিকোয়েস্ট পাঠানো হচ্ছে
+    const response = await fetch('/user/cslogin-ajax', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const data = await response.json();
+
+    if (data.success) {
+      // লগইন সফল হলে মোডাল বন্ধ হবে এবং পেজ রিডাইরেক্ট না হয়ে পূর্বের ইচ্ছা অনুযায়ী অ্যাকশন নেওয়া হবে
+      closeLoginModal();
+      
+      if (pendingAction === 'order') {
+        executeOrderRedirect(); // অর্ডার পেজে নিয়ে যাবে
+      } else if (pendingAction === 'cart') {
+        addToDatabaseCart();   // কার্টে প্রোডাক্ট যোগ করবে (প্রোডাক্ট পেজেই থাকবে)
+      } else {
+        window.location.reload(); // পেজ রিফ্রেশ করে লগইন স্টেট আপডেট করবে
       }
-
-      loginBtn.innerText = 'Signing in...';
-      loginBtn.disabled = true;
-
-      try {
-        const response = await fetch('/user/cslogin-ajax', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
-
-        if (data.success) {
-          closeLoginModal();
-          // Process saved user intent automatically after login
-          if (pendingAction === 'order') {
-            executeOrderRedirect();
-          } else if (pendingAction === 'cart') {
-            addToDatabaseCart();
-          } else {
-            window.location.reload();
-          }
-        } else {
-          alert(data.message || 'Incorrect email or password!');
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        alert('Server error! Please try again.');
-      } finally {
-        loginBtn.innerText = 'Sign In';
-        loginBtn.disabled = false;
-      }
+    } else {
+      alert(data.message || 'Incorrect email or password!');
     }
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('Server error! Please try again.');
+  } finally {
+    loginBtn.innerText = 'Sign In';
+    loginBtn.disabled = false;
+  }
+}
 
     function executeOrderRedirect() {
       if (!productId) return;
