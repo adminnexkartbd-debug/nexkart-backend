@@ -1363,37 +1363,6 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
-router.post('/cslogin-ajax', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'Email and password required!' });
-        }
-
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
-
-        const existingUser = users[0];
-        const isMatch = await bcrypt.compare(String(password), String(existingUser.password));
-        if (!isMatch) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
-
-        req.session.user = existingUser;
-        const returnTo = req.session.returnTo || null;
-        delete req.session.returnTo;
-
-        return res.json({ 
-            success: true, 
-            message: 'Login successful!',
-            redirectTo: returnTo 
-        });
-    } catch (err) {
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
 
 
 module.exports = router;
