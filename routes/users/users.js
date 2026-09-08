@@ -72,16 +72,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-
-// ১.৩ AJAX এর মাধ্যমে রিডাইরেক্ট URL সেশনে সেভ করার রাউট
-router.post('/save-redirect-url', (req, res) => {
-    if (req.body && req.body.redirectTo) {
-        req.session.returnTo = req.body.redirectTo;
-        return res.json({ success: true });
-    }
-    return res.status(400).json({ success: false });
-});
-
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
 async function sendInvoiceEmail(orderData, productTitle) {
     if (!orderData.customer_email) return;
@@ -1188,42 +1178,9 @@ router.get('/current_user', (req, res) => {
         return res.status(401).json({ message: 'Not logged in' });
     }
 });
-router.post('/modal-login', async (req, res) => {
-    const { email, password } = req.body;
 
-    try {
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        
-        if (users.length === 0) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
 
-        const user = users[0];
-        const isMatch = await bcrypt.compare(String(password), String(user.password));
-        
-        if (!isMatch) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
 
-        req.login(user, (err) => {
-            if (err) {
-                return res.json({ success: false, message: 'Session login failed!' });
-            }
-
-            req.session.user = { id: user.id, email: user.email, user_type: 'user' };
-
-            // কোন রিডাইরেক্ট ইউআরএল না পাঠিয়ে শুধু সাফল্য নিশ্চিত করুন
-            return res.json({ 
-                success: true, 
-                message: 'Login successful!'
-            });
-        });
-
-    } catch (err) {
-        console.error('Modal Login Error:', err);
-        res.status(500).json({ success: false, message: 'Server error!' });
-    }
-});
 router.post('/save-redirect-url', (req, res) => {
     if (req.body.redirectTo) {
         req.session.redirectTo = req.body.redirectTo;
