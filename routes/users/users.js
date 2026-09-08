@@ -1363,34 +1363,37 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
-// পপ-আপ লগইনের জন্য আলাদা রাউট
 router.post('/cslogin-ajax', async (req, res) => {
-    const { email, password } = req.body;
-
     try {
-        // ... আপনার ইউজার ভ্যালিডেশন এবং পাসওয়ার্ড চেকের কোড ...
-        // উদাহরণ:
-        // const user = await User.findOne({ email });
-        // if (!user) return res.json({ success: false, message: 'User not found' });
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: 'Email and password required!' });
+        }
 
-        // সেশনে ইউজার তথ্য সেভ করা
-        req.session.user = {
-            id: user._id,
-            email: user.email
-        };
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
 
-        // কোনো রিডাইরেক্ট ছাড়া শুধু Success Response পাঠানো
-        return res.json({
-            success: true,
-            message: 'Logged in successfully'
+        const existingUser = users[0];
+        const isMatch = await bcrypt.compare(String(password), String(existingUser.password));
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Invalid email or password!' });
+        }
+
+        req.session.user = existingUser;
+        const returnTo = req.session.returnTo || null;
+        delete req.session.returnTo;
+
+        return res.json({ 
+            success: true, 
+            message: 'Login successful!',
+            redirectTo: returnTo 
         });
-
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false, 
-            message: 'Server error during login' 
-        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 });
+
 
 module.exports = router;
