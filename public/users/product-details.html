@@ -461,7 +461,9 @@
           <label for="modal-password" class="block text-[11px] font-bold text-gray-700 mb-1">Password</label>
           <input type="password" id="modal-password" required placeholder="Enter password" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]">
         </div>
-        <button type="button" id="modal-login-btn" onclick="handleModalLogin(event)">Sign In</button>
+        <button type="submit" id="modal-login-btn" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all text-xs">
+          Sign In
+        </button>
       </form>
 
     </div>
@@ -645,73 +647,73 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
- async function handleModalLogin(event) {
-    // ১. ফর্ম সাবমিশন ও ডিফল্ট পেজ রিফ্রেশ/রিডাইরেক্ট পুরোপুরি বন্ধ করা
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+    async function handleModalLogin(event) {
+      // ১. ফর্ম সাবমিশন ও ডিফল্ট পেজ রিফ্রেশ/রিডাইরেক্ট পুরোপুরি বন্ধ করা
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
-    const emailInput = document.getElementById('modal-email');
-    const passwordInput = document.getElementById('modal-password');
-    const loginBtn = document.getElementById('modal-login-btn');
+      const emailInput = document.getElementById('modal-email');
+      const passwordInput = document.getElementById('modal-password');
+      const loginBtn = document.getElementById('modal-login-btn');
 
-    const email = emailInput ? emailInput.value.trim() : '';
-    const password = passwordInput ? passwordInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value.trim() : '';
 
-    if (!email || !password) {
-      alert('Please provide email and password!');
-      return;
-    }
+      if (!email || !password) {
+        alert('Please provide email and password!');
+        return;
+      }
 
-    if (loginBtn) {
-      loginBtn.innerText = 'Signing in...';
-      loginBtn.disabled = true;
-    }
+      if (loginBtn) {
+        loginBtn.innerText = 'Signing in...';
+        loginBtn.disabled = true;
+      }
 
-    try {
-      const response = await fetch('/user/cslogin-ajax', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await response.json();
+      try {
+        const response = await fetch('/user/cslogin-ajax', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
 
-      if (data.success) {
-        // ২. পপ-আপ মোডাল বন্ধ করা
-        closeLoginModal(); 
+        if (data.success) {
+          // ২. পপ-আপ মোডাল বন্ধ করা
+          closeLoginModal(); 
 
-        // ৩. ড্যাশবোর্ডে না গিয়ে প্রোডাক্ট ডিটেইলস পেজেই আটকে থেকে অ্যাকশন চালানো
-        if (pendingAction === 'order') {
-          if (typeof executeOrderRedirect === 'function') {
-            executeOrderRedirect();
+          // ৩. ড্যাশবোর্ডে না গিয়ে প্রোডাক্ট ডিটেইলস পেজেই আটকে থেকে অ্যাকশন চালানো
+          if (pendingAction === 'order') {
+            if (typeof executeOrderRedirect === 'function') {
+              executeOrderRedirect();
+            } else {
+              // Checkout পেজে নিয়ে যাবে সরাসরি প্রোডাক্ট ডিটেইলস ধরে
+              window.location.href = `/user/checkout?product_id=${productId}&quantity=${productQuantity}${selectedVariant ? '&variant=' + encodeURIComponent(selectedVariant) : ''}`;
+            }
+          } else if (pendingAction === 'cart') {
+            if (typeof addToDatabaseCart === 'function') {
+              addToDatabaseCart();
+            } else {
+              alert('Product added to cart!');
+            }
           } else {
-            // Checkout পেজে নিয়ে যাবে সরাসরি প্রোডাক্ট ডিটেইলস ধরে
-            window.location.href = `/user/checkout?product_id=${productId}&quantity=${productQuantity}${selectedVariant ? '&variant=' + encodeURIComponent(selectedVariant) : ''}`;
-          }
-        } else if (pendingAction === 'cart') {
-          if (typeof addToDatabaseCart === 'function') {
-            addToDatabaseCart();
-          } else {
-            alert('Product added to cart!');
+            alert('Login successful!');
           }
         } else {
-          alert('Login successful!');
+          alert(data.message || 'Login failed!');
         }
-      } else {
-        alert(data.message || 'Login failed!');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      alert('An error occurred during login. Please try again.');
-    } finally {
-      if (loginBtn) {
-        loginBtn.innerText = 'Sign In';
-        loginBtn.disabled = false;
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('An error occurred during login. Please try again.');
+      } finally {
+        if (loginBtn) {
+          loginBtn.innerText = 'Sign In';
+          loginBtn.disabled = false;
+        }
       }
     }
-  }
 
     function executeOrderRedirect() {
       if (!productId) return;
