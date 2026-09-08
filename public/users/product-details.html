@@ -521,6 +521,7 @@
             url: shareUrl
           };
 
+          // Try fetching image to convert into File object for native image sharing
           if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
             try {
               const response = await fetch(mainImgSrc);
@@ -543,6 +544,7 @@
           }
         }
       } else {
+        // Fallback: Copy to Clipboard if Web Share API is unavailable
         const fullShareContent = `${shareText}${shareUrl}`;
         navigator.clipboard.writeText(fullShareContent).then(() => {
           alert('Product details and link copied to clipboard!');
@@ -645,7 +647,6 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-    // Modal Form Login Functionality (Same Page Stay Fix)
     async function handleModalLogin(event) {
       event.preventDefault();
       const email = document.getElementById('modal-email').value.trim();
@@ -670,7 +671,6 @@
         const data = await response.json();
 
         if (data.success) {
-          // লগইন সফল হলে পেজ রিফ্রেশ করে ব্যবহারকারীকে বর্তমান প্রোডাক্টেই রাখবে
           window.location.reload(); 
         } else {
           alert(data.message || 'Incorrect email or password!');
