@@ -648,7 +648,9 @@
     }
 
    async function handleModalLogin(event) {
-  event.preventDefault();
+  // ১. ব্রাউজারের ডিফোল্ট পেজ রিফ্রেশ / রিডাইরেক্ট বন্ধ রাখা
+  if (event) event.preventDefault();
+
   const email = document.getElementById('modal-email').value.trim();
   const password = document.getElementById('modal-password').value.trim();
   const loginBtn = document.getElementById('modal-login-btn');
@@ -662,7 +664,6 @@
   loginBtn.disabled = true;
 
   try {
-    // নতুন আলাদা AJAX Callback রাউটে রিকোয়েস্ট পাঠানো হচ্ছে
     const response = await fetch('/user/cslogin-ajax', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -672,15 +673,17 @@
     const data = await response.json();
 
     if (data.success) {
-      // লগইন সফল হলে মোডাল বন্ধ হবে এবং পেজ রিডাইরেক্ট না হয়ে পূর্বের ইচ্ছা অনুযায়ী অ্যাকশন নেওয়া হবে
-      closeLoginModal();
-      
+      // ২. পপ-আপ মোডালটি বন্ধ করে দেওয়া
+      closeLoginModal(); 
+
+      // ৩. ইউজার আগের প্রোডাক্ট পেজেই থাকবে, শুধু পছন্দসই কাজ সম্পন্ন হবে
       if (pendingAction === 'order') {
-        executeOrderRedirect(); // অর্ডার পেজে নিয়ে যাবে
+        executeOrderRedirect(); // যদি বাই নাউ করা হয়ে থাকে
       } else if (pendingAction === 'cart') {
-        addToDatabaseCart();   // কার্টে প্রোডাক্ট যোগ করবে (প্রোডাক্ট পেজেই থাকবে)
+        addToDatabaseCart();    // কার্টে প্রোডাক্ট যোগ করার মূল ফাংশন
       } else {
-        window.location.reload(); // পেজ রিফ্রেশ করে লগইন স্টেট আপডেট করবে
+        // রিফ্রেশ বা অন্য কোথাও না গিয়ে শুধু সেশন যুক্ত প্রোডাক্ট স্টেট আপডেট
+        alert('Login successful!');
       }
     } else {
       alert(data.message || 'Incorrect email or password!');
@@ -693,7 +696,6 @@
     loginBtn.disabled = false;
   }
 }
-
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
