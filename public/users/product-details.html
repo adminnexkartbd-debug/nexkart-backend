@@ -461,9 +461,7 @@
           <label for="modal-password" class="block text-[11px] font-bold text-gray-700 mb-1">Password</label>
           <input type="password" id="modal-password" required placeholder="Enter password" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]">
         </div>
-        <button type="submit" id="modal-login-btn" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all text-xs">
-          Sign In
-        </button>
+        <button type="button" id="modal-login-btn" onclick="handleModalLogin(event)">Sign In</button>
       </form>
 
     </div>
@@ -648,8 +646,11 @@
     }
 
   async function handleModalLogin(event) {
-  // ১. ব্রাউজারের ডিফোল্ট পেজ রিফ্রেশ / রিডাইরেক্ট বন্ধ রাখা
-  if (event) event.preventDefault();
+  // ১. ফরম সাবমিশন ও পেজ রিডাইরেক্ট পুরোপুরি বন্ধ করা
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   const email = document.getElementById('modal-email').value.trim();
   const password = document.getElementById('modal-password').value.trim();
@@ -673,17 +674,18 @@
     const data = await response.json();
 
     if (data.success) {
-      // ২. পপ-আপ মোডালটি বন্ধ করে দেওয়া
+      // ২. পপ-আপ মোডালটি বন্ধ করা
       closeLoginModal(); 
 
-      // ৩. ইউজার আগের প্রোডাক্ট পেজেই থাকবে, শুধু পছন্দসই কাজ সম্পন্ন হবে
+      // ৩. ড্যাশবোর্ডে না গিয়ে বর্তমান পেজেই পন্ডিং অ্যাকশন চালানো
       if (pendingAction === 'order') {
-        executeOrderRedirect(); // যদি বাই নাউ করা হয়ে থাকে
+        executeOrderRedirect(); 
       } else if (pendingAction === 'cart') {
-        addToDatabaseCart();    // কার্টে প্রোডাক্ট যোগ করার মূল ফাংশন
+        addToDatabaseCart();    
       } else {
-        // রিফ্রেশ বা অন্য কোথাও না গিয়ে শুধু সেশন যুক্ত প্রোডাক্ট স্টেট আপডেট
         alert('Login successful!');
+        // পেজ রিফ্রেশ না করে শুধু দরকারি ইউজার ডাটা/UI রিফ্রেস করতে পারেন
+        location.reload(); // বর্তমান পেজেই রিফ্রেশ হবে (ড্যাশবোর্ডে যাবে না)
       }
     } else {
       alert(data.message || 'Incorrect email or password!');
