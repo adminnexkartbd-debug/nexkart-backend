@@ -647,74 +647,36 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-    async function handleModalLogin(event) {
-      // ১. ফর্ম সাবমিশন ও ডিফল্ট পেজ রিফ্রেশ/রিডাইরেক্ট পুরোপুরি বন্ধ করা
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+   // ফ্রন্টএন্ড ডায়ালগ/মোডাল সাবমিট ফাংশন
+async function handleModalLogin(event) {
+    event.preventDefault(); // ফর্মের ডিফল্ট রিলোড বন্ধ করা
 
-      const emailInput = document.getElementById('modal-email');
-      const passwordInput = document.getElementById('modal-password');
-      const loginBtn = document.getElementById('modal-login-btn');
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
 
-      const email = emailInput ? emailInput.value.trim() : '';
-      const password = passwordInput ? passwordInput.value.trim() : '';
+    const response = await fetch('/user/modal-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
 
-      if (!email || !password) {
-        alert('Please provide email and password!');
-        return;
-      }
+    const data = await response.json();
 
-      if (loginBtn) {
-        loginBtn.innerText = 'Signing in...';
-        loginBtn.disabled = true;
-      }
+    if (data.success) {
+        // ১. পপ-আপ মোডালটি বন্ধ করুন
+        closeLoginModal(); 
 
-      try {
-        const response = await fetch('/user/cslogin-ajax', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
+        // ২. রিডাইরেক্ট বা পেজ রিলোড সম্পূর্ণ বন্ধ রাখুন
+        // (এখানে window.location.href বা reload লিখবেন না)
 
-        if (data.success) {
-          // ২. পপ-আপ মোডাল বন্ধ করা
-          closeLoginModal(); 
-
-          // ৩. ড্যাশবোর্ডে না গিয়ে প্রোডাক্ট ডিটেইলস পেজেই আটকে থেকে অ্যাকশন চালানো
-          if (pendingAction === 'order') {
-            if (typeof executeOrderRedirect === 'function') {
-              executeOrderRedirect();
-            } else {
-              // Checkout পেজে নিয়ে যাবে সরাসরি প্রোডাক্ট ডিটেইলস ধরে
-              window.location.href = `/user/checkout?product_id=${productId}&quantity=${productQuantity}${selectedVariant ? '&variant=' + encodeURIComponent(selectedVariant) : ''}`;
-            }
-          } else if (pendingAction === 'cart') {
-            if (typeof addToDatabaseCart === 'function') {
-              addToDatabaseCart();
-            } else {
-              alert('Product added to cart!');
-            }
-          } else {
-            alert('Login successful!');
-          }
-        } else {
-          alert(data.message || 'Login failed!');
+        // ৩. (ঐচ্ছিক) ইউজারের আটকে থাকা অ্যাকশন থাকলে তা চালান
+        if (typeof pendingAction === 'function') {
+            pendingAction();
         }
-      } catch (err) {
-        console.error('Login error:', err);
-        alert('An error occurred during login. Please try again.');
-      } finally {
-        if (loginBtn) {
-          loginBtn.innerText = 'Sign In';
-          loginBtn.disabled = false;
-        }
-      }
+    } else {
+        alert(data.message);
     }
-
+}
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
