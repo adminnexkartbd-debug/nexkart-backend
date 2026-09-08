@@ -23,8 +23,7 @@ const upload = multer({ storage: storage });
 passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
-    proxy: true // ক্লাউড বা রিভার্স প্রক্সির জন্য যুক্ত করা হলো
+    callbackURL: process.env.GOOGLE_USER_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -147,7 +146,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
 
     try {
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: 'mehedi.hasantanvir78@gmail.com',
             to: orderData.customer_email,
             subject: `NexKart Invoice - Order #${orderData.order_id}`,
             html: emailTemplate
@@ -551,11 +550,9 @@ router.post('/forgot-password', async (req, res) => {
             [resetToken, tokenExpires, user.id]
         );
 
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        const resetUrl = `${baseUrl}/user/reset-password/${resetToken}`;
-
+        const resetUrl = `http://localhost:5000/user/reset-password/${resetToken}`;
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: 'mehedi.hasantanvir78@gmail.com',
             to: email,
             subject: 'NexKart - Password Reset Request',
             html: `
@@ -681,7 +678,7 @@ router.post('/signup', async (req, res) => {
 
         temporaryUserData[email] = { name, email, password: hashedPassword, otp_code, otp_expires_at };
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: 'mehedi.hasantanvir78@gmail.com',
             to: email,
             subject: 'NexKart - Verification OTP',
             text: `Your OTP is ${otp_code}. Valid for 5 minutes.`
@@ -924,8 +921,7 @@ router.post('/place-order', async (req, res) => {
         );
 
         if (payment_method === 'online') {
-            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-            const callbackUrl = `${baseUrl}/user/bdgate/callback?order_id=${orderId}`;
+            const callbackUrl = `http://localhost:5000/user/bdgate/callback?order_id=${orderId}`;
 
             const bdgatePayload = {
                 amount: totalAmount.toFixed(2),
@@ -933,8 +929,8 @@ router.post('/place-order', async (req, res) => {
                 redirect_url: callbackUrl,
                 success_url: callbackUrl,
                 callback_url: callbackUrl,
-                cancel_url: `${baseUrl}/user/checkout?status=cancel`,
-                fail_url: `${baseUrl}/user/checkout?status=fail`,
+                cancel_url: `http://localhost:5000/user/checkout?status=cancel`,
+                fail_url: `http://localhost:5000/user/checkout?status=fail`,
                 customer_name: name,
                 customer_email: email || 'customer@example.com',
                 customer_phone: phone,
@@ -946,7 +942,7 @@ router.post('/place-order', async (req, res) => {
                 const response = await axios.post('https://api.bdgate.net/api/v1/checkout', bdgatePayload, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': process.env.BDGATE_API_KEY || 'bd_live_40d9307632248d56aabb35758971e9b9'
+                        'X-API-Key': 'bd_live_40d9307632248d56aabb35758971e9b9'
                     }
                 });
 
@@ -975,7 +971,6 @@ router.post('/place-order', async (req, res) => {
 router.get('/bdgate/callback', async (req, res) => {
     try {
         const { order_id } = req.query;
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         
         if (order_id) {
             const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ?', [order_id]);
@@ -1007,11 +1002,10 @@ router.get('/bdgate/callback', async (req, res) => {
             }
         }
 
-        return res.redirect(`${baseUrl}/user/dashboard`);
+        return res.redirect('http://localhost:5000/user/dashboard');
     } catch (error) {
         console.error("Callback Error:", error);
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        return res.redirect(`${baseUrl}/user/dashboard`);
+        return res.redirect('http://localhost:5000/user/dashboard');
     }
 });
 
@@ -1131,54 +1125,6 @@ router.get('/current_user', (req, res) => {
         return res.status(401).json({ message: 'Not logged in' });
     }
 });
-// Pop-up / Modal Login Callback Router
-router.post('/modal-login', async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        
-        if (users.length === 0) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
-
-        const user = users[0];
-        const isMatch = await bcrypt.compare(String(password), String(user.password));
-        
-        if (!isMatch) {
-            return res.json({ success: false, message: 'Invalid email or password!' });
-        }
-
-        // Passport/Express Session setup
-        req.login(user, (err) => {
-            if (err) {
-                return res.json({ success: false, message: 'Session login failed!' });
-            }
-
-            req.session.user = { 
-                id: user.id, 
-                email: user.email,
-                user_type: 'user' 
-            };
-
-            return res.json({ 
-                success: true, 
-                message: 'Login successful!',
-                user: { id: user.id, name: user.name, email: user.email }
-            });
-        });
-
-    } catch (err) {
-        console.error('Modal Login Error:', err);
-        res.status(500).json({ success: false, message: 'Server error!' });
-    }
-});
-router.post('/save-redirect-url', (req, res) => {
-    if (req.body.redirectTo) {
-        req.session.redirectTo = req.body.redirectTo;
-    }
-    res.json({ success: true });
-});
 
 router.get('/logout', (req, res, next) => {
     req.logout(function(err) {
@@ -1200,9 +1146,11 @@ router.get('/dashProduct', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 8;
 
+        // মোট প্রোডাক্টের সংখ্যা বের করা
         const [totalCountResult] = await db.query('SELECT COUNT(*) AS total FROM products');
         const totalProducts = totalCountResult[0].total;
 
+        // হাজার হাজার প্রোডাক্ট থাকলেও স্লো হবে না, সিউডো-র‍্যান্ডম অফসেট ব্যবহার করা হলো
         const maxOffset = Math.max(0, totalProducts - limit);
         const randomOffset = page === 1 ? Math.floor(Math.random() * (maxOffset + 1)) : (parseInt(req.query.offset) || 0);
         const offset = Math.min(randomOffset, maxOffset);
