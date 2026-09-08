@@ -501,22 +501,43 @@
     const inquiriesPerPage = 5;
 
     // -----------------------------------------------------------
-    // Share Product Information Functionality
+    // Share Product Information & Image Functionality
     // -----------------------------------------------------------
     async function shareProduct() {
       const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
       const salePrice = document.getElementById('product-sale-price').innerText || '';
+      const category = document.getElementById('product-category').innerText || '';
+      const sku = document.getElementById('product-sku').innerText || '';
       const shareUrl = window.location.href;
+      const mainImgSrc = document.getElementById('main-product-image').src;
 
-      const shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n💰 Price: ${salePrice}\n\nBuy now: `;
+      const shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\nBuy now: `;
 
       if (navigator.share) {
         try {
-          await navigator.share({
+          let shareData = {
             title: productTitle,
             text: shareText,
             url: shareUrl
-          });
+          };
+
+          // Try fetching image to convert into File object for native image sharing
+          if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+            try {
+              const response = await fetch(mainImgSrc);
+              const blob = await response.blob();
+              const ext = blob.type.split('/')[1] || 'jpg';
+              const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                shareData.files = [file];
+              }
+            } catch (fileErr) {
+              console.warn('Image fetch for share failed, falling back to text share:', fileErr);
+            }
+          }
+
+          await navigator.share(shareData);
         } catch (err) {
           if (err.name !== 'AbortError') {
             console.error('Error sharing:', err);
