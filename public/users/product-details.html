@@ -587,12 +587,20 @@
       }
     });
 
-function redirectToLogin() {
-  // সম্পূর্ণ URL-এর বদলে শুধু Relative Path পাঠানো
-  const currentPath = window.location.pathname + window.location.search;
-  window.location.href = `/user/auth/google/pop?redirectTo=${encodeURIComponent(currentPath)}`;
-}
-window.addEventListener('pageshow', function(event) {
+    function redirectToLogin() {
+      const currentUrl = window.location.href;
+      fetch('/user/save-redirect-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirectTo: currentUrl })
+      }).then(() => {
+        window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`; 
+      }).catch(err => {
+        window.location.href = `/user/auth/google?redirectTo=${encodeURIComponent(currentUrl)}`;
+      });
+    }
+
+    window.addEventListener('pageshow', function(event) {
       if (event.persisted) {
         window.location.reload();
       }
@@ -639,71 +647,67 @@ window.addEventListener('pageshow', function(event) {
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-async function handleModalLogin(event) {
-    event.preventDefault(); 
+    // ফ্রন্টএন্ড মোডাল লগইন সাবমিট ফাংশন
+    async function handleModalLogin(event) {
+        event.preventDefault(); 
 
-    const emailInput = document.getElementById('modal-email');
-    const passwordInput = document.getElementById('modal-password');
-    const loginBtn = document.getElementById('modal-login-btn');
+        const emailInput = document.getElementById('modal-email');
+        const passwordInput = document.getElementById('modal-password');
+        const loginBtn = document.getElementById('modal-login-btn');
 
-    if (!emailInput || !passwordInput) return;
+        if (!emailInput || !passwordInput) return;
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
 
-    if (!email || !password) {
-        alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
-        return;
-    }
-
-    try {
-        if (loginBtn) {
-            loginBtn.disabled = true;
-            loginBtn.innerText = 'Signing In...';
+        if (!email || !password) {
+            alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
+            return;
         }
 
-        const response = await fetch('/user/pop-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            closeLoginModal();
-
-            // ১. যদি ব্যাকএন্ড থেকে redirectUrl পাঠানো হয়ে থাকে
-            if (data.redirectUrl) {
-                window.location.href = data.redirectUrl;
-                return;
+        try {
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.innerText = 'Signing In...';
             }
 
-            // ২. পেন্ডিং অর্ডার বা কার্ট অ্যাকশন থাকলে তা সম্পন্ন করা
-            if (pendingAction === 'order') {
-                executeOrderRedirect();
-            } else if (pendingAction === 'cart') {
-                addToDatabaseCart();
+            // ব্যাকএন্ডের pop-loginRouter.js অনুযায়ী সঠিক URL /user/pop-login ব্যবহার করা হয়েছে
+            const response = await fetch('/user/pop-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeLoginModal();
+
+                // লগইন সফল হওয়ার পরে পেন্ডিং কাজ (Order/Cart) সম্পূর্ণ করবে
+                if (pendingAction === 'order') {
+                    executeOrderRedirect();
+                } else if (pendingAction === 'cart') {
+                    addToDatabaseCart();
+                } else {
+                    window.location.reload();
+                }
             } else {
-                // ৩. কোনো বিশেষ অ্যাকশন না থাকলে বর্তমান পেজেই রিফ্রেশ হবে
-                window.location.reload();
+                alert(data.message || 'Login failed!');
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = 'Sign In';
+                }
             }
-        } else {
-            alert(data.message || 'Login failed!');
+        } catch (error) {
+            console.error('Modal Login Error:', error);
+            alert('Server error occurred during login!');
             if (loginBtn) {
                 loginBtn.disabled = false;
                 loginBtn.innerText = 'Sign In';
             }
         }
-    } catch (error) {
-        console.error('Modal Login Error:', error);
-        alert('Server error occurred during login!');
-        if (loginBtn) {
-            loginBtn.disabled = false;
-            loginBtn.innerText = 'Sign In';
-        }
-    }
-}
+    }   
+
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
