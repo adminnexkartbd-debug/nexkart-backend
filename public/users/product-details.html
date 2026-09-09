@@ -652,63 +652,64 @@
     }
 
     async function handleModalLogin(event) {
-        event.preventDefault(); 
+    event.preventDefault(); 
 
-        const emailInput = document.getElementById('modal-email');
-        const passwordInput = document.getElementById('modal-password');
-        const loginBtn = document.getElementById('modal-login-btn');
+    const emailInput = document.getElementById('modal-email');
+    const passwordInput = document.getElementById('modal-password');
+    const loginBtn = document.getElementById('modal-login-btn');
 
-        if (!emailInput || !passwordInput) return;
+    if (!emailInput || !passwordInput) return;
 
-        const email = emailInput.value.trim();
-        const password = passwordInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-        if (!email || !password) {
-            alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
-            return;
+    if (!email || !password) {
+        alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
+        return;
+    }
+
+    try {
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.innerText = 'Signing In...';
         }
 
-        try {
-            if (loginBtn) {
-                loginBtn.disabled = true;
-                loginBtn.innerText = 'Signing In...';
-            }
+        // পপআপের জন্য তৈরি করা আলাদা রাউটে কল করা হচ্ছে
+        const response = await fetch('/user/pop-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-            const response = await fetch('/user/pop-login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+        const data = await response.json();
 
-            const data = await response.json();
+        if (data.success) {
+            closeLoginModal(); // পপআপ মডাল বন্ধ হবে
 
-            if (data.success) {
-                closeLoginModal();
-
-                if (pendingAction === 'order') {
-                    executeOrderRedirect();
-                } else if (pendingAction === 'cart') {
-                    addToDatabaseCart();
-                } else {
-                    window.location.reload();
-                }
+            // ব্যবহারকারী আগে যে অ্যাকশন নিতে চেয়েছিল (যেমন: Order Now বা Add to Cart) তা সম্পন্ন হবে
+            if (pendingAction === 'order') {
+                executeOrderRedirect();
+            } else if (pendingAction === 'cart') {
+                addToDatabaseCart();
             } else {
-                alert(data.message || 'Login failed!');
-                if (loginBtn) {
-                    loginBtn.disabled = false;
-                    loginBtn.innerText = 'Sign In';
-                }
+                window.location.reload(); // অন্য কোনো অ্যাকশন না থাকলে পেজ রিফ্রেশ হয়ে একই পেজে থাকবে
             }
-        } catch (error) {
-            console.error('Modal Login Error:', error);
-            alert('Server error occurred during login!');
+        } else {
+            alert(data.message || 'Login failed!');
             if (loginBtn) {
                 loginBtn.disabled = false;
                 loginBtn.innerText = 'Sign In';
             }
         }
-    }   
-
+    } catch (error) {
+        console.error('Modal Login Error:', error);
+        alert('Server error occurred during login!');
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.innerText = 'Sign In';
+        }
+    }
+}
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
