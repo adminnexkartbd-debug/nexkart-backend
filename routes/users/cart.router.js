@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const db = require('../../db'); // আপনার ডাটাবেজ কানেকশন ফাইলের সঠিক পাথ দিন
+const db = require('../../db'); // আপনার ডাটাবেজ কানেকশন ফাইলের সঠিক পাথ দিন[cite: 2]
 const axios = require('axios');
-// পে-স্যুট সার্ভিস সঠিকভাবে ইম্পোর্ট করা হলো যাতে ReferenceError না ঘটে
+// পে-স্যুট সার্ভিস সঠিকভাবে ইম্পোর্ট করা হলো যাতে ReferenceError না ঘটে[cite: 2]
 const { createPaySuitePayment } = require('../../services/paysuiteService');
 
 // Authentication Middleware
@@ -74,7 +74,20 @@ router.get('/api/cart-items', isAuthenticated, async (req, res) => {
                 p.free_shipping,
                 p.cod_available,
                 p.admin_id,
-                CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image
+                COALESCE(
+                    (
+                        SELECT 
+                            CASE 
+                                WHEN pi.image_path LIKE 'http%' THEN pi.image_path
+                                WHEN pi.image_path LIKE '/uploads/%' THEN pi.image_path
+                                ELSE CONCAT('/uploads/', pi.image_path)
+                            END
+                        FROM product_images pi 
+                        WHERE pi.product_id = p.id 
+                        LIMIT 1
+                    ), 
+                    '/uploads/default.png'
+                ) AS primary_image
             FROM cart c
             JOIN products p ON c.product_id = p.id
             WHERE c.user_id = ?
