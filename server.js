@@ -79,7 +79,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==================== ৩. সেশন ও পাসপোর্ট সেটআপ ====================
 const isProduction = process.env.NODE_ENV === 'production';
-
+app.set('trust proxy', 1);
 app.use(session({
     secret: process.env.JWT_SECRET || 'nexkart_super_secret_key_2026',
     resave: false,
