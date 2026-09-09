@@ -437,7 +437,8 @@
         <p class="text-xs text-gray-500">Please log in to complete your purchase or action.</p>
       </div>
 
-      <a href="#" onclick="redirectToLogin()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-2xl border border-gray-300 shadow-sm transition-all">
+      <!-- Google Popup Trigger Button -->
+      <a href="javascript:void(0)" onclick="openGooglePopup()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-2xl border border-gray-300 shadow-sm transition-all cursor-pointer">
         <svg class="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -500,6 +501,37 @@
     let allInquiriesData = [];
     let currentInquiriesPage = 1;
     const inquiriesPerPage = 5;
+
+    // -----------------------------------------------------------
+    // Google Popup Authentication Logic
+    // -----------------------------------------------------------
+    function openGooglePopup() {
+      const width = 500;
+      const height = 600;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+
+      window.open(
+        '/user/auth/google/popup',
+        'GoogleLoginPopup',
+        `width=${width},height=${height},top=${top},left=${left}`
+      );
+    }
+
+    // Google Popup Login listener without redirecting to dashboard
+    window.addEventListener('message', function (event) {
+      if (event.data && event.data.message === 'login_completed') {
+        closeLoginModal(); // Close modal if open
+
+        if (pendingAction === 'order') {
+          executeOrderRedirect();
+        } else if (pendingAction === 'cart') {
+          addToDatabaseCart();
+        } else {
+          window.location.reload(); 
+        }
+      }
+    });
 
     // -----------------------------------------------------------
     // Share Product Information & Image Functionality
@@ -652,64 +684,63 @@
     }
 
     async function handleModalLogin(event) {
-    event.preventDefault(); 
+      event.preventDefault(); 
 
-    const emailInput = document.getElementById('modal-email');
-    const passwordInput = document.getElementById('modal-password');
-    const loginBtn = document.getElementById('modal-login-btn');
+      const emailInput = document.getElementById('modal-email');
+      const passwordInput = document.getElementById('modal-password');
+      const loginBtn = document.getElementById('modal-login-btn');
 
-    if (!emailInput || !passwordInput) return;
+      if (!emailInput || !passwordInput) return;
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
 
-    if (!email || !password) {
-        alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
-        return;
+      if (!email || !password) {
+          alert('অনুগ্রহ করে ইমেইল এবং পাসওয়ার্ড প্রদান করুন!');
+          return;
+      }
+
+      try {
+          if (loginBtn) {
+              loginBtn.disabled = true;
+              loginBtn.innerText = 'Signing In...';
+          }
+
+          const response = await fetch('/user/pop-login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+              closeLoginModal();
+
+              if (pendingAction === 'order') {
+                  executeOrderRedirect();
+              } else if (pendingAction === 'cart') {
+                  addToDatabaseCart();
+              } else {
+                  window.location.reload();
+              }
+          } else {
+              alert(data.message || 'Login failed!');
+              if (loginBtn) {
+                  loginBtn.disabled = false;
+                  loginBtn.innerText = 'Sign In';
+              }
+          }
+      } catch (error) {
+          console.error('Modal Login Error:', error);
+          alert('Server error occurred during login!');
+          if (loginBtn) {
+              loginBtn.disabled = false;
+              loginBtn.innerText = 'Sign In';
+          }
+      }
     }
 
-    try {
-        if (loginBtn) {
-            loginBtn.disabled = true;
-            loginBtn.innerText = 'Signing In...';
-        }
-
-        // পপআপের জন্য তৈরি করা আলাদা রাউটে কল করা হচ্ছে
-        const response = await fetch('/user/pop-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            closeLoginModal(); // পপআপ মডাল বন্ধ হবে
-
-            // ব্যবহারকারী আগে যে অ্যাকশন নিতে চেয়েছিল (যেমন: Order Now বা Add to Cart) তা সম্পন্ন হবে
-            if (pendingAction === 'order') {
-                executeOrderRedirect();
-            } else if (pendingAction === 'cart') {
-                addToDatabaseCart();
-            } else {
-                window.location.reload(); // অন্য কোনো অ্যাকশন না থাকলে পেজ রিফ্রেশ হয়ে একই পেজে থাকবে
-            }
-        } else {
-            alert(data.message || 'Login failed!');
-            if (loginBtn) {
-                loginBtn.disabled = false;
-                loginBtn.innerText = 'Sign In';
-            }
-        }
-    } catch (error) {
-        console.error('Modal Login Error:', error);
-        alert('Server error occurred during login!');
-        if (loginBtn) {
-            loginBtn.disabled = false;
-            loginBtn.innerText = 'Sign In';
-        }
-    }
-}
     function executeOrderRedirect() {
       if (!productId) return;
       let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
