@@ -222,7 +222,6 @@ const adminSettingRoute = require('./routes/admin/AdminSetting');
 const returnsRouter = require('./routes/users/returns');
 const myCouponRouter = require('./routes/users/my-couponRouter');
 const userSettingsRouter = require('./routes/users/settings');
-const popLoginRouter = require('./routes/users/pop-loginRouter');
 
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
@@ -249,7 +248,6 @@ app.use('/user', inquiryRouter);
 app.use('/user/returns', returnsRouter);
 app.use('/my-coupons', myCouponRouter);
 app.use('/settings', userSettingsRouter);
-app.use('/user', popLoginRouter);
 
 app.use('/api/ipr', iprRouter);
 app.use('/api/products', edprProductRoutes);
