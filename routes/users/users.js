@@ -701,8 +701,9 @@ router.get('/auth/google/callback',
                 req.session.userId = req.user.id;
             }
             
+            // সেশনে পেজের লিংক থাকলে সেখানে পাঠাবে, না থাকলে ড্যাশবোর্ডে পাঠাবে
             const targetUrl = req.session.redirectTo || '/user/dashboard';
-            delete req.session.redirectTo; 
+            delete req.session.redirectTo; // সেশন পরিষ্কার করা হচ্ছে
             res.redirect(targetUrl);
         });
     }
@@ -1183,7 +1184,7 @@ router.get('/current_user', (req, res) => {
 
 router.post('/save-redirect-url', (req, res) => {
     if (req.body.redirectTo) {
-        req.session.redirectTo = req.body.redirectTo;
+        req.session.redirectTo = req.body.redirectTo; // সেশনে ইউআরএল সেভ
     }
     res.json({ success: true });
 });
