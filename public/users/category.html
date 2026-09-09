@@ -70,6 +70,7 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .home-btn:hover {
@@ -101,6 +102,7 @@
             outline: none;
             font-size: 14px;
             color: #333;
+            width: 100%;
         }
 
         .search-box button {
@@ -187,7 +189,7 @@
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 12px;
-            background-color: #f1f1f1; /* Placeholder color when image loads */
+            background-color: #f1f1f1;
         }
 
         .product-category {
@@ -277,6 +279,94 @@
         .d-none {
             display: none !important;
         }
+
+        /* ---------------- MOBILE & TABLET RESPONSIVE ---------------- */
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+
+            .home-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .search-box {
+                padding: 6px 14px;
+            }
+
+            .search-box input {
+                font-size: 13px;
+            }
+
+            .products-section {
+                padding: 15px 15px 30px 15px;
+            }
+
+            .section-title {
+                margin-bottom: 15px;
+            }
+
+            .section-title h1 {
+                font-size: 18px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr); /* মোবাইলে ২ কলাম */
+                gap: 12px;
+            }
+
+            .product-card {
+                padding: 10px;
+                min-height: 310px;
+            }
+
+            .product-img {
+                height: 130px;
+                margin-bottom: 8px;
+            }
+
+            .product-title {
+                font-size: 12px;
+                height: 34px;
+                margin: 3px 0 5px 0;
+            }
+
+            .discount-badge {
+                top: 10px;
+                right: 10px;
+                font-size: 9px;
+                padding: 2px 5px;
+            }
+
+            .product-rating {
+                font-size: 10px;
+                margin-bottom: 5px;
+            }
+
+            .current-price {
+                font-size: 14px;
+            }
+
+            .old-price {
+                font-size: 11px;
+            }
+
+            .btn-load-more {
+                padding: 10px 25px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .home-btn span {
+                display: none; /* খুব ছোট স্ক্রিনে টেক্সট হাইড হয়ে শুধু আইকন দেখাবে */
+            }
+            .home-btn {
+                padding: 8px 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -284,7 +374,7 @@
    <!-- ১. সাধারণ হেডার (Semantic HTML) -->
    <header class="top-header">
         <a href="/user/dashboard" class="home-btn" title="Go to Dashboard Home">
-            <i class="fa-solid fa-house" aria-hidden="true"></i> Home
+            <i class="fa-solid fa-house" aria-hidden="true"></i> <span>Home</span>
         </a>
 
         <form class="search-box" role="search" onsubmit="event.preventDefault(); handleSearch();">
