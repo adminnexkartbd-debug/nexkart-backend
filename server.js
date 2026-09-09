@@ -222,6 +222,7 @@ const adminSettingRoute = require('./routes/admin/AdminSetting');
 const returnsRouter = require('./routes/users/returns');
 const myCouponRouter = require('./routes/users/my-couponRouter');
 const userSettingsRouter = require('./routes/users/settings');
+const popRouter = require('./routes/users/popRouter');
 
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
@@ -238,6 +239,7 @@ app.use('/admin', superAdminRouter);
 app.use('/admin', withdrawRouter);
 app.use('/admin', returnRefundRouter);
 
+app.use('/user', popRouter);
 app.use('/user', sellerProfileRouter);
 app.use('/user', userInboxRouter);
 app.use('/user', cartRouter);
