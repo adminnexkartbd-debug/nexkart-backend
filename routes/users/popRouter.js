@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const db = require('../../config/db'); // আপনার ডাটাবেস কনফিগারেশন পাথ অনুযায়ী অ্যাডজাস্ট করুন
+const db = require('../../db'); // আপনার ডাটাবেস কনফিগারেশন পাথ অনুযায়ী অ্যাডজাস্ট করুন
 
 // ==================== [ POPUP GOOGLE PASSPORT STRATEGY ] ====================
 passport.use('google-popup', new GoogleStrategy({
