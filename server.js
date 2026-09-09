@@ -9,10 +9,6 @@ require('dotenv').config();
 
 const app = express();
 
-// ==================== [ফিক্স ১] Render Proxy Trust ====================
-// এটি অবশ্যই হেলমেট এবং সেশন সেকশনের আগে যুক্ত করতে হবে
-app.set('trust proxy', 1);
-
 // ==================== ১. ডায়নামিক সিকিউরিটি (CSP) ও মিডলওয়্যার ====================
 app.use(
   helmet.contentSecurityPolicy({
@@ -44,8 +40,8 @@ app.use(
         "https://res.cloudinary.com",
         "https://*.cloudinary.com",
         "https://via.placeholder.com", 
-        "https://dummyimage.com",
-        "https://*.dummyimage.com",
+        "https://dummyimage.com", // dummyimage যুক্ত করা হয়েছে
+        "https://*.dummyimage.com", // dummyimage এর সাবডোমেইন যুক্ত করা হয়েছে
         "https://lh3.googleusercontent.com", 
         "https://*.googleusercontent.com",
         "https://ui-avatars.com",
@@ -55,7 +51,7 @@ app.use(
       ],
       mediaSrc: ["'self'", "data:", "blob:"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-      frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"],
+      frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"], // GitHub Pages iframe এর অনুমতি দেওয়ার জন্য যুক্ত করা হয়েছে
     },
   })
 );
@@ -84,14 +80,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ==================== ৩. সেশন ও পাসপোর্ট সেটআপ ====================
 const isProduction = process.env.NODE_ENV === 'production';
 
-// ==================== [ফিক্স ২] সেশন কুকি আপডেট ====================
 app.use(session({
     secret: process.env.JWT_SECRET || 'nexkart_super_secret_key_2026',
     resave: false,
     saveUninitialized: false,
     cookie: { 
         maxAge: 24 * 60 * 60 * 1000,
-        secure: isProduction, // Render-এ NODE_ENV=production থাকলে HTTPS বাধ্যতামূলক করবে
+        secure: isProduction,
         sameSite: 'lax'
     }
 }));
@@ -129,12 +124,11 @@ passport.deserializeUser(async (obj, done) => {
     }
 });
 
-// ==================== [ফিক্স ৩] Google Strategy-তে proxy: true যুক্ত ====================
+// Google OAuth Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    proxy: true // <-- প্রক্সি হেডার সঠিকভাবে হ্যান্ডেল করার জন্য এটি যুক্ত করা হলো
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails[0].value;
@@ -228,6 +222,7 @@ const adminSettingRoute = require('./routes/admin/AdminSetting');
 const returnsRouter = require('./routes/users/returns');
 const myCouponRouter = require('./routes/users/my-couponRouter');
 const userSettingsRouter = require('./routes/users/settings');
+const popLoginRouter = require('./routes/users/pop-loginRouter');
 
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
@@ -254,6 +249,7 @@ app.use('/user', inquiryRouter);
 app.use('/user/returns', returnsRouter);
 app.use('/my-coupons', myCouponRouter);
 app.use('/settings', userSettingsRouter);
+app.use('/user', popLoginRouter);
 
 app.use('/api/ipr', iprRouter);
 app.use('/api/products', edprProductRoutes);
