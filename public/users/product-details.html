@@ -588,24 +588,22 @@
     });
 
     function redirectToLogin() {
-    // বর্তমান পেজের সম্পূর্ণ URL সংগ্রহ করা হচ্ছে
-    const currentUrl = window.location.href; 
+      const currentUrl = window.location.href; 
 
-    // ব্যাকএন্ডে বর্তমান URL-টি সেশনে সেভ করা হচ্ছে
-    fetch('/user/save-redirect-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ redirectTo: currentUrl })
-    })
-    .then(() => {
-        // সেভ হওয়ার পর গুগল অথেনটিকেশনে রিডাইরেক্ট করা হবে
-        window.location.href = '/user/auth/google'; 
-    })
-    .catch(err => {
-        console.error("Error saving redirect URL:", err);
-        window.location.href = '/user/auth/google';
-    });
-}
+      fetch('/user/save-redirect-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectTo: currentUrl })
+      })
+      .then(() => {
+          window.location.href = '/user/auth/google'; 
+      })
+      .catch(err => {
+          console.error("Error saving redirect URL:", err);
+          window.location.href = '/user/auth/google';
+      });
+    }
+
     window.addEventListener('pageshow', function(event) {
       if (event.persisted) {
         window.location.reload();
@@ -653,7 +651,6 @@
       document.getElementById('login-modal').classList.add('hidden');
     }
 
-    // ফ্রন্টএন্ড মোডাল লগইন সাবমিট ফাংশন
     async function handleModalLogin(event) {
         event.preventDefault(); 
 
@@ -677,7 +674,6 @@
                 loginBtn.innerText = 'Signing In...';
             }
 
-            // ব্যাকএন্ডের pop-loginRouter.js অনুযায়ী সঠিক URL /user/pop-login ব্যবহার করা হয়েছে
             const response = await fetch('/user/pop-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -689,7 +685,6 @@
             if (data.success) {
                 closeLoginModal();
 
-                // লগইন সফল হওয়ার পরে পেন্ডিং কাজ (Order/Cart) সম্পূর্ণ করবে
                 if (pendingAction === 'order') {
                     executeOrderRedirect();
                 } else if (pendingAction === 'cart') {
