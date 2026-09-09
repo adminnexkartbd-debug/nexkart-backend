@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const db = require('../../db'); // আপনার ডাটাবেস কনফিগারেশন পাথ অনুযায়ী অ্যাডজাস্ট করুন
+const db = require('../../db'); // আপনার প্রজেক্টের ডাটাবেস কনফিগারেশন পাথ
 
 // ==================== [ POPUP GOOGLE PASSPORT STRATEGY ] ====================
 passport.use('google-popup', new GoogleStrategy({
-    clientID: '532557505629-04dk1t4k3cmihggqjsaqv00nnsdacqj0.apps.googleusercontent.com',
-    clientSecret: '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',
-    callbackURL: 'https://www.nexkart.2bd.net/user/auth/google/popup/callback'
+    clientID: process.env.GOOGLE_USER_CLIENT_ID || '532557505629-04dk1t4k3cmihggqjsaqv00nnsdacqj0.apps.googleusercontent.com',
+    clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET || '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',
+    callbackURL: process.env.GOOGLE_POPUP_CALLBACK_URL || 'https://www.nexkart.2bd.net/user/auth/google/popup/callback'
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -17,30 +17,39 @@ passport.use('google-popup', new GoogleStrategy({
         return done(new Error('No email found from Google'), null);
       }
 
-      // Check if user exists
-      const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+      // ১. অ্যাডমিন ইমেইল চেক (পপআপের ক্ষেত্রেও সুরক্ষা)
+      const [adminCheck] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
+      if (adminCheck.length > 0) {
+        return done(null, false, { message: 'Admin email cannot register as User!' });
+      }
+
+      // ২. ইউজার ডাটাবেসে চেক করা
+      const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
       let user;
 
-      if (users.length > 0) {
-        user = users[0];
+      if (existingUser.length > 0) {
+        user = existingUser[0];
       } else {
-        // New user creation
+        // নতুন ইউজার রেজিস্টার করা
+        const profileImage = (profile.photos && profile.photos.length > 0) ? profile.photos[0].value : null;
         const [result] = await db.query(
-          'INSERT INTO users (name, email, google_id) VALUES (?, ?, ?)',
-          [profile.displayName, email, profile.id]
+          'INSERT INTO users (name, email, profile_image, is_verified, created_at) VALUES (?, ?, ?, 1, NOW())',
+          [profile.displayName, email, profileImage]
         );
-        user = { id: result.insertId, name: profile.displayName, email: email };
+        const [newUser] = await db.query("SELECT * FROM users WHERE id = ?", [result.insertId]);
+        user = newUser[0];
       }
 
       user.user_type = 'user';
       return done(null, user);
     } catch (err) {
+      console.error("Popup Google Auth Error:", err);
       return done(err, null);
     }
   }
 ));
 
-// ==================== [ ROUTES ] ====================
+// ==================== [ POPUP AUTH ROUTES ] ====================
 
 // ১. Google Login Trigger Route
 router.get('/auth/google/popup', passport.authenticate('google-popup', { 
@@ -70,10 +79,11 @@ router.get('/auth/google/popup/callback', (req, res, next) => {
         `);
       }
 
+      // সেশন আপডেট
       req.session.user = { id: user.id, user_type: 'user' };
       req.session.userId = user.id;
 
-      // ড্যাশবোর্ডে রিডাইরেক্ট না করে পপআপ বন্ধ করা এবং মেইন পেজকে জানান দেয়া
+      // মূল উইন্ডোতে 'success' মেসেজ পাঠিয়ে পপআপ বন্ধ করা
       return res.send(`
         <script>
           if (window.opener) {
