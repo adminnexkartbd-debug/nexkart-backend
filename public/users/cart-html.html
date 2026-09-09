@@ -246,10 +246,15 @@
         if (Number(item.cod_available) === 0) hasNonCod = true;
         const stockQty = parseInt(item.stock_quantity) || 0;
         const isOutOfStock = stockQty <= 0 || item.stock_status === 'out_of_stock';
+        
+        // ইমেজ ইউআরএল ফিল্টারিং এবং ফলব্যাক চেক
+        const imgPath = (item.primary_image && item.primary_image !== '/uploads/' && item.primary_image !== '/uploads/null') 
+          ? item.primary_image 
+          : 'https://via.placeholder.com/80?text=No+Image';
 
         html += `
           <div class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
-            <img src="${item.primary_image || ''}" class="w-14 h-14 object-cover rounded-xl border border-pink-200" onerror="this.style.display='none';">
+            <img src="${imgPath}" alt="${item.product_name}" class="w-14 h-14 object-cover rounded-xl border border-pink-200 shrink-0" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=No+Image';">
             <div class="flex-1 overflow-hidden">
               <h4 class="text-xs font-bold text-gray-900 truncate">${item.product_name}</h4>
               <div class="text-[#ff4b6e] font-extrabold text-xs mt-1">৳ ${item.price}</div>
