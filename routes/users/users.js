@@ -204,6 +204,13 @@ router.get('/dashboard', async (req, res) => {
 });
 
 router.get('/message-center.html', (req, res) => {
+    const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
+
+    if (!userId) {
+        req.session.redirectTo = '/user/message-center.html';
+        return res.redirect('/user/cslogin');
+    }
+
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'message-center.html'));
 });
 
@@ -234,6 +241,16 @@ router.get('/my-Order', (req, res) => res.sendFile(path.join(process.cwd(), 'pub
 router.get('/Return-Refund-Requests', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'Return-Refund-Requests.html')));
 
 router.get('/ipr-report', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'ipr-report.html')));
+router.get('/ipr-report.html', (req, res) => {
+    const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
+
+    if (!userId) {
+        req.session.redirectTo = '/user/ipr-report.html';
+        return res.redirect('/user/cslogin');
+    }
+
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'ipr-report.html'));
+});
 
 router.get('/banner-products', async (req, res) => {
     try {
@@ -423,7 +440,7 @@ router.post('/remove-from-cart', async (req, res) => {
     }
 });
 
-// ==================== [ GET PRODUCT REVIEWS ROUTE (UPDATED FOR REPLY) ] ====================
+// ==================== [ GET PRODUCT REVIEWS ROUTE ] ====================
 router.get('/reviews/:productId', async (req, res) => {
     try {
         const productId = req.params.productId;
@@ -498,28 +515,6 @@ router.get('/api/seller-data/:id', async (req, res) => {
         console.error("Seller Profile Fetch Error:", error);
         return res.status(500).json({ success: false, message: 'Server error!' });
     }
-});
-
-router.get('/message-center.html', (req, res) => {
-    const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
-
-    if (!userId) {
-        req.session.redirectTo = '/user/message-center.html';
-        return res.redirect('/user/cslogin');
-    }
-
-    res.sendFile(path.join(process.cwd(), 'public', 'users', 'message-center.html'));
-});
-
-router.get('/ipr-report.html', (req, res) => {
-    const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
-
-    if (!userId) {
-        req.session.redirectTo = '/user/ipr-report.html';
-        return res.redirect('/user/cslogin');
-    }
-
-    res.sendFile(path.join(process.cwd(), 'public', 'users', 'ipr-report.html'));
 });
 
 router.post('/apply-coupon', async (req, res) => {
@@ -701,9 +696,8 @@ router.get('/auth/google/callback',
                 req.session.userId = req.user.id;
             }
             
-            // সেশনে পেজের লিংক থাকলে সেখানে পাঠাবে, না থাকলে ড্যাশবোর্ডে পাঠাবে
             const targetUrl = req.session.redirectTo || '/user/dashboard';
-            delete req.session.redirectTo; // সেশন পরিষ্কার করা হচ্ছে
+            delete req.session.redirectTo;
             res.redirect(targetUrl);
         });
     }
@@ -971,6 +965,23 @@ router.post('/place-order', async (req, res) => {
             [newStock, newSoldQty, newStockStatus, product.id]
         );
 
+        const orderData = {
+            order_id: orderId,
+            customer_name: name,
+            customer_email: email,
+            customer_phone: phone,
+            shipping_address: fullShippingAddress,
+            payment_method: payment_method,
+            selected_gateway: gatewayUsed,
+            payment_status: paymentStatus,
+            quantity: orderQty,
+            variant: variant,
+            subtotal_price: subtotal,
+            delivery_charge: deliveryCharge,
+            total_amount: totalAmount
+        };
+        sendInvoiceEmail(orderData, product.title);
+
         if (payment_method === 'online') {
             const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
             const callbackUrl = `${baseUrl}/user/bdgate/callback?order_id=${orderId}`;
@@ -1180,11 +1191,9 @@ router.get('/current_user', (req, res) => {
     }
 });
 
-
-
 router.post('/save-redirect-url', (req, res) => {
     if (req.body.redirectTo) {
-        req.session.redirectTo = req.body.redirectTo; // সেশনে ইউআরএল সেভ
+        req.session.redirectTo = req.body.redirectTo;
     }
     res.json({ success: true });
 });
@@ -1314,5 +1323,56 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
+// ==================== [ POPUP DEDICATED LOGIN ROUTE ] ====================
+router.post('/pop-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: "ইমেইল এবং পাসওয়ার্ড দেওয়া বাধ্যতামূলক!" });
+    }
+
+    try {
+        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        if (adminCheck.length > 0) {
+            return res.status(400).json({ success: false, message: "Admin email cannot be used for user login!" });
+        }
+
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.status(400).json({ success: false, message: "Invalid email or password!" });
+        }
+
+        const user = users[0];
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.status(400).json({ success: false, message: "এই ইমেইলটি Google দিয়ে তৈরি করা হয়েছে। অনুগ্রহ করে Google দিয়ে লগইন করুন!" });
+        }
+
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Invalid email or password!" });
+        }
+
+        user.user_type = 'user';
+
+        // Passport login handler without redirecting
+        req.login(user, (err) => {
+            if (err) {
+                console.error("Popup Login Session Error:", err);
+                return res.status(500).json({ success: false, message: "Login Session Error!" });
+            }
+            
+            req.session.user = { id: user.id, user_type: 'user' }; 
+            req.session.userId = user.id; 
+
+            // ড্যাশবোর্ডে রিডাইরেক্ট না করে সরাসরি JSON রেসপন্স ব্যাক করা হবে
+            return res.json({ success: true, message: "Login successful!" });
+        });
+
+    } catch (err) {
+        console.error("Popup Login Server Error:", err);
+        res.status(500).json({ success: false, message: "Server Error!" });
+    }
+});
 
 module.exports = router;
