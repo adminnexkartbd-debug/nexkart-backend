@@ -71,15 +71,15 @@
     <div id="dashboardContent" class="space-y-6">
 
       <!-- HERO BANNER & STATS GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
         <!-- HERO BANNER -->
-        <div class="md:col-span-2 rounded-3xl bg-gradient-to-br from-pink-600 via-rose-500 to-purple-600 p-6 md:p-8 text-white shadow-2xl shadow-pink-500/30 relative overflow-hidden flex flex-col justify-between">
+        <div class="md:col-span-2 rounded-3xl bg-gradient-to-br from-pink-600 via-rose-500 to-purple-600 p-6 md:p-7 text-white shadow-2xl shadow-pink-500/30 relative overflow-hidden flex flex-col justify-between">
           <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
           <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl"></div>
           
           <div class="relative z-10">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center mb-5">
               <span class="text-xs font-bold uppercase tracking-wider bg-white/20 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1.5">
                 <i class="fa-solid fa-wallet text-pink-200"></i> <span data-bn="মোট ব্যালেন্স" data-en="Total Balance">মোট ব্যালেন্স</span>
               </span>
@@ -87,40 +87,40 @@
             </div>
 
             <div class="my-2">
-              <div class="text-4xl md:text-6xl font-black tracking-tight flex items-baseline gap-2">
-                <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-2xl font-medium opacity-90">Coins</span>
+              <div class="text-4xl md:text-5xl font-black tracking-tight flex items-baseline gap-2">
+                <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-xl font-medium opacity-90">Coins</span>
               </div>
-              <p class="text-xs md:text-sm text-pink-100 mt-3 font-medium flex items-center gap-1.5">
+              <p class="text-xs md:text-sm text-pink-100 mt-2.5 font-medium flex items-center gap-1.5">
                 <span data-bn="সমপরিমাণ টাকা:" data-en="Equivalent Amount:">সমপরিমাণ টাকা:</span> 
-                <span class="font-extrabold text-white text-base md:text-lg bg-white/10 px-3 py-0.5 rounded-lg border border-white/10" id="equivalentTkDisplay">৳ ০.০০</span>
+                <span class="font-extrabold text-white text-sm md:text-base bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10" id="equivalentTkDisplay">৳ ০.০০</span>
               </p>
             </div>
           </div>
 
-          <div class="mt-8 pt-4 border-t border-white/20 relative z-10 flex items-center justify-between text-xs text-pink-100 font-medium">
+          <div class="mt-6 pt-3.5 border-t border-white/20 relative z-10 flex items-center justify-between text-xs text-pink-100 font-medium">
             <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-300"></i> <span data-bn="কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন" data-en="Use for shopping discounts">কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন</span></span>
           </div>
         </div>
 
-        <!-- QUICK INFO CARD -->
-        <div class="md:col-span-1 flex flex-col justify-between gap-4">
-          <div class="glass-card p-4.5 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-4 hover:border-pink-200 transition">
-            <div class="w-13 h-13 min-w-[3.25rem] rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-rose-500/20">
+        <!-- QUICK INFO CARDS CONTAINER (UNIFORM HEIGHT & NO GAPS) -->
+        <div class="md:col-span-1 grid grid-cols-2 md:grid-cols-1 gap-3.5">
+          <div class="glass-card p-4 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-3.5 hover:border-pink-200 transition">
+            <div class="w-11 h-11 min-w-[2.75rem] rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-rose-500/20">
               <i class="fa-solid fa-gift"></i>
             </div>
-            <div>
-              <div class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider" data-bn="সাইন-আপ বোনাস" data-en="Sign-up Bonus">সাইন-আপ বোনাস</div>
-              <div class="text-sm font-bold text-gray-800 mt-0.5" data-bn="+১০ কয়েন (৬ মাস মেয়াদ)" data-en="+10 Coins (6 Months)">+১০ কয়েন (৬ মাস মেয়াদ)</div>
+            <div class="min-w-0">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider truncate" data-bn="সাইন-আপ বোনাস" data-en="Sign-up Bonus">সাইন-আপ বোনাস</div>
+              <div class="text-xs md:text-sm font-bold text-gray-800 mt-0.5 truncate" data-bn="+১০ কয়েন (৬ মাস মেয়াদ)" data-en="+10 Coins (6 Months)">+১০ কয়েন (৬ মাস)</div>
             </div>
           </div>
 
-          <div class="glass-card p-4.5 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-4 hover:border-purple-200 transition">
-            <div class="w-13 h-13 min-w-[3.25rem] rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-purple-500/20">
+          <div class="glass-card p-4 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-3.5 hover:border-purple-200 transition">
+            <div class="w-11 h-11 min-w-[2.75rem] rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-500/20">
               <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
-            <div>
-              <div class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider" data-bn="স্বয়ংক্রিয় মেয়াদ" data-en="Auto Expiry">স্বয়ংক্রিয় মেয়াদ</div>
-              <div class="text-sm font-bold text-gray-800 mt-0.5" data-bn="৬ মাস পর এক্সপায়ার" data-en="Expires after 6 mos">৬ মাস পর এক্সপায়ার</div>
+            <div class="min-w-0">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider truncate" data-bn="স্বয়ংক্রিয় মেয়াদ" data-en="Auto Expiry">স্বয়ংক্রিয় মেয়াদ</div>
+              <div class="text-xs md:text-sm font-bold text-gray-800 mt-0.5 truncate" data-bn="৬ মাস পর এক্সপায়ার" data-en="Expires after 6 mos">৬ মাস পর এক্সপায়ার</div>
             </div>
           </div>
         </div>
