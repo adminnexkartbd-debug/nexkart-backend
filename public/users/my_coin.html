@@ -149,19 +149,23 @@
       });
     }
 
-    // Load User Coin Data & Check Login Status
+    // Load Logged-in User Coin Data & Check Authentication
     async function loadUserCoins() {
       try {
-        // এখানে আপনার সিস্টেমের লগইন করা ইউজারের আইডি ডাইনামিক বসাবেন (যেমন সেশন বা লোকালস্টোরেজ থেকে)
-        // যদি ইউজার লগইন করা না থাকে, তবে userId-এর মান null বা 0 হবে।
-        const userId = 1; // টেস্ট করার জন্য 1 দেওয়া আছে, লগইন না থাকলে null দিন।
+        // প্রথমে ব্যাকএন্ড থেকে বর্তমান লগইন করা ইউজারের আইডি চেক করা হচ্ছে
+        const userRes = await fetch('/api/coins/current-user');
+        const userData = await userRes.json();
 
-        if (!userId) {
+        if (!userData.success || !userData.userId) {
+          // ইউজার লগইন করা না থাকলে ড্যাশবোর্ড লুকিয়ে লগইন প্রম্পট দেখাবে
           document.getElementById('dashboardContent').classList.add('hidden');
           document.getElementById('loginRequiredState').classList.remove('hidden');
           return;
         }
 
+        const userId = userData.userId; // ডাটাবেজের সঠিক user_id
+
+        // নির্দিষ্ট ইউজারের কয়েন ব্যালেন্স ও হিস্ট্রি ফেচ করা
         const response = await fetch(`/api/coins/balance/${userId}`);
         const result = await response.json();
 
@@ -177,6 +181,7 @@
             return;
           }
 
+          // ইউজারের সমস্ত কয়েন ট্রানজেকশন লুপ চালিয়ে দেখানো হচ্ছে (+ এবং - উভয়ই)
           result.transactions.forEach(tx => {
             const isPositive = tx.coin_balance > 0;
             const bgClass = isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600';
@@ -197,7 +202,7 @@
                   <span class="text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-500'}">
                     ${isPositive ? '+' : ''}${tx.coin_balance} Coins
                   </span>
-                  <div class="text-[10px] text-gray-400">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ (-১০ কয়েন)'}</div>
+                  <div class="text-[10px] text-gray-400">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ (মাইনাস)'}</div>
                 </div>
               </div>
             `;
@@ -206,6 +211,8 @@
         }
       } catch (error) {
         console.error('Failed to load coin data:', error);
+        document.getElementById('dashboardContent').classList.add('hidden');
+        document.getElementById('loginRequiredState').classList.remove('hidden');
       }
     }
 
