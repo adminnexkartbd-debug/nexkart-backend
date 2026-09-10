@@ -6,7 +6,7 @@ const db = require('../../db');
 const { checkAndAddSignupCoins } = require('../../services/coinService');
 
 // ক্রন জব (প্রতিদিন বা টেস্টের জন্য প্রতি মিনিটে রান করাতে পারেন)
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('* * * * *', async () => {
   console.log('[Coin Cron] Running automatic coin & expiration check...');
   try {
     await checkAndAddSignupCoins();
