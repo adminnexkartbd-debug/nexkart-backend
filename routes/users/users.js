@@ -218,6 +218,10 @@ router.get('/My-Coupons.html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'My-Coupons.html'));
 });
 
+router.get('/my_coin.html', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html'));
+});
+
 router.get(['/penalties', '/penalties.html'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'penalties.html'));
 });
