@@ -1,125 +1,53 @@
+// routes/users/coinRoutes.js
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); // আপনার MySQL Connection Pool
+const cron = require('node-cron');
+const db = require('../../db');
+const { checkAndAddSignupCoins } = require('../../services/coinService');
 
-// ১. ইউজারের মোট কয়েন ব্যালেন্স এবং হিস্ট্রি পাওয়া (GET /api/coins/balance)
-router.get('/balance', async (req, res) => {
-  const userId = req.user.id; // Authentication Middleware থেকে প্রাপ্ত ID
-
+// ক্রন জব (প্রতিদিন বা টেস্টের জন্য প্রতি মিনিটে রান করাতে পারেন)
+cron.schedule('0 0 * * *', async () => {
+  console.log('[Coin Cron] Running automatic coin & expiration check...');
   try {
-    // অ্যাক্টিভ ও মেয়াদের ভেতর থাকা কয়েন যোগ করা
-    const [balanceResult] = await db.query(
-      `SELECT SUM(earning_coin) AS total_coins 
-       FROM users_coins 
-       WHERE user_id = ? 
-         AND refer_status = 'completed' 
-         AND (expire_date IS NULL OR expire_date > NOW())`,
-      [userId]
-    );
+    await checkAndAddSignupCoins();
+  } catch (error) {
+    console.error('[Coin Cron Error]:', error);
+  }
+});
 
-    // লেনদেনের হিস্ট্রি রিট্রিভ
-    const [history] = await db.query(
-      `SELECT id, refer_number, refer_status, earning_coin, coin_date, expire_date 
-       FROM users_coins 
-       WHERE user_id = ? 
-       ORDER BY coin_date DESC LIMIT 10`,
-      [userId]
-    );
-
-    const totalCoins = balanceResult[0].total_coins || 0;
-
-    res.status(200).json({
-      success: true,
-      total_coins: totalCoins,
-      equivalent_bdt: (totalCoins * 0.1).toFixed(2), // ১ কয়েন = ৳০.১০
-      history: history
-    });
+// ম্যানুয়ালি টেস্ট করার রাউট
+router.get('/check-coins', async (req, res) => {
+  try {
+    await checkAndAddSignupCoins();
+    res.status(200).json({ success: true, message: 'Coin expiration and signup bonus processed successfully!' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// ২. রেফারেল কোড রিডিম করা (POST /api/coins/redeem)
-router.post('/redeem', async (req, res) => {
-  const userId = req.user.id;
-  const { refer_number } = req.body;
-
-  if (!refer_number) {
-    return res.status(400).json({ success: false, message: 'রেফারেল কোডটি প্রদান করুন।' });
-  }
-
+// নির্দিষ্ট ইউজারের কয়েন ব্যালেন্স ও হিস্ট্রি ফেচ করার API (1 Coin = ৳0.30)
+router.get('/balance/:user_id', async (req, res) => {
   try {
-    // ইউজার কি নিজের কোড বসাচ্ছে কিনা তা চেক
-    const [ownCodeCheck] = await db.query(
-      `SELECT id FROM users_coins WHERE user_id = ? AND refer_number = ?`,
-      [userId, refer_number]
-    );
+    const userId = req.params.user_id;
 
-    if (ownCodeCheck.length > 0) {
-      return res.status(400).json({ success: false, message: 'নিজের রেফারেল কোড ব্যবহার করা সম্ভব নয়।' });
-    }
-
-    // কোডটি ইতিমধ্যে রিডিম করা হয়েছে কিনা চেক
-    const [alreadyUsed] = await db.query(
-      `SELECT id FROM users_coins WHERE user_id = ? AND refer_number = ? AND refer_status = 'completed'`,
-      [userId, refer_number]
-    );
-
-    if (alreadyUsed.length > 0) {
-      return res.status(400).json({ success: false, message: 'আপনি এই রেফারেল কোডটি আগেই ব্যবহার করেছেন।' });
-    }
-
-    // ১ বছর মেয়াদের কয়েন যোগ করা
-    const expireDate = new Date();
-    expireDate.setFullYear(expireDate.getFullYear() + 1);
-
-    await db.query(
-      `INSERT INTO users_coins (user_id, refer_number, refer_status, earning_coin, expire_date) 
-       VALUES (?, ?, 'completed', 50, ?)`,
-      [userId, refer_number, expireDate]
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'রেফারেল কোড সফলভাবে রিডিম করা হয়েছে! +৫০ কয়েন যোগ হয়েছে।'
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ৩. কেনাকাটায় কয়েন রিডিম/ব্যবহার করা (POST /api/coins/use)
-router.post('/use', async (req, res) => {
-  const userId = req.user.id;
-  const { coins_to_use } = req.body;
-
-  try {
-    const [balanceResult] = await db.query(
-      `SELECT SUM(earning_coin) AS total_coins 
-       FROM users_coins 
-       WHERE user_id = ? 
-         AND refer_status = 'completed' 
-         AND (expire_date IS NULL OR expire_date > NOW())`,
+    // ইউজারের সব কয়েন ট্রানজেকশন ফেচ করা
+    const [rows] = await db.execute(
+      'SELECT * FROM my_coins WHERE user_id = ? ORDER BY id DESC',
       [userId]
     );
 
-    const totalCoins = balanceResult[0].total_coins || 0;
+    // সব কয়েন যোগ করে মোট ব্যালেন্স বের করা (যেহেতু এক্সপায়ার্ড কয়েন -10 আকারে আছে, তাই অটো মাইনাস হয়ে যাবে)
+    let totalCoins = rows.reduce((sum, row) => sum + row.coin_balance, 0);
+    if (totalCoins < 0) totalCoins = 0;
 
-    if (coins_to_use > totalCoins) {
-      return res.status(400).json({ success: false, message: 'পর্যাপ্ত কয়েন ব্যালেন্স নেই।' });
-    }
-
-    // কয়েন কাটার জন্য মাইনাস (-) ভ্যালু এন্ট্রি করা
-    await db.query(
-      `INSERT INTO users_coins (user_id, refer_status, earning_coin) 
-       VALUES (?, 'completed', ?)`,
-      [userId, -Math.abs(coins_to_use)]
-    );
+    // ১ কয়েন = ০.৩০ টাকা হিসেবে টাকার পরিমাণ হিসাব
+    const equivalentTk = (totalCoins * 0.30).toFixed(2);
 
     res.status(200).json({
       success: true,
-      message: `${coins_to_use} কয়েন সফলভাবে ব্যবহার করা হয়েছে।`,
-      discount_bdt: (coins_to_use * 0.1).toFixed(2)
+      totalCoins,
+      equivalentTk,
+      transactions: rows
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
