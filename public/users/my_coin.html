@@ -14,31 +14,36 @@
       font-family: 'Hind Siliguri', 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 text-gray-800 antialiased min-h-screen pb-24 md:pb-12">
+<body class="bg-gradient-to-tr from-pink-100 via-purple-50 to-rose-100 text-gray-800 antialiased min-h-screen pb-24 md:pb-12">
 
   <main class="max-w-4xl mx-auto px-4 py-6 md:py-10 space-y-6">
 
     <!-- TOP NAVIGATION HEADER -->
-    <header class="flex justify-between items-center bg-white/90 backdrop-blur-md p-4 md:p-5 rounded-2xl border border-pink-100 shadow-sm">
-      <div class="flex items-center gap-3">
-        <button onclick="window.history.back()" class="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-100 active:scale-95 transition shadow-sm">
+    <header class="flex justify-between items-center glass-card p-4 md:p-5 rounded-3xl border border-white/60 shadow-lg shadow-pink-500/5">
+      <div class="flex items-center gap-3.5">
+        <button onclick="window.history.back()" class="w-11 h-11 rounded-2xl bg-white border border-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-50 active:scale-95 transition shadow-sm">
           <i class="fa-solid fa-arrow-left text-lg"></i>
         </button>
-        <div class="w-10 h-10 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center text-xl font-bold">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-pink-500/30">
           <i class="fa-solid fa-coins"></i>
         </div>
         <div>
-          <h1 class="text-base md:text-xl font-bold text-gray-900" data-bn="মাই রিওয়ার্ডস & কয়েন" data-en="My Rewards & Coins">মাই রিওয়ার্ডস & কয়েন</h1>
-          <p class="text-xs text-gray-500 hidden sm:block" data-bn="আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন" data-en="Manage your points and rewards">আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন</p>
+          <h1 class="text-base md:text-xl font-extrabold text-gray-900 tracking-tight" data-bn="মাই রিওয়ার্ডস & কয়েন" data-en="My Rewards & Coins">মাই রিওয়ার্ডস & কয়েন</h1>
+          <p class="text-xs text-gray-500 hidden sm:block font-medium" data-bn="আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন" data-en="Manage your points and rewards">আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন</p>
         </div>
       </div>
 
       <!-- LANGUAGE TOGGLE -->
       <div class="flex items-center gap-2">
-        <div class="bg-pink-50 border border-pink-200 rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+        <div class="bg-white/90 border border-pink-200/80 rounded-2xl px-3.5 py-2 flex items-center gap-2 shadow-sm">
           <i class="fa-solid fa-globe text-pink-500 text-xs"></i>
           <select id="langSelect" onchange="toggleLanguage(this.value)" class="bg-transparent text-xs font-bold text-pink-700 focus:outline-none cursor-pointer">
             <option value="bn" selected>বাংলা</option>
@@ -49,13 +54,15 @@
     </header>
 
     <!-- IF USER IS NOT LOGGED IN (HIDDEN BY DEFAULT) -->
-    <div id="loginRequiredState" class="hidden bg-white/90 backdrop-blur-md rounded-3xl p-8 text-center border border-pink-100 shadow-sm space-y-4">
-      <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+    <div id="loginRequiredState" class="hidden glass-card rounded-3xl p-10 text-center border border-white/80 shadow-xl space-y-5">
+      <div class="w-20 h-20 bg-gradient-to-tr from-pink-100 to-rose-100 text-pink-600 rounded-3xl flex items-center justify-center mx-auto text-3xl shadow-inner">
         <i class="fa-solid fa-user-lock"></i>
       </div>
-      <h2 class="text-xl font-bold text-gray-900" data-bn="দয়া করে লগইন করুন" data-en="Please Login">দয়া করে লগইন করুন</h2>
-      <p class="text-xs text-gray-500 max-w-sm mx-auto" data-bn="আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।" data-en="Please log in to your account to view your coins and rewards.">আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।</p>
-      <a href="/login.html" class="inline-block px-6 py-3 bg-pink-600 text-white font-bold text-sm rounded-xl shadow hover:bg-pink-700 transition">
+      <div class="space-y-2">
+        <h2 class="text-2xl font-bold text-gray-900" data-bn="দয়া করে লগইন করুন" data-en="Please Login">দয়া করে লগইন করুন</h2>
+        <p class="text-xs md:text-sm text-gray-500 max-w-sm mx-auto" data-bn="আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।" data-en="Please log in to your account to view your coins and rewards.">আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।</p>
+      </div>
+      <a href="/login.html" class="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-pink-600/30 hover:opacity-95 active:scale-95 transition">
         <span data-bn="লগইন করুন" data-en="Login Now">লগইন করুন</span>
       </a>
     </div>
@@ -67,51 +74,53 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         <!-- HERO BANNER -->
-        <div class="md:col-span-2 rounded-3xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 p-6 md:p-8 text-white shadow-xl shadow-pink-500/20 relative overflow-hidden flex flex-col justify-between">
-          <div class="absolute -right-8 -top-8 w-36 h-36 bg-white/10 rounded-full blur-xl"></div>
+        <div class="md:col-span-2 rounded-3xl bg-gradient-to-br from-pink-600 via-rose-500 to-purple-600 p-6 md:p-8 text-white shadow-2xl shadow-pink-500/30 relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+          <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl"></div>
           
-          <div>
-            <div class="flex justify-between items-center mb-4">
-              <span class="text-xs font-semibold uppercase tracking-wider bg-black/20 px-3.5 py-1.5 rounded-full backdrop-blur-md">
-                <i class="fa-solid fa-wallet text-pink-200 mr-1.5"></i> <span data-bn="মোট ব্যালেন্স" data-en="Total Balance">মোট ব্যালেন্স</span>
+          <div class="relative z-10">
+            <div class="flex justify-between items-center mb-6">
+              <span class="text-xs font-bold uppercase tracking-wider bg-white/20 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+                <i class="fa-solid fa-wallet text-pink-200"></i> <span data-bn="মোট ব্যালেন্স" data-en="Total Balance">মোট ব্যালেন্স</span>
               </span>
-              <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-white font-medium" data-bn="১ কয়েন = ৳০.৩০" data-en="1 Coin = ৳0.30">১ কয়েন = ৳০.৩০</span>
+              <span class="text-xs bg-black/20 px-3.5 py-1.5 rounded-full text-pink-100 font-semibold backdrop-blur-md border border-white/10" data-bn="১ কয়েন = ৳০.৩০" data-en="1 Coin = ৳0.30">১ কয়েন = ৳০.৩০</span>
             </div>
 
-            <div class="my-4">
-              <div class="text-4xl md:text-5xl font-black tracking-tight">
-                <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-xl font-normal opacity-90">Coins</span>
+            <div class="my-2">
+              <div class="text-4xl md:text-6xl font-black tracking-tight flex items-baseline gap-2">
+                <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-2xl font-medium opacity-90">Coins</span>
               </div>
-              <p class="text-xs md:text-sm text-pink-100 mt-2">
-                <span data-bn="সমপরিমাণ টাকা:" data-en="Equivalent Amount:">সমপরিমাণ টাকা:</span> <span class="font-bold text-white text-base" id="equivalentTkDisplay">৳ ০.০০</span>
+              <p class="text-xs md:text-sm text-pink-100 mt-3 font-medium flex items-center gap-1.5">
+                <span data-bn="সমপরিমাণ টাকা:" data-en="Equivalent Amount:">সমপরিমাণ টাকা:</span> 
+                <span class="font-extrabold text-white text-base md:text-lg bg-white/10 px-3 py-0.5 rounded-lg border border-white/10" id="equivalentTkDisplay">৳ ০.০০</span>
               </p>
             </div>
           </div>
 
-          <div class="mt-6 pt-4 border-t border-white/20 flex items-center justify-between">
-            <span class="text-xs text-pink-100" data-bn="কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন" data-en="Use for shopping discounts">কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন</span>
+          <div class="mt-8 pt-4 border-t border-white/20 relative z-10 flex items-center justify-between text-xs text-pink-100 font-medium">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-emerald-300"></i> <span data-bn="কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন" data-en="Use for shopping discounts">কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন</span></span>
           </div>
         </div>
 
         <!-- QUICK INFO CARD -->
         <div class="md:col-span-1 flex flex-col justify-between gap-4">
-          <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-500 flex items-center justify-center font-bold text-lg shrink-0">
+          <div class="glass-card p-4.5 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-4 hover:border-pink-200 transition">
+            <div class="w-13 h-13 min-w-[3.25rem] rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-rose-500/20">
               <i class="fa-solid fa-gift"></i>
             </div>
             <div>
-              <div class="text-xs text-gray-400 font-medium" data-bn="সাইন-আপ বোনাস" data-en="Sign-up Bonus">সাইন-আপ বোনাস</div>
-              <div class="text-sm font-bold text-gray-800" data-bn="+১০ কয়েন (৬ মাস মেয়াদ)" data-en="+10 Coins (6 Months)">+১০ কয়েন (৬ মাস মেয়াদ)</div>
+              <div class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider" data-bn="সাইন-আপ বোনাস" data-en="Sign-up Bonus">সাইন-আপ বোনাস</div>
+              <div class="text-sm font-bold text-gray-800 mt-0.5" data-bn="+১০ কয়েন (৬ মাস মেয়াদ)" data-en="+10 Coins (6 Months)">+১০ কয়েন (৬ মাস মেয়াদ)</div>
             </div>
           </div>
 
-          <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-500 flex items-center justify-center font-bold text-lg shrink-0">
+          <div class="glass-card p-4.5 rounded-3xl border border-white/80 shadow-md shadow-pink-500/5 flex items-center gap-4 hover:border-purple-200 transition">
+            <div class="w-13 h-13 min-w-[3.25rem] rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-purple-500/20">
               <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
             <div>
-              <div class="text-xs text-gray-400 font-medium" data-bn="স্বয়ংক্রিয় মেয়াদ" data-en="Auto Expiry">স্বয়ংক্রিয় মেয়াদ</div>
-              <div class="text-sm font-bold text-gray-800" data-bn="৬ মাস পর এক্সপায়ার" data-en="Expires after 6 mos">৬ মাস পর এক্সপায়ার</div>
+              <div class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider" data-bn="স্বয়ংক্রিয় মেয়াদ" data-en="Auto Expiry">স্বয়ংক্রিয় মেয়াদ</div>
+              <div class="text-sm font-bold text-gray-800 mt-0.5" data-bn="৬ মাস পর এক্সপায়ার" data-en="Expires after 6 mos">৬ মাস পর এক্সপায়ার</div>
             </div>
           </div>
         </div>
@@ -119,15 +128,18 @@
       </div>
 
       <!-- TRANSACTION HISTORY SECTION -->
-      <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 border border-pink-100 shadow-sm space-y-4">
-        <div class="flex justify-between items-center">
+      <div class="glass-card rounded-3xl p-6 md:p-7 border border-white/80 shadow-xl shadow-pink-500/5 space-y-5">
+        <div class="flex justify-between items-center border-b border-gray-100 pb-4">
           <div>
-            <h3 class="font-bold text-lg text-gray-900" data-bn="লেনদেনের ইতিহাস" data-en="Transaction History">লেনদেনের ইতিহাস</h3>
-            <p class="text-xs text-gray-400" data-bn="আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব" data-en="Your recent coin earnings and validity record">আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব</p>
+            <h3 class="font-extrabold text-lg text-gray-900 tracking-tight" data-bn="লেনদেনের ইতিহাস" data-en="Transaction History">লেনদেনের ইতিহাস</h3>
+            <p class="text-xs text-gray-400 font-medium" data-bn="আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব" data-en="Your recent coin earnings and validity record">আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব</p>
+          </div>
+          <div class="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-receipt"></i>
           </div>
         </div>
 
-        <div class="space-y-3" id="transactionList">
+        <div class="space-y-3.5" id="transactionList">
           <!-- Dynamic Transactions will load here -->
         </div>
       </div>
@@ -152,20 +164,17 @@
     // Load Logged-in User Coin Data & Check Authentication
     async function loadUserCoins() {
       try {
-        // প্রথমে ব্যাকএন্ড থেকে বর্তমান লগইন করা ইউজারের আইডি চেক করা হচ্ছে
         const userRes = await fetch('/api/coins/current-user');
         const userData = await userRes.json();
 
         if (!userData.success || !userData.userId) {
-          // ইউজার লগইন করা না থাকলে ড্যাশবোর্ড লুকিয়ে লগইন প্রম্পট দেখাবে
           document.getElementById('dashboardContent').classList.add('hidden');
           document.getElementById('loginRequiredState').classList.remove('hidden');
           return;
         }
 
-        const userId = userData.userId; // ডাটাবেজের সঠিক user_id
+        const userId = userData.userId;
 
-        // নির্দিষ্ট ইউজারের কয়েন ব্যালেন্স ও হিস্ট্রি ফেচ করা
         const response = await fetch(`/api/coins/balance/${userId}`);
         const result = await response.json();
 
@@ -177,32 +186,31 @@
           container.innerHTML = '';
 
           if (result.transactions.length === 0) {
-            container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">কোনো লেনদেন পাওয়া যায়নি।</p>';
+            container.innerHTML = '<div class="text-center py-10 space-y-2"><div class="w-12 h-12 rounded-full bg-gray-50 text-gray-300 flex items-center justify-center mx-auto text-lg"><i class="fa-solid fa-box-open"></i></div><p class="text-xs text-gray-400 font-medium">কোনো লেনদেন পাওয়া যায়নি।</p></div>';
             return;
           }
 
-          // ইউজারের সমস্ত কয়েন ট্রানজেকশন লুপ চালিয়ে দেখানো হচ্ছে (+ এবং - উভয়ই)
           result.transactions.forEach(tx => {
             const isPositive = tx.coin_balance > 0;
-            const bgClass = isPositive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600';
+            const bgClass = isPositive ? 'bg-emerald-100/80 text-emerald-600 border-emerald-200' : 'bg-rose-100/80 text-rose-600 border-rose-200';
             const iconClass = isPositive ? 'fa-arrow-down' : 'fa-arrow-up';
             
             const itemHTML = `
-              <div class="p-4 rounded-2xl bg-pink-50/30 hover:bg-pink-50/60 border border-pink-100 flex justify-between items-center transition">
-                <div class="flex items-center gap-3.5">
-                  <div class="w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center text-sm font-bold shrink-0 shadow-sm">
+              <div class="p-4.5 rounded-2xl bg-white/60 hover:bg-white/90 border border-pink-100/60 flex justify-between items-center transition shadow-sm hover:shadow-md">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 rounded-2xl ${bgClass} border flex items-center justify-center text-sm font-bold shrink-0 shadow-sm">
                     <i class="fa-solid ${iconClass}"></i>
                   </div>
                   <div>
                     <div class="text-xs md:text-sm font-bold text-gray-800">${tx.coin_source}</div>
-                    <div class="text-[11px] text-gray-400">${new Date(tx.coin_create_date).toLocaleString('bn-BD')}</div>
+                    <div class="text-[11px] text-gray-400 font-medium mt-0.5">${new Date(tx.coin_create_date).toLocaleString('bn-BD')}</div>
                   </div>
                 </div>
                 <div class="text-right">
-                  <span class="text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-500'}">
+                  <span class="text-sm md:text-base font-black tracking-tight ${isPositive ? 'text-emerald-600' : 'text-rose-500'}">
                     ${isPositive ? '+' : ''}${tx.coin_balance} Coins
                   </span>
-                  <div class="text-[10px] text-gray-400">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ (মাইনাস)'}</div>
+                  <div class="text-[10px] font-semibold ${isPositive ? 'text-emerald-500' : 'text-rose-400'} mt-0.5">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ (মাইনাস)'}</div>
                 </div>
               </div>
             `;
