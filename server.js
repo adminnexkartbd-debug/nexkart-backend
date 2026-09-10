@@ -223,6 +223,7 @@ const returnsRouter = require('./routes/users/returns');
 const myCouponRouter = require('./routes/users/my-couponRouter');
 const userSettingsRouter = require('./routes/users/settings');
 const popRouter = require('./routes/users/popRouter');
+const coinRoutes = require('./routes/users/coinRoutes');
 
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
@@ -259,6 +260,7 @@ app.use('/api/admin/inquiries', inquariedRouter);
 app.use('/api/admin/reviews', adminReviewRouter);
 app.use('/api/message-center', messageCenterRouter);
 app.use('/api/admin', adminSettingRoute);
+app.use('/api/coins', coinRoutes);
 
 app.use('/admin/uploads', express.static(path.join(__dirname, 'uploads')));
 
