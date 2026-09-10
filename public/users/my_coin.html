@@ -19,10 +19,10 @@
 
 <body class="bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 text-gray-800 antialiased min-h-screen pb-24 md:pb-12">
 
-  <main class="max-w-5xl mx-auto px-4 py-6 md:py-10 space-y-6">
+  <main class="max-w-4xl mx-auto px-4 py-6 md:py-10 space-y-6">
 
     <!-- TOP NAVIGATION HEADER -->
-    <header class="flex justify-between items-center bg-white/80 backdrop-blur-md p-4 md:p-5 rounded-2xl border border-pink-100 shadow-sm">
+    <header class="flex justify-between items-center bg-white/90 backdrop-blur-md p-4 md:p-5 rounded-2xl border border-pink-100 shadow-sm">
       <div class="flex items-center gap-3">
         <button onclick="window.history.back()" class="w-10 h-10 rounded-xl bg-pink-50 border border-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-100 active:scale-95 transition shadow-sm">
           <i class="fa-solid fa-arrow-left text-lg"></i>
@@ -31,87 +31,137 @@
           <i class="fa-solid fa-coins"></i>
         </div>
         <div>
-          <h1 class="text-lg md:text-xl font-bold text-gray-900">মাই রিওয়ার্ডস & কয়েন</h1>
-          <p class="text-xs text-gray-500 hidden sm:block">সহজেই পয়েন্ট আর্ন করুন এবং কেনাকাটায় ব্যবহার করুন</p>
+          <h1 class="text-base md:text-xl font-bold text-gray-900" data-bn="মাই রিওয়ার্ডস & কয়েন" data-en="My Rewards & Coins">মাই রিওয়ার্ডস & কয়েন</h1>
+          <p class="text-xs text-gray-500 hidden sm:block" data-bn="আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন" data-en="Manage your points and rewards">আপনার পয়েন্ট এবং রিওয়ার্ড ম্যানেজ করুন</p>
+        </div>
+      </div>
+
+      <!-- LANGUAGE TOGGLE -->
+      <div class="flex items-center gap-2">
+        <div class="bg-pink-50 border border-pink-200 rounded-xl px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-globe text-pink-500 text-xs"></i>
+          <select id="langSelect" onchange="toggleLanguage(this.value)" class="bg-transparent text-xs font-bold text-pink-700 focus:outline-none cursor-pointer">
+            <option value="bn" selected>বাংলা</option>
+            <option value="en">English</option>
+          </select>
         </div>
       </div>
     </header>
 
-    <!-- HERO BANNER (DYNAMIC BALANCE & TAKA) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 rounded-3xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 p-6 md:p-8 text-white shadow-xl shadow-pink-500/20 relative overflow-hidden flex flex-col justify-between">
-        <div class="absolute -right-8 -top-8 w-36 h-36 bg-white/10 rounded-full blur-xl"></div>
-        
-        <div>
-          <div class="flex justify-between items-center mb-4">
-            <span class="text-xs font-semibold uppercase tracking-wider bg-black/20 px-3.5 py-1.5 rounded-full backdrop-blur-md">
-              <i class="fa-solid fa-wallet text-pink-200 mr-1.5"></i> মোট ব্যালেন্স
-            </span>
-            <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-white font-medium">১ কয়েন = ৳০.৩০</span>
-          </div>
-
-          <div class="my-4">
-            <div class="text-4xl md:text-5xl font-black tracking-tight">
-              <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-xl font-normal opacity-90">Coins</span>
-            </div>
-            <p class="text-xs md:text-sm text-pink-100 mt-2">
-              সমপরিমাণ টাকা: <span class="font-bold text-white text-base" id="equivalentTkDisplay">৳ ০.০০</span>
-            </p>
-          </div>
-        </div>
-
-        <div class="mt-6 pt-4 border-t border-white/20 flex flex-col sm:flex-row gap-3">
-          <button class="w-full sm:w-auto px-6 py-3 bg-white text-pink-600 font-bold text-sm rounded-xl shadow active:scale-95 transition hover:bg-pink-50">
-            কেনাকাটায় ব্যবহার করুন
-          </button>
-        </div>
+    <!-- IF USER IS NOT LOGGED IN (HIDDEN BY DEFAULT) -->
+    <div id="loginRequiredState" class="hidden bg-white/90 backdrop-blur-md rounded-3xl p-8 text-center border border-pink-100 shadow-sm space-y-4">
+      <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-user-lock"></i>
       </div>
-
-      <!-- QUICK STATS -->
-      <div class="lg:col-span-1 flex flex-col justify-between gap-3">
-        <div class="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-500 flex items-center justify-center font-bold text-lg shrink-0">
-            <i class="fa-solid fa-gift"></i>
-          </div>
-          <div>
-            <div class="text-xs text-gray-400 font-medium">সাইন-আপ বোনাস</div>
-            <div class="text-sm font-bold text-gray-800">নতুন অ্যাকাউন্টে +১০ কয়েন</div>
-          </div>
-        </div>
-
-        <div class="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-500 flex items-center justify-center font-bold text-lg shrink-0">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-          </div>
-          <div>
-            <div class="text-xs text-gray-400 font-medium">কয়েনের মেয়াদ</div>
-            <div class="text-sm font-bold text-gray-800">অর্জনের ৬ মাস পর</div>
-          </div>
-        </div>
-      </div>
+      <h2 class="text-xl font-bold text-gray-900" data-bn="দয়া করে লগইন করুন" data-en="Please Login">দয়া করে লগইন করুন</h2>
+      <p class="text-xs text-gray-500 max-w-sm mx-auto" data-bn="আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।" data-en="Please log in to your account to view your coins and rewards.">আপনার কয়েন এবং রিওয়ার্ড দেখতে প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করুন।</p>
+      <a href="/login.html" class="inline-block px-6 py-3 bg-pink-600 text-white font-bold text-sm rounded-xl shadow hover:bg-pink-700 transition">
+        <span data-bn="লগইন করুন" data-en="Login Now">লগইন করুন</span>
+      </a>
     </div>
 
-    <!-- TRANSACTION HISTORY SECTION -->
-    <div class="bg-white/80 backdrop-blur-md rounded-3xl p-6 border border-pink-100 shadow-sm">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h3 class="font-bold text-lg text-gray-900">লেনদেনের ইতিহাস</h3>
-          <p class="text-xs text-gray-400">আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব</p>
+    <!-- MAIN DASHBOARD CONTENT (VISIBLE WHEN LOGGED IN) -->
+    <div id="dashboardContent" class="space-y-6">
+
+      <!-- HERO BANNER & STATS GRID -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- HERO BANNER -->
+        <div class="md:col-span-2 rounded-3xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 p-6 md:p-8 text-white shadow-xl shadow-pink-500/20 relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute -right-8 -top-8 w-36 h-36 bg-white/10 rounded-full blur-xl"></div>
+          
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-xs font-semibold uppercase tracking-wider bg-black/20 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+                <i class="fa-solid fa-wallet text-pink-200 mr-1.5"></i> <span data-bn="মোট ব্যালেন্স" data-en="Total Balance">মোট ব্যালেন্স</span>
+              </span>
+              <span class="text-xs bg-white/20 px-3 py-1 rounded-full text-white font-medium" data-bn="১ কয়েন = ৳০.৩০" data-en="1 Coin = ৳0.30">১ কয়েন = ৳০.৩০</span>
+            </div>
+
+            <div class="my-4">
+              <div class="text-4xl md:text-5xl font-black tracking-tight">
+                <span id="totalCoinsDisplay">0</span> <span class="text-lg md:text-xl font-normal opacity-90">Coins</span>
+              </div>
+              <p class="text-xs md:text-sm text-pink-100 mt-2">
+                <span data-bn="সমপরিমাণ টাকা:" data-en="Equivalent Amount:">সমপরিমাণ টাকা:</span> <span class="font-bold text-white text-base" id="equivalentTkDisplay">৳ ০.০০</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-white/20 flex items-center justify-between">
+            <span class="text-xs text-pink-100" data-bn="কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন" data-en="Use for shopping discounts">কেনাকাটায় ডিসকাউন্টে ব্যবহার করুন</span>
+          </div>
+        </div>
+
+        <!-- QUICK INFO CARD -->
+        <div class="md:col-span-1 flex flex-col justify-between gap-4">
+          <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-500 flex items-center justify-center font-bold text-lg shrink-0">
+              <i class="fa-solid fa-gift"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 font-medium" data-bn="সাইন-আপ বোনাস" data-en="Sign-up Bonus">সাইন-আপ বোনাস</div>
+              <div class="text-sm font-bold text-gray-800" data-bn="+১০ কয়েন (৬ মাস মেয়াদ)" data-en="+10 Coins (6 Months)">+১০ কয়েন (৬ মাস মেয়াদ)</div>
+            </div>
+          </div>
+
+          <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-500 flex items-center justify-center font-bold text-lg shrink-0">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400 font-medium" data-bn="স্বয়ংক্রিয় মেয়াদ" data-en="Auto Expiry">স্বয়ংক্রিয় মেয়াদ</div>
+              <div class="text-sm font-bold text-gray-800" data-bn="৬ মাস পর এক্সপায়ার" data-en="Expires after 6 mos">৬ মাস পর এক্সপায়ার</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TRANSACTION HISTORY SECTION -->
+      <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 border border-pink-100 shadow-sm space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-lg text-gray-900" data-bn="লেনদেনের ইতিহাস" data-en="Transaction History">লেনদেনের ইতিহাস</h3>
+            <p class="text-xs text-gray-400" data-bn="আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব" data-en="Your recent coin earnings and validity record">আপনার সাম্প্রতিক কয়েন জমা ও মেয়াদের হিসাব</p>
+          </div>
+        </div>
+
+        <div class="space-y-3" id="transactionList">
+          <!-- Dynamic Transactions will load here -->
         </div>
       </div>
 
-      <div class="space-y-3" id="transactionList">
-        <!-- Dynamic Transactions will load here -->
-      </div>
     </div>
 
   </main>
 
   <script>
-    // Fetch user coin data dynamically (Replace '1' with dynamic logged-in user id)
+    // Language Toggle Implementation
+    function toggleLanguage(lang) {
+      const elements = document.querySelectorAll('[data-bn]');
+      elements.forEach(el => {
+        if (lang === 'en') {
+          el.textContent = el.getAttribute('data-en');
+        } else {
+          el.textContent = el.getAttribute('data-bn');
+        }
+      });
+    }
+
+    // Load User Coin Data & Check Login Status
     async function loadUserCoins() {
       try {
-        const userId = 1; // আপনার লগইন করা ইউজারের আইডি এখানে ডায়নামিক করুন
+        // এখানে আপনার সিস্টেমের লগইন করা ইউজারের আইডি ডাইনামিক বসাবেন (যেমন সেশন বা লোকালস্টোরেজ থেকে)
+        // যদি ইউজার লগইন করা না থাকে, তবে userId-এর মান null বা 0 হবে।
+        const userId = 1; // টেস্ট করার জন্য 1 দেওয়া আছে, লগইন না থাকলে null দিন।
+
+        if (!userId) {
+          document.getElementById('dashboardContent').classList.add('hidden');
+          document.getElementById('loginRequiredState').classList.remove('hidden');
+          return;
+        }
+
         const response = await fetch(`/api/coins/balance/${userId}`);
         const result = await response.json();
 
@@ -123,7 +173,7 @@
           container.innerHTML = '';
 
           if (result.transactions.length === 0) {
-            container.innerHTML = '<p class="text-center text-xs text-gray-400 py-4">কোনো লেনদেন পাওয়া যায়নি।</p>';
+            container.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">কোনো লেনদেন পাওয়া যায়নি।</p>';
             return;
           }
 
@@ -133,9 +183,9 @@
             const iconClass = isPositive ? 'fa-arrow-down' : 'fa-arrow-up';
             
             const itemHTML = `
-              <div class="p-4 rounded-2xl bg-pink-50/40 hover:bg-pink-50/70 border border-pink-100 flex justify-between items-center transition">
+              <div class="p-4 rounded-2xl bg-pink-50/30 hover:bg-pink-50/60 border border-pink-100 flex justify-between items-center transition">
                 <div class="flex items-center gap-3.5">
-                  <div class="w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center text-sm font-bold">
+                  <div class="w-10 h-10 rounded-xl ${bgClass} flex items-center justify-center text-sm font-bold shrink-0 shadow-sm">
                     <i class="fa-solid ${iconClass}"></i>
                   </div>
                   <div>
@@ -147,7 +197,7 @@
                   <span class="text-sm font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-500'}">
                     ${isPositive ? '+' : ''}${tx.coin_balance} Coins
                   </span>
-                  <div class="text-[10px] text-gray-400">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ'}</div>
+                  <div class="text-[10px] text-gray-400">${isPositive ? 'সফলভাবে জমা হয়েছে' : 'মেয়াদ উত্তীর্ণ (-১০ কয়েন)'}</div>
                 </div>
               </div>
             `;
