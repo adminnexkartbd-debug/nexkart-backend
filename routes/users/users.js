@@ -229,8 +229,9 @@ router.get(['/penalties', '/penalties.html'], (req, res) => {
 router.get(['/return-policy', '/return-policy.html'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'return-policy.html'));
 });
-
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
+
+router.get('/my_coin', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html')));
 router.get('/settings.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
 router.get('/profile.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
@@ -1127,6 +1128,7 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
+// ==================== [ NEW FEATURE: PRODUCT DETAILS PAGE (SUPPORT FOR VIDEO_URL) ] ====================
 router.get('/product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
@@ -1170,6 +1172,7 @@ router.get('/product/:id', async (req, res) => {
         return res.json({
             success: true,
             product: product,
+            video_url: product.video_url || null, // video_url পাঠানো হচ্ছে
             gallery_images: images.map(img => img.image_path),
             seller_products: sellerProducts,
             suggested_products: suggestedProducts
