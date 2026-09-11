@@ -235,7 +235,57 @@
               <span class="text-sm font-medium text-slate-300">🚚 Free Shipping</span>
             </label>
           </div>
+        </div>
 
+        <!-- 2.1 VIDEO UPLOAD & COIN OFFER SECTION -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
+              <i class="fa-solid fa-video"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Product Video & Coin Offer Details</h2>
+              <p class="text-xs text-slate-400">প্রোডাক্টের ভিডিও এবং কয়েন অফার সম্পর্কিত সেটিংস</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Video Upload & Existing Preview Field -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Video (MP4/WebM)</label>
+              <div id="videoPreviewContainer" class="mb-3 hidden">
+                <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-2">
+                  <video id="existingVideoPlayer" src="" controls class="w-full h-36 object-cover rounded-lg"></video>
+                  <div class="flex items-center justify-between mt-2 px-1">
+                    <span class="text-xs text-purple-400 font-medium">Existing Video Loaded</span>
+                    <button type="button" id="removeVideoBtn" onclick="removeExistingVideo()" class="px-2.5 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-xs font-semibold transition">
+                      <i class="fa-solid fa-trash"></i> Remove Video
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <input type="file" id="product_video" name="product_video" accept="video/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/30 transition">
+              <p class="text-xs text-slate-400 mt-1">আগে ভিডিও থাকলে দেখাবে, নতুন আপলোড করলে পুরোনোটি প্রতিস্থাপিত হবে।</p>
+              <input type="hidden" id="remove_video_flag" name="remove_video" value="0">
+            </div>
+
+            <!-- Coin Offer Toggle & Percentage -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Coin Offer Available? <span class="text-pink-500">*</span></label>
+                <select id="coin_offer_toggle" name="coin_offer_toggle" onchange="handleCoinOfferToggle()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition">
+                  <option value="no">No (না)</option>
+                  <option value="yes">Yes (হ্যাঁ)</option>
+                </select>
+              </div>
+
+              <div id="coinPercentageContainer" class="hidden">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Coin Percentage (%) <span class="text-pink-500">*</span></label>
+                <input type="number" id="coin_percentage" name="coin_percentage" placeholder="যেমন: 5" min="1" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-purple-400 font-semibold focus:outline-none focus:border-purple-500 transition">
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 3. PRICING & INVENTORY -->
@@ -424,6 +474,28 @@
       }
     }
 
+    // Coin Offer Toggle Functionality
+    function handleCoinOfferToggle() {
+      const coinToggle = document.getElementById('coin_offer_toggle').value;
+      const percentageContainer = document.getElementById('coinPercentageContainer');
+      const percentageInput = document.getElementById('coin_percentage');
+
+      if (coinToggle === 'yes') {
+        percentageContainer.classList.remove('hidden');
+        percentageInput.required = true;
+      } else {
+        percentageContainer.classList.add('hidden');
+        percentageInput.required = false;
+        percentageInput.value = '';
+      }
+    }
+
+    function removeExistingVideo() {
+      document.getElementById('existingVideoPlayer').src = '';
+      document.getElementById('videoPreviewContainer').classList.add('hidden');
+      document.getElementById('remove_video_flag').value = '1';
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const dbProductId = urlParams.get('id');
 
@@ -467,6 +539,21 @@
           document.getElementById('cod_available').checked = Number(p.cod_available) === 1;
           document.getElementById('open_box_inspection').checked = Number(p.open_box_inspection) === 1;
           document.getElementById('free_shipping').checked = Number(p.free_shipping) === 1;
+
+          // Video URL preview setup
+          if (p.video_url && p.video_url.trim() !== '') {
+            document.getElementById('existingVideoPlayer').src = p.video_url;
+            document.getElementById('videoPreviewContainer').classList.remove('hidden');
+            document.getElementById('remove_video_flag').value = '0';
+          }
+
+          // Coin Offer setup
+          const coinOfferVal = p.coin_offer ? p.coin_offer.toLowerCase() : 'no';
+          document.getElementById('coin_offer_toggle').value = coinOfferVal;
+          if (coinOfferVal === 'yes' && p.coin_percentage_value !== undefined && p.coin_percentage_value !== null) {
+            document.getElementById('coin_percentage').value = p.coin_percentage_value;
+          }
+          handleCoinOfferToggle();
 
           document.getElementById('regular_price').value = p.regular_price || '';
           document.getElementById('old_price').value = (p.old_price !== null && p.old_price !== undefined) ? p.old_price : '';
