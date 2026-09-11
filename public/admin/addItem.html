@@ -116,7 +116,6 @@
               </select>
             </div>
 
-            <!-- 🔴 এখন এটি সবসময় দৃশ্যমান থাকবে (hidden ক্লাস সরিয়ে দেওয়া হয়েছে) 🔴 -->
             <div id="variantContainer" class="md:col-span-3">
               <label class="block text-sm font-medium text-slate-300 mb-2">Product Variant</label>
               <input type="text" id="variantInput" name="products_variant" placeholder="যেমন: Red, Blue, Black অথবা 32, 34, XL, 128GB, 256GB" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
@@ -224,7 +223,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/5 transition-all">
-                <input type="checkbox" id="codAvailable" class="w-5 h-5 accent-blue-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="codAvailable" name="cod_available" class="w-5 h-5 accent-blue-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
@@ -237,7 +236,7 @@
               </label>
 
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/60 hover:bg-amber-500/5 transition-all">
-                <input type="checkbox" id="openBoxInspection" class="w-5 h-5 accent-amber-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="openBoxInspection" name="open_box_inspection" class="w-5 h-5 accent-amber-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-box-open"></i>
@@ -250,7 +249,7 @@
               </label>
 
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-emerald-500/60 hover:bg-emerald-500/5 transition-all">
-                <input type="checkbox" id="freeShipping" class="w-5 h-5 accent-emerald-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="freeShipping" name="free_shipping" class="w-5 h-5 accent-emerald-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-truck-ramp-box"></i>
@@ -264,7 +263,45 @@
 
             </div>
           </div>
+        </div>
 
+        <!-- 2.1 VIDEO UPLOAD & COIN OFFER SECTION (Newly Added) -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
+          <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+          <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
+              <i class="fa-solid fa-video"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-semibold text-white">Product Video & Coin Offer Details</h2>
+              <p class="text-xs text-slate-400">প্রোডাক্টের ভিডিও এবং কয়েন অফার সম্পর্কিত সেটিংস</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Video Upload Field -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Video (MP4/WebM)</label>
+              <input type="file" id="product_video" name="product_video" accept="video/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/30 transition">
+              <p class="text-xs text-slate-400 mt-1">প্রোডাক্টের একটি ছোট প্রোমোশনাল ভিডিও আপলোড করতে পারেন (ঐচ্ছিক)।</p>
+            </div>
+
+            <!-- Coin Offer Toggle & Percentage -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Coin Offer Available? <span class="text-pink-500">*</span></label>
+                <select id="coin_offer_toggle" name="coin_offer_toggle" onchange="handleCoinOfferToggle()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition">
+                  <option value="no">No (না)</option>
+                  <option value="yes">Yes (হ্যাঁ)</option>
+                </select>
+              </div>
+
+              <div id="coinPercentageContainer" class="hidden">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Coin Percentage (%) <span class="text-pink-500">*</span></label>
+                <input type="number" id="coin_percentage" name="coin_percentage" placeholder="যেমন: 5" min="1" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-purple-400 font-semibold focus:outline-none focus:border-purple-500 transition">
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 3. PRICING & INVENTORY -->
@@ -435,6 +472,22 @@
       }
     }
 
+    // Coin Offer Toggle Functionality
+    function handleCoinOfferToggle() {
+      const coinToggle = document.getElementById('coin_offer_toggle').value;
+      const percentageContainer = document.getElementById('coinPercentageContainer');
+      const percentageInput = document.getElementById('coin_percentage');
+
+      if (coinToggle === 'yes') {
+        percentageContainer.classList.remove('hidden');
+        percentageInput.required = true;
+      } else {
+        percentageContainer.classList.add('hidden');
+        percentageInput.required = false;
+        percentageInput.value = '';
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const editId = urlParams.get('edit') || urlParams.get('id');
@@ -508,6 +561,14 @@
       document.getElementById('codAvailable').checked = Boolean(product.cod_available == 1);
       document.getElementById('openBoxInspection').checked = Boolean(product.open_box_inspection == 1);
       document.getElementById('freeShipping').checked = Boolean(product.free_shipping == 1);
+
+      // Coin Offer setup
+      const coinOfferVal = product.coin_offer ? product.coin_offer.toLowerCase() : 'no';
+      document.getElementById('coin_offer_toggle').value = coinOfferVal;
+      if (coinOfferVal === 'yes' && product.coin_percentage_value !== undefined && product.coin_percentage_value !== null) {
+        document.getElementById('coin_percentage').value = product.coin_percentage_value;
+      }
+      handleCoinOfferToggle();
 
       // Pricing & Inventory
       document.getElementById('regularPriceInput').value = product.regular_price ?? '';
@@ -635,71 +696,6 @@
       if (totalImagesCount < 3) {
         alert("⚠️ অনুগ্রহ করে কমপক্ষে ৩টি প্রোডাক্টের ছবি সিলেক্ট করুন!");
         return;
-      }
-
-      const submitBtn = this.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${editMode ? 'Updating Product...' : 'Saving Product...'}`;
-
-      const formData = new FormData(this);
-      
-      const brandInputEl = document.getElementById('brandInput');
-      const brandValue = brandInputEl ? brandInputEl.value.trim() : '';
-      formData.set('brand_name', brandValue !== '' ? brandValue : 'N/A');
-
-      // 🔴 সব ক্যাটাগরির জন্যই ভ্যারিয়েন্ট ডাটা ব্যাকএন্ডে পাঠানোর ব্যবস্থা 🔴
-      const variantInputEl = document.getElementById('variantInput');
-      const variantValue = variantInputEl ? variantInputEl.value.trim() : '';
-      formData.set('products_variant', variantValue);
-
-      if (document.getElementById('codAvailable').checked) {
-        formData.set('cod_available', "1");
-      } else {
-        formData.delete('cod_available');
-      }
-
-      if (document.getElementById('openBoxInspection').checked) {
-        formData.set('open_box_inspection', "1");
-      } else {
-        formData.delete('open_box_inspection');
-      }
-
-      if (document.getElementById('freeShipping').checked) {
-        formData.set('free_shipping', "1");
-      } else {
-        formData.delete('free_shipping');
-      }
-
-      if (editMode) {
-        formData.append('kept_image_ids', JSON.stringify(keptImageIds));
-      }
-
-      const targetURL = editMode ? `/api/products/update/${editProductId}` : '/api/products/add';
-      const targetMethod = editMode ? 'PUT' : 'POST';
-
-      try {
-        const response = await fetch(targetURL, {
-            method: targetMethod,
-            body: formData,
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            alert(result.message || (editMode ? "সফলভাবে প্রোডাক্ট আপডেট করা হয়েছে! 🎉" : "সফলভাবে নতুন প্রোডাক্ট যোগ করা হয়েছে! 🎉"));
-            setTimeout(() => { window.location.href = "/home.html"; }, 300);
-        } else {
-            alert('❌ ' + (result.message || 'কিছু সমস্যা হয়েছে!'));
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = editMode ? 'Update Product' : 'Save Product';
-        }
-      } 
-      catch (error) {
-        console.error('Error:', error);
-        alert('⚠️ এরর: ' + error.message);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = editMode ? 'Update Product' : 'Save Product';
       }
     });
   </script>
