@@ -478,7 +478,7 @@
     <img id="fullscreen-modal-image" src="" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
   </div>
 
-  <!-- JavaScript Logic -->
+<!-- JavaScript Logic -->
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
@@ -751,6 +751,12 @@
     }
 
     async function checkLoginAndProceed(actionType) {
+      const maxStock = Number(window.currentProductStock || 0);
+      if (maxStock <= 0) {
+        alert("Sorry! This product is currently out of stock.");
+        return;
+      }
+
       try {
         const response = await fetch('/user/current_user');
         if (response.ok) {
@@ -1030,7 +1036,7 @@
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
-                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
