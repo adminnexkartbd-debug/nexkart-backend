@@ -621,7 +621,7 @@
      }
    });
 
- async function shareProduct() {
+async function shareProduct() {
   const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
   const salePrice = document.getElementById('product-sale-price').innerText || '';
   const category = document.getElementById('product-category').innerText || '';
@@ -630,7 +630,7 @@
 
   let shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
-  // যদি ভিডিও থাকে, তবে টেক্সট মেসেজের মধ্যে ভিডিও লিংক যুক্ত করা হবে
+  // ভিডিও থাকলে তার লিংক যুক্ত করবে
   if (currentVideoUrl) {
     let formattedVidUrl = currentVideoUrl;
     if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
@@ -649,22 +649,21 @@
         url: shareUrl
       };
 
-      // ভিডিও না থাকলে কেবল ছবি শেয়ার করার ফাইল যুক্ত করবে
-      if (!currentVideoUrl) {
-        const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
-        if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-          try {
-            const response = await fetch(mainImgSrc);
-            const blob = await response.blob();
-            const ext = blob.type.split('/')[1] || 'jpg';
-            const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+      // ইমেজ শেয়ার করার অংশ (ভিডিও থাকলেও এখন ইমেজ যুক্ত হবে)
+      const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
+      if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+        try {
+          const response = await fetch(mainImgSrc);
+          const blob = await response.blob();
+          const ext = blob.type.split('/')[1] || 'jpg';
+          const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
 
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              shareData.files = [file];
-            }
-          } catch (fileErr) {
-            console.warn('Image fetch for share failed, falling back to text share:', fileErr);
+          // ফাইল শেয়ার করা সম্ভব কি না চেক করে যুক্ত করবে
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            shareData.files = [file];
           }
+        } catch (fileErr) {
+          console.warn('Image fetch for share failed, sharing text/link only:', fileErr);
         }
       }
 
@@ -685,7 +684,8 @@
     });
   }
 }
-    function setupImageFullscreen() {
+
+function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
       if (!container || !img) return;
