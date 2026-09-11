@@ -339,8 +339,8 @@
         <!-- Specification Gallery Images -->
         <div id="specification-images-gallery" class="pt-4 space-y-6"></div>
         <div id="spec-img-toggle-btn-container" class="hidden text-center pt-2">
-          <button id="spec-img-toggle-btn" onclick="toggleSpecificationImages()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-4 py-2 rounded-xl border border-pink-200 transition-all">
-            <span>Show More Images</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          <button id="spec-img-toggle-btn" onclick="loadMoreSpecImages()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-5 py-2.5 rounded-xl border border-pink-200 transition-all shadow-sm active:scale-95">
+            <span>Load More Images</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
           </button>
         </div>
       </div>
@@ -503,7 +503,10 @@
     let fullDescriptionText = '';
     let isDescExpanded = false;
     let isSpecExpanded = false;
-    let isSpecImagesExpanded = false;
+
+    // Specification Images Pagination Global Variables
+    let specImagesList = [];
+    let visibleSpecImgCount = 1;
 
     // Pagination Global Variables
     let allReviewsData = [];
@@ -1049,7 +1052,7 @@
 
       const title = product.title ? `${product.title} - NexKart` : 'NexKart Product Details';
       const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
-      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফার!`;
+      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKart`;
       const pageUrl = window.location.href;
 
@@ -1401,24 +1404,6 @@
       }
     }
 
-    // Toggle for Specification Images Gallery (Threshold changed to 1 image)
-    function toggleSpecificationImages() {
-      const allImgCards = document.querySelectorAll('.spec-img-card');
-      const btn = document.getElementById('spec-img-toggle-btn');
-
-      if (isSpecImagesExpanded) {
-        allImgCards.forEach((el, index) => {
-          if (index >= 1) el.classList.add('hidden');
-        });
-        btn.innerHTML = `<span>Show More Images</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
-        isSpecImagesExpanded = false;
-      } else {
-        allImgCards.forEach(el => el.classList.remove('hidden'));
-        btn.innerHTML = `<span>Show Less Images</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
-        isSpecImagesExpanded = true;
-      }
-    }
-
     async function fetchProductData() {
       if (!productId) return;
 
@@ -1753,42 +1738,62 @@ function toggleCustomVideoPlay() {
       renderThumbnails(mediaList);
     }
 
+  // Specification Gallery Images (1 Image + Load More Pagination)
   function renderSpecificationImages(images) {
-  const specImageContainer = document.getElementById('specification-images-gallery');
-  const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-  if (!specImageContainer) return;
-  specImageContainer.innerHTML = '';
+    const specImageContainer = document.getElementById('specification-images-gallery');
+    const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+    if (!specImageContainer) return;
+    
+    specImageContainer.innerHTML = '';
+    specImagesList = images || [];
+    visibleSpecImgCount = 1; // শুরুতে ১টি ছবি রেন্ডার হবে
 
-  if (!images || images.length === 0) {
-    if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
-    return;
-  }
-
-  images.forEach((imgUrl, index) => {
-    let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
-    if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
+    if (!specImagesList || specImagesList.length === 0) {
+      if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
+      return;
     }
 
-    if (formattedUrl) {
-      // ১টির বেশি ছবি হলে বাকিগুলো প্রাথমিক অবস্থায় 'hidden' থাকবে
-      const hideClass = index >= 1 ? 'hidden' : '';
-      specImageContainer.innerHTML += `
-        <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center ${hideClass}">
-          <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.parentElement.style.display='none';">
-        </div>
-      `;
-    }
-  });
-
-  // ১টির বেশি ছবি থাকলে Show More Images বাটনটি দৃশ্যমান হবে
-  if (images.length > 1 && specImgBtnContainer) {
-    specImgBtnContainer.classList.remove('hidden');
-    isSpecImagesExpanded = false;
-  } else if (specImgBtnContainer) {
-    specImgBtnContainer.classList.add('hidden');
+    renderSpecImagesBatch();
   }
-}
+
+  function renderSpecImagesBatch() {
+    const specImageContainer = document.getElementById('specification-images-gallery');
+    const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+    if (!specImageContainer) return;
+
+    specImageContainer.innerHTML = '';
+
+    const currentImagesToDisplay = specImagesList.slice(0, visibleSpecImgCount);
+
+    currentImagesToDisplay.forEach((imgUrl) => {
+      let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
+      if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+        formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
+      }
+
+      if (formattedUrl) {
+        specImageContainer.innerHTML += `
+          <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center">
+            <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.parentElement.style.display='none';">
+          </div>
+        `;
+      }
+    });
+
+    // সব ছবি দেখানো হয়ে গেলে বাটন হাইড হবে
+    if (visibleSpecImgCount < specImagesList.length) {
+      if (specImgBtnContainer) specImgBtnContainer.classList.remove('hidden');
+    } else {
+      if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
+    }
+  }
+
+  // Load More Button Click Event Handler
+  function loadMoreSpecImages() {
+    visibleSpecImgCount += 1; // প্রতিক্লিকে ১টি করে অতিরিক্ত ছবি লোড হবে
+    renderSpecImagesBatch();
+  }
+
     document.addEventListener("DOMContentLoaded", () => {
       if (productId) {
         fetchProductData();
