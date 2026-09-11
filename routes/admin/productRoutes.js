@@ -18,7 +18,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'uploads', // Cloudinary-র যে ফোল্ডারে ফাইল সেভ হবে
+    folder: 'uploads',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'],
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -29,12 +29,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// 🔴 সিলেক্ট করলে 1 পাঠাবে, না পাঠালে 0 (ডাটাবেজ ডিফল্ট) 🔴
+// চেকবক্স ভ্যালু পার্স করার ফাংশন
 const parseCheckboxValue = (val) => {
   if (val === 1 || val === '1' || val === 'true' || val === true) {
     return 1;
   }
-  return 0; // যদি ফ্রন্ট থেকে না পাঠানো হয় (undefined) তবে ০ ধরে নিবে
+  return 0;
 };
 
 // GET All Products (Supports Search by Product ID and Title)
@@ -49,7 +49,6 @@ router.get('/all', async (req, res) => {
     const { search } = req.query;
     const queryParams = [adminId];
 
-    // ANY_VALUE(pi.image_path) ব্যবহার করে ONLY_FULL_GROUP_BY এরর ফিক্স করা হয়েছে
     let query = `
       SELECT p.*, ANY_VALUE(pi.image_path) AS image_path 
       FROM products p 
@@ -57,7 +56,6 @@ router.get('/all', async (req, res) => {
       WHERE p.admin_id = ?
     `;
 
-    // LOWER() ব্যবহার করে কেস-ইনসেনসিটিভ সার্চ ফিক্স করা হয়েছে
     if (search && search.trim() !== '') {
       query += ` AND (LOWER(p.product_id) LIKE LOWER(?) OR LOWER(p.title) LIKE LOWER(?))`;
       const searchTerm = `%${search.trim()}%`;
@@ -112,12 +110,10 @@ router.post('/add', upload.fields([
     const cleanBrand = (brand_name && String(brand_name).trim() !== '') ? String(brand_name).trim() : 'N/A';
     const finalStockStatus = (stock_status && String(stock_status).trim() !== '') ? stock_status : 'in_stock';
 
-    // 🔴 ফ্রন্ট থেকে '1' আসলেই কেবল 1 হবে, অন্যথায় (না পাঠালে) 0 থাকবে 🔴
     const finalCod = parseCheckboxValue(cod_available);
     const finalOpenBox = parseCheckboxValue(open_box_inspection);
     const finalFreeShipping = parseCheckboxValue(free_shipping);
 
-    // Coin Offer Data Processing
     const finalCoinOffer = coin_offer_toggle || 'no';
     const finalCoinPercentage = (finalCoinOffer === 'yes' && coin_percentage) ? coin_percentage : null;
 
@@ -177,7 +173,6 @@ router.post('/add', upload.fields([
     const dbInternalId = result.insertId;
 
     const imageQuery = `INSERT INTO product_images (product_id, image_path) VALUES ?`;
-    // 🔴 Cloudinary-র দেওয়া ফুল পাবলিক URL (`file.path`) সেভ হচ্ছে 🔴
     const imageValues = imageFiles.map(file => [dbInternalId, file.path]);
     await db.query(imageQuery, [imageValues]);
 
@@ -264,28 +259,26 @@ router.put('/update/:id', upload.fields([
 
         const [existingImages] = await db.query('SELECT id FROM product_images WHERE product_id = ?', [productId]);
         for (let img of existingImages) {
-            if (!keptIds.includes(img.id)) {
+            if (!keptIds.includes(String(img.id)) && !keptIds.includes(img.id)) {
                 await db.query('DELETE FROM product_images WHERE id = ?', [img.id]);
             }
         }
 
-        // 🔴 রিপ্লেস করা ইমেজের জায়গায় Cloudinary URL (`file.path`) বসানো 🔴
         if (req.files && req.files['replaced_images'] && replaced_original_ids) {
             const repFiles = req.files['replaced_images'];
             const repOriginalIds = Array.isArray(replaced_original_ids) ? replaced_original_ids : [replaced_original_ids];
             
             for (let i = 0; i < repFiles.length; i++) {
                 if (repOriginalIds[i]) {
-                    const newPath = repFiles[i].path; // Cloudinary URL
+                    const newPath = repFiles[i].path;
                     await db.query('UPDATE product_images SET image_path = ? WHERE id = ?', [newPath, repOriginalIds[i]]);
                 }
             }
         }
 
-        // 🔴 নতুন যুক্ত ইমেজের ক্ষেত্রে Cloudinary URL (`file.path`) ইনসার্ট করা 🔴
         if (req.files && req.files['new_images']) {
             for (let file of req.files['new_images']) {
-                const newPath = file.path; // Cloudinary URL
+                const newPath = file.path;
                 await db.query('INSERT INTO product_images (product_id, image_path) VALUES (?, ?)', [productId, newPath]);
             }
         }
