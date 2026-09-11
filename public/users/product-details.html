@@ -191,7 +191,7 @@
       <!-- Left Column -->
       <div class="space-y-4 md:sticky md:top-6">
         <div id="img-zoom-box" class="img-zoom-container relative rounded-2xl overflow-hidden border border-pink-200 bg-white/80 h-[480px] md:h-[620px] flex items-center justify-center p-4 shadow-sm group">
-          <img id="main-product-image" src="" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+          <img id="main-product-image" src="" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
           <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
           </div>
@@ -254,7 +254,7 @@
           </h3>
           <div class="theme-glass-input p-3.5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
             <div class="flex items-center gap-3">
-              <img id="seller-avatar" src="" class="w-12 h-12 rounded-xl object-cover border border-pink-200" alt="Seller Avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>';">
+              <img id="seller-avatar" src="" loading="lazy" class="w-12 h-12 rounded-xl object-cover border border-pink-200" alt="Seller Avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>';">
               <div>
                 <div class="flex items-center gap-2">
                   <h4 id="seller-shop-name" class="font-bold text-gray-900 text-sm">NexKart Store</h4>
@@ -482,7 +482,7 @@
     <button onclick="closeFullscreenModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-all z-50">
       <i class="fa-solid fa-xmark text-xl"></i>
     </button>
-    <img id="fullscreen-modal-image" src="" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
+    <img id="fullscreen-modal-image" src="" loading="lazy" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
   </div>
 
   <!-- JavaScript Logic -->
@@ -1017,7 +1017,7 @@
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
-                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
@@ -1531,6 +1531,7 @@
               <a href="${reviewImg}" target="_blank" class="inline-block">
                 <img src="${reviewImg}" 
                      alt="Review Image" 
+                     loading="lazy"
                      class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-pink-200 hover:scale-105 transition-transform duration-200 shadow-sm"
                      onerror="this.style.display='none';">
               </a>
@@ -1557,6 +1558,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
                 <img src="${finalProfilePic}" 
+                     loading="lazy"
                      class="w-8 h-8 rounded-full object-cover border border-pink-200" 
                      onerror="this.onerror=null; this.src='${fallbackSvg}';" 
                      alt="User Profile">
@@ -1668,7 +1670,7 @@
       }
   } else {
       viewerBox.innerHTML = `
-          <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+          <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
           <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
           </div>
@@ -1719,7 +1721,7 @@ function toggleCustomVideoPlay() {
               thumbHTML = `
                   <div class="thumb-slide-item">
                     <button onclick="switchMedia(${index})" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all cursor-pointer">
-                      <img src="${media.url}" alt="Thumbnail ${index + 1}" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
+                      <img src="${media.url}" alt="Thumbnail ${index + 1}" loading="lazy" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
                     </button>
                   </div>
               `;
@@ -1771,7 +1773,7 @@ function toggleCustomVideoPlay() {
           const hideClass = index >= 3 ? 'hidden' : '';
           specImageContainer.innerHTML += `
             <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center ${hideClass}">
-              <img src="${formattedUrl}" alt="Specification Gallery Image" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.style.display='none';">
+              <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.style.display='none';">
             </div>
           `;
         }
