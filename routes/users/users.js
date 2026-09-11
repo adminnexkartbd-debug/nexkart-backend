@@ -1128,58 +1128,61 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
-// ==================== [ NEW FEATURE: PRODUCT DETAILS PAGE (SUPPORT FOR VIDEO_URL) ] ====================
+// প্রোডাক্ট ডিটেইলস API
 router.get('/product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
-        const productQuery = `
-            SELECT p.*, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
-                   a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
-            FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.product_id = ? OR p.id = ?
-        `;
-        const [products] = await db.query(productQuery, [productId, productId]);
+
+        // ১. প্রোডাক্টের মূল তথ্য এবং ভিডিও ইউআরএল কোয়েরি
+        const [products] = await db.execute(
+            'SELECT * FROM products WHERE id = ?', 
+            [productId]
+        );
+
         if (products.length === 0) {
-            return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
         }
+
         const product = products[0];
-        const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
 
-        const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.admin_id = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY p.id DESC LIMIT 6
-        `, [product.admin_id, product.id]);
+        // ২. প্রোডাক্টের অতিরিক্ত গ্যালারি ইমেজ কোয়েরি
+        const [images] = await db.execute(
+            'SELECT image_path FROM product_images WHERE product_id = ?', 
+            [productId]
+        );
 
-        const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.category = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY RAND() LIMIT 6
-        `, [product.category, product.id]);
+        // ৩. সেলারের অন্যান্য প্রোডাক্টস (Optional)
+        const [sellerProducts] = await db.execute(
+            'SELECT id, title, sale_price, primary_image FROM products WHERE seller_id = ? AND id != ? LIMIT 4',
+            [product.seller_id, productId]
+        );
 
+        // ৪. সাজেস্টেড প্রোডাক্টস (Optional)
+        const [suggestedProducts] = await db.execute(
+            'SELECT id, title, sale_price, primary_image FROM products WHERE category_id = ? AND id != ? LIMIT 4',
+            [product.category_id, productId]
+        );
+
+        // ৫. ফাইনাল JSON রেসপন্স
         return res.json({
             success: true,
             product: product,
-            video_url: product.video_url || null, // video_url পাঠানো হচ্ছে
+            // ভিডিও ইউআরএল ফাঁকা না থাকলে ডাটা যাবে, অন্যথায় null
+            video_url: product.video_url && product.video_url.trim() !== "" ? product.video_url : null,
             gallery_images: images.map(img => img.image_path),
             seller_products: sellerProducts,
             suggested_products: suggestedProducts
         });
+
     } catch (error) {
-        console.error("Product Details Fetch Error:", error);
-        return res.status(500).json({ success: false, message: "Server Error" });
+        console.error("Error fetching product details:", error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal Server Error'
+        });
     }
 });
 
