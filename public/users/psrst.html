@@ -246,45 +246,52 @@
         const alertBox = document.getElementById('alertBox');
         const submitBtn = document.getElementById('submitBtn');
 
-        forgotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+       forgotForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Sending Link...";
-            alertBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Sending Link...";
+    alertBox.style.display = 'none';
 
-            try {
-                const response = await fetch('/user/forgot-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alertBox.className = "alert-message alert-success";
-                    alertBox.innerText = data.message || "A reset link has been sent to your email!";
-                    alertBox.style.display = 'block';
-                    forgotForm.reset();
-                } else {
-                    alertBox.className = "alert-message alert-danger";
-                    alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
-                    alertBox.style.display = 'block';
-                }
-            } catch (err) {
-                alertBox.className = "alert-message alert-danger";
-                alertBox.innerText = "Something went wrong! Please check your connection.";
-                alertBox.style.display = 'block';
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Send Reset Link";
-            }
+    try {
+        const response = await fetch('/user/forgot-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email })
         });
-    </script>
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alertBox.className = "alert-message alert-success";
+            alertBox.innerText = data.message || "A reset link has been sent to your email! Redirecting to login...";
+            alertBox.style.display = 'block';
+            forgotForm.reset();
+
+            // ইমেইল সফলভাবে পাঠানোর পর ১.৫ সেকেন্ডের মধ্যে cslogin এ নিয়ে যাবে
+            setTimeout(() => {
+                window.location.href = data.redirectTo || '/user/cslogin';
+            }, 1500);
+
+        } else {
+            alertBox.className = "alert-message alert-danger";
+            alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Send Reset Link";
+        }
+    } catch (err) {
+        alertBox.className = "alert-message alert-danger";
+        alertBox.innerText = "Something went wrong! Please check your connection.";
+        alertBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Send Reset Link";
+    }
+});
+   </script>
 </body>
 </html>
