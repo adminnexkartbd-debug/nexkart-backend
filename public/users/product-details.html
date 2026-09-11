@@ -1401,13 +1401,14 @@
       }
     }
 
+    // Toggle for Specification Images Gallery (Threshold changed to 1 image)
     function toggleSpecificationImages() {
       const allImgCards = document.querySelectorAll('.spec-img-card');
       const btn = document.getElementById('spec-img-toggle-btn');
 
       if (isSpecImagesExpanded) {
         allImgCards.forEach((el, index) => {
-          if (index >= 3) el.classList.add('hidden');
+          if (index >= 1) el.classList.add('hidden');
         });
         btn.innerHTML = `<span>Show More Images</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
         isSpecImagesExpanded = false;
@@ -1752,7 +1753,7 @@ function toggleCustomVideoPlay() {
       renderThumbnails(mediaList);
     }
 
-    // Updated renderSpecificationImages with Show More / Show Less functionality
+    // Render Specification Gallery Images (Shows 1 image and hides rest if > 1)
     function renderSpecificationImages(images) {
       const specImageContainer = document.getElementById('specification-images-gallery');
       const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
@@ -1771,7 +1772,8 @@ function toggleCustomVideoPlay() {
         }
 
         if (formattedUrl) {
-          const hideClass = index >= 3 ? 'hidden' : '';
+          // ১টির বেশি ছবি হলে বাকিগুলো 'hidden' রাখা হচ্ছে
+          const hideClass = index >= 1 ? 'hidden' : '';
           specImageContainer.innerHTML += `
             <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center ${hideClass}">
               <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.style.display='none';">
@@ -1780,7 +1782,8 @@ function toggleCustomVideoPlay() {
         }
       });
 
-      if (images.length > 3 && specImgBtnContainer) {
+      // ১টির বেশি ছবি থাকলে বাটন দেখাবে, নাহলে হাইড থাকবে
+      if (images.length > 1 && specImgBtnContainer) {
         specImgBtnContainer.classList.remove('hidden');
         isSpecImagesExpanded = false;
       } else if (specImgBtnContainer) {
