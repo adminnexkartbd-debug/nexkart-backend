@@ -377,8 +377,8 @@
         <!-- Specification Gallery Images -->
         <div id="specification-images-gallery" class="pt-4 space-y-6"></div>
         <div id="spec-img-toggle-btn-container" class="hidden text-center pt-2">
-          <button id="spec-img-toggle-btn" onclick="loadMoreSpecImages()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-5 py-2.5 rounded-xl border border-pink-200 transition-all shadow-sm active:scale-95">
-            <span>Load More Images</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          <button id="spec-img-toggle-btn" onclick="toggleSpecImages()" class="text-[#ff4b6e] font-bold text-xs hover:underline flex items-center gap-1 mx-auto bg-pink-50 px-5 py-2.5 rounded-xl border border-pink-200 transition-all shadow-sm active:scale-95">
+            <span id="spec-img-toggle-text">Show More Images</span> <i id="spec-img-toggle-icon" class="fa-solid fa-chevron-down text-[10px]"></i>
           </button>
         </div>
       </div>
@@ -559,11 +559,14 @@
     // Show More / Show Less Global Variables
     let fullDescriptionText = '';
     let isDescExpanded = false;
+
+    let fullHighlightsList = [];
     let isSpecExpanded = false;
 
     // Specification Images Pagination Global Variables
     let specImagesList = [];
-    let visibleSpecImgCount = 1;
+    let isSpecImagesExpanded = false;
+    const initialSpecImgLimit = 1; // শুরুতে ১ম ইমেজ দেখাবে
 
     // Pagination Global Variables
     let allReviewsData = [];
@@ -1077,443 +1080,156 @@
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
-                    <img src="${imageSrc}" alt="${product.title || 'Product'}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size='14\'>Image Not Found</text></svg>';">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>No Image</text></svg>';">
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
-                    
-                    <div class="flex items-center gap-1 text-xs">
-                        <i class="fa-solid fa-star text-amber-400 text-[11px]"></i>
-                        <span class="font-bold text-gray-700 text-[11px]">${avgRating}</span>
-                        <span class="text-gray-400 text-[10px]">(${reviewCount})</span>
-                    </div>
-                </div>
-                <h3 class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 my-1 h-10" title="${product.title}">${product.title}</h3>
+                <h4 class="font-bold text-xs text-gray-800 line-clamp-2 group-hover:text-[#ff4b6e] transition-colors">${product.title}</h4>
             </div>
-
-            <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                <div class="flex flex-col">
-                    <span class="text-sm sm:text-base font-bold text-[#ff4b6e]">৳ ${product.sale_price}</span>
-                    ${Number(product.regular_price) > Number(product.sale_price) ? `<span class="text-[11px] text-gray-400 line-through">৳ ${product.regular_price}</span>` : ''}
+            <div class="mt-3 pt-2 border-t border-pink-100 flex items-center justify-between">
+                <div>
+                    <span class="text-sm font-extrabold text-[#ff4b6e]">৳ ${Number(product.sale_price).toLocaleString()}</span>
+                    ${product.regular_price > product.sale_price ? `<span class="text-[10px] text-gray-400 line-through ml-1">৳ ${Number(product.regular_price).toLocaleString()}</span>` : ''}
                 </div>
-                <button class="bg-pink-50 text-[#ff4b6e] hover:bg-[#ff4b6e] hover:text-white w-9 h-9 rounded-full flex items-center justify-center border border-pink-200 transition-all shadow-sm">
-                    <i class="fa-solid fa-cart-plus text-xs"></i>
-                </button>
+                <div class="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
+                    <i class="fa-solid fa-star"></i> ${avgRating} (${reviewCount})
+                </div>
             </div>
         </div>
       `;
     }
 
-    function updateDynamicSEO(product, galleryImages) {
-      if (!product) return;
-
-      const title = product.title ? `${product.title} - NexKart` : 'NexKart Product Details';
-      const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
-      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
-      const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKart`;
-      const pageUrl = window.location.href;
-
-      let imageUrl = '';
-      if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
-        imageUrl = galleryImages[0];
-      } else if (product.primary_image) {
-        imageUrl = product.primary_image;
-      }
-      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-        imageUrl = window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
-      }
-
-      document.title = title;
-      document.getElementById('seo-title').innerText = title;
-      document.getElementById('seo-description').setAttribute('content', metaDescription);
-      document.getElementById('seo-keywords').setAttribute('content', keywords);
-      document.getElementById('seo-canonical').setAttribute('href', pageUrl);
-
-      document.getElementById('og-title').setAttribute('content', title);
-      document.getElementById('og-description').setAttribute('content', metaDescription);
-      document.getElementById('og-image').setAttribute('content', imageUrl);
-      document.getElementById('og-url').setAttribute('content', pageUrl);
-
-      document.getElementById('tw-title').setAttribute('content', title);
-      document.getElementById('tw-description').setAttribute('content', metaDescription);
-      document.getElementById('tw-image').setAttribute('content', imageUrl);
-
-      const schemaData = {
-        "@context": "https://schema.org/",
-        "@type": "Product",
-        "name": product.title || "NexKart Product",
-        "image": imageUrl ? [imageUrl] : [],
-        "description": metaDescription,
-        "sku": product.sku || product.product_id || product.id || "N/A",
-        "brand": {
-          "@type": "Brand",
-          "name": product.brand_name || product.seller_shop_name || "NexKart"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": pageUrl,
-          "priceCurrency": "BDT",
-          "price": product.sale_price || "0",
-          "itemCondition": "https://schema.org/NewCondition",
-          "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-        }
-      };
-
-      if (product.avg_rating && Number(product.avg_rating) > 0) {
-        schemaData.aggregateRating = {
-          "@type": "AggregateRating",
-          "ratingValue": Number(product.avg_rating).toFixed(1),
-          "reviewCount": product.review_count || 1
-        };
-      }
-
-      const schemaScript = document.getElementById('product-json-ld');
-      if (schemaScript) {
-        schemaScript.textContent = JSON.stringify(schemaData);
-      }
-    }
-
-    function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts) {
-      document.getElementById('product-title').innerText = product.title || 'Untitled Product';
-      document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
-      document.getElementById('product-category').innerText = product.category || 'General';
-
-      window.currentProductStock = Number(product.stock_quantity || 0);
-
-      updateDynamicSEO(product, galleryImages);
-
-      currentStockPrice = parseFloat(product.sale_price || 0);
-
-      const stockQty = Number(product.stock_quantity || 0);
-      const stockBadge = document.getElementById('stock-status-badge');
-      const actionButtonsContainer = document.querySelector('.pt-2.grid.grid-cols-1.sm\\:grid-cols-2');
-
-      if (stockQty <= 0) {
-          if (stockBadge) {
-              stockBadge.innerText = 'Out of Stock';
-              stockBadge.className = 'bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full border border-red-200';
-          }
-
-          if (actionButtonsContainer) {
-              actionButtonsContainer.innerHTML = `
-                  <button disabled class="w-full sm:col-span-2 bg-gray-300 text-gray-500 font-bold py-3.5 px-6 rounded-2xl shadow-none cursor-not-allowed flex items-center justify-center gap-2">
-                      <i class="fa-solid fa-ban"></i> Out of Stock
-                  </button>
-              `;
-          }
-          productQuantity = 0;
-          document.getElementById('product-quantity').innerText = '0';
-          document.getElementById('product-total-price').innerText = '৳ 0';
-      } else {
-          if (stockBadge) {
-              stockBadge.innerText = 'In Stock';
-              stockBadge.className = 'bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200';
-          }
-
-          if (actionButtonsContainer) {
-              actionButtonsContainer.innerHTML = `
-                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
-                    <i class="fa-solid fa-bag-shopping"></i> Order Now
-                  </button>
-
-                  <button onclick="checkLoginAndProceed('cart')" class="bg-white hover:bg-pink-50 text-[#d63384] font-bold py-3.5 px-6 rounded-2xl border border-pink-200 shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95">
-                    <i class="fa-solid fa-cart-plus text-[#ff4b6e]"></i> Add to Cart
-                  </button>
-              `;
-          }
-          productQuantity = 1;
-          calculateTotalPrice();
-      }
-
-      const suggestedSection = document.getElementById('section-suggested');
-      const suggestedGrid = document.getElementById('suggested-grid');
-      if (suggestedProducts && suggestedProducts.length > 0) {
-        suggestedSection.style.display = 'block';
-        suggestedGrid.innerHTML = suggestedProducts.map(p => createMiniProductCard(p)).join('');
-      } else {
-        suggestedSection.style.display = 'none';
-      }
-
-      const sellerSection = document.getElementById('same-seller-section');
-      const sellerGrid = document.getElementById('same-seller-grid');
-      if (sellerProducts && sellerProducts.length > 0) {
-        sellerSection.style.display = 'block';
-        sellerGrid.innerHTML = sellerProducts.map(p => createMiniProductCard(p)).join('');
-      } else {
-        sellerSection.style.display = 'none';
-      }
-      
-      document.getElementById('product-sale-price').innerText = `৳ ${currentStockPrice.toLocaleString()}`;
-      
-      const oldPriceElem = document.getElementById('product-old-price');
-      if (product.old_price && parseFloat(product.old_price) > 0) {
-        oldPriceElem.innerText = `৳ ${parseFloat(product.old_price).toLocaleString()}`;
-        oldPriceElem.classList.remove('hidden');
-      } else {
-        oldPriceElem.classList.add('hidden');
-      }
-
-      if (Number(product.regular_price) > Number(product.sale_price)) {
-        document.getElementById('product-regular-price').innerText = `৳ ${parseFloat(product.regular_price).toLocaleString()}`;
-      } else {
-        document.getElementById('product-regular-price').innerText = '';
-      }
-
-      const variantSection = document.getElementById('variant-section');
-      const variantContainer = document.getElementById('variant-container');
-      variantContainer.innerHTML = '';
-      
-      const rawVariants = product.products_variant || product.product_variants || '';
-      if (rawVariants && rawVariants.trim() !== '') {
-        const variantList = rawVariants.split(',').map(v => v.trim()).filter(v => v !== '');
-        if (variantList.length > 0) {
-          variantSection.classList.remove('hidden');
-          variantList.forEach((v, index) => {
-            const isFirst = index === 0;
-            if (isFirst) selectedVariant = v;
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `variant-btn uppercase font-semibold text-xs px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
-              isFirst 
-                ? 'bg-[#ff4b6e] text-white border-[#ff4b6e] shadow-md' 
-                : 'bg-white text-gray-700 border-pink-200 hover:border-[#ff4b6e]'
-            }`;
-            btn.innerText = v;
-            btn.onclick = () => selectVariant(btn, v);
-            variantContainer.appendChild(btn);
-          });
-        } else {
-          variantSection.classList.add('hidden');
-        }
-      } else {
-        variantSection.classList.add('hidden');
-      }
-
-      document.getElementById('shipping-from-loc').innerText = product.shipping_from || 'Main Warehouse';
-      document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
-
-      document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKart Official';
-      document.getElementById('seller-slogan').innerText = product.seller_slogan || 'Best Quality Guaranteed';
-
-      const visitStoreBtn = document.getElementById('visit-store-btn');
-      const sellerId = product.admin_id || product.seller_id;
-      if (visitStoreBtn && sellerId) {
-        visitStoreBtn.href = `/user/store/${sellerId}`;
-      }
-
-      const sellerAvatar = document.getElementById('seller-avatar');
-      if (product.seller_picture && product.seller_picture.trim() !== '') {
-        let picUrl = product.seller_picture.trim();
-        if (!picUrl.startsWith('http://') && !picUrl.startsWith('https://')) {
-          picUrl = picUrl.startsWith('/') ? picUrl : '/' + picUrl;
-        }
-        sellerAvatar.src = picUrl;
-      } else {
-        sellerAvatar.src = 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\'></path><circle cx=\'12\' cy=\'7\' r=\'4\'></circle></svg>';
-      }
-
-      const verifiedBadgeContainer = document.getElementById('seller-verified-status');
-      if (product.seller_is_verified == 1 || product.is_verified == 1) {
-        verifiedBadgeContainer.innerHTML = `
-          <span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
-            <i class="fa-solid fa-circle-check text-emerald-600"></i> Verified
-          </span>`;
-      } else {
-        verifiedBadgeContainer.innerHTML = `
-          <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-300">
-            Unverified
-          </span>`;
-      }
-
-      const deliveryContainer = document.getElementById('delivery-options');
-      deliveryContainer.innerHTML = '';
-      
-      if (Number(product.free_shipping) === 1) {
-        deliveryContainer.innerHTML += `
-          <div class="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
-            <i class="fa-solid fa-truck-fast text-emerald-600"></i> Free Shipping
-          </div>`;
-      } else {
-        deliveryContainer.innerHTML += `
-          <div class="flex items-center gap-2 p-2 bg-pink-50 border border-pink-200 rounded-xl text-pink-900">
-            <i class="fa-solid fa-truck-ramp-box text-[#ff4b6e]"></i> Delivery Charge: ৳${product.delivery_charge || '60'}
-          </div>`;
-      }
-
-      if (Number(product.cod_available) === 1) {
-        deliveryContainer.innerHTML += `
-          <div class="flex items-center gap-2 p-2 bg-[#ff4b6e]/10 border border-pink-200 rounded-xl text-pink-900">
-            <i class="fa-solid fa-hand-holding-dollar text-[#ff4b6e]"></i> Cash on Delivery Available
-          </div>`;
-      }
-
-      fullDescriptionText = product.description || 'No description available for this product.';
-      const descContainer = document.getElementById('product-description');
-      const descBtnContainer = document.getElementById('desc-toggle-btn-container');
-
-      if (fullDescriptionText.length > 180) {
-        descContainer.innerHTML = fullDescriptionText.substring(0, 180) + '...';
-        descBtnContainer.classList.remove('hidden');
-        isDescExpanded = false;
-      } else {
-        descContainer.innerHTML = fullDescriptionText;
-        descBtnContainer.classList.add('hidden');
-      }
-
-      const highlightsContainer = document.getElementById('product-highlights');
-      let specItems = [];
-
-      const brandName = product.brand_name ? product.brand_name : 'N/A';
-      specItems.push(`
-        <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
-          <span class="text-gray-500">Brand Name:</span>
-          <span class="text-gray-900 font-bold">${brandName}</span>
-        </li>
-      `);
-
-      if (product.product_highlights) {
-        let highlightsList = typeof product.product_highlights === 'string' 
-                              ? product.product_highlights.split(',') 
-                              : product.product_highlights;
-
-        if (Array.isArray(highlightsList) && highlightsList.length > 0) {
-          highlightsList.forEach(text => {
-            specItems.push(`
-              <li class="spec-item flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
-                <i class="fa-solid fa-circle-check text-[#ff4b6e]"></i> ${String(text).trim()}
-              </li>
-            `);
-          });
-        }
-      }
-
-      if (product.return_policy) {
-        specItems.push(`
-          <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
-            <span class="text-gray-500">Return Policy:</span>
-            <span class="text-gray-900 font-bold">${product.return_policy}</span>
-          </li>
-        `);
-      }
-
-      if (Number(product.open_box_inspection) === 1) {
-        const openBoxText = product.open_box_condition || product.open_box_text || 'Open Box Inspection Allowed';
-        specItems.push(`
-          <li class="spec-item flex items-center justify-between bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
-            <span class="text-gray-500">Open Box Inspection:</span>
-            <span class="text-emerald-700 font-bold">${openBoxText}</span>
-          </li>
-        `);
-      }
-
-      highlightsContainer.innerHTML = specItems.join('');
-
-      const specBtnContainer = document.getElementById('spec-toggle-btn-container');
-      const allSpecElements = document.querySelectorAll('.spec-item');
-
-      if (allSpecElements.length > 3) {
-        specBtnContainer.classList.remove('hidden');
-        allSpecElements.forEach((el, index) => {
-          if (index >= 3) {
-            el.classList.add('hidden');
-          }
-        });
-        isSpecExpanded = false;
-      } else {
-        specBtnContainer.classList.add('hidden');
-      }
-
-      // Load Product Media (Video + Images)
-      loadProductMedia(product, galleryImages);
-      setupImageFullscreen();
-    }
-
     function toggleDescription() {
-      const descContainer = document.getElementById('product-description');
-      const btn = document.getElementById('desc-toggle-btn');
+      const container = document.getElementById('product-description');
+      const btnText = document.querySelector('#desc-toggle-btn span');
+      const btnIcon = document.querySelector('#desc-toggle-btn i');
 
       if (isDescExpanded) {
-        descContainer.innerHTML = fullDescriptionText.substring(0, 180) + '...';
-        btn.innerHTML = `<span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
+        container.innerText = fullDescriptionText.substring(0, 250) + '...';
+        btnText.innerText = 'Show More';
+        btnIcon.className = 'fa-solid fa-chevron-down text-[10px]';
         isDescExpanded = false;
       } else {
-        descContainer.innerHTML = fullDescriptionText;
-        btn.innerHTML = `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
+        container.innerText = fullDescriptionText;
+        btnText.innerText = 'Show Less';
+        btnIcon.className = 'fa-solid fa-chevron-up text-[10px]';
         isDescExpanded = true;
       }
     }
 
     function toggleSpecifications() {
-      const allSpecElements = document.querySelectorAll('.spec-item');
-      const btn = document.getElementById('spec-toggle-btn');
+      const container = document.getElementById('product-highlights');
+      const btnText = document.querySelector('#spec-toggle-btn span');
+      const btnIcon = document.querySelector('#spec-toggle-btn i');
 
+      container.innerHTML = '';
       if (isSpecExpanded) {
-        allSpecElements.forEach((el, index) => {
-          if (index >= 3) el.classList.add('hidden');
-        });
-        btn.innerHTML = `<span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>`;
+        renderHighlightsList(fullHighlightsList.slice(0, 6));
+        btnText.innerText = 'Show More';
+        btnIcon.className = 'fa-solid fa-chevron-down text-[10px]';
         isSpecExpanded = false;
       } else {
-        allSpecElements.forEach(el => el.classList.remove('hidden'));
-        btn.innerHTML = `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
+        renderHighlightsList(fullHighlightsList);
+        btnText.innerText = 'Show Less';
+        btnIcon.className = 'fa-solid fa-chevron-up text-[10px]';
         isSpecExpanded = true;
       }
     }
 
-    async function fetchProductData() {
-      if (!productId) return;
+    function renderHighlightsList(items) {
+      const container = document.getElementById('product-highlights');
+      items.forEach(item => {
+        container.innerHTML += `
+          <li class="flex items-start gap-2 bg-white/70 p-2.5 rounded-xl border border-pink-100">
+            <i class="fa-solid fa-check text-[#ff4b6e] mt-0.5 text-xs"></i>
+            <span>${item}</span>
+          </li>
+        `;
+      });
+    }
 
-      try {
-        const response = await fetch(`/user/product/${productId}`);
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
-        
-        const data = await response.json();
-        if (data.success && data.product) {
-          renderProductDetails(data.product, data.gallery_images, data.seller_products, data.suggested_products);
+    // ==================== SPECIFICATION IMAGES SHOW MORE / SHOW LESS LOGIC ====================
+    function renderSpecImages() {
+      const container = document.getElementById('specification-images-gallery');
+      const toggleContainer = document.getElementById('spec-img-toggle-btn-container');
+      const toggleText = document.getElementById('spec-img-toggle-text');
+      const toggleIcon = document.getElementById('spec-img-toggle-icon');
+
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (!specImagesList || specImagesList.length === 0) {
+        if (toggleContainer) toggleContainer.classList.add('hidden');
+        return;
+      }
+
+      // যদি মোট ছবির সংখ্যা ১টি বা তার কম হয় তবে বাটন দেখানোর প্রয়োজন নেই
+      if (specImagesList.length <= initialSpecImgLimit) {
+        if (toggleContainer) toggleContainer.classList.add('hidden');
+      } else {
+        if (toggleContainer) toggleContainer.classList.remove('hidden');
+      }
+
+      const imagesToShow = isSpecImagesExpanded ? specImagesList : specImagesList.slice(0, initialSpecImgLimit);
+
+      imagesToShow.forEach((imgUrl, idx) => {
+        container.innerHTML += `
+          <div class="rounded-2xl overflow-hidden border border-pink-200 bg-white/80 p-2 shadow-sm cursor-pointer group hover:shadow-md transition-all">
+            <img src="${imgUrl}" alt="Specification Detail Image ${idx + 1}" loading="lazy" class="w-full h-auto object-contain rounded-xl group-hover:scale-[1.01] transition-transform duration-300" onclick="openSingleImageFullscreen('${imgUrl}')">
+          </div>
+        `;
+      });
+
+      if (toggleText && toggleIcon) {
+        if (isSpecImagesExpanded) {
+          toggleText.innerText = 'Show Less Images';
+          toggleIcon.className = 'fa-solid fa-chevron-up text-[10px]';
+        } else {
+          toggleText.innerText = `Show More Images (${specImagesList.length - initialSpecImgLimit} More)`;
+          toggleIcon.className = 'fa-solid fa-chevron-down text-[10px]';
         }
-      } catch (error) {
-        console.error("Error fetching product data:", error);
       }
     }
 
-    async function loadProductReviews() {
-      if (!productId) return;
+    function toggleSpecImages() {
+      isSpecImagesExpanded = !isSpecImagesExpanded;
+      renderSpecImages();
+    }
 
+    function openSingleImageFullscreen(src) {
+      const modal = document.getElementById('image-fullscreen-modal');
+      const modalImg = document.getElementById('fullscreen-modal-image');
+      if (!modal || !modalImg) return;
+      modalImg.src = src;
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modalImg.classList.remove('scale-95');
+        modalImg.classList.add('scale-100');
+      }, 10);
+    }
+
+    async function loadReviews() {
+      if (!productId) return;
       try {
         const response = await fetch(`/user/reviews/${productId}`);
         const data = await response.json();
 
-        const totalCountElem = document.getElementById('total-reviews-count');
-        const avgRatingBadge = document.getElementById('average-rating-badge');
-
-        if (data.success && data.reviews && data.reviews.length > 0) {
+        if (data.success && data.reviews) {
           allReviewsData = data.reviews;
-          totalCountElem.innerText = allReviewsData.length;
-
-          let totalRatingSum = 0;
-          allReviewsData.forEach(review => {
-            totalRatingSum += Number(review.rating) || 5;
-          });
-
-          const avgRating = (totalRatingSum / allReviewsData.length).toFixed(1);
-          avgRatingBadge.innerText = `${avgRating} / 5.0 Rating`;
+          
+          document.getElementById('total-reviews-count').innerText = allReviewsData.length;
+          
+          if (allReviewsData.length > 0) {
+            const sumRating = allReviewsData.reduce((acc, curr) => acc + Number(curr.rating || 0), 0);
+            const avgRating = (sumRating / allReviewsData.length).toFixed(1);
+            document.getElementById('average-rating-badge').innerText = `${avgRating} / 5.0 Rating`;
+          } else {
+            document.getElementById('average-rating-badge').innerText = `0.0 / 5.0 Rating`;
+          }
 
           currentReviewsPage = 1;
           renderReviewsPage();
-        } else {
-          totalCountElem.innerText = '0';
-          avgRatingBadge.innerText = '0.0 / 5.0 Rating';
-          allReviewsData = [];
-          renderReviewsPage();
         }
-
       } catch (error) {
         console.error('Error loading reviews:', error);
-        const container = document.getElementById('reviews-container');
-        if (container) {
-          container.innerHTML = `<p class="text-xs text-red-500 text-center py-3">Failed to load reviews!</p>`;
-        }
       }
     }
 
@@ -1525,12 +1241,7 @@
       container.innerHTML = '';
 
       if (!allReviewsData || allReviewsData.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-6 bg-pink-50/50 rounded-2xl border border-pink-100">
-            <i class="fa-regular fa-comment-dots text-pink-300 text-2xl mb-1"></i>
-            <p class="text-xs text-gray-500 font-medium">No reviews given for this product yet.</p>
-          </div>
-        `;
+        container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">No reviews found for this product yet.</p>`;
         if (paginationElem) paginationElem.classList.add('hidden');
         return;
       }
@@ -1539,87 +1250,54 @@
       const startIndex = (currentReviewsPage - 1) * reviewsPerPage;
       const paginatedReviews = allReviewsData.slice(startIndex, startIndex + reviewsPerPage);
 
-      paginatedReviews.forEach(review => {
-        const ratingNum = Number(review.rating) || 5;
-
+      paginatedReviews.forEach(rev => {
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
-          if (i <= ratingNum) {
+          if (i <= rev.rating) {
             starsHtml += `<i class="fa-solid fa-star text-amber-400"></i>`;
           } else {
             starsHtml += `<i class="fa-regular fa-star text-gray-300"></i>`;
           }
         }
 
-        let userImg = review.profile_image ? review.profile_image.trim() : '';
-        const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>`;
-
-        if (userImg && !userImg.startsWith('http://') && !userImg.startsWith('https://')) {
-          userImg = userImg.startsWith('/') ? userImg : '/' + userImg;
-        }
-        const finalProfilePic = userImg || fallbackSvg;
-
-        const reviewDate = review.created_at 
-          ? new Date(review.created_at).toLocaleDateString() 
-          : 'Unknown Date';
+        let userImg = rev.profile_image ? rev.profile_image : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>";
 
         let reviewImageHtml = '';
-        if (review.review_imgUrl && review.review_imgUrl.trim() !== '') {
-          let reviewImg = review.review_imgUrl.trim();
-          if (!reviewImg.startsWith('http://') && !reviewImg.startsWith('https://')) {
-            reviewImg = reviewImg.startsWith('/') ? reviewImg : '/' + reviewImg;
-          }
+        if (rev.review_imgUrl) {
           reviewImageHtml = `
-            <div class="mt-2.5">
-              <a href="${reviewImg}" target="_blank" class="inline-block">
-                <img src="${reviewImg}" 
-                     alt="Review Image" 
-                     loading="lazy"
-                     class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-pink-200 hover:scale-105 transition-transform duration-200 shadow-sm"
-                     onerror="this.style.display='none';">
-              </a>
+            <div class="mt-2">
+              <img src="${rev.review_imgUrl}" alt="User Review Image" class="w-20 h-20 object-cover rounded-xl border border-pink-200 cursor-pointer" onclick="openSingleImageFullscreen('${rev.review_imgUrl}')">
             </div>
           `;
         }
 
-        let reviewReplyHtml = '';
-        if (review.review_reply && review.review_reply.trim() !== '') {
-          reviewReplyHtml = `
-            <div class="ml-4 sm:ml-6 pl-3 border-l-2 border-[#ff4b6e] space-y-1 bg-pink-50/60 p-3 rounded-r-xl mt-2.5">
+        let replyHtml = '';
+        if (rev.review_reply) {
+          replyHtml = `
+            <div class="ml-4 sm:ml-6 pl-3 border-l-2 border-[#ff4b6e] space-y-1 bg-white/60 p-3 rounded-r-xl mt-2">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-[11px] text-[#ff4b6e] flex items-center gap-1.5">
-                  <i class="fa-solid fa-reply text-xs"></i> Store Admin / Seller (Reply)
-                </span>
+                <span class="font-bold text-[11px] text-[#ff4b6e]"><i class="fa-solid fa-store"></i> Seller Reply</span>
               </div>
-              <p class="text-xs text-gray-700 leading-relaxed mt-1">${review.review_reply}</p>
+              <p class="text-xs text-gray-600">${rev.review_reply}</p>
             </div>
           `;
         }
 
         container.innerHTML += `
-          <div class="theme-glass-input p-4 rounded-2xl space-y-2 border border-pink-100 hover:shadow-sm transition-all">
+          <div class="theme-glass-input p-4 rounded-2xl space-y-2">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2.5">
-                <img src="${finalProfilePic}" 
-                     loading="lazy"
-                     class="w-8 h-8 rounded-full object-cover border border-pink-200" 
-                     onerror="this.onerror=null; this.src='${fallbackSvg}';" 
-                     alt="User Profile">
+                <img src="${userImg}" class="w-8 h-8 rounded-full object-cover border border-pink-200" alt="User Avatar">
                 <div>
-                  <h4 class="font-bold text-xs text-gray-800">${review.user_name || 'Anonymous User'}</h4>
-                  <div class="flex text-[10px] gap-0.5 mt-0.5">
-                    ${starsHtml}
-                  </div>
+                  <h5 class="font-bold text-xs text-gray-800">${rev.user_name || 'Anonymous User'}</h5>
+                  <div class="text-[10px] flex items-center gap-1 mt-0.5">${starsHtml}</div>
                 </div>
               </div>
-              <span class="text-[10px] text-gray-400 font-mono bg-[#ff4b6e]/10 px-2 py-1 rounded-md border border-pink-100">${reviewDate}</span>
+              <span class="text-[10px] text-gray-400 font-mono">${new Date(rev.created_at).toLocaleDateString()}</span>
             </div>
-            
-            <p class="text-xs text-gray-600 leading-relaxed pt-1">${review.review_text || 'No written feedback provided.'}</p>
-            
+            <p class="text-xs text-gray-700 leading-relaxed pt-1">${rev.review_text || ''}</p>
             ${reviewImageHtml}
-            
-            ${reviewReplyHtml}
+            ${replyHtml}
           </div>
         `;
       });
@@ -1642,221 +1320,267 @@
       renderReviewsPage();
     }
 
-    // Product Video & Gallery Media Support Functions
-    function loadProductMedia(product, galleryImages) {
-      currentProductImages = galleryImages || [];
-      currentVideoUrl = product.video_url ? product.video_url.trim() : null;
-      
-      let mediaList = [];
-
-      // If video exists, add it first
-      if (currentVideoUrl) {
-          let formattedVideoUrl = currentVideoUrl;
-          if (!formattedVideoUrl.startsWith('http://') && !formattedVideoUrl.startsWith('https://')) {
-              formattedVideoUrl = formattedVideoUrl.startsWith('/') ? formattedVideoUrl : '/' + formattedVideoUrl;
-          }
-          mediaList.push({ type: 'video', url: formattedVideoUrl });
+    async function fetchProductDetails() {
+      if (!productId) {
+        alert('Product ID missing!');
+        window.location.href = '/user/dashboard';
+        return;
       }
 
-      // Add all images to media list
-      currentProductImages.forEach(img => {
-          let formattedImgUrl = img ? String(img).trim() : '';
-          if (formattedImgUrl && !formattedImgUrl.startsWith('http://') && !formattedImgUrl.startsWith('https://')) {
-              formattedImgUrl = formattedImgUrl.startsWith('/') ? formattedImgUrl : '/' + formattedImgUrl;
+      try {
+        const response = await fetch(`/user/product/${productId}`);
+        const data = await response.json();
+
+        if (!data.success || !data.product) {
+          alert(data.message || 'Product not found!');
+          window.location.href = '/user/dashboard';
+          return;
+        }
+
+        const product = data.product;
+        window.currentProductStock = Number(product.stock_quantity || 0);
+
+        // Update SEO Meta Tags
+        document.getElementById('seo-title').innerText = `${product.title} - NexKart`;
+        document.getElementById('seo-description').setAttribute('content', product.description ? product.description.substring(0, 160) : product.title);
+        document.getElementById('seo-canonical').setAttribute('href', window.location.href);
+
+        document.getElementById('og-title').setAttribute('content', `${product.title} - NexKart`);
+        document.getElementById('og-description').setAttribute('content', product.description ? product.description.substring(0, 160) : product.title);
+        document.getElementById('og-url').setAttribute('content', window.location.href);
+
+        document.getElementById('tw-title').setAttribute('content', `${product.title} - NexKart`);
+        document.getElementById('tw-description').setAttribute('content', product.description ? product.description.substring(0, 160) : product.title);
+
+        // Product Details Fill
+        document.getElementById('product-title').innerText = product.title || '';
+        document.getElementById('product-category').innerText = product.category || 'General';
+        
+        currentStockPrice = Number(product.sale_price || 0);
+        document.getElementById('product-sale-price').innerText = `৳ ${currentStockPrice.toLocaleString()}`;
+
+        if (product.regular_price && Number(product.regular_price) > currentStockPrice) {
+          document.getElementById('product-regular-price').innerText = `৳ ${Number(product.regular_price).toLocaleString()}`;
+          document.getElementById('product-regular-price').classList.remove('hidden');
+        } else {
+          document.getElementById('product-regular-price').classList.add('hidden');
+        }
+
+        // Stock Status
+        const stockBadge = document.getElementById('stock-status-badge');
+        if (window.currentProductStock <= 0) {
+          stockBadge.innerText = 'Out of Stock';
+          stockBadge.className = 'bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full border border-red-200';
+        } else {
+          stockBadge.innerText = `In Stock (${window.currentProductStock})`;
+          stockBadge.className = 'bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200';
+        }
+
+        document.getElementById('product-sku').innerText = product.sku || product.product_id || 'NXK-' + product.id;
+        document.getElementById('shipping-from-loc').innerText = product.shipping_from || 'Central Warehouse';
+        document.getElementById('estimated-delivery-time').innerText = product.delivery_time || '3-5 Business Days';
+
+        // Delivery Charge Options
+        const deliveryContainer = document.getElementById('delivery-options');
+        let insideDhakaCharge = product.delivery_inside || product.delivery_charge || 60;
+        let outsideDhakaCharge = product.delivery_outside || 120;
+        
+        if (Number(product.free_shipping) === 1) {
+          deliveryContainer.innerHTML = `
+            <div class="flex items-center gap-2 p-2 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl sm:col-span-2">
+              <i class="fa-solid fa-truck-ramp-box text-emerald-600"></i>
+              <span>Delivery: <strong class="text-emerald-700 uppercase font-bold">Free Shipping Available</strong></span>
+            </div>
+          `;
+        } else {
+          deliveryContainer.innerHTML = `
+            <div class="flex items-center gap-2 p-2 bg-pink-50 text-pink-900 border border-pink-200 rounded-xl">
+              <i class="fa-solid fa-city text-[#ff4b6e]"></i>
+              <span>Inside Dhaka: <strong>৳ ${insideDhakaCharge}</strong></span>
+            </div>
+            <div class="flex items-center gap-2 p-2 bg-pink-50 text-pink-900 border border-pink-200 rounded-xl">
+              <i class="fa-solid fa-map-location-dot text-[#ff4b6e]"></i>
+              <span>Outside Dhaka: <strong>৳ ${outsideDhakaCharge}</strong></span>
+            </div>
+          `;
+        }
+
+        // Seller Information
+        if (product.seller_shop_name) {
+          document.getElementById('seller-shop-name').innerText = product.seller_shop_name;
+          if (product.seller_slogan) {
+            document.getElementById('seller-slogan').innerText = product.seller_slogan;
           }
-          mediaList.push({ type: 'image', url: formattedImgUrl });
-      });
+          if (product.seller_picture) {
+            document.getElementById('seller-avatar').src = product.seller_picture;
+          }
+          if (product.seller_is_verified) {
+            document.getElementById('seller-verified-status').innerHTML = `<i class="fa-solid fa-circle-check text-blue-500 text-xs" title="Verified Seller"></i>`;
+          }
+          if (product.seller_id) {
+            document.getElementById('visit-store-btn').href = `/user/seller-profile?id=${product.seller_id}`;
+          }
+        }
 
-      activeMediaIndex = 0;
-      renderMainMediaViewer(mediaList);
-      renderThumbnails(mediaList);
-      renderSpecificationImages(currentProductImages);
-    }
+        // Variants Setup
+        if (product.variants && product.variants.trim() !== '') {
+          const variantsList = product.variants.split(',').map(v => v.trim()).filter(Boolean);
+          if (variantsList.length > 0) {
+            const vContainer = document.getElementById('variant-container');
+            vContainer.innerHTML = '';
+            variantsList.forEach((varItem, idx) => {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = `variant-btn text-xs px-3.5 py-1.5 rounded-xl border transition-all ${idx === 0 ? 'bg-[#ff4b6e] text-white border-[#ff4b6e] shadow-md' : 'bg-white text-gray-700 border-pink-200'}`;
+              btn.innerText = varItem;
+              btn.onclick = () => selectVariant(btn, varItem);
+              vContainer.appendChild(btn);
+              if (idx === 0) selectedVariant = varItem;
+            });
+            document.getElementById('variant-section').classList.remove('hidden');
+          }
+        }
 
-  function renderMainMediaViewer(mediaList) {
-  const viewerBox = document.getElementById('img-zoom-box');
-  if (!viewerBox || !mediaList || mediaList.length === 0) return;
+        // Image Gallery & Video Logic
+        currentProductImages = data.gallery_images || [];
+        if (currentProductImages.length === 0 && product.primary_image) {
+          currentProductImages = [product.primary_image];
+        }
 
-  const currentMedia = mediaList[activeMediaIndex];
+        currentVideoUrl = product.video_url || null;
 
-  if (currentMedia.type === 'video') {
-      viewerBox.innerHTML = `
-          <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden group/vid">
-              <video id="custom-product-video" class="max-h-full max-w-full rounded-xl shadow-lg cursor-pointer">
-                  <source src="${currentMedia.url}" type="video/mp4">
-                  Your browser does not support the video tag.
-              </video>
-              
-              <!-- Video Overlay Center Play Button -->
-              <button id="custom-play-btn" onclick="toggleCustomVideoPlay()" class="absolute w-16 h-16 bg-[#ff4b6e]/90 hover:bg-[#ff4b6e] text-white rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 transform group-hover/vid:scale-110 active:scale-95 z-20">
-                  <i id="play-btn-icon" class="fa-solid fa-play text-2xl ml-1"></i>
-              </button>
+        const mainImgElem = document.getElementById('main-product-image');
+        const thumbContainer = document.getElementById('thumbnail-container');
+        thumbContainer.innerHTML = '';
 
-              <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md pointer-events-none z-10">
-                  <i class="fa-solid fa-film"></i> Product Video
-              </div>
-          </div>
-      `;
+        let mediaList = [];
+        if (currentVideoUrl) {
+          mediaList.push({ type: 'video', url: currentVideoUrl });
+        }
+        currentProductImages.forEach(img => {
+          mediaList.push({ type: 'image', url: img.startsWith('/') ? img : '/' + img });
+        });
 
-      // Video click event to play/pause
-      const videoElem = document.getElementById('custom-product-video');
-      if (videoElem) {
-          videoElem.addEventListener('click', toggleCustomVideoPlay);
-          videoElem.addEventListener('ended', () => {
-              const playIcon = document.getElementById('play-btn-icon');
-              const playBtn = document.getElementById('custom-play-btn');
-              if (playIcon && playBtn) {
-                  playIcon.className = 'fa-solid fa-play text-2xl ml-1';
-                  playBtn.classList.remove('opacity-0');
-              }
+        if (mediaList.length > 0) {
+          if (mediaList[0].type === 'image') {
+            mainImgElem.src = mediaList[0].url;
+          }
+
+          document.getElementById('og-image').setAttribute('content', window.location.origin + mediaList[0].url);
+          document.getElementById('tw-image').setAttribute('content', window.location.origin + mediaList[0].url);
+
+          mediaList.forEach((media, idx) => {
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = `thumb-slide-item w-16 h-16 rounded-xl border-2 overflow-hidden cursor-pointer flex items-center justify-center p-1 bg-white ${idx === 0 ? 'border-[#ff4b6e]' : 'border-pink-200'}`;
+
+            if (media.type === 'video') {
+              thumbDiv.innerHTML = `<div class="bg-pink-100 text-[#ff4b6e] w-full h-full rounded-lg flex flex-col items-center justify-center"><i class="fa-solid fa-play text-xs"></i><span class="text-[8px] font-bold">Video</span></div>`;
+              thumbDiv.onclick = () => {
+                document.querySelectorAll('.thumb-slide-item').forEach(el => el.classList.replace('border-[#ff4b6e]', 'border-pink-200'));
+                thumbDiv.classList.replace('border-pink-200', 'border-[#ff4b6e]');
+                
+                document.getElementById('img-zoom-box').innerHTML = `
+                  <video controls autoplay class="w-full h-full object-contain rounded-xl">
+                    <source src="${media.url}" type="video/mp4">
+                    Your browser does not support video play.
+                  </video>
+                `;
+              };
+            } else {
+              thumbDiv.innerHTML = `<img src="${media.url}" class="w-full h-full object-cover rounded-lg" alt="Thumbnail">`;
+              thumbDiv.onclick = () => {
+                document.querySelectorAll('.thumb-slide-item').forEach(el => el.classList.replace('border-[#ff4b6e]', 'border-pink-200'));
+                thumbDiv.classList.replace('border-pink-200', 'border-[#ff4b6e]');
+
+                document.getElementById('img-zoom-box').innerHTML = `
+                  <img id="main-product-image" src="${media.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+                  <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+                    <i class="fa-solid fa-expand"></i> Click to Fullscreen
+                  </div>
+                `;
+                setupImageFullscreen();
+              };
+            }
+
+            thumbContainer.appendChild(thumbDiv);
           });
-      }
-  } else {
-      viewerBox.innerHTML = `
-          <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
-          <div class="absolute bottom-3 right-[#ff4b6e] bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
-            <i class="fa-solid fa-expand"></i> Click to Fullscreen
-          </div>
-      `;
-      setupImageFullscreen();
-  }
-}
+        }
 
-// Custom Video Play / Pause Toggle Helper
-function toggleCustomVideoPlay() {
-  const video = document.getElementById('custom-product-video');
-  const playBtn = document.getElementById('custom-play-btn');
-  const playIcon = document.getElementById('play-btn-icon');
+        setupImageFullscreen();
+        calculateTotalPrice();
 
-  if (!video) return;
+        // Description Show More Setup
+        fullDescriptionText = product.description || 'No description provided for this product.';
+        const descElem = document.getElementById('product-description');
+        const descBtnContainer = document.getElementById('desc-toggle-btn-container');
 
-  if (video.paused) {
-      video.play();
-      if (playIcon) playIcon.className = 'fa-solid fa-pause text-2xl';
-      if (playBtn) playBtn.classList.add('opacity-0', 'hover:opacity-100');
-  } else {
-      video.pause();
-      if (playIcon) playIcon.className = 'fa-solid fa-play text-2xl ml-1';
-      if (playBtn) playBtn.classList.remove('opacity-0');
-  }
-}
-    function renderThumbnails(mediaList) {
-      const thumbContainer = document.getElementById('thumbnail-container');
-      if (!thumbContainer) return;
-      thumbContainer.innerHTML = '';
+        if (fullDescriptionText.length > 250) {
+          descElem.innerText = fullDescriptionText.substring(0, 250) + '...';
+          descBtnContainer.classList.remove('hidden');
+        } else {
+          descElem.innerText = fullDescriptionText;
+          descBtnContainer.classList.add('hidden');
+        }
 
-      mediaList.forEach((media, index) => {
-          let thumbHTML = '';
-          if (media.type === 'video') {
-              thumbHTML = `
-                  <div class="thumb-slide-item">
-                    <button onclick="switchMedia(${index})" class="thumb-btn relative w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-black overflow-hidden p-0 transition-all flex items-center justify-center cursor-pointer">
-                        <video class="w-full h-full object-cover pointer-events-none opacity-80">
-                            <source src="${media.url}" type="video/mp4">
-                        </video>
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs">
-                            <i class="fa-solid fa-play"></i>
-                        </div>
-                    </button>
-                  </div>
-              `;
-          } else {
-              thumbHTML = `
-                  <div class="thumb-slide-item">
-                    <button onclick="switchMedia(${index})" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all cursor-pointer">
-                      <img src="${media.url}" alt="Thumbnail ${index + 1}" loading="lazy" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
-                    </button>
-                  </div>
-              `;
-          }
-          thumbContainer.innerHTML += thumbHTML;
-      });
-    }
+        // Specifications Show More Setup
+        if (product.highlights && product.highlights.trim() !== '') {
+          fullHighlightsList = product.highlights.split('\n').map(h => h.trim()).filter(Boolean);
+        } else {
+          fullHighlightsList = [
+            `Brand / Manufacturer: ${product.brand || 'NexKart Standard'}`,
+            `Category: ${product.category || 'General'}`,
+            `Quality Guaranteed: 100% Original Product`,
+            `Return Policy: 7 Days Return Warranty`
+          ];
+        }
 
-    function switchMedia(index) {
-      activeMediaIndex = index;
-      let mediaList = [];
-      if (currentVideoUrl) {
-          let formattedVideoUrl = currentVideoUrl;
-          if (!formattedVideoUrl.startsWith('http://') && !formattedVideoUrl.startsWith('https://')) {
-              formattedVideoUrl = formattedVideoUrl.startsWith('/') ? formattedVideoUrl : '/' + formattedVideoUrl;
-          }
-          mediaList.push({ type: 'video', url: formattedVideoUrl });
-      }
-      currentProductImages.forEach(img => {
-          let formattedImgUrl = img ? String(img).trim() : '';
-          if (formattedImgUrl && !formattedImgUrl.startsWith('http://') && !formattedImgUrl.startsWith('https://')) {
-              formattedImgUrl = formattedImgUrl.startsWith('/') ? formattedImgUrl : '/' + formattedImgUrl;
-          }
-          mediaList.push({ type: 'image', url: formattedImgUrl });
-      });
+        const specBtnContainer = document.getElementById('spec-toggle-btn-container');
+        if (fullHighlightsList.length > 6) {
+          renderHighlightsList(fullHighlightsList.slice(0, 6));
+          specBtnContainer.classList.remove('hidden');
+        } else {
+          renderHighlightsList(fullHighlightsList);
+          specBtnContainer.classList.add('hidden');
+        }
 
-      renderMainMediaViewer(mediaList);
-      renderThumbnails(mediaList);
-    }
+        // Specification Gallery Images (Galleries) Setup with Show More System
+        if (data.gallery_images && data.gallery_images.length > 0) {
+          specImagesList = data.gallery_images.map(img => img.startsWith('/') ? img : '/' + img);
+          renderSpecImages();
+        }
 
-  // Specification Gallery Images (1 Image + Load More Pagination)
-  function renderSpecificationImages(images) {
-    const specImageContainer = document.getElementById('specification-images-gallery');
-    const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-    if (!specImageContainer) return;
-    
-    specImageContainer.innerHTML = '';
-    specImagesList = images || [];
-    visibleSpecImgCount = 1; // শুরুতে ১টি ছবি রেন্ডার হবে
+        // Same Seller Products Section
+        if (data.seller_products && data.seller_products.length > 0) {
+          const sellerGrid = document.getElementById('same-seller-grid');
+          sellerGrid.innerHTML = '';
+          data.seller_products.forEach(p => {
+            sellerGrid.innerHTML += createMiniProductCard(p);
+          });
+          document.getElementById('same-seller-section').style.display = 'block';
+        }
 
-    if (!specImagesList || specImagesList.length === 0) {
-      if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
-      return;
-    }
+        // Suggested Products Section
+        if (data.suggested_products && data.suggested_products.length > 0) {
+          const suggestedGrid = document.getElementById('suggested-grid');
+          suggestedGrid.innerHTML = '';
+          data.suggested_products.forEach(p => {
+            suggestedGrid.innerHTML += createMiniProductCard(p);
+          });
+          document.getElementById('section-suggested').style.display = 'block';
+        }
 
-    renderSpecImagesBatch();
-  }
-
-  function renderSpecImagesBatch() {
-    const specImageContainer = document.getElementById('specification-images-gallery');
-    const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-    if (!specImageContainer) return;
-
-    specImageContainer.innerHTML = '';
-
-    const currentImagesToDisplay = specImagesList.slice(0, visibleSpecImgCount);
-
-    currentImagesToDisplay.forEach((imgUrl) => {
-      let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
-      if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-        formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
-      }
-
-      if (formattedUrl) {
-        specImageContainer.innerHTML += `
-          <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center">
-            <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.parentElement.style.display='none';">
-          </div>
-        `;
-      }
-    });
-
-    // সব ছবি দেখানো হয়ে গেলে বাটন হাইড হবে
-    if (visibleSpecImgCount < specImagesList.length) {
-      if (specImgBtnContainer) specImgBtnContainer.classList.remove('hidden');
-    } else {
-      if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
-    }
-  }
-
-  // Load More Button Click Event Handler
-  function loadMoreSpecImages() {
-    visibleSpecImgCount += 1; // প্রতিক্লিকে ১টি করে অতিরিক্ত ছবি লোড হবে
-    renderSpecImagesBatch();
-  }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      if (productId) {
-        fetchProductData();
+        // Load Reviews & Inquiries
+        loadReviews();
         loadInquiries();
-        loadProductReviews();
+
+      } catch (error) {
+        console.error('Fetch Details Error:', error);
       }
+    }
+
+    // Page Load Init
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProductDetails();
     });
   </script>
 </body>
