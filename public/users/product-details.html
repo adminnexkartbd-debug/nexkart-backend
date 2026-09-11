@@ -502,40 +502,40 @@
     let currentInquiriesPage = 1;
     const inquiriesPerPage = 5;
 
-    // -----------------------------------------------------------
-    // Google Popup Authentication Logic
-    // -----------------------------------------------------------
+    // Google Popup Login Function
     function openGooglePopup() {
       const width = 500;
       const height = 600;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
 
-      window.open(
+      const popup = window.open(
         '/user/auth/google/popup',
         'GoogleLoginPopup',
         `width=${width},height=${height},top=${top},left=${left}`
       );
+
+      if (!popup) {
+        alert("Popup Blocked! Please allow popups for this site.");
+      }
     }
 
-    // Google Popup Login listener without redirecting to dashboard
-    window.addEventListener('message', function (event) {
-      if (event.data && event.data.message === 'login_completed') {
-        closeLoginModal(); // Close modal if open
-
+    // Listen for PostMessage from Popup Window
+    window.addEventListener('message', (event) => {
+      if (event.data && (event.data.status === 'success' || event.data.message === 'login_completed')) {
+        closeLoginModal();
+        
         if (pendingAction === 'order') {
           executeOrderRedirect();
         } else if (pendingAction === 'cart') {
           addToDatabaseCart();
         } else {
-          window.location.reload(); 
+          window.location.reload();
         }
       }
     });
 
-    // -----------------------------------------------------------
     // Share Product Information & Image Functionality
-    // -----------------------------------------------------------
     async function shareProduct() {
       const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
       const salePrice = document.getElementById('product-sale-price').innerText || '';
@@ -1165,7 +1165,7 @@
 
           if (actionButtonsContainer) {
               actionButtonsContainer.innerHTML = `
-                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
+                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-[#ffffff] font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
                     <i class="fa-solid fa-bag-shopping"></i> Order Now
                   </button>
 
