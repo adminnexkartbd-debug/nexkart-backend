@@ -159,6 +159,36 @@
       0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
       100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 30%; }
     }
+
+    /* Specification Images Peek & View All CSS */
+    .spec-gallery-container {
+      position: relative;
+      overflow: hidden;
+      max-height: 550px;
+      transition: max-height 0.5s ease-in-out;
+    }
+
+    .spec-gallery-container.expanded {
+      max-height: none;
+    }
+
+    .spec-gallery-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 180px;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 80%, rgba(255, 255, 255, 1) 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+      pointer-events: none;
+    }
+
+    .spec-gallery-overlay button {
+      pointer-events: auto;
+    }
   </style>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
@@ -335,7 +365,16 @@
             <span>Show More</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
           </button>
         </div>
-        <div id="specification-images-gallery" class="pt-4 space-y-6"></div>
+        
+        <!-- Specification Images Peek Gallery Wrapper -->
+        <div id="spec-gallery-wrapper" class="relative pt-4">
+          <div id="specification-images-gallery" class="spec-gallery-container space-y-6"></div>
+          <div id="spec-gallery-overlay" class="spec-gallery-overlay hidden">
+            <button onclick="toggleSpecGallery()" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg hover:opacity-95 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-images"></i> <span id="spec-gallery-btn-text">View All Images</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 3. Customer Reviews -->
@@ -496,6 +535,7 @@
     let fullDescriptionText = '';
     let isDescExpanded = false;
     let isSpecExpanded = false;
+    let isSpecGalleryExpanded = false;
 
     // Pagination Global Variables
     let allReviewsData = [];
@@ -553,16 +593,12 @@
      }
    });
 
-    // -----------------------------------------------------------
-    // Share Product Information & Image Functionality
-    // -----------------------------------------------------------
     async function shareProduct() {
       const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
       const salePrice = document.getElementById('product-sale-price').innerText || '';
       const category = document.getElementById('product-category').innerText || '';
       const sku = document.getElementById('product-sku').innerText || '';
       const shareUrl = window.location.href;
-      const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
 
       const shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\nBuy now: `;
 
@@ -574,18 +610,43 @@
             url: shareUrl
           };
 
-          if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+          // ১. ভিডিও থাকলে প্রথমে ভিডিও ফাইল হিসেবে শেয়ার করার চেষ্টা করবে
+          if (currentVideoUrl) {
             try {
-              const response = await fetch(mainImgSrc);
-              const blob = await response.blob();
-              const ext = blob.type.split('/')[1] || 'jpg';
-              const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
-
-              if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                shareData.files = [file];
+              let formattedVidUrl = currentVideoUrl;
+              if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
+                formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
               }
-            } catch (fileErr) {
-              console.warn('Image fetch for share failed, falling back to text share:', fileErr);
+
+              const response = await fetch(formattedVidUrl);
+              const blob = await response.blob();
+              const ext = blob.type.split('/')[1] || 'mp4';
+              const videoFile = new File([blob], `product-video-${productId || 'item'}.${ext}`, { type: blob.type || 'video/mp4' });
+
+              if (navigator.canShare && navigator.canShare({ files: [videoFile] })) {
+                shareData.files = [videoFile];
+              }
+            } catch (vidErr) {
+              console.warn('Video fetch for share failed, falling back to image/text share:', vidErr);
+            }
+          }
+
+          // ২. ভিডিও না থাকলে বা ভিডিও শেয়ার ব্যাকআপ ফেল করলে ছবি শেয়ার করবে
+          if (!shareData.files) {
+            const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
+            if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+              try {
+                const response = await fetch(mainImgSrc);
+                const blob = await response.blob();
+                const ext = blob.type.split('/')[1] || 'jpg';
+                const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                  shareData.files = [file];
+                }
+              } catch (fileErr) {
+                console.warn('Image fetch for share failed, falling back to text share:', fileErr);
+              }
             }
           }
 
@@ -605,7 +666,6 @@
         });
       }
     }
-
     function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
@@ -927,7 +987,7 @@
     window.addEventListener('scroll', () => {
       const sections = ['section-description', 'section-specification', 'section-reviews', 'section-inquiries'];
       const navLinks = {
-        'section-description': document.getElementById('nav-description'),
+        'section-[#section-description]': document.getElementById('nav-description'),
         'section-specification': document.getElementById('nav-specification'),
         'section-reviews': document.getElementById('nav-reviews'),
         'section-inquiries': document.getElementById('nav-inquiries')   
@@ -1292,7 +1352,7 @@
           highlightsList.forEach(text => {
             specItems.push(`
               <li class="spec-item flex items-center gap-2 bg-white/70 p-2.5 rounded-xl border border-pink-100 font-medium">
-                <i class="fa-solid fa-circle-check text-[#ff4b6e]"></i> ${String(text).trim()}
+                <i class="fa-solid fa-[#ff4b6e] text-[#ff4b6e]"></i> ${String(text).trim()}
               </li>
             `);
           });
@@ -1706,10 +1766,14 @@ function toggleCustomVideoPlay() {
 
     function renderSpecificationImages(images) {
       const specImageContainer = document.getElementById('specification-images-gallery');
+      const overlay = document.getElementById('spec-gallery-overlay');
       if (!specImageContainer) return;
       specImageContainer.innerHTML = '';
 
-      if (!images || images.length === 0) return;
+      if (!images || images.length === 0) {
+        if (overlay) overlay.classList.add('hidden');
+        return;
+      }
 
       images.forEach((imgUrl) => {
         let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
@@ -1725,6 +1789,36 @@ function toggleCustomVideoPlay() {
           `;
         }
       });
+
+      // 1টির বেশি ইমেজ থাকলে Peek (Peek-a-boo) ইফেক্ট চালু করবে
+      if (images.length > 1) {
+        specImageContainer.classList.remove('expanded');
+        if (overlay) overlay.classList.remove('hidden');
+        isSpecGalleryExpanded = false;
+      } else {
+        specImageContainer.classList.add('expanded');
+        if (overlay) overlay.classList.add('hidden');
+      }
+    }
+
+    function toggleSpecGallery() {
+      const gallery = document.getElementById('specification-images-gallery');
+      const overlay = document.getElementById('spec-gallery-overlay');
+      const btnText = document.getElementById('spec-gallery-btn-text');
+
+      if (isSpecGalleryExpanded) {
+        gallery.classList.remove('expanded');
+        overlay.classList.remove('hidden', 'relative', 'bg-none');
+        overlay.classList.add('absolute', 'bottom-0');
+        btnText.innerText = 'View All Images';
+        isSpecGalleryExpanded = false;
+      } else {
+        gallery.classList.add('expanded');
+        overlay.classList.remove('absolute', 'bottom-0');
+        overlay.classList.add('relative', 'mt-4', 'bg-none', 'h-auto', 'p-0');
+        btnText.innerText = 'Show Less Images';
+        isSpecGalleryExpanded = true;
+      }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
