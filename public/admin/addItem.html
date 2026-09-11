@@ -279,14 +279,12 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Video Upload Field -->
             <div>
               <label class="block text-sm font-medium text-slate-300 mb-2">Product Video (MP4/WebM)</label>
               <input type="file" id="product_video" name="product_video" accept="video/*" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/30 transition">
               <p class="text-xs text-slate-400 mt-1">প্রোডাক্টের একটি ছোট প্রোমোশনাল ভিডিও আপলোড করতে পারেন (ঐচ্ছিক)।</p>
             </div>
 
-            <!-- Coin Offer Toggle & Percentage -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-slate-300 mb-2">Coin Offer Available? <span class="text-pink-500">*</span></label>
@@ -472,7 +470,6 @@
       }
     }
 
-    // Coin Offer Toggle Functionality
     function handleCoinOfferToggle() {
       const coinToggle = document.getElementById('coin_offer_toggle').value;
       const percentageContainer = document.getElementById('coinPercentageContainer');
@@ -523,7 +520,7 @@
             alert('❌ প্রোডাক্টটি খুঁজে পাওয়া যায়নি!');
           }
         } else {
-          alert('❌ প্রোডাক্ট এর তথ্য ফ্রেচ করতে ব্যর্থ হয়েছে!');
+          alert('❌ প্রোডাক্ট এর তথ্য ফেচ করতে ব্যর্থ হয়েছে!');
         }
       } catch (err) {
         console.error('Fetch Error:', err);
@@ -557,12 +554,10 @@
       if (product.guarantee) document.getElementById('guaranteeSelect').value = product.guarantee;
       if (product.return_policy) document.getElementById('returnPolicySelect').value = product.return_policy;
 
-      // Checkbox Values
       document.getElementById('codAvailable').checked = Boolean(product.cod_available == 1);
       document.getElementById('openBoxInspection').checked = Boolean(product.open_box_inspection == 1);
       document.getElementById('freeShipping').checked = Boolean(product.free_shipping == 1);
 
-      // Coin Offer setup
       const coinOfferVal = product.coin_offer ? product.coin_offer.toLowerCase() : 'no';
       document.getElementById('coin_offer_toggle').value = coinOfferVal;
       if (coinOfferVal === 'yes' && product.coin_percentage_value !== undefined && product.coin_percentage_value !== null) {
@@ -570,13 +565,11 @@
       }
       handleCoinOfferToggle();
 
-      // Pricing & Inventory
       document.getElementById('regularPriceInput').value = product.regular_price ?? '';
       document.getElementById('salePriceInput').value = product.sale_price ?? '';
       document.getElementById('stockQtyInput').value = product.stock_quantity ?? '';
       if (product.stock_status) document.getElementById('stockStatusSelect').value = product.stock_status;
 
-      // Highlights
       if (product.product_highlights) {
         const highlightsContainer = document.getElementById('highlightsContainer');
         highlightsContainer.innerHTML = '';
@@ -597,7 +590,6 @@
       document.getElementById('descInput').value = product.description || '';
       document.getElementById('keywordsInput').value = product.keywords || '';
 
-      // Existing Images
       if (product.images && Array.isArray(product.images)) {
         existingImages = product.images;
       } else if (product.image_path) {
@@ -689,7 +681,6 @@
       updateFileInputAndPreview();
     }
 
-    // 🔴 ফিক্সড ফর্ম সাবমিট হ্যান্ডলার ( AJAX Request যুক্ত করা হয়েছে ) 🔴
     document.getElementById('productForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -705,7 +696,10 @@
 
       const formData = new FormData(this);
 
-      // যদি এডিট মোড হয়
+      if (editMode) {
+        formData.append('kept_image_ids', JSON.stringify(keptImageIds));
+      }
+
       const url = editMode ? `/api/products/update/${editProductId}` : `/api/products/add`;
       const method = editMode ? 'PUT' : 'POST';
 
