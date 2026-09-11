@@ -14,16 +14,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Multer Cloudinary Storage Setup
+// Multer Cloudinary Storage Setup (Supports Images and Videos)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'uploads',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-    public_id: (req, file) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      return uniqueSuffix;
-    },
+  params: async (req, file) => {
+    let resourceType = 'image';
+    let allowedFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    
+    if (file.mimetype.startsWith('video/')) {
+      resourceType = 'auto';
+      allowedFormats = ['mp4', 'mov', 'avi', 'webm', 'mkv'];
+    }
+
+    return {
+      folder: 'uploads',
+      resource_type: resourceType,
+      allowed_formats: allowedFormats,
+      public_id: Date.now() + '-' + Math.round(Math.random() * 1E9),
+    };
   },
 });
 
@@ -103,7 +111,10 @@ router.get('/:id', async (req, res) => {
         images: images,
         highlights: product.product_highlights || '',
         sub_category: product.sub_category || '',
-        products_variant: product.products_variant || null
+        products_variant: product.products_variant || null,
+        video_url: product.video_url || null,
+        coin_offer: product.coin_offer || 'no',
+        coin_percentage_value: product.coin_percentage_value || 0
       }
     });
 
@@ -113,8 +124,11 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ৩. প্রোডাক্ট এড করার রাউট (সব ক্যাটাগরির জন্যই Variant সেভ হবে)
-router.post('/add', upload.array('images', 10), async (req, res) => {
+// ৩. প্রোডাক্ট এড করার রাউট
+router.post('/add', upload.fields([
+  { name: 'images', maxCount: 10 },
+  { name: 'product_video', maxCount: 1 }
+]), async (req, res) => {
   try {
     const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
 
@@ -123,8 +137,9 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
     }
 
     const files = req.files;
+    const galleryFiles = files && files['images'] ? files['images'] : [];
 
-    if (!files || files.length < 3) {
+    if (!galleryFiles || galleryFiles.length < 3) {
       return res.status(400).json({ success: false, message: "কমপক্ষে ৩টি প্রোডাক্টের ছবি আপলোড করা বাধ্যতামূলক!" });
     }
 
@@ -132,7 +147,7 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
       product_id, title, brand_name, category, sub_category, products_variant, shipping_from, promo_badge,
       delivery_charge, delivery_limit, delivery_time, guarantee, return_policy, cod_available, open_box_inspection,
       free_shipping, regular_price, old_price, sale_price, stock_quantity,
-      stock_status, description, keywords, highlights
+      stock_status, description, keywords, highlights, coin_offer_toggle, coin_percentage
     } = req.body;
 
     const cod = cod_available ? 1 : 0;
@@ -141,12 +156,19 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
     const soldQty = 0;
 
     const cleanBrand = (brand_name && String(brand_name).trim() !== '') ? String(brand_name).trim() : 'N/A';
-    
-    // যেকোনো ক্যাটাগরিতে Variant ডাটা থাকলে তা ডাটাবেজে সেভ হবে
     const variantData = (products_variant && products_variant.trim() !== '') ? products_variant.trim() : null;
-    
     const cleanOldPrice = (old_price !== undefined && old_price !== null && String(old_price).trim() !== '') ? old_price : null;
     const cleanStockStatus = stock_status || 'in_stock';
+
+    // Video URL handling
+    let videoUrl = null;
+    if (files && files['product_video'] && files['product_video'][0]) {
+      videoUrl = files['product_video'][0].path;
+    }
+
+    // Coin Offer handling
+    const coinOffer = coin_offer_toggle === 'yes' ? 'yes' : 'no';
+    const coinPercentageVal = coinOffer === 'yes' && coin_percentage ? Number(coin_percentage) : 0;
 
     let highlightList = [];
     if (Array.isArray(highlights)) {
@@ -161,22 +183,22 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
         product_id, admin_id, title, category, sub_category, products_variant, shipping_from, promo_badge, 
         product_highlights, guarantee, return_policy, cod_available, open_box_inspection, 
         free_shipping, delivery_charge, delivery_limit, delivery_time, regular_price, old_price, sale_price, stock_quantity, sold_qty,
-        stock_status, description, keywords, brand_name, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        stock_status, description, keywords, brand_name, video_url, coin_offer, coin_percentage_value, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const productValues = [
       product_id, adminId, title, category, sub_category || null, variantData, shipping_from, promo_badge,
       highlightsString, guarantee, return_policy, cod, openBox, freeShip,
       delivery_charge || 60, delivery_limit || 1, delivery_time || '2-3 Days', regular_price, cleanOldPrice, sale_price || null, stock_quantity, soldQty,
-      cleanStockStatus, description, keywords, cleanBrand
+      cleanStockStatus, description, keywords, cleanBrand, videoUrl, coinOffer, coinPercentageVal
     ];
 
     const [result] = await db.query(productQuery, productValues);
     const dbInternalId = result.insertId;
 
     const imageQuery = `INSERT INTO product_images (product_id, image_path) VALUES ?`;
-    const imageValues = files.map(file => [dbInternalId, file.path]);
+    const imageValues = galleryFiles.map(file => [dbInternalId, file.path]);
     await db.query(imageQuery, [imageValues]);
 
     return res.status(200).json({ 
@@ -190,10 +212,11 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
   }
 });
 
-// ৪. প্রোডাক্ট আপডেট করার রাউট (সব ক্যাটাগরির জন্যই Variant আপডেট হবে)
+// ৪. প্রোডাক্ট আপডেট করার রাউট
 router.put('/update/:id', upload.fields([
     { name: 'replaced_images', maxCount: 10 },
-    { name: 'new_images', maxCount: 10 }
+    { name: 'new_images', maxCount: 10 },
+    { name: 'product_video', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
@@ -209,11 +232,14 @@ router.put('/update/:id', upload.fields([
             return res.status(403).json({ success: false, message: "এই প্রোডাক্টটি আপডেট করার অনুমতি আপনার নেই!" });
         }
 
+        const existingProduct = checkProd[0];
+
         const {
             product_id, title, brand_name, category, sub_category, products_variant, shipping_from, promo_badge,
             delivery_charge, delivery_limit, delivery_time, guarantee, return_policy, cod_available, open_box_inspection,
             free_shipping, regular_price, old_price, sale_price, stock_quantity,
             stock_status, description, keywords, kept_image_ids, replaced_original_ids,
+            coin_offer_toggle, coin_percentage, remove_video,
             'highlights[]': highlightsArray, highlights
         } = req.body;
 
@@ -223,9 +249,33 @@ router.put('/update/:id', upload.fields([
         const cleanBrand = (brand_name && String(brand_name).trim() !== '') ? String(brand_name).trim() : 'N/A';
         const cleanOldPrice = (old_price !== undefined && old_price !== null && String(old_price).trim() !== '') ? old_price : null;
         const cleanStockStatus = stock_status || 'in_stock';
-
-        // যেকোনো ক্যাটাগরিতে Variant ডাটা থাকলে তা ডাটাবেজে আপডেট হবে
         const variantData = (products_variant && products_variant.trim() !== '') ? products_variant.trim() : null;
+
+        // Coin Offer handling
+        const coinOffer = coin_offer_toggle === 'yes' ? 'yes' : 'no';
+        const coinPercentageVal = coinOffer === 'yes' && coin_percentage ? Number(coin_percentage) : 0;
+
+        // Video URL update logic
+        let videoUrl = existingProduct.video_url;
+        if (remove_video === '1') {
+            if (existingProduct.video_url) {
+                const oldVideoPublicId = getCloudinaryPublicId(existingProduct.video_url);
+                if (oldVideoPublicId) {
+                    await cloudinary.uploader.destroy(oldVideoPublicId, { resource_type: 'video' }).catch(err => console.error("Cloudinary Video Delete Error:", err));
+                }
+            }
+            videoUrl = null;
+        }
+
+        if (req.files && req.files['product_video'] && req.files['product_video'][0]) {
+            if (existingProduct.video_url) {
+                const oldVideoPublicId = getCloudinaryPublicId(existingProduct.video_url);
+                if (oldVideoPublicId) {
+                    await cloudinary.uploader.destroy(oldVideoPublicId, { resource_type: 'video' }).catch(err => console.error("Cloudinary Video Delete Error:", err));
+                }
+            }
+            videoUrl = req.files['product_video'][0].path;
+        }
 
         let rawHighlights = highlightsArray || highlights;
         let highlightList = [];
@@ -241,7 +291,7 @@ router.put('/update/:id', upload.fields([
                 product_id = ?, title = ?, delivery_limit = ?, category = ?, sub_category = ?, products_variant = ?, shipping_from = ?, promo_badge = ?,
                 product_highlights = ?, guarantee = ?, return_policy = ?, cod_available = ?, open_box_inspection = ?,
                 free_shipping = ?, delivery_charge = ?, delivery_time = ?, regular_price = ?, old_price = ?, sale_price = ?, stock_quantity = ?,
-                stock_status = ?, description = ?, keywords = ?, brand_name = ?
+                stock_status = ?, description = ?, keywords = ?, brand_name = ?, video_url = ?, coin_offer = ?, coin_percentage_value = ?
             WHERE id = ? AND admin_id = ?
         `;
 
@@ -249,7 +299,7 @@ router.put('/update/:id', upload.fields([
             product_id, title, delivery_limit || 1, category, sub_category || null, variantData, shipping_from, promo_badge,
             highlightsString, guarantee, return_policy, cod, openBox,
             freeShip, delivery_charge || 60, delivery_time || '2-3 Days', regular_price, cleanOldPrice, sale_price || null, stock_quantity,
-            cleanStockStatus, description, keywords, cleanBrand, productId, adminId
+            cleanStockStatus, description, keywords, cleanBrand, videoUrl, coinOffer, coinPercentageVal, productId, adminId
         ]);
 
         let keptIds = [];
@@ -319,6 +369,16 @@ router.delete('/delete/:id', async (req, res) => {
     const [products] = await db.query(`SELECT * FROM products WHERE id = ? AND admin_id = ?`, [productId, adminId]);
     if (products.length === 0) {
       return res.status(403).json({ success: false, message: "এই প্রোডাক্টটি ডিলিট করার অনুমতি আপনার নেই!" });
+    }
+
+    const product = products[0];
+
+    // Delete Cloudinary video if exists
+    if (product.video_url) {
+      const videoPublicId = getCloudinaryPublicId(product.video_url);
+      if (videoPublicId) {
+        await cloudinary.uploader.destroy(videoPublicId, { resource_type: 'video' }).catch(err => console.error("Video Cloudinary Delete Error:", err));
+      }
     }
 
     const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [productId]);
