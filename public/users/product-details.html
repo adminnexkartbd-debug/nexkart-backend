@@ -1753,44 +1753,42 @@ function toggleCustomVideoPlay() {
       renderThumbnails(mediaList);
     }
 
-    // Render Specification Gallery Images (Shows 1 image and hides rest if > 1)
-    function renderSpecificationImages(images) {
-      const specImageContainer = document.getElementById('specification-images-gallery');
-      const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-      if (!specImageContainer) return;
-      specImageContainer.innerHTML = '';
+  function renderSpecificationImages(images) {
+  const specImageContainer = document.getElementById('specification-images-gallery');
+  const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+  if (!specImageContainer) return;
+  specImageContainer.innerHTML = '';
 
-      if (!images || images.length === 0) {
-        if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
-        return;
-      }
+  if (!images || images.length === 0) {
+    if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
+    return;
+  }
 
-      images.forEach((imgUrl, index) => {
-        let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
-        if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-          formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
-        }
-
-        if (formattedUrl) {
-          // ১টির বেশি ছবি হলে বাকিগুলো 'hidden' রাখা হচ্ছে
-          const hideClass = index >= 1 ? 'hidden' : '';
-          specImageContainer.innerHTML += `
-            <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center ${hideClass}">
-              <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.style.display='none';">
-            </div>
-          `;
-        }
-      });
-
-      // ১টির বেশি ছবি থাকলে বাটন দেখাবে, নাহলে হাইড থাকবে
-      if (images.length > 1 && specImgBtnContainer) {
-        specImgBtnContainer.classList.remove('hidden');
-        isSpecImagesExpanded = false;
-      } else if (specImgBtnContainer) {
-        specImgBtnContainer.classList.add('hidden');
-      }
+  images.forEach((imgUrl, index) => {
+    let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
+    if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
     }
 
+    if (formattedUrl) {
+      // ১টির বেশি ছবি হলে বাকিগুলো প্রাথমিক অবস্থায় 'hidden' থাকবে
+      const hideClass = index >= 1 ? 'hidden' : '';
+      specImageContainer.innerHTML += `
+        <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center ${hideClass}">
+          <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.parentElement.style.display='none';">
+        </div>
+      `;
+    }
+  });
+
+  // ১টির বেশি ছবি থাকলে Show More Images বাটনটি দৃশ্যমান হবে
+  if (images.length > 1 && specImgBtnContainer) {
+    specImgBtnContainer.classList.remove('hidden');
+    isSpecImagesExpanded = false;
+  } else if (specImgBtnContainer) {
+    specImgBtnContainer.classList.add('hidden');
+  }
+}
     document.addEventListener("DOMContentLoaded", () => {
       if (productId) {
         fetchProductData();
