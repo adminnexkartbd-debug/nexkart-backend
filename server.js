@@ -5,10 +5,13 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const path = require('path');
 const helmet = require('helmet');
+const compression = require('compression'); 
 require('dotenv').config();
 
 const app = express();
+app.use(compression());
 
+// ==================== ১. ডায়নামিক সিকিউরিটি (CSP) ও মিডলওয়্যার ====================
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
@@ -39,8 +42,8 @@ app.use(
         "https://res.cloudinary.com",
         "https://*.cloudinary.com",
         "https://via.placeholder.com", 
-        "https://dummyimage.com", // dummyimage যুক্ত করা হয়েছে
-        "https://*.dummyimage.com", // dummyimage এর সাবডোমেইন যুক্ত করা হয়েছে
+        "https://dummyimage.com", // dummyimage যুক্ত করা হয়েছে
+        "https://*.dummyimage.com", // dummyimage এর সাবডোমেইন যুক্ত করা হয়েছে
         "https://lh3.googleusercontent.com", 
         "https://*.googleusercontent.com",
         "https://ui-avatars.com",
@@ -48,12 +51,12 @@ app.use(
         "https://*.unsplash.com",
         "https://www.svgrepo.com"
       ],
-      mediaSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com"], // <-- এখানে ক্লাউডিনারি যোগ করা হয়েছে
+      mediaSrc: ["'self'", "data:", "blob:"],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
       frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"], // GitHub Pages iframe এর অনুমতি দেওয়ার জন্য যুক্ত করা হয়েছে
     },
   })
-)
+);
 
 // বডি পার্সার
 app.use(express.json({ limit: '100mb' }));
