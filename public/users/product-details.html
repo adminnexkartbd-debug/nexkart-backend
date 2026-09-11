@@ -630,7 +630,6 @@ async function shareProduct() {
 
   let shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
-  // ভিডিও থাকলে তার লিংক যুক্ত করবে
   if (currentVideoUrl) {
     let formattedVidUrl = currentVideoUrl;
     if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
@@ -639,52 +638,44 @@ async function shareProduct() {
     shareText += `🎬 Watch Video: ${formattedVidUrl}\n\n`;
   }
 
-  shareText += `Buy now: `;
+  shareText += `Buy now: ${shareUrl}`;
 
   if (navigator.share) {
     try {
       let shareData = {
         title: productTitle,
-        text: shareText,
-        url: shareUrl
+        text: shareText
       };
 
-      // ইমেজ শেয়ার করার অংশ (ভিডিও থাকলেও এখন ইমেজ যুক্ত হবে)
-      const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
-      if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-        try {
-          const response = await fetch(mainImgSrc);
-          const blob = await response.blob();
-          const ext = blob.type.split('/')[1] || 'jpg';
-          const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+      // শুধুমাত্র ভিডিও না থাকলেই ইমেজ ফাইল হিসেবে যুক্ত হবে
+      if (!currentVideoUrl) {
+        const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
+        if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+          try {
+            const response = await fetch(mainImgSrc);
+            const blob = await response.blob();
+            const ext = blob.type.split('/')[1] || 'jpg';
+            const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
 
-          // ফাইল শেয়ার করা সম্ভব কি না চেক করে যুক্ত করবে
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            shareData.files = [file];
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
+            }
+          } catch (e) {
+            console.warn('Image fetch failed, falling back to text only');
           }
-        } catch (fileErr) {
-          console.warn('Image fetch for share failed, sharing text/link only:', fileErr);
         }
       }
 
       await navigator.share(shareData);
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Error sharing:', err);
-      }
+      if (err.name !== 'AbortError') console.error('Error sharing:', err);
     }
   } else {
-    // Web Share API সাপোর্ট না করলে ক্লিপবোর্ডে কপি হবে
-    const fullShareContent = `${shareText}${shareUrl}`;
-    navigator.clipboard.writeText(fullShareContent).then(() => {
-      alert('Product details and link copied to clipboard!');
-    }).catch(err => {
-      console.error('Copy failed:', err);
-      alert('Failed to copy. Share link: ' + shareUrl);
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert('Product info copied to clipboard!');
     });
   }
 }
-
 function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
