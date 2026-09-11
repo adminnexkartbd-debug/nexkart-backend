@@ -1582,36 +1582,73 @@
       renderSpecificationImages(currentProductImages);
     }
 
-    function renderMainMediaViewer(mediaList) {
-      const viewerBox = document.getElementById('img-zoom-box');
-      const specImageContainer = document.getElementById('specification-images-gallery');
-      if (!viewerBox || !mediaList || mediaList.length === 0) return;
+  function renderMainMediaViewer(mediaList) {
+  const viewerBox = document.getElementById('img-zoom-box');
+  if (!viewerBox || !mediaList || mediaList.length === 0) return;
 
-      const currentMedia = mediaList[activeMediaIndex];
+  const currentMedia = mediaList[activeMediaIndex];
 
-      if (currentMedia.type === 'video') {
-          viewerBox.innerHTML = `
-              <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden">
-                  <video controls controlsList="nodownload" class="max-h-full max-w-full rounded-xl shadow-lg">
-                      <source src="${currentMedia.url}" type="video/mp4">
-                      Your browser does not support the video tag.
-                  </video>
-                  <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
-                      <i class="fa-solid fa-play"></i> Product Video
-                  </div>
+  if (currentMedia.type === 'video') {
+      viewerBox.innerHTML = `
+          <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden group/vid">
+              <video id="custom-product-video" class="max-h-full max-w-full rounded-xl shadow-lg cursor-pointer">
+                  <source src="${currentMedia.url}" type="video/mp4">
+                  Your browser does not support the video tag.
+              </video>
+              
+              <!-- Video Overlay Center Play Button -->
+              <button id="custom-play-btn" onclick="toggleCustomVideoPlay()" class="absolute w-16 h-16 bg-[#ff4b6e]/90 hover:bg-[#ff4b6e] text-white rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 transform group-hover/vid:scale-110 active:scale-95 z-20">
+                  <i id="play-btn-icon" class="fa-solid fa-play text-2xl ml-1"></i>
+              </button>
+
+              <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md pointer-events-none z-10">
+                  <i class="fa-solid fa-film"></i> Product Video
               </div>
-          `;
-      } else {
-          viewerBox.innerHTML = `
-              <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
-              <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
-                <i class="fa-solid fa-expand"></i> Click to Fullscreen
-              </div>
-          `;
-          setupImageFullscreen();
+          </div>
+      `;
+
+      // Video click event to play/pause
+      const videoElem = document.getElementById('custom-product-video');
+      if (videoElem) {
+          videoElem.addEventListener('click', toggleCustomVideoPlay);
+          videoElem.addEventListener('ended', () => {
+              const playIcon = document.getElementById('play-btn-icon');
+              const playBtn = document.getElementById('custom-play-btn');
+              if (playIcon && playBtn) {
+                  playIcon.className = 'fa-solid fa-play text-2xl ml-1';
+                  playBtn.classList.remove('opacity-0');
+              }
+          });
       }
-    }
+  } else {
+      viewerBox.innerHTML = `
+          <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+          <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+            <i class="fa-solid fa-expand"></i> Click to Fullscreen
+          </div>
+      `;
+      setupImageFullscreen();
+  }
+}
 
+// Custom Video Play / Pause Toggle Helper
+function toggleCustomVideoPlay() {
+  const video = document.getElementById('custom-product-video');
+  const playBtn = document.getElementById('custom-play-btn');
+  const playIcon = document.getElementById('play-btn-icon');
+
+  if (!video) return;
+
+  if (video.paused) {
+      video.play();
+      if (playIcon) playIcon.className = 'fa-solid fa-pause text-2xl';
+      if (playBtn) playBtn.classList.add('opacity-0', 'hover:opacity-100'); // ভিডিও চালু হলে বাটন হাইড হয়ে যাবে, মাউস নিলে আবার আসবে
+  } else {
+      video.pause();
+      if (playIcon) playIcon.className = 'fa-solid fa-play text-2xl ml-1';
+      if (playBtn) playBtn.classList.remove('opacity-0');
+  }
+}
     function renderThumbnails(mediaList) {
       const thumbContainer = document.getElementById('thumbnail-container');
       if (!thumbContainer) return;
