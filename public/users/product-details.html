@@ -478,8 +478,11 @@
     <img id="fullscreen-modal-image" src="" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
   </div>
 
-<!-- JavaScript Logic -->
+  <!-- JavaScript Logic -->
   <script>
+    let currentProductImages = [];
+let currentVideoUrl = null;
+let activeMediaIndex = 0;
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
@@ -502,40 +505,58 @@
     let currentInquiriesPage = 1;
     const inquiriesPerPage = 5;
 
-    // Google Popup Login Function
-    function openGooglePopup() {
-      const width = 500;
-      const height = 600;
-      const left = (window.innerWidth - width) / 2;
-      const top = (window.innerHeight - height) / 2;
+   // Google Popup Login Function
+function openGooglePopup() {
+  const width = 500;
+  const height = 600;
+  const left = (window.innerWidth - width) / 2;
+  const top = (window.innerHeight - height) / 2;
 
-      const popup = window.open(
-        '/user/auth/google/popup',
-        'GoogleLoginPopup',
-        `width=${width},height=${height},top=${top},left=${left}`
-      );
+  // popRouter-এর রাউট অনুযায়ী URL দিন
+  const popup = window.open(
+    '/user/auth/google/popup',
+    'GoogleLoginPopup',
+    `width=${width},height=${height},top=${top},left=${left}`
+  );
 
-      if (!popup) {
-        alert("Popup Blocked! Please allow popups for this site.");
-      }
+  if (!popup) {
+    alert("Popup Blocked! Please allow popups for this site.");
+  }
+}
+
+// Listen for PostMessage from Popup Window
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.status === 'success' && event.data.message === 'login_completed') {
+    closeLoginModal();
+    
+    // লগইন সফল হলে পরবর্তী একশন অনুযায়ী ফ্লো চালানো
+    if (pendingAction === 'order') {
+      proceedToCheckout();
+    } else if (pendingAction === 'cart') {
+      addToCart();
+    } else {
+      window.location.reload();
     }
+  }
+});
+    // Google Popup Login listener without redirecting to dashboard
+    window.addEventListener('message', function (event) {
+      if (event.data && event.data.message === 'login_completed') {
+        closeLoginModal(); // Close modal if open
 
-    // Listen for PostMessage from Popup Window
-    window.addEventListener('message', (event) => {
-      if (event.data && (event.data.status === 'success' || event.data.message === 'login_completed')) {
-        closeLoginModal();
-        
         if (pendingAction === 'order') {
           executeOrderRedirect();
         } else if (pendingAction === 'cart') {
           addToDatabaseCart();
         } else {
-          window.location.reload();
+          window.location.reload(); 
         }
       }
     });
 
+    // -----------------------------------------------------------
     // Share Product Information & Image Functionality
+    // -----------------------------------------------------------
     async function shareProduct() {
       const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
       const salePrice = document.getElementById('product-sale-price').innerText || '';
@@ -751,12 +772,6 @@
     }
 
     async function checkLoginAndProceed(actionType) {
-      const maxStock = Number(window.currentProductStock || 0);
-      if (maxStock <= 0) {
-        alert("Sorry! This product is currently out of stock.");
-        return;
-      }
-
       try {
         const response = await fetch('/user/current_user');
         if (response.ok) {
@@ -1036,7 +1051,7 @@
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
-                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
@@ -1171,7 +1186,7 @@
 
           if (actionButtonsContainer) {
               actionButtonsContainer.innerHTML = `
-                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-[#ffffff] font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
+                  <button onclick="checkLoginAndProceed('order')" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95">
                     <i class="fa-solid fa-bag-shopping"></i> Order Now
                   </button>
 
@@ -1605,6 +1620,95 @@
         loadProductReviews();
       }
     });
-  </script>
+ function loadProductMedia(product, galleryImages) {
+    currentProductImages = galleryImages;
+    currentVideoUrl = product.video_url ? product.video_url.trim() : null;
+    
+    let mediaList = [];
+
+    // যদি ভিডিও থাকে, তবে সবার আগে ভিডিও যুক্ত হবে
+    if (currentVideoUrl) {
+        mediaList.push({ type: 'video', url: currentVideoUrl });
+    }
+
+    // এরপর সব ইমেজগুলো যুক্ত হবে
+    currentProductImages.forEach(img => {
+        mediaList.push({ type: 'image', url: '/uploads/' + img });
+    });
+
+    renderMainMediaViewer(mediaList);
+    renderThumbnails(mediaList);
+}
+
+// মূল স্ক্রিনে ভিডিও অথবা ইমেজ দেখানোর ফাংশন
+function renderMainMediaViewer(mediaList) {
+    const viewerBox = document.getElementById('img-zoom-box');
+    if (!mediaList || mediaList.length === 0) return;
+
+    const currentMedia = mediaList[activeMediaIndex];
+
+    if (currentMedia.type === 'video') {
+        viewerBox.innerHTML = `
+            <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden">
+                <video controls controlsList="nodownload" class="max-h-full max-w-full rounded-xl shadow-lg" poster="">
+                    <source src="${currentMedia.url}" type="video/mp4">
+                    আপনার ব্রাউজার ভিডিও ট্যাগ সাপোর্ট করে না।
+                </video>
+                <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
+                    <i class="fa-solid fa-play"></i> Product Video
+                </div>
+            </div>
+        `;
+    } else {
+        viewerBox.innerHTML = `
+            <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+            <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+                <i class="fa-solid fa-expand"></i> Click to Fullscreen
+            </div>
+        `;
+    }
+}
+
+// নিচে থাম্বনেইল স্লাইডার তৈরি করার ফাংশন (যেখান থেকে ক্লিক করে ভিডিও বা ছবি স্লাইড করা যাবে)
+function renderThumbnails(mediaList) {
+    const thumbContainer = document.getElementById('thumbnail-container');
+    thumbContainer.innerHTML = '';
+
+    mediaList.forEach((media, index) => {
+        let thumbHTML = '';
+        if (media.type === 'video') {
+            thumbHTML = `
+                <div onclick="switchMedia(${index})" class="thumb-slide-item relative w-20 h-20 rounded-xl overflow-hidden border-2 cursor-pointer bg-black flex items-center justify-center ${activeMediaIndex === index ? 'border-[#ff4b6e] scale-95 shadow-md' : 'border-pink-200 opacity-70 hover:opacity-100'} transition-all">
+                    <video class="w-full h-full object-cover pointer-events-none">
+                        <source src="${media.url}" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs">
+                        <i class="fa-solid fa-play fa-lg"></i>
+                    </div>
+                </div>
+            `;
+        } else {
+            thumbHTML = `
+                <div onclick="switchMedia(${index})" class="thumb-slide-item w-20 h-20 rounded-xl overflow-hidden border-2 cursor-pointer bg-white flex items-center justify-center p-1 ${activeMediaIndex === index ? 'border-[#ff4b6e] scale-95 shadow-md' : 'border-pink-200 opacity-70 hover:opacity-100'} transition-all">
+                    <img src="${media.url}" class="w-full h-full object-cover rounded-lg" alt="Thumb">
+                </div>
+            `;
+        }
+        thumbContainer.innerHTML += thumbHTML;
+    });
+}
+
+// থাম্বনেইলে ক্লিক করলে মিডিয়া পরিবর্তন করার ফাংশন
+function switchMedia(index) {
+    activeMediaIndex = index;
+    let mediaList = [];
+    if (currentVideoUrl) mediaList.push({ type: 'video', url: currentVideoUrl });
+    currentProductImages.forEach(img => mediaList.push({ type: 'image', url: '/uploads/' + img }));
+
+    renderMainMediaViewer(mediaList);
+    renderThumbnails(mediaList);
+}
+ 
+ </script>
 </body>
 </html>
