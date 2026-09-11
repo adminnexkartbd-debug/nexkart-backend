@@ -1671,7 +1671,7 @@
   } else {
       viewerBox.innerHTML = `
           <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
-          <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+          <div class="absolute bottom-3 right-[#ff4b6e] bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
           </div>
       `;
@@ -1690,7 +1690,7 @@ function toggleCustomVideoPlay() {
   if (video.paused) {
       video.play();
       if (playIcon) playIcon.className = 'fa-solid fa-pause text-2xl';
-      if (playBtn) playBtn.classList.add('opacity-0', 'hover:opacity-100'); // ভিডিও চালু হলে বাটন হাইড হয়ে যাবে, মাউস নিলে আবার আসবে
+      if (playBtn) playBtn.classList.add('opacity-0', 'hover:opacity-100');
   } else {
       video.pause();
       if (playIcon) playIcon.className = 'fa-solid fa-play text-2xl ml-1';
@@ -1752,6 +1752,7 @@ function toggleCustomVideoPlay() {
       renderThumbnails(mediaList);
     }
 
+    // Updated renderSpecificationImages with Show More / Show Less functionality
     function renderSpecificationImages(images) {
       const specImageContainer = document.getElementById('specification-images-gallery');
       const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
