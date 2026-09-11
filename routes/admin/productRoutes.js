@@ -18,8 +18,8 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'uploads', // Cloudinary-র যে ফোল্ডারে ইমেজ সেভ হবে
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+    folder: 'uploads', // Cloudinary-র যে ফোল্ডারে ফাইল সেভ হবে
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'],
     public_id: (req, file) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       return uniqueSuffix;
@@ -78,8 +78,11 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// ADD Product
-router.post('/add', upload.array('images', 10), async (req, res) => {
+// ADD Product (Supports Images, Video, and Coin Offer Data)
+router.post('/add', upload.fields([
+    { name: 'images', maxCount: 10 },
+    { name: 'product_video', maxCount: 1 }
+]), async (req, res) => {
   try {
     const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
 
@@ -88,17 +91,21 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
     }
 
     const files = req.files;
+    const imageFiles = files ? files['images'] : null;
+    const videoFiles = files ? files['product_video'] : null;
 
-    if (!files || files.length < 3) {
+    if (!imageFiles || imageFiles.length < 3) {
       return res.status(400).json({ success: false, message: "কমপক্ষে ৩টি প্রোডাক্টের ছবি আপলোড করা বাধ্যতামূলক!" });
     }
+
+    const productVideoPath = videoFiles && videoFiles.length > 0 ? videoFiles[0].path : null;
 
     const {
       product_id, title, brand_name, category, sub_category, shipping_from, promo_badge,
       delivery_charge, delivery_limit, delivery_time, guarantee, return_policy, 
       cod_available, open_box_inspection, free_shipping,
       regular_price, sale_price, stock_quantity, stock_status, description, keywords, highlights,
-      products_variant
+      products_variant, coin_offer_toggle, coin_percentage
     } = req.body;
 
     const soldQty = 0;
@@ -109,6 +116,10 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
     const finalCod = parseCheckboxValue(cod_available);
     const finalOpenBox = parseCheckboxValue(open_box_inspection);
     const finalFreeShipping = parseCheckboxValue(free_shipping);
+
+    // Coin Offer Data Processing
+    const finalCoinOffer = coin_offer_toggle || 'no';
+    const finalCoinPercentage = (finalCoinOffer === 'yes' && coin_percentage) ? coin_percentage : null;
 
     let highlightList = [];
     if (Array.isArray(highlights)) {
@@ -127,8 +138,8 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
         product_highlights, products_variant, guarantee, return_policy, cod_available, open_box_inspection, free_shipping,
         delivery_charge, delivery_limit, delivery_time, 
         regular_price, sale_price, stock_quantity, sold_qty, stock_status, 
-        description, keywords, brand_name, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        description, keywords, brand_name, product_video, coin_offer, coin_percentage_value, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const productValues = [
@@ -156,7 +167,10 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
       finalStockStatus, 
       description, 
       keywords, 
-      cleanBrand
+      cleanBrand,
+      productVideoPath,
+      finalCoinOffer,
+      finalCoinPercentage
     ];
 
     const [result] = await db.query(productQuery, productValues);
@@ -164,12 +178,12 @@ router.post('/add', upload.array('images', 10), async (req, res) => {
 
     const imageQuery = `INSERT INTO product_images (product_id, image_path) VALUES ?`;
     // 🔴 Cloudinary-র দেওয়া ফুল পাবলিক URL (`file.path`) সেভ হচ্ছে 🔴
-    const imageValues = files.map(file => [dbInternalId, file.path]);
+    const imageValues = imageFiles.map(file => [dbInternalId, file.path]);
     await db.query(imageQuery, [imageValues]);
 
     return res.status(200).json({ 
       success: true, 
-      message: "সফলভাবে প্রোডাক্টটি অ্যাড করা হয়েছে! 🎉" 
+      message: "সফলভাবে প্রোডাক্ট, ভিডিও এবং কয়েন অফার সহ অ্যাড করা হয়েছে! 🎉" 
     });
 
   } catch (error) {
