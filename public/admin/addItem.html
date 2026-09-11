@@ -223,7 +223,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/5 transition-all">
-                <input type="checkbox" id="codAvailable" name="cod_available" class="w-5 h-5 accent-blue-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="codAvailable" name="cod_available" value="1" class="w-5 h-5 accent-blue-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
@@ -236,7 +236,7 @@
               </label>
 
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/60 hover:bg-amber-500/5 transition-all">
-                <input type="checkbox" id="openBoxInspection" name="open_box_inspection" class="w-5 h-5 accent-amber-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="openBoxInspection" name="open_box_inspection" value="1" class="w-5 h-5 accent-amber-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-box-open"></i>
@@ -249,7 +249,7 @@
               </label>
 
               <label class="group relative flex items-center gap-4 p-4 bg-slate-950/70 border border-slate-800 rounded-xl cursor-pointer hover:border-emerald-500/60 hover:bg-emerald-500/5 transition-all">
-                <input type="checkbox" id="freeShipping" name="free_shipping" class="w-5 h-5 accent-emerald-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
+                <input type="checkbox" id="freeShipping" name="free_shipping" value="1" class="w-5 h-5 accent-emerald-500 rounded bg-slate-900 border-slate-700 cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
                     <i class="fa-solid fa-truck-ramp-box"></i>
@@ -265,7 +265,7 @@
           </div>
         </div>
 
-        <!-- 2.1 VIDEO UPLOAD & COIN OFFER SECTION (Newly Added) -->
+        <!-- 2.1 VIDEO UPLOAD & COIN OFFER SECTION -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden backdrop-blur-sm">
           <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
           <div class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-6">
@@ -689,6 +689,7 @@
       updateFileInputAndPreview();
     }
 
+    // 🔴 ফিক্সড ফর্ম সাবমিট হ্যান্ডলার ( AJAX Request যুক্ত করা হয়েছে ) 🔴
     document.getElementById('productForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -696,6 +697,40 @@
       if (totalImagesCount < 3) {
         alert("⚠️ অনুগ্রহ করে কমপক্ষে ৩টি প্রোডাক্টের ছবি সিলেক্ট করুন!");
         return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      const formData = new FormData(this);
+
+      // যদি এডিট মোড হয়
+      const url = editMode ? `/api/products/update/${editProductId}` : `/api/products/add`;
+      const method = editMode ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          body: formData,
+          credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          alert("🎉 " + result.message);
+          window.location.href = '/home.html';
+        } else {
+          alert("❌ " + (result.message || "সংরক্ষণ করতে সমস্যা হয়েছে!"));
+          submitBtn.disabled = false;
+          submitBtn.textContent = editMode ? "Update Product" : "Save Product";
+        }
+      } catch (err) {
+        console.error('Submit Error:', err);
+        alert("⚠️ সার্ভারে সংযোগ স্থাপন করা যায়নি!");
+        submitBtn.disabled = false;
+        submitBtn.textContent = editMode ? "Update Product" : "Save Product";
       }
     });
   </script>
