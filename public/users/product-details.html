@@ -620,7 +620,6 @@
        }
      }
    });
-
 async function shareProduct() {
   const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
   const salePrice = document.getElementById('product-sale-price').innerText || '';
@@ -628,26 +627,28 @@ async function shareProduct() {
   const sku = document.getElementById('product-sku').innerText || '';
   const shareUrl = window.location.href;
 
-  let shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
+  let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
+  // ভিডিও থাকলে লিংক যুক্ত করবে
   if (currentVideoUrl) {
     let formattedVidUrl = currentVideoUrl;
     if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
       formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
     }
-    shareText += `🎬 Watch Video: ${formattedVidUrl}\n\n`;
+    shareText += `🎥 Watch Video: ${formattedVidUrl}\n\n`;
   }
 
-  shareText += `Buy now: ${shareUrl}`;
+  shareText += `🔗 Buy Link: ${shareUrl}`;
 
   if (navigator.share) {
     try {
       let shareData = {
         title: productTitle,
-        text: shareText
+        text: shareText,
+        url: shareUrl
       };
 
-      // শুধুমাত্র ভিডিও না থাকলেই ইমেজ ফাইল হিসেবে যুক্ত হবে
+      // ভিডিও না থাকলে ইমেজের ফাইল যুক্ত করবে (যাতে ইমেজ শেয়ার হয়)
       if (!currentVideoUrl) {
         const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
         if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
@@ -661,21 +662,22 @@ async function shareProduct() {
               shareData.files = [file];
             }
           } catch (e) {
-            console.warn('Image fetch failed, falling back to text only');
+            console.warn('Image fetch failed, sending text only');
           }
         }
       }
 
       await navigator.share(shareData);
     } catch (err) {
-      if (err.name !== 'AbortError') console.error('Error sharing:', err);
+      if (err.name !== 'AbortError') console.error('Share failed:', err);
     }
   } else {
     navigator.clipboard.writeText(shareText).then(() => {
-      alert('Product info copied to clipboard!');
+      alert('Product details copied to clipboard!');
     });
   }
 }
+
 function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
