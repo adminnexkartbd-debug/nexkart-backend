@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="media-src 'self' data: blob: https://res.cloudinary.com;">
+  <!-- CSP Updated to allow Cloudinary Media & Videos -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; media-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com;">
+  
   <!-- Primary SEO Meta Tags -->
   <title id="seo-title">NexKart - Product Details</title>
   <meta id="seo-description" name="description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন। দ্রুত ডেলিভারি এবং ক্যাশ অন ডেলিভারি সুবিধা!">
@@ -1623,6 +1625,7 @@ function setupImageFullscreen() {
     setupImageFullscreen();
   }
 }
+
 // Custom Video Play / Pause Toggle Helper
 function toggleCustomVideoPlay() {
   const video = document.getElementById('custom-product-video');
@@ -1673,6 +1676,7 @@ function toggleCustomVideoPlay() {
     thumbContainer.innerHTML += thumbHTML;
   });
 }
+
 function switchMedia(index) {
       activeMediaIndex = index;
       let mediaList = [];
@@ -1703,7 +1707,7 @@ function switchMedia(index) {
     
     specImageContainer.innerHTML = '';
     specImagesList = images || [];
-    visibleSpecImgCount = 1; // শুরুতে ১টি ছবি রেন্ডার হবে
+    visibleSpecImgCount = 1;
 
     if (!specImagesList || specImagesList.length === 0) {
       if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
@@ -1737,7 +1741,6 @@ function switchMedia(index) {
       }
     });
 
-    // সব ছবি দেখানো হয়ে গেলে বাটন হাইড হবে
     if (visibleSpecImgCount < specImagesList.length) {
       if (specImgBtnContainer) specImgBtnContainer.classList.remove('hidden');
     } else {
@@ -1745,9 +1748,8 @@ function switchMedia(index) {
     }
   }
 
-  // Load More Button Click Event Handler
   function loadMoreSpecImages() {
-    visibleSpecImgCount += 1; // প্রতিক্লিকে ১টি করে অতিরিক্ত ছবি লোড হবে
+    visibleSpecImgCount += 1;
     renderSpecImagesBatch();
   }
 
