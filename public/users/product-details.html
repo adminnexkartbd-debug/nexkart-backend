@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta http-equiv="Content-Security-Policy" content="media-src 'self' data: blob: https://res.cloudinary.com;">
   <!-- Primary SEO Meta Tags -->
   <title id="seo-title">NexKart - Product Details</title>
   <meta id="seo-description" name="description" content="NexKart থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন। দ্রুত ডেলিভারি এবং ক্যাশ অন ডেলিভারি সুবিধা!">
@@ -1603,10 +1603,10 @@ function setupImageFullscreen() {
 
   if (currentMedia.type === 'video') {
     viewerBox.innerHTML = `
-      <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden group/vid">
-        <video id="custom-product-video" controls autoplay class="max-h-full max-w-full rounded-xl shadow-lg cursor-pointer">
+      <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden">
+        <video controls controlsList="nodownload" preload="metadata" class="w-full h-full max-h-[600px] object-contain rounded-xl shadow-lg">
           <source src="${currentMedia.url}" type="video/mp4">
-          আপনার ব্রাউজার ভিডিও সাপোর্ট করে না।
+          আপনার ব্রাউজার ভিডিও সাপোর্ট করছে না।
         </video>
         <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md pointer-events-none z-10">
           <i class="fa-solid fa-film"></i> Product Video
@@ -1642,7 +1642,7 @@ function toggleCustomVideoPlay() {
   }
 }
 
-  function renderThumbnails(mediaList) {
+ function renderThumbnails(mediaList) {
   const thumbContainer = document.getElementById('thumbnail-container');
   if (!thumbContainer) return;
   thumbContainer.innerHTML = '';
@@ -1650,14 +1650,13 @@ function toggleCustomVideoPlay() {
   mediaList.forEach((media, index) => {
     let thumbHTML = '';
     if (media.type === 'video') {
-      // ভিডিও থাম্বনেলের ক্ষেত্রে প্রথম ইমেজের প্রিভিউ অথবা আইকন দেওয়া হচ্ছে
       const fallbackImg = currentProductImages[0] || '';
       thumbHTML = `
         <div class="thumb-slide-item">
           <button onclick="switchMedia(${index})" class="thumb-btn relative w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-black overflow-hidden p-0 transition-all flex items-center justify-center cursor-pointer">
-            ${fallbackImg ? `<img src="${fallbackImg}" class="w-full h-full object-cover opacity-60">` : ''}
+            ${fallbackImg ? `<img src="${fallbackImg}" class="w-full h-full object-cover opacity-50">` : ''}
             <div class="absolute inset-0 flex items-center justify-center text-white text-base bg-black/40">
-              <i class="fa-solid fa-circle-play text-[#ff4b6e] text-xl"></i>
+              <i class="fa-solid fa-circle-play text-[#ff4b6e] text-2xl"></i>
             </div>
           </button>
         </div>
@@ -1674,7 +1673,7 @@ function toggleCustomVideoPlay() {
     thumbContainer.innerHTML += thumbHTML;
   });
 }
-    function switchMedia(index) {
+function switchMedia(index) {
       activeMediaIndex = index;
       let mediaList = [];
       if (currentVideoUrl) {
