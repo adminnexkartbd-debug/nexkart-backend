@@ -1,29 +1,24 @@
 const nodemailer = require('nodemailer');
 
+// OAuth2 ব্যবহার করে Gmail Transporter কনফিগারেশন
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 547,
-    secure: false,
+    service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    family: 4, // 👈 এটি অবশ্যই দিতে হবে (IPv4 নিশ্চিত করার জন্য)
-    tls: {
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 20000
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,             // admin.nexkartbd@gmail.com
+        clientId: process.env.GOOGLE_CLIENT_ID,     // Google Cloud Client ID
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET, // Google Cloud Client Secret
+        refreshToken: process.env.GOOGLE_REFRESH_TOKEN  // Playground থেকে পাওয়া 1//04... টোকেনটি
+    }
 });
 
 /**
- * উইথড্র সফলভাবে সাবমিট হলে এডমিন/ইউজারের ইমেইলে নোটিফিকেশন পাঠানোর ফাংশন
+ * উইথড্র সফলভাবে সাবমিট হলে নোটিফিকেশন পাঠানোর ফাংশন
  */
 const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
     try {
         const mailOptions = {
-            from: 'NexKartBD <admin.nexkartbd@gmail.com>',
+            from: `NexKartBD <${process.env.EMAIL_USER}>`,
             to: adminEmail,
             subject: 'Withdrawal Request Submitted Successfully - NexKartBD',
             html: `
@@ -47,8 +42,9 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
                 </div>
             `
         };
+
         const info = await transporter.sendMail(mailOptions);
-        console.log('Withdraw Email Sent:', info.response);
+        console.log('Withdraw Email Sent via OAuth2:', info.response);
         return { success: true };
     } catch (error) {
         console.error('Email Send Error:', error);
