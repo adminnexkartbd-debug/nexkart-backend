@@ -66,16 +66,29 @@ passport.use('google-user', new GoogleStrategy({
 
 // ==================== [ FIX: TRANSPORTER CONFIGURATION ] ====================
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // সার্ভিস হিসেব 'gmail' ব্যবহার করুন
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL/TLS for Port 465
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
+    family: 4, // 👈 Force Nodemailer to use IPv4 only (Fixes ENETUNREACH)
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 20000
+});
+
+// Test transporter connection on server start
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ Email Transporter Error:", error.message);
+    } else {
+        console.log("✅ Email Transporter is ready to send emails!");
+    }
 });
 
 // সার্ভার চালু হওয়ার সময় ইমেইল সংযোগটি কাজ করছে কিনা তা টেস্ট করুন
