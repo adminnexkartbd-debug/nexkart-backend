@@ -46,7 +46,7 @@ const initWithdrawCron = () => {
             // ৩. প্রতিটি পেন্ডিং রিকোয়েস্টের জন্য ইমেইল পাঠানো এবং send_mail আপডেট করা
             for (const reqData of pendingRequests) {
                 const mailOptions = {
-                    from: 'NexKartBD <mehedi.hasantanvir78@gmail.com>',
+                    from: 'NexKartBD <admin.nexkartbd@gmail.com>',
                     to: adminEmails, // একসাথে সকল approved এডমিনদের কাছে চলে যাবে
                     subject: `New Withdrawal Request - TRX: ${reqData.transaction_id}`,
                     html: `
