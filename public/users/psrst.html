@@ -240,66 +240,76 @@
         </div>
     </div>
 
-    <script>
-        const forgotForm = document.getElementById('forgotForm');
-        const alertBox = document.getElementById('alertBox');
-        const submitBtn = document.getElementById('submitBtn');
-        const inputGroup = document.getElementById('inputGroup');
-        const iconBox = document.getElementById('iconBox');
+ <script>
+    const forgotForm = document.getElementById('forgotForm');
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const inputGroup = document.getElementById('inputGroup');
+    const iconBox = document.getElementById('iconBox');
 
-        forgotForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
+    forgotForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Sending Link...";
-            alertBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Sending Link...";
+        alertBox.style.display = 'none';
 
-            try {
-                const response = await fetch('/user/forgot-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email })
-                });
+        // ১৫ সেকেন্ডের রিকোয়েস্ট টাইমআউট সেটআপ
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                const data = await response.json();
+        try {
+            const response = await fetch('/user/forgot-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email }),
+                signal: controller.signal
+            });
 
-                if (response.ok) {
-                    // ১. ইনপুট বক্স ও সাবমিট বাটন হাইড করা
-                    inputGroup.style.display = 'none';
-                    submitBtn.style.display = 'none';
+            clearTimeout(timeoutId);
+            const data = await response.json();
 
-                    // ২. আইকন ও কালার পরিবর্তন
-                    if (iconBox) {
-                        iconBox.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
-                        iconBox.style.background = '#e8f5e9';
-                        iconBox.style.color = '#2e7d32';
-                        iconBox.style.borderColor = '#c8e6c9';
-                    }
+            if (response.ok) {
+                inputGroup.style.display = 'none';
+                submitBtn.style.display = 'none';
 
-                    // ৩. সাকসেস মেসেজ শো করা
-                    alertBox.className = "alert-message alert-success";
-                    alertBox.innerHTML = `<strong><i class="fa-solid fa-circle-check"></i> Mail Sent Successfully!</strong><br>${data.message || 'Please check your inbox or spam folder.'}`;
-                    alertBox.style.display = 'block';
-
-                } else {
-                    alertBox.className = "alert-message alert-danger";
-                    alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
-                    alertBox.style.display = 'block';
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Send Reset Link";
+                if (iconBox) {
+                    iconBox.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    iconBox.style.background = '#e8f5e9';
+                    iconBox.style.color = '#2e7d32';
+                    iconBox.style.borderColor = '#c8e6c9';
                 }
-            } catch (err) {
+
+                alertBox.className = "alert-message alert-success";
+                alertBox.innerHTML = `<strong><i class="fa-solid fa-circle-check"></i> Mail Sent Successfully!</strong><br>${data.message || 'Please check your inbox or spam folder.'}`;
+                alertBox.style.display = 'block';
+
+            } else {
                 alertBox.className = "alert-message alert-danger";
-                alertBox.innerText = "Something went wrong! Please check your connection.";
+                alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
                 alertBox.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Send Reset Link";
             }
-        });
-    </script>
+        } catch (err) {
+            clearTimeout(timeoutId);
+            alertBox.className = "alert-message alert-danger";
+            
+            if (err.name === 'AbortError') {
+                alertBox.innerText = "সার্ভার ইমেইল পাঠাতে বিলম্ব করছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+            } else {
+                alertBox.innerText = "Something went wrong! Please check your connection.";
+            }
+            
+            alertBox.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Send Reset Link";
+        }
+    });
+</script>
 </body>
 </html>
