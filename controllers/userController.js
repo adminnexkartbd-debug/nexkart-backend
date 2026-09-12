@@ -5,7 +5,7 @@ exports.placeOrder = async (req, res) => {
         const orderData = {
             order_id: `ORD-${Date.now()}`,
             name: req.body.name || (req.user ? req.user.name : 'Guest'),
-            email: req.body.email || (req.user ? req.user.email : 'customer@example.com'),
+            email: req.body.email || (req.user ? req.user.email : 'admin.nexkartbd@gmail.com'),
             phone: req.body.phone
         };
         const totalAmount = req.body.total_amount;
