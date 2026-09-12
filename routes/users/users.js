@@ -64,19 +64,27 @@ passport.use('google-user', new GoogleStrategy({
     }
 }));
 
+// ==================== [ FIX: TRANSPORTER CONFIGURATION ] ====================
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // TLS ব্যবহার হবে (port 587 এর জন্য false থাকা জরুরি)
+    service: 'gmail', // সার্ভিস হিসেব 'gmail' ব্যবহার করুন
     auth: {
-        user: process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com',
-        pass: process.env.EMAIL_PASS || 'vhqlvnekcwocfxrx'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     },
     tls: {
         rejectUnauthorized: false
     },
-    connectionTimeout: 10000, // ১০ সেকেন্ডের বেশি অপেক্ষা করবে না
-    greetingTimeout: 10000
+    connectionTimeout: 15000,
+    greetingTimeout: 15000
+});
+
+// সার্ভার চালু হওয়ার সময় ইমেইল সংযোগটি কাজ করছে কিনা তা টেস্ট করুন
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ Email Transporter Error:", error.message);
+    } else {
+        console.log("✅ Email Transporter is ready to send emails!");
+    }
 });
 
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
