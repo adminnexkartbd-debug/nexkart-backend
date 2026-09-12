@@ -66,15 +66,17 @@ passport.use('google-user', new GoogleStrategy({
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // SSL
+    port: 587,
+    secure: false, // TLS ব্যবহার হবে (port 587 এর জন্য false থাকা জরুরি)
     auth: {
         user: process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com',
         pass: process.env.EMAIL_PASS || 'vhqlvnekcwocfxrx'
     },
     tls: {
-        rejectUnauthorized: false // Local SSL Handshake Bypass
-    }
+        rejectUnauthorized: false
+    },
+    connectionTimeout: 10000, // ১০ সেকেন্ডের বেশি অপেক্ষা করবে না
+    greetingTimeout: 10000
 });
 
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
@@ -588,6 +590,7 @@ router.post('/apply-coupon', async (req, res) => {
     }
 });
 
+// ২. Forgot Password Route
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -655,6 +658,7 @@ router.post('/forgot-password', async (req, res) => {
         </html>
         `;
 
+        // ইমেইল সেন্ড করার লজিক
         await transporter.sendMail({
             from: `"NexKart Support" <${process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com'}>`,
             to: email,
@@ -665,27 +669,10 @@ router.post('/forgot-password', async (req, res) => {
         return res.status(200).json({ message: 'আপনার ইমেইলে রিসেট লিংক পাঠানো হয়েছে! স্প্যাম (Spam) ফোল্ডারও চেক করুন।' });
 
     } catch (err) {
-        console.error('Forgot Password Email Error:', err);
+        console.error('Forgot Password Email Error Details:', err);
         return res.status(500).json({ message: 'ইমেইল পাঠাতে সমস্যা হয়েছে! কনফিগারেশন চেক করুন।' });
     }
 });
-router.get('/reset-password/:token', async (req, res) => {
-    try {
-        const { token } = req.params;
-        const [users] = await db.query(
-            'SELECT * FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW()',
-            [token]
-        );
-        if (users.length === 0) {
-            return res.send('<h3 style="text-align:center; margin-top:50px; color:red;">Password reset token is invalid or has expired. Please try again.</h3>');
-        }
-        res.sendFile(path.join(process.cwd(), 'public', 'users', 'reset-password.html'));
-    } catch (err) {
-        console.error('Reset Page Error:', err);
-        res.status(500).send('Server Error!');
-    }
-});
-
 router.post('/update-password', async (req, res) => {
     try {
         const { token, password } = req.body;
