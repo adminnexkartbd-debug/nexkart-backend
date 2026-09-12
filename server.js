@@ -42,8 +42,8 @@ app.use(
         "https://res.cloudinary.com",
         "https://*.cloudinary.com",
         "https://via.placeholder.com", 
-        "https://dummyimage.com", // dummyimage যুক্ত করা হয়েছে
-        "https://*.dummyimage.com", // dummyimage এর সাবডোমেইন যুক্ত করা হয়েছে
+        "https://dummyimage.com", 
+        "https://*.dummyimage.com", 
         "https://lh3.googleusercontent.com", 
         "https://*.googleusercontent.com",
         "https://ui-avatars.com",
@@ -51,9 +51,16 @@ app.use(
         "https://*.unsplash.com",
         "https://www.svgrepo.com"
       ],
-      mediaSrc: ["'self'", "data:", "blob:"],
+      // এখানে Cloudinary যুক্ত করা হয়েছে 👇
+      mediaSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://res.cloudinary.com", 
+        "https://*.cloudinary.com"
+      ],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-      frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"], // GitHub Pages iframe এর অনুমতি দেওয়ার জন্য যুক্ত করা হয়েছে
+      frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"], 
     },
   })
 );
