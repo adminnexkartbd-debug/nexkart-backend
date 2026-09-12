@@ -564,7 +564,7 @@
      }
    });
 
-   async function shareProduct() {
+ async function shareProduct() {
   const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
   const salePrice = document.getElementById('product-sale-price').innerText || '';
   const category = document.getElementById('product-category').innerText || '';
@@ -573,7 +573,6 @@
 
   let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
-  // ভিডিও থাকলে লিংক যুক্ত করবে
   if (currentVideoUrl) {
     let formattedVidUrl = currentVideoUrl;
     if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
@@ -592,22 +591,19 @@
         url: shareUrl
       };
 
-      // ভিডিও না থাকলে ইমেজের ফাইল যুক্ত করবে (যাতে ইমেজ শেয়ার হয়)
-      if (!currentVideoUrl) {
-        const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
-        if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-          try {
-            const response = await fetch(mainImgSrc);
-            const blob = await response.blob();
-            const ext = blob.type.split('/')[1] || 'jpg';
-            const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+      // ইমেজ শেয়ার ট্রাই করা হচ্ছে
+      const mainImgSrc = currentProductImages[0] || (document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '');
+      if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+        try {
+          const response = await fetch(mainImgSrc);
+          const blob = await response.blob();
+          const file = new File([blob], `product-${productId || 'item'}.jpg`, { type: blob.type });
 
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              shareData.files = [file];
-            }
-          } catch (e) {
-            console.warn('Image fetch failed, sending text only');
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            shareData.files = [file];
           }
+        } catch (e) {
+          console.warn('Image fetch failed, sharing link only:', e);
         }
       }
 
@@ -620,8 +616,8 @@
       alert('Product details copied to clipboard!');
     });
   }
-}
-    function setupImageFullscreen() {
+} 
+function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
       if (!container || !img) return;
@@ -1599,55 +1595,34 @@
       renderSpecificationImages(currentProductImages);
     }
 
-  function renderMainMediaViewer(mediaList) {
+ function renderMainMediaViewer(mediaList) {
   const viewerBox = document.getElementById('img-zoom-box');
   if (!viewerBox || !mediaList || mediaList.length === 0) return;
 
   const currentMedia = mediaList[activeMediaIndex];
 
   if (currentMedia.type === 'video') {
-      viewerBox.innerHTML = `
-          <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden group/vid">
-              <video id="custom-product-video" class="max-h-full max-w-full rounded-xl shadow-lg cursor-pointer">
-                  <source src="${currentMedia.url}" type="video/mp4">
-                  Your browser does not support the video tag.
-              </video>
-              
-              <!-- Video Overlay Center Play Button -->
-              <button id="custom-play-btn" onclick="toggleCustomVideoPlay()" class="absolute w-16 h-16 bg-[#ff4b6e]/90 hover:bg-[#ff4b6e] text-white rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 transform group-hover/vid:scale-110 active:scale-95 z-20">
-                  <i id="play-btn-icon" class="fa-solid fa-play text-2xl ml-1"></i>
-              </button>
-
-              <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md pointer-events-none z-10">
-                  <i class="fa-solid fa-film"></i> Product Video
-              </div>
-          </div>
-      `;
-
-      // Video click event to play/pause
-      const videoElem = document.getElementById('custom-product-video');
-      if (videoElem) {
-          videoElem.addEventListener('click', toggleCustomVideoPlay);
-          videoElem.addEventListener('ended', () => {
-              const playIcon = document.getElementById('play-btn-icon');
-              const playBtn = document.getElementById('custom-play-btn');
-              if (playIcon && playBtn) {
-                  playIcon.className = 'fa-solid fa-play text-2xl ml-1';
-                  playBtn.classList.remove('opacity-0');
-              }
-          });
-      }
+    viewerBox.innerHTML = `
+      <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden group/vid">
+        <video id="custom-product-video" controls autoplay class="max-h-full max-w-full rounded-xl shadow-lg cursor-pointer">
+          <source src="${currentMedia.url}" type="video/mp4">
+          আপনার ব্রাউজার ভিডিও সাপোর্ট করে না।
+        </video>
+        <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-md pointer-events-none z-10">
+          <i class="fa-solid fa-film"></i> Product Video
+        </div>
+      </div>
+    `;
   } else {
-      viewerBox.innerHTML = `
-          <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
-          <div class="absolute bottom-3 right-[#ff4b6e] bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
-            <i class="fa-solid fa-expand"></i> Click to Fullscreen
-          </div>
-      `;
-      setupImageFullscreen();
+    viewerBox.innerHTML = `
+      <img id="main-product-image" src="${currentMedia.url}" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+      <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+        <i class="fa-solid fa-expand"></i> Click to Fullscreen
+      </div>
+    `;
+    setupImageFullscreen();
   }
 }
-
 // Custom Video Play / Pause Toggle Helper
 function toggleCustomVideoPlay() {
   const video = document.getElementById('custom-product-video');
@@ -1666,39 +1641,39 @@ function toggleCustomVideoPlay() {
       if (playBtn) playBtn.classList.remove('opacity-0');
   }
 }
-    function renderThumbnails(mediaList) {
-      const thumbContainer = document.getElementById('thumbnail-container');
-      if (!thumbContainer) return;
-      thumbContainer.innerHTML = '';
 
-      mediaList.forEach((media, index) => {
-          let thumbHTML = '';
-          if (media.type === 'video') {
-              thumbHTML = `
-                  <div class="thumb-slide-item">
-                    <button onclick="switchMedia(${index})" class="thumb-btn relative w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-black overflow-hidden p-0 transition-all flex items-center justify-center cursor-pointer">
-                        <video class="w-full h-full object-cover pointer-events-none opacity-80">
-                            <source src="${media.url}" type="video/mp4">
-                        </video>
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs">
-                            <i class="fa-solid fa-play"></i>
-                        </div>
-                    </button>
-                  </div>
-              `;
-          } else {
-              thumbHTML = `
-                  <div class="thumb-slide-item">
-                    <button onclick="switchMedia(${index})" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all cursor-pointer">
-                      <img src="${media.url}" alt="Thumbnail ${index + 1}" loading="lazy" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
-                    </button>
-                  </div>
-              `;
-          }
-          thumbContainer.innerHTML += thumbHTML;
-      });
+  function renderThumbnails(mediaList) {
+  const thumbContainer = document.getElementById('thumbnail-container');
+  if (!thumbContainer) return;
+  thumbContainer.innerHTML = '';
+
+  mediaList.forEach((media, index) => {
+    let thumbHTML = '';
+    if (media.type === 'video') {
+      // ভিডিও থাম্বনেলের ক্ষেত্রে প্রথম ইমেজের প্রিভিউ অথবা আইকন দেওয়া হচ্ছে
+      const fallbackImg = currentProductImages[0] || '';
+      thumbHTML = `
+        <div class="thumb-slide-item">
+          <button onclick="switchMedia(${index})" class="thumb-btn relative w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-black overflow-hidden p-0 transition-all flex items-center justify-center cursor-pointer">
+            ${fallbackImg ? `<img src="${fallbackImg}" class="w-full h-full object-cover opacity-60">` : ''}
+            <div class="absolute inset-0 flex items-center justify-center text-white text-base bg-black/40">
+              <i class="fa-solid fa-circle-play text-[#ff4b6e] text-xl"></i>
+            </div>
+          </button>
+        </div>
+      `;
+    } else {
+      thumbHTML = `
+        <div class="thumb-slide-item">
+          <button onclick="switchMedia(${index})" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all cursor-pointer">
+            <img src="${media.url}" alt="Thumbnail ${index + 1}" loading="lazy" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
+          </button>
+        </div>
+      `;
     }
-
+    thumbContainer.innerHTML += thumbHTML;
+  });
+}
     function switchMedia(index) {
       activeMediaIndex = index;
       let mediaList = [];
