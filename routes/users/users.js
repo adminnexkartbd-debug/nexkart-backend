@@ -24,7 +24,7 @@ passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
-    proxy: true // ক্লাউড বা রিভার্স প্রক্সির জন্য যুক্ত করা হলো
+    proxy: true // <--- এটি যোগ করা হয়েছে
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -65,10 +65,15 @@ passport.use('google-user', new GoogleStrategy({
 }));
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // SSL
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com',
+        pass: process.env.EMAIL_PASS || 'vhqlvnekcwocfxrx'
+    },
+    tls: {
+        rejectUnauthorized: false // Local SSL Handshake Bypass
     }
 });
 
@@ -168,6 +173,7 @@ router.get('/psrst', (req, res) => {
 router.get('/forgot-password', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'psrst.html'));
 });
+
 router.get('/reset-password', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'reset-password.html'));
 });
@@ -586,7 +592,6 @@ router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
 
-        // ১. ইমেইল দিয়ে ইউজার চেক করা
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) {
             return res.status(404).json({ message: 'এই ইমেইলটি আমাদের সিস্টেমে নিবন্ধিত নেই!' });
@@ -594,26 +599,21 @@ router.post('/forgot-password', async (req, res) => {
 
         const user = users[0];
 
-        // ২. ইউজার যদি গুগলের মাধ্যমে সাইন-ইন করে থাকে
         if (!user.password) {
-            return res.status(400).json({ message: 'এই অ্যাকাউন্টটি Google দিয়ে তৈরি করা হয়েছে। অনুগ্রহ করে Google দিয়ে লগইন করুন!' });
+            return res.status(400).json({ message: 'এই অ্যাকাউন্টটি Google দিয়ে তৈরি করা হয়েছে। অনুগ্রহ করে Google দিয়ে লগইন করুন!' });
         }
 
-        // ৩. রিসেট টোকেন এবং এক্সপায়ারি টাইম তৈরি (১৫ মিনিট মেয়াদ)
         const resetToken = crypto.randomBytes(32).toString('hex');
         const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); 
 
-        // ৪. ডাটাবেজে টোকেন সেভ করা
         await db.query(
             'UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
             [resetToken, tokenExpires, user.id]
         );
 
-        // ৫. রিসেট লিংক তৈরি করা
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         const resetUrl = `${baseUrl}/user/reset-password/${resetToken}`;
 
-        // ৬. সুন্দর ডিজাইন করা HTML ইমেইল টেমপ্লেট
         const emailTemplate = `
         <!DOCTYPE html>
         <html>
@@ -622,78 +622,31 @@ router.post('/forgot-password', async (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Reset Password - NexKart</title>
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #f4f6f9; padding: 40px 0;">
+        <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: Arial, sans-serif;">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f6f9; padding: 40px 0;">
                 <tr>
                     <td align="center">
                         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 550px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
-                            
-                            <!-- Header / Logo Area -->
                             <tr>
                                 <td align="center" style="background: linear-gradient(135deg, #ff4b6e, #ff758c); padding: 30px 20px;">
-                                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">NexKart</h1>
-                                    <p style="color: #ffe6eb; margin: 5px 0 0 0; font-size: 13px;">Your trusted shopping partner</p>
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">NexKart</h1>
                                 </td>
                             </tr>
-
-                            <!-- Content Body -->
                             <tr>
                                 <td style="padding: 35px 30px; text-align: center;">
-                                    <!-- Lock Icon Circle -->
-                                    <div style="width: 60px; height: 60px; background-color: #fff0f3; border-radius: 50%; display: inline-block; margin-bottom: 20px; line-height: 60px;">
-                                        <span style="font-size: 28px; color: #ff4b6e;">🔒</span>
-                                    </div>
-
-                                    <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 20px; font-weight: 600;">Forgot Your Password?</h2>
-                                    <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
+                                    <h2 style="color: #333333; margin: 0 0 10px 0;">Forgot Your Password?</h2>
+                                    <p style="color: #666666; font-size: 14px; margin: 0 0 25px 0;">
                                         Hello <strong>${user.name || 'Valued Customer'}</strong>,<br>
-                                        We received a request to reset the password for your NexKart account. Click the button below to set a new password.
+                                        Click the button below to set a new password.
                                     </p>
-
-                                    <!-- Call to Action Button -->
-                                    <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                                        <tr>
-                                            <td align="center" style="border-radius: 8px;" bgcolor="#ff4b6e">
-                                                <a href="${resetUrl}" target="_blank" style="font-size: 15px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 30px; border: 1px solid #ff4b6e; display: inline-block; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 75, 110, 0.3);">
-                                                    Reset My Password
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <!-- Expiry Warning -->
-                                    <p style="color: #888888; font-size: 12px; margin-top: 25px; line-height: 1.5;">
-                                        ⚠️ This reset link is valid for <strong>15 minutes</strong>.<br>
-                                        If you didn't request a password reset, please ignore this email or contact support.
+                                    <a href="${resetUrl}" target="_blank" style="font-size: 15px; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 30px; background-color: #ff4b6e; display: inline-block; font-weight: bold;">
+                                        Reset My Password
+                                    </a>
+                                    <p style="color: #888888; font-size: 12px; margin-top: 25px;">
+                                        ⚠️ This reset link is valid for <strong>15 minutes</strong>.
                                     </p>
                                 </td>
                             </tr>
-
-                            <!-- Divider -->
-                            <tr>
-                                <td style="padding: 0 30px;">
-                                    <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0;">
-                                </td>
-                            </tr>
-
-                            <!-- Direct Link Fallback -->
-                            <tr>
-                                <td style="padding: 20px 30px; text-align: left; background-color: #fafafa;">
-                                    <p style="color: #777777; font-size: 11px; line-height: 1.5; margin: 0;">
-                                        Button not working? Copy and paste this URL into your browser:<br>
-                                        <a href="${resetUrl}" style="color: #ff4b6e; word-break: break-all;">${resetUrl}</a>
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td align="center" style="background-color: #333333; padding: 20px; color: #aaaaaa; font-size: 12px;">
-                                    <p style="margin: 0 0 5px 0;">Need help? Contact our support team.</p>
-                                    <p style="margin: 0;">&copy; ${new Date().getFullYear()} NexKart. All rights reserved.</p>
-                                </td>
-                            </tr>
-
                         </table>
                     </td>
                 </tr>
@@ -702,9 +655,8 @@ router.post('/forgot-password', async (req, res) => {
         </html>
         `;
 
-        // ৭. ইমেইল সেন্ড করা
         await transporter.sendMail({
-            from: `"NexKart Support" <${process.env.EMAIL_USER}>`,
+            from: `"NexKart Support" <${process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com'}>`,
             to: email,
             subject: '🔒 Reset Your NexKart Password',
             html: emailTemplate
@@ -717,7 +669,6 @@ router.post('/forgot-password', async (req, res) => {
         return res.status(500).json({ message: 'ইমেইল পাঠাতে সমস্যা হয়েছে! কনফিগারেশন চেক করুন।' });
     }
 });
-
 router.get('/reset-password/:token', async (req, res) => {
     try {
         const { token } = req.params;
@@ -738,26 +689,31 @@ router.get('/reset-password/:token', async (req, res) => {
 router.post('/update-password', async (req, res) => {
     try {
         const { token, password } = req.body;
+
         const [users] = await db.query(
             'SELECT * FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW()',
             [token]
         );
+
         if (users.length === 0) {
             return res.status(400).json({ message: 'Reset token is invalid or has expired.' });
         }
+
         const user = users[0];
         const hashedPassword = await bcrypt.hash(password, 10);
+
         await db.query(
             'UPDATE users SET password = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?',
             [hashedPassword, user.id]
         );
+
         return res.status(200).json({ message: 'Password updated successfully!' });
+
     } catch (err) {
         console.error('Update Password Error:', err);
         return res.status(500).json({ message: 'Server error! Failed to update password.' });
     }
 });
-
 router.get('/get-unread-sms-count', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
