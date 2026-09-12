@@ -185,25 +185,6 @@
       </button>
     </div>
 
-    <!-- Top Advertisement Banner -->
-    <div id="top-ad-banner" class="theme-glass-card rounded-2xl p-4 text-center border border-pink-200 overflow-hidden relative shadow-md">
-      <span class="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[9px] font-bold px-2 py-0.5 rounded-md">AD</span>
-      <div id="top-ad-content" class="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3 text-left">
-          <div class="w-12 h-12 bg-pink-100 text-[#ff4b6e] rounded-xl flex items-center justify-center text-xl shrink-0">
-            <i class="fa-solid fa-bullhorn"></i>
-          </div>
-          <div>
-            <h4 class="font-bold text-sm text-gray-900">বিশেষ অফার ও ডিসকাউন্ট!</h4>
-            <p class="text-xs text-gray-600">আজকের কেনাকাটায় পাচ্ছেন আকর্ষনীয় ক্যাশব্যাক এবং ফ্রি ডেলিভারি।</p>
-          </div>
-        </div>
-        <a href="#" class="bg-[#ff4b6e] hover:bg-[#d63384] text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shrink-0">
-          অফার দেখুন
-        </a>
-      </div>
-    </div>
-
     <!-- Product Main Section -->
     <div id="product-main-section" class="theme-glass-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8 items-start">
       
@@ -342,25 +323,6 @@
           </button>
         </div>
       </div>
-      
-      <!-- Middle In-feed Advertisement Banner -->
-      <div id="middle-ad-banner" class="theme-glass-card rounded-3xl p-4 text-center border border-pink-200 relative overflow-hidden my-6 shadow-sm">
-        <span class="absolute top-2 right-2 bg-gray-200 text-gray-600 text-[9px] font-bold px-2 py-0.5 rounded-md">SPONSORED</span>
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 p-2">
-          <div class="flex items-center gap-4 text-left">
-            <div class="w-14 h-14 bg-gradient-to-tr from-[#ff4b6e] to-[#ff758c] text-white rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-md">
-              <i class="fa-solid fa-gift"></i>
-            </div>
-            <div>
-              <h3 class="font-extrabold text-base text-gray-900">সেরা ব্র্যান্ডের আকর্ষণীয় কালেকশন</h3>
-              <p class="text-xs text-gray-600 mt-1">আপনার পছন্দের পণ্যগুলোতে পাচ্ছেন বিশাল ছাড়! দেরি না করে এখনই অর্ডার করুন।</p>
-            </div>
-          </div>
-          <a href="#" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white text-xs font-bold px-6 py-3 rounded-xl shadow-md hover:opacity-95 transition-all shrink-0">
-            এক্সপ্লোর করুন
-          </a>
-        </div>
-      </div>
 
       <!-- 2. Specifications -->
       <div id="section-specification" class="scroll-mt-20 theme-glass-card rounded-3xl p-6 md:p-8 space-y-6">
@@ -443,25 +405,6 @@
           <button id="inquiries-next-btn" onclick="changeInquiriesPage(1)" class="px-3 py-1.5 rounded-xl bg-white border border-pink-200 text-[#ff4b6e] font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             Next <i class="fa-solid fa-chevron-right"></i>
           </button>
-        </div>
-      </div>
-
-      <!-- Bottom Promotional Advertisement Card -->
-      <div id="bottom-ad-banner" class="theme-glass-card rounded-3xl p-6 md:p-8 space-y-4 border border-pink-200 text-center relative overflow-hidden shadow-sm">
-        <span class="absolute top-3 right-3 bg-gray-200 text-gray-600 text-[9px] font-bold px-2 py-0.5 rounded-md">ADVERTISEMENT</span>
-        <div class="max-w-xl mx-auto space-y-3">
-          <div class="w-12 h-12 bg-pink-100 text-[#ff4b6e] rounded-full flex items-center justify-center mx-auto text-xl">
-            <i class="fa-solid fa-tags"></i>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900">NexKart মেম্বারশিপে জয়েন করুন!</h3>
-          <p class="text-xs text-gray-600 leading-relaxed">
-            এখনই আমাদের মেম্বারশিপে জয়েন করে প্রতি কেনাকাটায় এক্সক্লুসিভ ডিসকাউন্ট ও পয়েন্ট অর্জন করুন।
-          </p>
-          <div class="pt-1">
-            <a href="#" class="inline-block bg-white hover:bg-pink-50 text-[#ff4b6e] font-bold text-xs px-6 py-3 rounded-2xl border border-pink-200 transition-all shadow-sm">
-              মেম্বারশিপ চালু করুন
-            </a>
-          </div>
         </div>
       </div>
 
@@ -621,80 +564,63 @@
      }
    });
 
-    async function shareProduct() {
-      const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
-      const salePrice = document.getElementById('product-sale-price').innerText || '';
-      const category = document.getElementById('product-category').innerText || '';
-      const sku = document.getElementById('product-sku').innerText || '';
-      const shareUrl = window.location.href;
+   async function shareProduct() {
+  const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
+  const salePrice = document.getElementById('product-sale-price').innerText || '';
+  const category = document.getElementById('product-category').innerText || '';
+  const sku = document.getElementById('product-sku').innerText || '';
+  const shareUrl = window.location.href;
 
-      const shareText = `Check out this product on NexKart!\n\n📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\nBuy now: `;
+  let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
-      if (navigator.share) {
-        try {
-          let shareData = {
-            title: productTitle,
-            text: shareText,
-            url: shareUrl
-          };
+  // ভিডিও থাকলে লিংক যুক্ত করবে
+  if (currentVideoUrl) {
+    let formattedVidUrl = currentVideoUrl;
+    if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
+      formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
+    }
+    shareText += `🎥 Watch Video: ${formattedVidUrl}\n\n`;
+  }
 
-          // ১. ভিডিও থাকলে প্রথমে ভিডিও ফাইল হিসেবে শেয়ার করার চেষ্টা করবে
-          if (currentVideoUrl) {
-            try {
-              let formattedVidUrl = currentVideoUrl;
-              if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
-                formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
-              }
+  shareText += `🔗 Buy Link: ${shareUrl}`;
 
-              const response = await fetch(formattedVidUrl);
-              const blob = await response.blob();
-              const ext = blob.type.split('/')[1] || 'mp4';
-              const videoFile = new File([blob], `product-video-${productId || 'item'}.${ext}`, { type: blob.type || 'video/mp4' });
+  if (navigator.share) {
+    try {
+      let shareData = {
+        title: productTitle,
+        text: shareText,
+        url: shareUrl
+      };
 
-              if (navigator.canShare && navigator.canShare({ files: [videoFile] })) {
-                shareData.files = [videoFile];
-              }
-            } catch (vidErr) {
-              console.warn('Video fetch for share failed, falling back to image/text share:', vidErr);
+      // ভিডিও না থাকলে ইমেজের ফাইল যুক্ত করবে (যাতে ইমেজ শেয়ার হয়)
+      if (!currentVideoUrl) {
+        const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
+        if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+          try {
+            const response = await fetch(mainImgSrc);
+            const blob = await response.blob();
+            const ext = blob.type.split('/')[1] || 'jpg';
+            const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              shareData.files = [file];
             }
-          }
-
-          // ২. ভিডিও না থাকলে বা ভিডিও শেয়ার ব্যাকআপ ফেল করলে ছবি শেয়ার করবে
-          if (!shareData.files) {
-            const mainImgSrc = document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '';
-            if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-              try {
-                const response = await fetch(mainImgSrc);
-                const blob = await response.blob();
-                const ext = blob.type.split('/')[1] || 'jpg';
-                const file = new File([blob], `product-${productId || 'item'}.${ext}`, { type: blob.type });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                  shareData.files = [file];
-                }
-              } catch (fileErr) {
-                console.warn('Image fetch for share failed, falling back to text share:', fileErr);
-              }
-            }
-          }
-
-          await navigator.share(shareData);
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Error sharing:', err);
+          } catch (e) {
+            console.warn('Image fetch failed, sending text only');
           }
         }
-      } else {
-        const fullShareContent = `${shareText}${shareUrl}`;
-        navigator.clipboard.writeText(fullShareContent).then(() => {
-          alert('Product details and link copied to clipboard!');
-        }).catch(err => {
-          console.error('Copy failed:', err);
-          alert('Failed to copy. Share link: ' + shareUrl);
-        });
       }
-    }
 
+      await navigator.share(shareData);
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('Share failed:', err);
+    }
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert('Product details copied to clipboard!');
+    });
+  }
+}
     function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
       const img = document.getElementById('main-product-image');
