@@ -19,7 +19,6 @@
 
         /* ------------------ BACKGROUND SECTION ------------------ */
         body {
-            /* প্রিমিয়াম গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড */
             background: linear-gradient(135deg, #fff5f7 0%, #ffe0e6 50%, #f9f9f9 100%);
             display: flex;
             justify-content: center;
@@ -30,7 +29,6 @@
             overflow: hidden;
         }
 
-        /* ব্যাকগ্রাউন্ড গ্লো ইফেক্ট (Decorative Circles) */
         body::before {
             content: '';
             position: absolute;
@@ -60,7 +58,7 @@
         /* ------------------ CARD STYLING ------------------ */
         .reset-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px); /* গ্লাস টাইপ ইফেক্ট */
+            backdrop-filter: blur(10px);
             width: 100%;
             max-width: 420px;
             padding: 40px 30px;
@@ -69,7 +67,7 @@
             border: 1px solid rgba(255, 204, 213, 0.6);
             text-align: center;
             position: relative;
-            z-index: 1; /* কার্ডটি যেন ব্যাকগ্রাউন্ডের উপরে থাকে */
+            z-index: 1;
         }
 
         .icon-box {
@@ -85,6 +83,7 @@
             margin: 0 auto 20px;
             border: 1px solid #ffccd5;
             box-shadow: 0 4px 12px rgba(255, 75, 110, 0.1);
+            transition: all 0.3s ease;
         }
 
         .reset-card h2 {
@@ -189,13 +188,13 @@
             text-decoration: underline;
         }
 
-        /* মেসেজ বা অ্যালার্ট নোটিফিকেশন */
         .alert-message {
-            padding: 10px 15px;
+            padding: 12px 15px;
             font-size: 13px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
+            line-height: 1.5;
         }
 
         .alert-success {
@@ -214,18 +213,18 @@
 <body>
 
     <div class="reset-card">
-        <div class="icon-box">
+        <div class="icon-box" id="iconBox">
             <i class="fa-solid fa-lock"></i>
         </div>
 
-        <h2>Forgot Password?</h2>
-        <p>No worries! Enter your registered email address below, and we'll send you a password reset link.</p>
+        <h2 id="cardTitle">Forgot Password?</h2>
+        <p id="cardSubText">No worries! Enter your registered email address below, and we'll send you a password reset link.</p>
 
         <!-- নোটিফিকেশন মেসেজ বক্স -->
         <div id="alertBox" class="alert-message"></div>
 
         <form id="forgotForm">
-            <div class="input-group">
+            <div class="input-group" id="inputGroup">
                 <label for="email">Email Address</label>
                 <div class="input-field">
                     <i class="fa-solid fa-envelope"></i>
@@ -245,53 +244,62 @@
         const forgotForm = document.getElementById('forgotForm');
         const alertBox = document.getElementById('alertBox');
         const submitBtn = document.getElementById('submitBtn');
+        const inputGroup = document.getElementById('inputGroup');
+        const iconBox = document.getElementById('iconBox');
 
-       forgotForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
 
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Sending Link...";
-    alertBox.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Sending Link...";
+            alertBox.style.display = 'none';
 
-    try {
-        const response = await fetch('/user/forgot-password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
+            try {
+                const response = await fetch('/user/forgot-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ১. ইনপুট বক্স ও সাবমিট বাটন হাইড করা
+                    inputGroup.style.display = 'none';
+                    submitBtn.style.display = 'none';
+
+                    // ২. আইকন ও কালার পরিবর্তন
+                    if (iconBox) {
+                        iconBox.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                        iconBox.style.background = '#e8f5e9';
+                        iconBox.style.color = '#2e7d32';
+                        iconBox.style.borderColor = '#c8e6c9';
+                    }
+
+                    // ৩. সাকসেস মেসেজ শো করা
+                    alertBox.className = "alert-message alert-success";
+                    alertBox.innerHTML = `<strong><i class="fa-solid fa-circle-check"></i> Mail Sent Successfully!</strong><br>${data.message || 'Please check your inbox or spam folder.'}`;
+                    alertBox.style.display = 'block';
+
+                } else {
+                    alertBox.className = "alert-message alert-danger";
+                    alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
+                    alertBox.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Send Reset Link";
+                }
+            } catch (err) {
+                alertBox.className = "alert-message alert-danger";
+                alertBox.innerText = "Something went wrong! Please check your connection.";
+                alertBox.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Send Reset Link";
+            }
         });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alertBox.className = "alert-message alert-success";
-            alertBox.innerText = data.message || "A reset link has been sent to your email! Redirecting to login...";
-            alertBox.style.display = 'block';
-            forgotForm.reset();
-
-            // ইমেইল সফলভাবে পাঠানোর পর ১.৫ সেকেন্ডের মধ্যে cslogin এ নিয়ে যাবে
-            setTimeout(() => {
-                window.location.href = data.redirectTo || '/user/cslogin';
-            }, 1500);
-
-        } else {
-            alertBox.className = "alert-message alert-danger";
-            alertBox.innerText = data.message || "Failed to send reset link. Please try again.";
-            alertBox.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Send Reset Link";
-        }
-    } catch (err) {
-        alertBox.className = "alert-message alert-danger";
-        alertBox.innerText = "Something went wrong! Please check your connection.";
-        alertBox.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Send Reset Link";
-    }
-});
-   </script>
+    </script>
 </body>
 </html>
