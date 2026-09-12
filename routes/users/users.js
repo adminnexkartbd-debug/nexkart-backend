@@ -65,7 +65,7 @@ passport.use('google-user', new GoogleStrategy({
     }
 }));
 
-// ==================== [ FIX: OAUTH2 GOOGLE TRANSPORTER (PORT BLOCK FREE) ] ====================
+// ==================== [ FIX: DIRECT OAUTH2 HTTP TRANSPORTER ] ====================
 const OAuth2 = google.auth.OAuth2;
 
 const oauth2Client = new OAuth2(
@@ -78,7 +78,6 @@ oauth2Client.setCredentials({
     refresh_token: process.env.GOOGLE_REFRESH_TOKEN
 });
 
-// dynamic transporter generator
 async function createOAuthTransporter() {
     try {
         const accessTokenResponse = await oauth2Client.getAccessToken();
@@ -88,6 +87,7 @@ async function createOAuthTransporter() {
             throw new Error("Failed to generate Google Access Token.");
         }
 
+        // 'service: gmail' এর সাথে সরাসরি OAuth2 তথ্য দিয়ে ট্রান্সপোর্টার তৈরি
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -106,7 +106,6 @@ async function createOAuthTransporter() {
         throw error;
     }
 }
-
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
 async function sendInvoiceEmail(orderData, productTitle) {
     if (!orderData.customer_email) return;
