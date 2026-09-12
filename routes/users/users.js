@@ -9,6 +9,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const crypto = require('crypto');
 const multer = require('multer');
 const axios = require('axios');
+const { google } = require('googleapis'); // Google APIs Import
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -24,7 +25,7 @@ passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
-    proxy: true // <--- এটি যোগ করা হয়েছে
+    proxy: true
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -64,41 +65,47 @@ passport.use('google-user', new GoogleStrategy({
     }
 }));
 
-// ==================== [ FIX: TRANSPORTER CONFIGURATION ] ====================
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL/TLS for Port 465
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    family: 4, // 👈 Force Nodemailer to use IPv4 only (Fixes ENETUNREACH)
-    tls: {
-        rejectUnauthorized: false
-    },
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
-    socketTimeout: 20000
+// ==================== [ FIX: OAUTH2 GOOGLE TRANSPORTER (PORT BLOCK FREE) ] ====================
+const OAuth2 = google.auth.OAuth2;
+
+const oauth2Client = new OAuth2(
+    process.env.GOOGLE_USER_CLIENT_ID,
+    process.env.GOOGLE_USER_CLIENT_SECRET,
+    process.env.GOOGLE_OAUTH_REDIRECT_URI || "https://developers.google.com/oauthplayground"
+);
+
+oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN
 });
 
-// Test transporter connection on server start
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("❌ Email Transporter Error:", error.message);
-    } else {
-        console.log("✅ Email Transporter is ready to send emails!");
-    }
-});
+// dynamic transporter generator
+async function createOAuthTransporter() {
+    try {
+        const accessTokenResponse = await oauth2Client.getAccessToken();
+        const accessToken = accessTokenResponse?.token;
 
-// সার্ভার চালু হওয়ার সময় ইমেইল সংযোগটি কাজ করছে কিনা তা টেস্ট করুন
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("❌ Email Transporter Error:", error.message);
-    } else {
-        console.log("✅ Email Transporter is ready to send emails!");
+        if (!accessToken) {
+            throw new Error("Failed to generate Google Access Token.");
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                type: 'OAuth2',
+                user: process.env.EMAIL_USER,
+                clientId: process.env.GOOGLE_USER_CLIENT_ID,
+                clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
+                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+                accessToken: accessToken
+            }
+        });
+
+        return transporter;
+    } catch (error) {
+        console.error("❌ OAuth2 Transporter Initialization Error:", error.message);
+        throw error;
     }
-});
+}
 
 // ==================== [ HELPER: INVOICE EMAIL SENDER ] ====================
 async function sendInvoiceEmail(orderData, productTitle) {
@@ -174,14 +181,15 @@ async function sendInvoiceEmail(orderData, productTitle) {
     `;
 
     try {
+        const transporter = await createOAuthTransporter();
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: `"NexKart" <${process.env.EMAIL_USER}>`,
             to: orderData.customer_email,
             subject: `NexKart Invoice - Order #${orderData.order_id}`,
             html: emailTemplate
         });
     } catch (err) {
-        console.error("Failed to send invoice email:", err);
+        console.error("Failed to send invoice email via OAuth2:", err);
     }
 }
 
@@ -197,9 +205,10 @@ router.get('/forgot-password', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'psrst.html'));
 });
 
-router.get('/reset-password', (req, res) => {
+router.get(['/reset-password', '/reset-password/:token'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'reset-password.html'));
 });
+
 router.get('/cslogin', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cslogin.html'));
 });
@@ -679,9 +688,10 @@ router.post('/forgot-password', async (req, res) => {
         </html>
         `;
 
-        // ইমেইল সেন্ড করার লজিক
+        // Google OAuth 2.0 Dynamic Transporter ব্যবহার করে ইমেইল পাঠানো
+        const transporter = await createOAuthTransporter();
         await transporter.sendMail({
-            from: `"NexKart Support" <${process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com'}>`,
+            from: `"NexKart Support" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: '🔒 Reset Your NexKart Password',
             html: emailTemplate
@@ -789,8 +799,10 @@ router.post('/signup', async (req, res) => {
         const otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
 
         temporaryUserData[email] = { name, email, password: hashedPassword, otp_code, otp_expires_at };
+
+        const transporter = await createOAuthTransporter();
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: `"NexKart Verification" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'NexKart - Verification OTP',
             text: `Your OTP is ${otp_code}. Valid for 5 minutes.`
