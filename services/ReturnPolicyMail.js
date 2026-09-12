@@ -23,7 +23,7 @@ const sendReturnEmail = async (sellerEmail, orderData) => {
                     <li><b>Product ID:</b> ${orderData.product_id}</li>
                     <li><b>Reason:</b> ${orderData.return_reason}</li>
                     <li><b>Details:</b> ${orderData.return_details}</li>
-                    <li><b>Proof File:</b> <a href="http://yourdomain.com${orderData.proof_file}">Click to view proof</a></li>
+                    <li><b>Proof File:</b> <a href="http://nexkart.2bd.net${orderData.proof_file}">Click to view proof</a></li>
                 </ul>
                 <p>Please check your admin panel for more details.</p>
             `

@@ -21,7 +21,7 @@ const sendSellerWarningEmail = async (email, shopName, reason) => {
   `;
 
   return await transporter.sendMail({
-    from: '"Admin System" <mehedi.hasantanvir78@gmail.com>',
+    from: '"Admin System" <admin.nexkartbd@gmail.com>',
     to: email,
     subject: `Warning Notice - ${shopName}`,
     html
@@ -39,7 +39,7 @@ const sendSellerBanEmail = async (email, reason) => {
   `;
 
   return await transporter.sendMail({
-    from: '"Admin System" <mehedi.hasantanvir78@gmail.com>',
+    from: '"Admin System" <admin.nexkartbd@gmail.com>',
     to: email,
     subject: 'Account Suspended Notice',
     html
@@ -55,7 +55,7 @@ const sendSellerUnbanEmail = async (email) => {
   `;
 
   return await transporter.sendMail({
-    from: '"Admin System" <mehedi.hasantanvir78@gmail.com>',
+    from: '"Admin System" <admin.nexkartbd@gmail.com>',
     to: email,
     subject: 'Account Reactivated Notice',
     html

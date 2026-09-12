@@ -2,9 +2,9 @@ require('dotenv').config(); // এটি একদম উপরে থাকব�
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // সার্ভিস হিসেবে 'gmail' দিতে হবে
+    service: 'gmail', // সার্ভিস হিসেবে 'gmail'
     auth: {
-       user: "admin.nexkartbd@gmail.com",
-        pass: "vhqlvnekcwocfxrx"
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
