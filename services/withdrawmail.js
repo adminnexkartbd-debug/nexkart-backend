@@ -2,8 +2,8 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 547,
+    secure: false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -47,7 +47,6 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
                 </div>
             `
         };
-
         const info = await transporter.sendMail(mailOptions);
         console.log('Withdraw Email Sent:', info.response);
         return { success: true };
