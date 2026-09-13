@@ -1,25 +1,19 @@
 const { Resend } = require('resend');
-const SibApiV3Sdk = require('@getbrevo/brevo');
 const Mailjet = require('node-mailjet');
 require('dotenv').config();
 
 // 1. Resend Setup
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 2. Brevo Setup
-let defaultClient = SibApiV3Sdk.ApiClient.instance;
-let apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
-let brevoInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
-// 3. Mailjet Setup
+// 2. Mailjet Setup
 const mailjet = Mailjet.apiConnect(
   process.env.MAILJET_API_KEY,
   process.env.MAILJET_SECRET_KEY
 );
 
-// Fallback Mail Sending Function
+// Fallback Mail Sending Function (Resend -> Brevo -> Mailjet)
 const sendMailWithFallback = async ({ to, subject, html, text }) => {
+  
   // --- 1st Try: Resend ---
   try {
     console.log('Trying with Resend...');
@@ -38,15 +32,29 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
   } catch (resendError) {
     console.log(`Resend failed: ${resendError.message}. Switching to Brevo...`);
 
-    // --- 2nd Try: Brevo ---
+    // --- 2nd Try: Brevo (Using Native Fetch API - No SDK errors!) ---
     try {
-      let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-      sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = html;
-      sendSmtpEmail.sender = { name: "NexKART", email: "no-reply@nexkartbd.com" };
-      sendSmtpEmail.to = [{ email: to }];
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: "NexKART", email: "no-reply@nexkartbd.com" },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html,
+          textContent: text
+        })
+      });
 
-      await brevoInstance.sendTransacEmail(sendSmtpEmail);
+      if (!response.ok) {
+        const errRes = await response.json();
+        throw new Error(errRes.message || 'Brevo API request failed');
+      }
+
       console.log('Mail sent successfully via Brevo!');
       return { success: true, provider: 'Brevo' };
 
@@ -108,7 +116,6 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধটি সফলভাবে জমা হয়েছে। ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // Fallback ফাংশন কল করা হলো (Resend -> Brevo -> Mailjet)
         const result = await sendMailWithFallback({
             to: adminEmail,
             subject: 'Withdrawal Request Submitted Successfully - NexKartBD',
