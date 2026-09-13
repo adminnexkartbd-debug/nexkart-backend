@@ -1,4 +1,4 @@
-import { sendMailWithFallback } from './mailer.js'; // আপনার তৈরি করা failover mailer file-টি import করুন
+const { sendMailWithFallback } = require('./mailer.js');
 
 /**
  * উইথড্র সফলভাবে সাবমিট হলে নোটিফিকেশন পাঠানোর ফাংশন (Multi-API Fallback সহ)
@@ -45,4 +45,4 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
     }
 };
 
-export { sendWithdrawEmail };
+module.exports = { sendWithdrawEmail };
