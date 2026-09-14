@@ -32,7 +32,7 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
   } catch (resendError) {
     console.log(`Resend failed: ${resendError.message}. Switching to Brevo...`);
 
-    // --- 2nd Try: Brevo (Using Native Fetch API - No SDK errors!) ---
+    // --- 2nd Try: Brevo (Using Native Fetch API) ---
     try {
       const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
@@ -89,41 +89,75 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
 };
 
 /**
- * উইথড্র সফলভাবে সাবমিট হলে নোটিফিকেশন পাঠানোর ফাংশন (Multi-API Fallback সহ)
+ * উইথড্র স্ট্যাটাস অনুযায়ী ডায়নামিক ও প্রফেশনাল ইমেইল নোটিফিকেশন পাঠানোর ফাংশন
  */
 const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
     try {
+        // স্ট্যাটাস চেক করা (Pending, Approved, Rejected) - ডিফল্ট Pending
+        const status = (withdrawDetails.status || 'Pending').toLowerCase();
+        
+        let statusColor = '#d97706'; // Pending (Yellow/Orange)
+        let statusText = 'Pending';
+        let badgeBg = '#fef3c7';
+        let headerTitle = 'Withdrawal Request Submitted';
+        let mainMessage = 'আপনার উত্তোলনের অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে এবং সিস্টেমে জমা হয়েছে।';
+        let subjectLine = 'Withdrawal Request Submitted Successfully - NexKartBD';
+
+        if (status === 'approved' || status === 'success') {
+            statusColor = '#16a34a'; // Green
+            statusText = 'Approved';
+            badgeBg = '#dcfce7';
+            headerTitle = 'Withdrawal Request Approved! 🎉';
+            mainMessage = 'সুসংবাদ! আপনার উত্তোলনের অনুরোধটি সফলভাবে অ্যাপ্রুভ করা হয়েছে। খুব শীঘ্রই আপনার পেমেন্ট অ্যাকাউন্টে টাকা পৌঁছে যাবে।';
+            subjectLine = 'Withdrawal Request Approved - NexKartBD';
+        } else if (status === 'rejected' || status === 'failed') {
+            statusColor = '#dc2626'; // Red
+            statusText = 'Rejected';
+            badgeBg = '#fee2e2';
+            headerTitle = 'Withdrawal Request Status Update';
+            mainMessage = 'দুঃখিত, আপনার উত্তোলনের অনুরোধটি কিছু কারণবশত বাতিল (Rejected) করা হয়েছে। বিস্তারিত জানতে সাপোর্টের সাথে যোগাযোগ করুন।';
+            subjectLine = 'Withdrawal Request Status: Rejected - NexKartBD';
+        }
+
         const htmlContent = `
-            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
-                <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                    <h2 style="color: #db2777; text-align: center;">NexKartBD Withdraw Portal</h2>
-                    <p>প্রিয় <strong>${withdrawDetails.userName}</strong>,</p>
-                    <p>আপনার উত্তোলনের অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে এবং সিস্টেমে জমা হয়েছে।</p>
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; background-color: #f4f6f8; border-radius: 12px;">
+                <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 35px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
                     
-                    <div style="background: #fdf2f8; padding: 15px; border-left: 4px solid #db2777; margin: 20px 0; border-radius: 4px;">
-                        <p style="margin: 5px 0;"><strong>টাকার পরিমাণ:</strong> ৳${withdrawDetails.amount}</p>
-                        <p style="margin: 5px 0;"><strong>পেমেন্ট মেথড:</strong> ${withdrawDetails.paymentType.toUpperCase()}</p>
-                        <p style="margin: 5px 0;"><strong>ট্রানজেকশন আইডি:</strong> ${withdrawDetails.transactionId}</p>
-                        <p style="margin: 5px 0;">স্ট্যাটাস: <span style="color: #d97706; font-weight: bold;">Pending</span></p>
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="color: #db2777; margin: 0; font-size: 24px;">NexKartBD</h2>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Secure Withdrawal Portal</p>
                     </div>
 
-                    <p style="font-size: 12px; color: #6b7280; text-align: center; margin-top: 30px;">
-                        এটি একটি স্বয়ংক্রিয় ইমেইল। দয়া করে এই ইমেইলে সরাসরি রিপ্লাই করবেন না।
+                    <h3 style="color: #1f2937; text-align: center; margin-bottom: 15px;">${headerTitle}</h3>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">প্রিয় <strong>${withdrawDetails.userName || 'Valued User'}</strong>,</p>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">${mainMessage}</p>
+                    
+                    <div style="background: #fdf2f8; padding: 20px; border-left: 5px solid #db2777; margin: 25px 0; border-radius: 6px;">
+                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>টাকার পরিমাণ:</strong> <span style="color: #db2777; font-size: 16px; font-weight: bold;">৳${withdrawDetails.amount}</span></p>
+                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>পেমেন্ট মেথড:</strong> ${withdrawDetails.paymentType ? withdrawDetails.paymentType.toUpperCase() : 'N/A'}</p>
+                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>ট্রানজেকশন আইডি:</strong> ${withdrawDetails.transactionId || 'N/A'}</p>
+                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>স্ট্যাটাস:</strong> <span style="background: ${badgeBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px;">${statusText}</span></p>
+                    </div>
+
+                    <p style="font-size: 13px; color: #6b7280; text-align: center; margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                        এটি একটি স্বয়ংক্রিয় নোটিফিকেশন ইমেইল। দয়া করে এই মেইলে সরাসরি রিপ্লাই করবেন না。<br>
+                        &copy; ${new Date().getFullYear()} NexKartBD. All rights reserved.
                     </p>
                 </div>
             </div>
         `;
 
-        const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধটি সফলভাবে জমা হয়েছে। ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
+        const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
+        // Fallback ফাংশন কল করা হলো
         const result = await sendMailWithFallback({
             to: adminEmail,
-            subject: 'Withdrawal Request Submitted Successfully - NexKartBD',
+            subject: subjectLine,
             html: htmlContent,
             text: textContent
         });
 
-        console.log(`Withdraw Email Sent Successfully via ${result.provider}!`);
+        console.log(`Withdraw Status (${statusText}) Email Sent Successfully via ${result.provider}!`);
         return { success: true };
 
     } catch (error) {
