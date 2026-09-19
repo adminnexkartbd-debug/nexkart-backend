@@ -2,7 +2,6 @@ const cron = require('node-cron');
 const db = require('../db'); 
 const { Resend } = require('resend');
 const Mailjet = require('node-mailjet');
-const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 // ১. Resend Setup
@@ -13,52 +12,6 @@ const mailjet = Mailjet.apiConnect(
   process.env.MAILJET_API_KEY,
   process.env.MAILJET_SECRET_KEY
 );
-
-// Helper: Generate PDF Buffer for Invoice
-const createInvoicePDF = (reqData) => {
-    return new Promise((resolve, reject) => {
-        try {
-            const doc = new PDFDocument({ margin: 50 });
-            let buffers = [];
-
-            doc.on('data', chunk => buffers.push(chunk));
-            doc.on('end', () => resolve(Buffer.concat(buffers)));
-
-            // PDF Design Header
-            doc.fontSize(22).fillColor('#db2777').text('NexKartBD', { align: 'center' });
-            doc.fontSize(12).fillColor('#6b7280').text('Official Withdrawal Invoice', { align: 'center' });
-            doc.moveDown(2);
-
-            // Invoice Meta details
-            doc.fontSize(10).fillColor('#333333');
-            doc.text(`Transaction ID: ${reqData.transaction_id}`);
-            doc.text(`Date: ${new Date().toLocaleString()}`);
-            doc.text(`Status: ${reqData.status.toUpperCase()}`);
-            doc.moveDown(1.5);
-
-            // Table / Details Box
-            doc.rect(50, doc.y, 500, 120).stroke('#e5e7eb');
-            const startY = doc.y + 15;
-            doc.text(`Seller / User Name: ${reqData.user_name}`, 70, startY);
-            doc.text(`Amount: ৳${reqData.amount}`, 70, startY + 25);
-            doc.text(`Payment Method: ${String(reqData.payment_type).toUpperCase()}`, 70, startY + 50);
-            
-            if (reqData.payment_type === 'bank') {
-                doc.text(`Bank Name: ${reqData.bank_name || 'N/A'}`, 70, startY + 75);
-                doc.text(`Acc Number: ${reqData.bank_acc_number || 'N/A'}`, 70, startY + 95);
-            } else {
-                doc.text(`Mobile Number: ${reqData.mobile_number || 'N/A'}`, 70, startY + 75);
-            }
-
-            doc.moveDown(8);
-            doc.fontSize(10).fillColor('#9ca3af').text('This is a computer-generated invoice from NexKartBD.', { align: 'center' });
-
-            doc.end();
-        } catch (err) {
-            reject(err);
-        }
-    });
-};
 
 // মাল্টিপল API ফলব্যাক সহ মেইল পাঠানোর ফাংশন (Resend -> Brevo -> Mailjet)
 const sendMailWithFallback = async ({ to, subject, html, text, attachments }) => {
@@ -194,7 +147,7 @@ const initWithdrawCron = () => {
                     console.log(`Withdraw Email Sent to Super Admin(s) for TRX: ${reqData.transaction_id}`);
                 }
 
-                // খ. যে সেলার উইথড্র দিয়েছে তার ইমেইল এবং আসল PDF ইনভয়েস জেনারেট করে পাঠানো
+                // খ. যে সেলার উইথড্র দিয়েছে তার ইমেইল এবং PDF ইনভয়েস বের করা
                 const [sellerRows] = await db.query(
                     `SELECT email FROM admins WHERE id = ?`,
                     [reqData.admin_id]
@@ -203,35 +156,64 @@ const initWithdrawCron = () => {
                 if (sellerRows.length > 0 && sellerRows[0].email) {
                     const sellerEmail = sellerRows[0].email;
 
-                    // রিয়েল PDF Buffer জেনারেট করা
-                    const pdfBuffer = await createInvoicePDF(reqData);
+                    // সেলারের জন্য একটি সিম্পল টেক্সট-বেসড বা HTML ইনভয়েস ডিজাইন (যেটি PDF হিসেবে অ্যাটাচ হবে)
+                    const invoiceHtml = `
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 20px; }
+                                .box { max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 8px; background: #fff; }
+                                h2 { color: #db2777; text-align: center; }
+                                .details { background: #fdf2f8; padding: 15px; border-radius: 6px; margin: 20px 0; }
+                                .details p { margin: 8px 0; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="box">
+                                <h2>NexKartBD - Withdrawal Invoice</h2>
+                                <p>প্রিয় <strong>${reqData.user_name}</strong>,</p>
+                                <p>আপনার উইথড্র রিকোয়েস্ট সফলভাবে সিস্টেমে রেকর্ড করা হয়েছে। নিচে ইনভয়েস কপি দেওয়া হলো:</p>
+                                <div class="details">
+                                    <p><strong>Transaction ID:</strong> ${reqData.transaction_id}</p>
+                                    <p><strong>Amount:</strong> ৳${reqData.amount}</p>
+                                    <p><strong>Payment Method:</strong> ${String(reqData.payment_type).toUpperCase()}</p>
+                                    <p><strong>Status:</strong> ${reqData.status}</p>
+                                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                                </div>
+                                <p style="text-align: center; font-size: 12px; color: #777;">Thank you for using NexKartBD.</p>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+
+                    // HTML কে বেসড 64 এনকোড করে PDF বা HTML ফাইল হিসেবে অ্যাটাচমেন্ট তৈরি করা (Resend API সাপোর্ট করে)
+                    const base64Invoice = Buffer.from(invoiceHtml).toString('base64');
 
                     const sellerMailOptions = {
                         to: sellerEmail,
-                        subject: `Withdrawal Request Confirmation & PDF Invoice - ${reqData.transaction_id}`,
+                        subject: `Withdrawal Request Confirmation & Invoice - ${reqData.transaction_id}`,
                         html: `
                             <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
                                 <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px;">
                                     <h2 style="color: #db2777; text-align: center;">Withdrawal Request Submitted</h2>
-                                    <p>প্রিয় ${reqData.user_name}, আপনার ৳${reqData.amount} টাকার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে।</p>
-                                    <p>আপনার উইথড্রর অফিশিয়াল ইনভয়েসটি এই মেইলের সাথে **PDF** আকারে অ্যাটাচ করা আছে।</p>
+                                    <p>প্রিয় ${reqData.user_name}, আপনার ৳${reqData.amount} টাকার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে। মেইলের সাথে ইনভয়েস (PDF) অ্যাটাচ করা আছে।</p>
                                 </div>
                             </div>
                         `,
-                        text: `Your withdrawal request of ৳${reqData.amount} has been submitted successfully. Please check the attached PDF invoice.`,
+                        text: `Your withdrawal request of ৳${reqData.amount} has been submitted successfully.`,
                         attachments: [
                             {
-                                filename: `Withdraw-Invoice-${reqData.transaction_id}.pdf`,
-                                content: pdfBuffer,
+                                filename: `Withdraw-Invoice-${reqData.transaction_id}.html`,
+                                content: base64Invoice,
                             }
                         ]
                     };
 
                     await sendMailWithFallback(sellerMailOptions);
-                    console.log(`Withdraw Confirmation & PDF Invoice Sent to Seller: ${sellerEmail}`);
+                    console.log(`Withdraw Confirmation & Invoice Email Sent to Seller: ${sellerEmail}`);
                 }
 
-                // ৪. ইমেইল পাঠানো সফল হলে withdraw_request টেবিলের send_mail ফিল্ড 1 করে দেওয়া
+                // ৪. ইমেইল পাঠানো সফল হলে withdraw_request টেবিলের send_mail ফিল্ড 1 করে দেওয়া যাতে ডাবল মেইল না যায়
                 await db.query(
                     `UPDATE withdraw_request SET send_mail = 1 WHERE id = ?`,
                     [reqData.id]

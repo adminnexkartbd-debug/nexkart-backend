@@ -69,7 +69,7 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
             Messages: [
               {
                 From: { Email: "pilot@mailjet.com", Name: "NexKART" },
-                To: [{ Email: to, Name: "Customer" }],
+                To: [{ Email: to, Name: "Seller" }],
                 Subject: subject,
                 HTMLPart: html,
                 TextPart: text,
@@ -89,10 +89,17 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
 };
 
 /**
- * উইথড্র স্ট্যাটাস অনুযায়ী ডায়নামিক ও প্রফেশনাল ইমেইল নোটিফিকেশন পাঠানোর ফাংশন
+ * উইথড্র স্ট্যাটাস অনুযায়ী ডায়নামিক ও প্রফেশনাল ইমেইল নোটিফিকেশন সরাসরি সেলারের কাছে পাঠানোর ফাংশন
  */
-const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
+const sendWithdrawEmail = async (withdrawDetails) => {
     try {
+        // Seller-er email check kora (withdrawDetails er modhye email ba sellerEmail thakte hobe)
+        const sellerEmail = withdrawDetails.sellerEmail || withdrawDetails.email;
+        
+        if (!sellerEmail) {
+            throw new Error('Seller email is missing in withdraw details!');
+        }
+
         // স্ট্যাটাস চেক করা (Pending, Approved, Rejected) - ডিফল্ট Pending
         const status = (withdrawDetails.status || 'Pending').toLowerCase();
         
@@ -129,7 +136,7 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
                     </div>
 
                     <h3 style="color: #1f2937; text-align: center; margin-bottom: 15px;">${headerTitle}</h3>
-                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">প্রিয় <strong>${withdrawDetails.userName || 'Valued User'}</strong>,</p>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">প্রিয় <strong>${withdrawDetails.userName || 'Valued Seller'}</strong>,</p>
                     <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">${mainMessage}</p>
                     
                     <div style="background: #fdf2f8; padding: 20px; border-left: 5px solid #db2777; margin: 25px 0; border-radius: 6px;">
@@ -149,15 +156,15 @@ const sendWithdrawEmail = async (adminEmail, withdrawDetails) => {
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // Fallback ফাংশন কল করা হলো
+        // Fallback ফাংশন কল করা হলো (sellerEmail use kore)
         const result = await sendMailWithFallback({
-            to: adminEmail,
+            to: sellerEmail,
             subject: subjectLine,
             html: htmlContent,
             text: textContent
         });
 
-        console.log(`Withdraw Status (${statusText}) Email Sent Successfully via ${result.provider}!`);
+        console.log(`Withdraw Status (${statusText}) Email Sent Successfully to Seller via ${result.provider}!`);
         return { success: true };
 
     } catch (error) {
