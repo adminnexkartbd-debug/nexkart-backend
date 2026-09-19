@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const db = require('../../db');
+const { sendWithdrawEmail } = require('../services/withdrawmail_3'); 
 
 // Super Admin Auth Guard Middleware
 function ensureSuperAdmin(req, res, next) {
@@ -427,55 +428,26 @@ router.post('/api/update-withdrawal-status', ensureSuperAdmin, async (req, res) 
         const [result] = await db.query("UPDATE withdraw_request SET status = ? WHERE id = ?", [status, id]);
 
         if (result.affectedRows > 0) {
-            // ৩. স্ট্যাটাস অনুযায়ী ইমেইল পাঠান (প্রফেশনাল HTML ফরম্যাটে)
+            // ৩. স্ট্যাটাস অনুযায়ী ইমেইল পাঠানোর জন্য ফলব্যাক মেল সিস্টেম কল করা হলো (Nodemailer এর বদলে)
             if (status === 'approved' || status === 'rejected') {
-                const nodemailer = require('nodemailer');
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: {
-                      user: process.env.EMAIL_USER,
-                      pass: process.env.EMAIL_PASS
-                    }
-                });
-
-                const subject = `Withdrawal Request ${status.toUpperCase()} - Payment Notification`;
-                
-                // সুন্দর এবং গোছানো HTML বডি যেখানে Transition ID এবং Date থাকবে
-                const htmlBody = `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px; margin: auto;">
-                        <h2 style="color: ${status === 'approved' ? '#28a745' : '#dc3545'}; text-align: center;">
-                            Withdrawal ${status.toUpperCase()}
-                        </h2>
-                        <p>Dear <strong>${request.user_name}</strong>,</p>
-                        <p>Your withdrawal request has been <strong>${status}</strong> by the administration.</p>
-                        
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                            <p style="margin: 8px 0;"><strong>Amount:</strong> ৳${request.amount}</p>
-                          <p style="margin: 8px 0;"><strong>Transaction ID:</strong> ${request.transaction_id || 'N/A'}</p>
-                            <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                        </div>
-                        
-                        <p>If you have any questions or face any issues, please feel free to contact our support team.</p>
-                        <p>Best Regards,<br><strong>Management Team</strong></p>
-                    </div>
-                `;
-
-                await transporter.sendMail({
-                    from: '"Payment System" <mehedi.hasantanvir78@gmail.com>',
-                    to: request.email,
-                    subject: subject,
-                    html: htmlBody // টেক্সটের পরিবর্তে HTML ফরম্যাট ব্যবহার করা হয়েছে
+                await sendWithdrawEmail({
+                    sellerEmail: request.email,
+                    userName: request.user_name,
+                    amount: request.amount,
+                    paymentType: request.payment_type,
+                    transactionId: request.transaction_id,
+                    status: status
                 });
             }
 
-            return res.json({ success: true, message: `Status updated to ${status} and formatted mail sent` });
+            return res.json({ success: true, message: `Withdrawal status updated to ${status} successfully!` });
         } else {
-            return res.status(404).json({ success: false, error: 'Failed to update' });
+            return res.status(400).json({ success: false, error: 'Failed to update status in database' });
         }
+
     } catch (err) {
-        console.error('Database/Mail Error:', err);
-        res.status(500).json({ success: false, error: 'Failed to update withdrawal status' });
+        console.error('Withdrawal Status Update Error:', err);
+        return res.status(500).json({ success: false, error: 'Server error during status update' });
     }
 });
-
 module.exports = router;
