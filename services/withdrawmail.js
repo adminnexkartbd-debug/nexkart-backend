@@ -1,21 +1,16 @@
 const { Resend } = require('resend');
-const SibApiV3Sdk = require('@getbrevo/brevo');
 const Mailjet = require('node-mailjet');
 require('dotenv').config();
 
-// 1. Initialize Clients
+// 1. Resend & Mailjet Setup
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-const brevoApiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-brevoApiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-
 const mailjet = Mailjet.apiConnect(
   process.env.MAILJET_API_KEY,
   process.env.MAILJET_SECRET_KEY
 );
 
 /**
- * অফিশিয়াল SDK এবং ফলব্যাক মেকানিজম সহ মেইল পাঠানোর ফাংশন
+ * ১০০% নিরাপদ ফলব্যাক মেল সিস্টেম (Resend SDK -> Brevo Fetch -> Mailjet SDK)
  */
 const sendMailWithFallback = async ({ to, subject, html, text }) => {
   
@@ -35,19 +30,32 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
     return { success: true, provider: 'Resend' };
 
   } catch (resendError) {
-    console.log(`Resend failed: ${resendError.message}. Switching to Brevo SDK...`);
+    console.log(`Resend failed: ${resendError.message}. Switching to Brevo HTTP API...`);
 
-    // --- 2nd Try: Brevo SDK ---
+    // --- 2nd Try: Brevo API (Native Fetch - কন্সট্রাক্টর ঝামেলা মুক্ত) ---
     try {
-      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-      sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = html;
-      sendSmtpEmail.textContent = text;
-      sendSmtpEmail.sender = { name: "NexKARTBD", email: "no-reply@nexkartbd.com" };
-      sendSmtpEmail.to = [{ email: to }];
+      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: "NexKARTBD", email: "no-reply@nexkartbd.com" },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html,
+          textContent: text
+        })
+      });
 
-      await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
-      console.log('Mail sent successfully via Brevo SDK!');
+      if (!brevoResponse.ok) {
+        const brevoErr = await brevoResponse.json();
+        throw new Error(brevoErr.message || 'Brevo API request failed');
+      }
+
+      console.log('Mail sent successfully via Brevo API!');
       return { success: true, provider: 'Brevo' };
 
     } catch (brevoError) {
