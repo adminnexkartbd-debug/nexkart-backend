@@ -3,8 +3,13 @@ const router = express.Router();
 const path = require('path');
 const db = require('../../db');
 
-const { sendWithdrawEmail } = require('../../services/withdrawmail')
-// Super Admin Auth Guard Middleware
+const { sendWithdrawEmail } = require('../../services/withdrawmail');
+const { 
+    sendSellerWarningEmail, 
+    sendSellerBanEmail, 
+    sendSellerUnbanEmail 
+} = require('../../services/sellerMailService');// Super Admin Auth Guard Middleware
+
 function ensureSuperAdmin(req, res, next) {
     if (req.isAuthenticated && req.isAuthenticated()) {
         if (req.user && (req.user.super_admin === 'approved' || req.user.role === 'superadmin')) {
@@ -319,7 +324,7 @@ router.get('/api/seller-status-list', ensureSuperAdmin, async (req, res) => {
     }
 });
 
-// Update Seller Action API & Send Mail
+// Update Seller Action API & Send Mail via sellerMailService
 router.post('/api/update-seller-status', ensureSuperAdmin, async (req, res) => {
   const { sellerId, status } = req.body; // ফ্রন্টএন্ড থেকে আসা স্ট্যাটাস বা অ্যাকশন ভ্যালু
 
@@ -340,43 +345,24 @@ router.post('/api/update-seller-status', ensureSuperAdmin, async (req, res) => {
     const query = "UPDATE admins SET action = ? WHERE id = ?";
     await db.query(query, [dbAction, sellerId]);
 
-    // অ্যাকশন অনুযায়ী ইমেইল নোটিফিকেশন পাঠানো
+    // অ্যাকশন অনুযায়ী sellerMailService থেকে প্রফেশনাল মেইল পাঠানো
     if (seller && seller.email) {
-      const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-        }
-      });
-
-      let subject = `Account Action Update - ${seller.shop_name || 'Shop'}`;
-      let text = `Your seller account action has been updated to: ${status.toUpperCase()}`;
-      
       if (status === 'warning') {
-        text = `Warning Notice: Your account has received a warning. Please check your dashboard.`;
+        await sendSellerWarningEmail(seller.email, seller.shop_name || 'Shop', 'Violation of terms and conditions. Please maintain guidelines.');
       } else if (status === 'suspended') {
-        text = `Suspension Notice: Your seller account has been suspended.`;
+        await sendSellerBanEmail(seller.email, 'Your account has been suspended by the administration.');
       } else if (status === 'active') {
-        text = `Activation Notice: Your seller account is now active and running.`;
+        // যদি suspended বা warning থেকে আবার active করা হয়
+        await sendSellerUnbanEmail(seller.email);
       }
-
-      await transporter.sendMail({
-        from: '"Admin System" <mehedi.hasantanvir78@gmail.com>',
-        to: seller.email,
-        subject: subject,
-        text: text
-      }).catch(err => console.error("Mail send error:", err));
     }
 
-    res.json({ success: true, message: `Seller action updated to ${status}` });
+    res.json({ success: true, message: `Seller action updated to ${status} and email sent successfully!` });
   } catch (err) {
-    console.error('Database Update Error:', err);
+    console.error('Database/Mail Error:', err);
     res.status(500).json({ success: false, error: 'Failed to update seller action' });
   }
 });
-
 
 
 // ================= WITHDRAWAL REQUESTS APIS =================
