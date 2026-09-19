@@ -1,24 +1,20 @@
 const { Resend } = require('resend');
-const Mailjet = require('node-mailjet');
 require('dotenv').config();
 
-// 1. Resend Setup
+// 1. Resend Setup (.env থেকে API Key নেওয়া হচ্ছে)
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 2. Mailjet Setup
-const mailjet = Mailjet.apiConnect(
-  process.env.MAILJET_API_KEY,
-  process.env.MAILJET_SECRET_KEY
-);
-
-// Fallback Mail Sending Function (Resend -> Brevo -> Mailjet)
+/**
+ * HTTP API ভিত্তিক ফলব্যাক মেল সিস্টেম (Resend -> Brevo)
+ * কোনো প্রকার SMTP বা পোর্ট কল করা হয় না, তাই ক্লাউড সার্ভারে (Render/Vercel) কোনো টাইমআউট বা ENETUNREACH এরর আসবে না।
+ */
 const sendMailWithFallback = async ({ to, subject, html, text }) => {
   
-  // --- 1st Try: Resend ---
+  // --- 1st Try: Resend API ---
   try {
-    console.log('Trying with Resend...');
+    console.log('Trying with Resend API...');
     const data = await resend.emails.send({
-      from: 'NexKARTbd <onboarding@resend.dev>',
+      from: 'NexKARTbd <onboarding@resend.dev>', // প্রয়োজনে আপনার ডোমেইন বা ভেরিফাইড মেইল দিতে পারেন
       to: [to],
       subject: subject,
       html: html,
@@ -30,9 +26,9 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
     return { success: true, provider: 'Resend' };
 
   } catch (resendError) {
-    console.log(`Resend failed: ${resendError.message}. Switching to Brevo...`);
+    console.log(`Resend failed: ${resendError.message}. Switching to Brevo API...`);
 
-    // --- 2nd Try: Brevo (Using Native Fetch API) ---
+    // --- 2nd Try: Brevo API (Native Fetch) ---
     try {
       const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
@@ -42,7 +38,7 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          sender: { name: "NexKART", email: "no-reply@nexkartbd.com" },
+          sender: { name: "NexKARTBD", email: "no-reply@nexkartbd.com" },
           to: [{ email: to }],
           subject: subject,
           htmlContent: html,
@@ -59,55 +55,30 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
       return { success: true, provider: 'Brevo' };
 
     } catch (brevoError) {
-      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet...`);
-
-      // --- 3rd Try: Mailjet ---
-      try {
-        await mailjet
-          .post('send', { version: 'v3.1' })
-          .request({
-            Messages: [
-              {
-                From: { Email: "pilot@mailjet.com", Name: "NexKART" },
-                To: [{ Email: to, Name: "Seller" }],
-                Subject: subject,
-                HTMLPart: html,
-                TextPart: text,
-              }
-            ]
-          });
-
-        console.log('Mail sent successfully via Mailjet!');
-        return { success: true, provider: 'Mailjet' };
-
-      } catch (mailjetError) {
-        console.error(`Mailjet also failed: ${mailjetError.message}`);
-        throw new Error('All email providers (Resend, Brevo, Mailjet) failed!');
-      }
+      console.error(`Brevo also failed: ${brevoError.message}`);
+      throw new Error('All email API providers (Resend, Brevo) failed!');
     }
   }
 };
 
 /**
- * উইথড্র স্ট্যাটাস অনুযায়ী ডায়নামিক ও প্রফেশনাল ইমেইল নোটিফিকেশন সরাসরি সেলারের কাছে পাঠানোর ফাংশন
+ * উইথড্র স্ট্যাটাস অনুযায়ী অত্যন্ত প্রফেশনাল ও আধুনিক ডিজাইনের ইমেইল পাঠানোর ফাংশন
  */
 const sendWithdrawEmail = async (withdrawDetails) => {
     try {
-        // Seller-er email check kora (withdrawDetails er modhye email ba sellerEmail thakte hobe)
         const sellerEmail = withdrawDetails.sellerEmail || withdrawDetails.email;
         
         if (!sellerEmail) {
             throw new Error('Seller email is missing in withdraw details!');
         }
 
-        // স্ট্যাটাস চেক করা (Pending, Approved, Rejected) - ডিফল্ট Pending
         const status = (withdrawDetails.status || 'Pending').toLowerCase();
         
-        let statusColor = '#d97706'; // Pending (Yellow/Orange)
+        let statusColor = '#d97706'; // Pending (Orange)
         let statusText = 'Pending';
         let badgeBg = '#fef3c7';
-        let headerTitle = 'Withdrawal Request Submitted';
-        let mainMessage = 'আপনার উত্তোলনের অনুরোধটি সফলভাবে গ্রহণ করা হয়েছে এবং সিস্টেমে জমা হয়েছে।';
+        let headerTitle = 'Withdrawal Request Received';
+        let mainMessage = 'আপনার উত্তোলনের অনুরোধটি সফলভাবে সিস্টেমে জমা হয়েছে এবং বর্তমানে রিভিউ পর্যায়ে রয়েছে।';
         let subjectLine = 'Withdrawal Request Submitted Successfully - NexKartBD';
 
         if (status === 'approved' || status === 'success') {
@@ -115,48 +86,72 @@ const sendWithdrawEmail = async (withdrawDetails) => {
             statusText = 'Approved';
             badgeBg = '#dcfce7';
             headerTitle = 'Withdrawal Request Approved! 🎉';
-            mainMessage = 'সুসংবাদ! আপনার উত্তোলনের অনুরোধটি সফলভাবে অ্যাপ্রুভ করা হয়েছে। খুব শীঘ্রই আপনার পেমেন্ট অ্যাকাউন্টে টাকা পৌঁছে যাবে।';
-            subjectLine = 'Withdrawal Request Approved - NexKartBD';
+            mainMessage = 'সুসংবাদ! আপনার উত্তোলনের অনুরোধটি সফলভাবে অ্যাপ্রুভ করা হয়েছে। খুব শীঘ্রই আপনার নির্দিষ্ট পেমেন্ট অ্যাকাউন্টে টাকা পৌঁছে দেওয়া হবে।';
+            subjectLine = 'Great News! Withdrawal Request Approved - NexKartBD';
         } else if (status === 'rejected' || status === 'failed') {
             statusColor = '#dc2626'; // Red
             statusText = 'Rejected';
             badgeBg = '#fee2e2';
-            headerTitle = 'Withdrawal Request Status Update';
-            mainMessage = 'দুঃখিত, আপনার উত্তোলনের অনুরোধটি কিছু কারণবশত বাতিল (Rejected) করা হয়েছে। বিস্তারিত জানতে সাপোর্টের সাথে যোগাযোগ করুন।';
-            subjectLine = 'Withdrawal Request Status: Rejected - NexKartBD';
+            headerTitle = 'Withdrawal Request Update';
+            mainMessage = 'দুঃখিত, কিছু অনিবার্য কারণবশত আপনার উত্তোলনের অনুরোধটি বাতিল (Rejected) করা হয়েছে। বিস্তারিত জানতে অনুগ্রহ করে সাপোর্টের সাথে যোগাযোগ করুন।';
+            subjectLine = 'Important Update Regarding Your Withdrawal - NexKartBD';
         }
 
+        // প্রিমিয়াম ও আধুনিক HTML ডিজাইন
         const htmlContent = `
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; background-color: #f4f6f8; border-radius: 12px;">
-                <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 35px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
-                    
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <h2 style="color: #db2777; margin: 0; font-size: 24px;">NexKartBD</h2>
-                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Secure Withdrawal Portal</p>
-                    </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+                    .wrapper { width: 100%; table-layout: fixed; background-color: #f3f4f6; padding: 40px 0; }
+                    .main-card { max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+                    .header { background: linear-gradient(135deg, #db2777 0%, #9333ea 100%); padding: 30px; text-align: center; color: #ffffff; }
+                    .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
+                    .header p { margin: 5px 0 0; font-size: 14px; opacity: 0.9; }
+                    .content { padding: 35px 30px; color: #374151; }
+                    .content h3 { color: #111827; font-size: 20px; margin-top: 0; margin-bottom: 20px; text-align: center; }
+                    .details-box { background-color: #fdf2f8; border-left: 4px solid #db2777; padding: 20px; border-radius: 8px; margin: 25px 0; }
+                    .details-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; color: #4b5563; }
+                    .badge { background-color: ${badgeBg}; color: ${statusColor}; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+                    .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
+                </style>
+            </head>
+            <body>
+                <div class="wrapper">
+                    <div class="main-card">
+                        <div class="header">
+                            <h1>NexKartBD</h1>
+                            <p>Secure Seller Payout Portal</p>
+                        </div>
+                        <div class="content">
+                            <h3>${headerTitle}</h3>
+                            <p>প্রিয় <strong>${withdrawDetails.userName || 'Valued Seller'}</strong>,</p>
+                            <p style="line-height: 1.6;">${mainMessage}</p>
+                            
+                            <div class="details-box">
+                                <p style="margin: 8px 0; font-size: 14px;"><strong>পরিমাণ:</strong> <span style="color: #db2777; font-size: 16px; font-weight: bold;">৳${withdrawDetails.amount}</span></p>
+                                <p style="margin: 8px 0; font-size: 14px;"><strong>পেমেন্ট মেথড:</strong> ${withdrawDetails.paymentType ? withdrawDetails.paymentType.toUpperCase() : 'N/A'}</p>
+                                <p style="margin: 8px 0; font-size: 14px;"><strong>ট্রানজেকশন আইডি:</strong> ${withdrawDetails.transactionId || 'N/A'}</p>
+                                <p style="margin: 8px 0; font-size: 14px;"><strong>স্ট্যাটাস:</strong> <span class="badge">${statusText}</span></p>
+                            </div>
 
-                    <h3 style="color: #1f2937; text-align: center; margin-bottom: 15px;">${headerTitle}</h3>
-                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">প্রিয় <strong>${withdrawDetails.userName || 'Valued Seller'}</strong>,</p>
-                    <p style="color: #4b5563; font-size: 15px; line-height: 1.5;">${mainMessage}</p>
-                    
-                    <div style="background: #fdf2f8; padding: 20px; border-left: 5px solid #db2777; margin: 25px 0; border-radius: 6px;">
-                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>টাকার পরিমাণ:</strong> <span style="color: #db2777; font-size: 16px; font-weight: bold;">৳${withdrawDetails.amount}</span></p>
-                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>পেমেন্ট মেথড:</strong> ${withdrawDetails.paymentType ? withdrawDetails.paymentType.toUpperCase() : 'N/A'}</p>
-                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>ট্রানজেকশন আইডি:</strong> ${withdrawDetails.transactionId || 'N/A'}</p>
-                        <p style="margin: 8px 0; color: #374151; font-size: 14px;"><strong>স্ট্যাটাস:</strong> <span style="background: ${badgeBg}; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 13px;">${statusText}</span></p>
+                            <p style="font-size: 14px; line-height: 1.6; color: #4b5563;">আপনার যেকোনো প্রয়োজনে আমাদের মার্চেন্ট সাপোর্ট টিমের সাথে যোগাযোগ করতে পারেন।</p>
+                        </div>
+                        <div class="footer">
+                            এটি একটি স্বয়ংক্রিয় সিস্টেম নোটিফিকেশন। দয়া করে এই মেইলে সরাসরি রিপ্লাই করবেন না।<br>
+                            &copy; ${new Date().getFullYear()} NexKartBD. All rights reserved.
+                        </div>
                     </div>
-
-                    <p style="font-size: 13px; color: #6b7280; text-align: center; margin-top: 35px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                        এটি একটি স্বয়ংক্রিয় নোটিফিকেশন ইমেইল। দয়া করে এই মেইলে সরাসরি রিপ্লাই করবেন না。<br>
-                        &copy; ${new Date().getFullYear()} NexKartBD. All rights reserved.
-                    </p>
                 </div>
-            </div>
+            </body>
+            </html>
         `;
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // Fallback ফাংশন কল করা হলো (sellerEmail use kore)
+        // সরাসরি HTTP API ভিত্তিক ফলব্যাক ফাংশন কল করা হলো
         const result = await sendMailWithFallback({
             to: sellerEmail,
             subject: subjectLine,
