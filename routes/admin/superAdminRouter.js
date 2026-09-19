@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const db = require('../../db');
-const { sendWithdrawEmail } = require('../services/withdrawmail_3'); 
 
+const { sendWithdrawEmail } = require('../../services/withdrawmail')
 // Super Admin Auth Guard Middleware
 function ensureSuperAdmin(req, res, next) {
     if (req.isAuthenticated && req.isAuthenticated()) {
@@ -400,7 +400,6 @@ router.get('/api/withdrawal-requests', ensureSuperAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch withdrawal requests' });
     }
 });
-
 // ২. উইথড্র স্ট্যাটাস (Pending, Approved, Rejected) আপডেট করার API
 router.post('/api/update-withdrawal-status', ensureSuperAdmin, async (req, res) => {
     const { id, status } = req.body;
@@ -428,7 +427,7 @@ router.post('/api/update-withdrawal-status', ensureSuperAdmin, async (req, res) 
         const [result] = await db.query("UPDATE withdraw_request SET status = ? WHERE id = ?", [status, id]);
 
         if (result.affectedRows > 0) {
-            // ৩. স্ট্যাটাস অনুযায়ী ইমেইল পাঠানোর জন্য ফলব্যাক মেল সিস্টেম কল করা হলো (Nodemailer এর বদলে)
+            // ৩. স্ট্যাটাস অনুযায়ী ফলব্যাক API মেল সিস্টেম কল করা হলো
             if (status === 'approved' || status === 'rejected') {
                 await sendWithdrawEmail({
                     sellerEmail: request.email,
@@ -440,14 +439,14 @@ router.post('/api/update-withdrawal-status', ensureSuperAdmin, async (req, res) 
                 });
             }
 
-            return res.json({ success: true, message: `Withdrawal status updated to ${status} successfully!` });
+            return res.json({ success: true, message: `Status updated to ${status} and mail sent successfully!` });
         } else {
-            return res.status(400).json({ success: false, error: 'Failed to update status in database' });
+            return res.status(404).json({ success: false, error: 'Failed to update' });
         }
-
     } catch (err) {
-        console.error('Withdrawal Status Update Error:', err);
-        return res.status(500).json({ success: false, error: 'Server error during status update' });
+        console.error('Database/Mail Error:', err);
+        res.status(500).json({ success: false, error: 'Failed to update withdrawal status' });
     }
 });
+
 module.exports = router;
