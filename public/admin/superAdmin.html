@@ -9,25 +9,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style> body { font-family: 'Poppins', sans-serif; } </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex flex-col md:flex-row h-screen overflow-hidden">
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden relative">
 
-  <!-- MOBILE HEADER BAR -->
-  <div class="md:hidden bg-slate-900 text-white h-16 flex items-center justify-between px-4 z-20 shrink-0 border-b border-slate-800">
-    <div class="flex items-center gap-2">
-      <i class="fa-solid fa-shield-halved text-purple-500 text-lg"></i>
-      <span class="font-bold text-base tracking-wide">Super Admin</span>
-    </div>
-    <button onclick="toggleMobileSidebar()" class="text-slate-300 hover:text-white focus:outline-none p-2">
-      <i id="mobileMenuIcon" class="fa-solid fa-bars text-xl"></i>
-    </button>
-  </div>
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div id="sidebarOverlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden"></div>
 
   <!-- SIDEBAR NAVIGATION -->
-  <aside id="sidebarNav" class="w-64 bg-slate-900 text-white flex flex-col justify-between fixed inset-y-0 left-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300 md:static h-full">
+  <aside id="sidebar" class="w-64 bg-slate-900 text-white flex flex-col justify-between fixed inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 md:static">
     <div>
-      <div class="h-16 hidden md:flex items-center gap-3 px-6 bg-slate-950 border-b border-slate-800">
-        <i class="fa-solid fa-shield-halved text-purple-500 text-xl"></i>
-        <span class="font-bold text-lg tracking-wide">Super Admin</span>
+      <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-shield-halved text-purple-500 text-xl"></i>
+          <span class="font-bold text-lg tracking-wide">Super Admin</span>
+        </div>
+        <!-- Mobile Sidebar Close Button -->
+        <button onclick="toggleMobileSidebar()" class="text-slate-400 hover:text-white md:hidden text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <nav class="mt-6 px-4 space-y-2 overflow-y-auto max-h-[calc(100vh-140px)]">
@@ -46,34 +44,34 @@
           
           <!-- Dropdown Items -->
           <div id="registerDropdown" class="hidden pl-4 space-y-1">
-            <button onclick="openRegisterModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
+            <button onclick="openRegisterModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
               <i class="fa-solid fa-user-plus text-xs"></i> New Register Requests
             </button>
-            <button onclick="openVerificationModal()" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
+            <button onclick="openVerificationModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left text-sm">
               <i class="fa-solid fa-user-check text-xs"></i> Verification Requests
             </button>
           </div>
         </div>
 
-        <button onclick="openOrderModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openOrderModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-boxes-packing"></i> All Order List
         </button>
-        <button onclick="openCommissionModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openCommissionModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-percent"></i> Commission Reports
         </button>
-        <button onclick="openTicketModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openTicketModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-ticket"></i> Support & Complains
         </button>
         <!-- NEW IPR REPORT BUTTON -->
-        <button onclick="openIprModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openIprModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-file-shield"></i> IPR Reports
         </button>
         <!-- NEW SELLER STATUS BUTTON -->
-        <button onclick="openSellerStatusModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openSellerStatusModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-store"></i> Seller Status List
         </button>
         <!-- NEW WITHDRAWAL REQUESTS BUTTON -->
-        <button onclick="openWithdrawalModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+        <button onclick="openWithdrawalModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
         </button>
       </nav>
@@ -87,17 +85,20 @@
     </div>
   </aside>
 
-  <!-- SIDEBAR BACKDROP FOR MOBILE -->
-  <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
-
   <!-- MAIN CONTENT AREA -->
-  <div class="flex-1 flex flex-col h-full overflow-y-auto">
+  <div class="flex-1 flex flex-col h-screen overflow-y-auto w-full">
     
     <!-- HEADER -->
-    <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-      <h1 class="text-base md:text-xl font-bold text-slate-800 flex items-center gap-2">
-        <i class="fa-solid fa-crown text-amber-500"></i> Super Admin Portal
-      </h1>
+    <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+      <div class="flex items-center gap-3">
+        <!-- Mobile Menu Toggle Button -->
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-700 text-xl focus:outline-none">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-crown text-amber-500"></i> <span class="truncate">Super Admin Portal</span>
+        </h1>
+      </div>
       
       <!-- DYNAMIC SUPER ADMIN PROFILE -->
       <div class="flex items-center gap-3">
@@ -105,17 +106,17 @@
           <p id="adminName" class="text-sm font-semibold text-slate-700">Loading...</p>
           <span class="text-xs text-purple-600 font-medium">Super Admin</span>
         </div>
-        <img id="adminImage" src="/default-avatar.png" alt="Profile" class="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-purple-500 object-cover shadow" />
+        <img id="adminImage" src="/default-avatar.png" alt="Profile" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-purple-500 object-cover shadow" />
       </div>
     </header>
 
     <!-- MAIN BODY CARDS -->
-    <main class="p-4 md:p-6 space-y-6">
+    <main class="p-4 sm:p-6 space-y-6">
       
-      <div class="bg-purple-950 text-white rounded-2xl p-5 md:p-6 shadow-xl flex items-center justify-between">
+      <div class="bg-purple-950 text-white rounded-2xl p-5 sm:p-6 shadow-xl flex items-center justify-between">
         <div>
-          <h2 class="text-xl md:text-2xl font-bold mb-1">স্বাগতম, Super Admin Portal ✨</h2>
-          <p class="text-purple-200 text-xs md:text-sm">যেকোনো কার্ড অথবা বামপাশের মেনুতে ক্লিক করে পপআপ উইন্ডো চালু করুন।</p>
+          <h2 class="text-xl sm:text-2xl font-bold mb-1">স্বাগতম, Super Admin Portal ✨</h2>
+          <p class="text-purple-200 text-xs sm:text-sm">যেকোনো কার্ড অথবা বামপাশের মেনুতে ক্লিক করে পপআপ উইন্ডো চালু করুন।</p>
         </div>
       </div>
 
@@ -127,7 +128,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Requests</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">New Register Request</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">New Register Request</h3>
             </div>
             <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition">
               <i class="fa-solid fa-user-plus"></i>
@@ -140,7 +141,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Verification</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">User Verification Request</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">User Verification Request</h3>
             </div>
             <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition">
               <i class="fa-solid fa-user-check"></i>
@@ -153,7 +154,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Orders</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">All Order List</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">All Order List</h3>
             </div>
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition">
               <i class="fa-solid fa-boxes-packing"></i>
@@ -166,7 +167,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Earnings</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">Commission Report</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Commission Report</h3>
             </div>
             <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition">
               <i class="fa-solid fa-percent"></i>
@@ -179,7 +180,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Complains</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">Support & Tickets</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Support & Tickets</h3>
             </div>
             <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-amber-600 group-hover:text-white transition">
               <i class="fa-solid fa-ticket"></i>
@@ -192,7 +193,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Reports</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">IPR Reports</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">IPR Reports</h3>
             </div>
             <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-rose-600 group-hover:text-white transition">
               <i class="fa-solid fa-file-shield"></i>
@@ -205,7 +206,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Sellers</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">Seller Status List</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Seller Status List</h3>
             </div>
             <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-teal-600 group-hover:text-white transition">
               <i class="fa-solid fa-store"></i>
@@ -218,7 +219,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-slate-400 uppercase">Payouts</p>
-              <h3 class="text-lg font-bold text-slate-800 mt-1">Withdrawal Requests</h3>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Withdrawal Requests</h3>
             </div>
             <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition">
               <i class="fa-solid fa-money-bill-transfer"></i>
@@ -233,31 +234,29 @@
   <!-- POPUP MODALS -->
 
   <!-- POPUP 1: Dynamic New Register Requests Modal -->
-  <div id="registerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="registerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base md:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-plus text-purple-600"></i> New Register Requests</h3>
-        <button onclick="closeModal('registerModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <h3 class="text-base sm:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-plus text-purple-600"></i> New Register Requests</h3>
+        <button onclick="closeModal('registerModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
       
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[600px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
-              <tr>
-                <th class="p-3">Profile</th>
-                <th class="p-3">Name</th>
-                <th class="p-3">Email</th>
-                <th class="p-3">Shop</th>
-                <th class="p-3">Status</th>
-                <th class="p-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="registerRequestsBody" class="divide-y divide-slate-100">
-              <!-- Dynamic data will render here -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[600px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+            <tr>
+              <th class="p-3">Profile</th>
+              <th class="p-3">Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Shop</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="registerRequestsBody" class="divide-y divide-slate-100">
+            <!-- Dynamic data will render here -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -269,32 +268,30 @@
   </div>
 
   <!-- POPUP 2: User Verification Modal -->
-  <div id="verificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="verificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base md:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-check text-blue-600"></i> User Verification Requests</h3>
-        <button onclick="closeModal('verificationModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <h3 class="text-base sm:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-check text-blue-600"></i> User Verification Requests</h3>
+        <button onclick="closeModal('verificationModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
       
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[700px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
-              <tr>
-                <th class="p-3">User</th>
-                <th class="p-3">Doc Type</th>
-                <th class="p-3">Doc No</th>
-                <th class="p-3">File</th>
-                <th class="p-3">Verified Status</th>
-                <th class="p-3">Doc Status</th>
-                <th class="p-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="verificationRequestsBody" class="divide-y divide-slate-100">
-              <!-- Dynamic Data Render -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[750px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+            <tr>
+              <th class="p-3">User</th>
+              <th class="p-3">Doc Type</th>
+              <th class="p-3">Doc No</th>
+              <th class="p-3">File</th>
+              <th class="p-3">Verified Status</th>
+              <th class="p-3">Doc Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="verificationRequestsBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Data Render -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -306,10 +303,10 @@
   </div>
 
   <!-- POPUP 3: Order List Modal -->
-  <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+  <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-boxes-packing text-emerald-600"></i> All Order List
         </h3>
         
@@ -322,26 +319,24 @@
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[800px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                <th class="p-3">Order Info</th>
-                <th class="p-3">Customer</th>
-                <th class="p-3">Qty / Var</th>
-                <th class="p-3">Total Amount</th>
-                <th class="p-3">Payment Method</th>
-                <th class="p-3">Payment Status</th>
-                <th class="p-3">Order Status</th>
-                <th class="p-3">Date</th>
-              </tr>
-            </thead>
-            <tbody id="orderListTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic Orders Render -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[850px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Order Info</th>
+              <th class="p-3">Customer</th>
+              <th class="p-3">Qty / Var</th>
+              <th class="p-3">Total Amount</th>
+              <th class="p-3">Payment Method</th>
+              <th class="p-3">Payment Status</th>
+              <th class="p-3">Order Status</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody id="orderListTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Orders Render -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -353,13 +348,13 @@
   </div>
 
   <!-- POPUP 4: COMMISSION REPORT MODAL -->
-  <div id="commissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="commissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <!-- Top Section with Search & Total Commission Summary -->
-      <div class="border-b pb-4 space-y-4">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+      <div class="border-b pb-4 space-y-3">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-percent text-indigo-600"></i> Commission Reports
           </h3>
           
@@ -368,14 +363,14 @@
 
         <!-- Filters & Search -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
             <div class="relative w-full sm:w-60">
               <input type="text" id="commOrderSearch" onkeyup="filterCommissionData()" placeholder="Search by Order Number..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-300">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
             </div>
 
             <!-- Month Dropdown -->
-            <select id="commMonthFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="commMonthFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
               <option value="all">All Months</option>
               <option value="01">January</option>
               <option value="02">February</option>
@@ -392,7 +387,7 @@
             </select>
 
             <!-- Year Dropdown -->
-            <select id="commYearFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select id="commYearFilter" onchange="filterCommissionData()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
               <option value="all">All Years</option>
               <option value="2026">2026</option>
               <option value="2025">2025</option>
@@ -401,7 +396,7 @@
           </div>
 
           <!-- Total Earned Commission Display -->
-          <div class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+          <div class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
             <span>Filtered Total Commission:</span>
             <span id="totalCommissionSum" class="text-sm font-bold">৳0.00</span>
           </div>
@@ -409,23 +404,21 @@
       </div>
 
       <!-- Commission Table Body -->
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[600px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                <th class="p-3">Order Number</th>
-                <th class="p-3">Seller Details</th>
-                <th class="p-3">Rate</th>
-                <th class="p-3">Commission Amount</th>
-                <th class="p-3">Date</th>
-              </tr>
-            </thead>
-            <tbody id="commissionTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic Commission Rows Render -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[650px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Order Number</th>
+              <th class="p-3">Seller Details</th>
+              <th class="p-3">Rate</th>
+              <th class="p-3">Commission Amount</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody id="commissionTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Commission Rows Render -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -437,22 +430,22 @@
   </div>
 
   <!-- POPUP 5: SUPPORT & COMPLAINS (TICKETS) MODAL -->
-  <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-ticket text-amber-600"></i> Support Tickets & Complains
         </h3>
-        <button onclick="closeModal('ticketModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <button onclick="closeModal('ticketModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
 
-      <!-- Ticket Management Layout -->
+      <!-- Ticket Management Layout (Mobile Friendly Column / Row Toggle or Stacked View) -->
       <div class="flex-1 flex flex-col md:flex-row overflow-hidden border rounded-xl my-3 bg-slate-50">
         
         <!-- Left Sidebar: Ticket List -->
-        <div class="w-full md:w-80 border-r bg-white flex flex-col h-1/3 md:h-full">
+        <div class="w-full md:w-80 border-r bg-white flex flex-col max-h-[40vh] md:max-h-none">
           <div class="p-3 border-b space-y-2">
             <div class="relative">
               <input type="text" id="ticketSearchInput" onkeyup="filterTickets()" placeholder="Search Ticket No, Email..." class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300">
@@ -474,38 +467,38 @@
         </div>
 
         <!-- Right Side: Ticket Detail View & Reply Panel -->
-        <div class="flex-1 flex flex-col bg-white overflow-hidden h-2/3 md:h-full">
+        <div class="flex-1 flex flex-col bg-white overflow-hidden">
           
           <div id="activeTicketHeader" class="p-3 border-b bg-slate-50 flex items-center justify-between">
             <div>
-              <p id="ticketHeaderNo" class="font-bold text-slate-800 text-sm">Select a ticket to view details</p>
-              <p id="ticketHeaderCategory" class="text-xs text-slate-500">N/A</p>
+              <p id="ticketHeaderNo" class="font-bold text-slate-800 text-xs sm:text-sm">Select a ticket to view details</p>
+              <p id="ticketHeaderCategory" class="text-[11px] sm:text-xs text-slate-500">N/A</p>
             </div>
             <div id="ticketHeaderStatus"></div>
           </div>
 
           <!-- Ticket Content & Discussion Container -->
-          <div id="ticketBodyContainer" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
+          <div id="ticketBodyContainer" class="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4 bg-slate-50/50">
             <div class="text-center text-slate-400 text-xs mt-10">
               বামপাশ থেকে একটি টিকেট সিলেক্ট করুন অভিযোগের বিষয়বস্তু পড়তে ও উত্তর প্রদান করতে।
             </div>
           </div>
 
           <!-- Admin Reply Form -->
-          <form id="ticketReplyForm" onsubmit="sendTicketReply(event)" class="p-3 border-t bg-white flex flex-col gap-2">
-            <div class="flex items-center gap-2 flex-wrap">
+          <form id="ticketReplyForm" onsubmit="sendTicketReply(event)" class="p-2 sm:p-3 border-t bg-white flex flex-col gap-2">
+            <div class="flex items-center gap-2">
               <select id="ticketStatusSelect" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" disabled>
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
                 <option value="closed">Closed / Solved</option>
               </select>
-              <span class="text-xs text-slate-400">Update Status along with reply</span>
+              <span class="text-[11px] sm:text-xs text-slate-400 hidden sm:inline">Update Status along with reply</span>
             </div>
 
             <div class="flex items-center gap-2">
               <textarea id="ticketReplyText" placeholder="Write official admin reply..." class="flex-1 px-3 py-2 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300 resize-none h-12" disabled required></textarea>
-              <button type="submit" id="ticketReplyBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50 h-12" disabled>
-                <i class="fa-solid fa-paper-plane"></i> Send Reply
+              <button type="submit" id="ticketReplyBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition disabled:opacity-50 h-12 flex items-center gap-1">
+                <i class="fa-solid fa-paper-plane"></i> <span class="hidden sm:inline">Send Reply</span>
               </button>
             </div>
           </form>
@@ -523,34 +516,32 @@
   </div>
 
   <!-- POPUP 6: IPR REPORTS MODAL -->
-  <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-file-shield text-rose-600"></i> IPR Reports & Complaints
         </h3>
-        <button onclick="closeModal('iprModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <button onclick="closeModal('iprModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
 
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[650px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                <th class="p-3">Brand Info</th>
-                <th class="p-3">Contact Email</th>
-                <th class="p-3">Infringement Type</th>
-                <th class="p-3">Product URL</th>
-                <th class="p-3">Status</th>
-                <th class="p-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="iprTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic IPR Data Render -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[700px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Brand Info</th>
+              <th class="p-3">Contact Email</th>
+              <th class="p-3">Infringement Type</th>
+              <th class="p-3">Product URL</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="iprTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic IPR Data Render -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -562,34 +553,32 @@
   </div>
 
   <!-- POPUP 8: SELLER STATUS MODAL -->
-  <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-store text-teal-600"></i> Seller Status List
         </h3>
-        <button onclick="closeModal('sellerStatusModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <button onclick="closeModal('sellerStatusModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
 
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[700px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                <th class="p-3">Seller Name</th>
-                <th class="p-3">Shop Name</th>
-                <th class="p-3">Email</th>
-                <th class="p-3">Phone</th>
-                <th class="p-3">Status</th>
-                <th class="p-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="sellerStatusTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic Seller Data Render -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[700px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Seller Name</th>
+              <th class="p-3">Shop Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Phone</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="sellerStatusTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Seller Data Render -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -601,21 +590,21 @@
   </div>
 
   <!-- POPUP: WITHDRAWAL REQUESTS MODAL -->
-  <div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
-    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <!-- Top Header & Filters -->
       <div class="border-b pb-4 space-y-3">
         <div class="flex justify-between items-center">
-          <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-money-bill-transfer text-violet-600"></i> Withdrawal Requests Management
           </h3>
-          <button onclick="closeModal('withdrawalModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+          <button onclick="closeModal('withdrawalModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
         </div>
 
         <!-- Search & Time/Status Filters -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
             <!-- Transaction ID Search -->
             <div class="relative w-full sm:w-60">
               <input type="text" id="withdrawSearchInput" onkeyup="filterWithdrawals()" placeholder="Search by Transaction ID..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 border-slate-300">
@@ -623,7 +612,7 @@
             </div>
 
             <!-- Time Filter -->
-            <select id="withdrawTimeFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <select id="withdrawTimeFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 flex-1 sm:flex-none">
               <option value="all">All Time</option>
               <option value="7">Last 7 Days</option>
               <option value="30">Last 1 Month</option>
@@ -631,7 +620,7 @@
             </select>
 
             <!-- Status Filter -->
-            <select id="withdrawStatusFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <select id="withdrawStatusFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 flex-1 sm:flex-none">
               <option value="all">All Status</option>
               <option value="pending">Pending Only</option>
               <option value="approved">Approved</option>
@@ -640,7 +629,7 @@
           </div>
 
           <!-- Total Withdrawal Sum Display -->
-          <div class="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+          <div class="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
             <span>Total Withdrawal:</span>
             <span id="totalWithdrawSum" class="text-sm font-bold">৳0.00</span>
           </div>
@@ -648,24 +637,22 @@
       </div>
 
       <!-- Table Body -->
-      <div class="flex-1 overflow-y-auto my-4">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm min-w-[700px]">
-            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-              <tr>
-                <th class="p-3">Seller / User</th>
-                <th class="p-3">Amount</th>
-                <th class="p-3">Payment Info</th>
-                <th class="p-3">Transaction ID</th>
-                <th class="p-3">Status</th>
-                <th class="p-3">Date</th>
-              </tr>
-            </thead>
-            <tbody id="withdrawalTableBody" class="divide-y divide-slate-100">
-              <!-- Dynamic Data -->
-            </tbody>
-          </table>
-        </div>
+      <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
+        <table class="w-full text-left text-sm min-w-[750px]">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+            <tr>
+              <th class="p-3">Seller / User</th>
+              <th class="p-3">Amount</th>
+              <th class="p-3">Payment Info</th>
+              <th class="p-3">Transaction ID</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawalTableBody" class="divide-y divide-slate-100">
+            <!-- Dynamic Data -->
+          </tbody>
+        </table>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -706,31 +693,22 @@
     let allTicketsData = [];
     let activeTicket = null;
 
-    // Mobile Sidebar Toggle Function
+    // Mobile Sidebar Toggle Functions
     function toggleMobileSidebar() {
-      const sidebar = document.getElementById('sidebarNav');
-      const backdrop = document.getElementById('sidebarBackdrop');
-      const icon = document.getElementById('mobileMenuIcon');
-      
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
       sidebar.classList.toggle('-translate-x-full');
-      backdrop.classList.toggle('hidden');
-      
-      if (sidebar.classList.contains('-translate-x-full')) {
-        icon.classList.remove('fa-xmark');
-        icon.classList.add('fa-bars');
-      } else {
-        icon.classList.remove('fa-bars');
-        icon.classList.add('fa-xmark');
+      overlay.classList.toggle('hidden');
+    }
+
+    function toggleMobileSidebarOnSelect() {
+      if (window.innerWidth < 768) {
+        toggleMobileSidebar();
       }
     }
 
     function openModal(modalId) {
       document.getElementById(modalId).classList.remove('hidden');
-      // Close mobile sidebar if open when opening a modal
-      const sidebar = document.getElementById('sidebarNav');
-      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
-        toggleMobileSidebar();
-      }
     }
 
     function closeModal(modalId) {
@@ -1430,6 +1408,7 @@
       }
     }
 
+
     let allWithdrawalsData = [];
 
     async function openWithdrawalModal() {
@@ -1462,7 +1441,7 @@
 
         let matchTime = true;
         if (timeFilter !== 'all') {
-          const itemDate = new Date(item.created_at);
+          const itemDate = new Date(item.created_at || item.created_at);
           const diffTime = Math.abs(now - itemDate);
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           matchTime = diffDays <= parseInt(timeFilter);
@@ -1502,17 +1481,17 @@
             </td>
             <td class="p-3 text-xs font-mono text-slate-700">${item.transaction_id || 'N/A'}</td>
             <td class="p-3">
-              <select onchange="updateWithdrawalStatus(${item.id}, this.value)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border focus:outline-none ${
+             <select onchange="updateWithdrawalStatus(${item.id}, this.value)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border focus:outline-none ${
                 currentStatus === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
                 currentStatus === 'rejected' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'
-              }">
+            }">
                 <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
                 <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
                 <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
-              </select>
+            </select>
             </td>
             <td class="p-3 text-xs text-slate-400">
-              ${new Date(item.created_at).toLocaleDateString()}
+              ${new Date(item.created_at || item.created_at).toLocaleDateString()}
             </td>
           </tr>
         `;
@@ -1524,7 +1503,6 @@
     async function updateWithdrawalStatus(id, newStatus) {
       try {
         const res = await fetch('/admin/api/update-withdrawal-status', {
-          content-type: 'application/json',
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, status: newStatus })
@@ -1543,12 +1521,13 @@
       }
     }
 
+
     window.onload = function() {
       fetchCurrentSuperAdmin();
     };
 
     window.onclick = function(event) {
-      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal', 'withdrawalModal'];
+      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal'];
       modals.forEach(id => {
         const modal = document.getElementById(id);
         if (event.target === modal) {
