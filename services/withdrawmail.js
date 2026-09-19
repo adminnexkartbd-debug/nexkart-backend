@@ -1,36 +1,43 @@
-const { Resend } = require('resend');
 require('dotenv').config();
 
-// 1. Resend Setup (.env থেকে API Key নেওয়া হচ্ছে)
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 /**
- * HTTP API ভিত্তিক ফলব্যাক মেল সিস্টেম (Resend -> Brevo)
- * কোনো প্রকার SMTP বা পোর্ট কল করা হয় না, তাই ক্লাউড সার্ভারে (Render/Vercel) কোনো টাইমআউট বা ENETUNREACH এরর আসবে না।
+ * ১০০% HTTP API ভিত্তিক ফলব্যাক মেল সিস্টেম (Resend -> Brevo -> Mailjet)
+ * এখানে কোনো ধরনের SMTP বা পোর্ট (যেমন 465) ব্যবহার করা হয়নি, ফলে ক্লাউড সার্ভারে কোনো নেটওয়ার্ক ব্লক বা এরর আসবে না।
  */
 const sendMailWithFallback = async ({ to, subject, html, text }) => {
   
-  // --- 1st Try: Resend API ---
+  // --- 1st Try: Resend API (HTTPS) ---
   try {
     console.log('Trying with Resend API...');
-    const data = await resend.emails.send({
-      from: 'NexKARTbd <onboarding@resend.dev>', // প্রয়োজনে আপনার ডোমেইন বা ভেরিফাইড মেইল দিতে পারেন
-      to: [to],
-      subject: subject,
-      html: html,
-      text: text,
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'NexKARTbd <onboarding@resend.dev>',
+        to: [to],
+        subject: subject,
+        html: html,
+        text: text
+      })
     });
 
-    if (data.error) throw new Error(data.error.message);
-    console.log('Mail sent successfully via Resend!');
+    const resendData = await resendResponse.json();
+    if (!resendResponse.ok) {
+      throw new Error(resendData.message || 'Resend API failed');
+    }
+
+    console.log('Mail sent successfully via Resend API!');
     return { success: true, provider: 'Resend' };
 
   } catch (resendError) {
     console.log(`Resend failed: ${resendError.message}. Switching to Brevo API...`);
 
-    // --- 2nd Try: Brevo API (Native Fetch) ---
+    // --- 2nd Try: Brevo API (HTTPS) ---
     try {
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -46,17 +53,52 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
         })
       });
 
-      if (!response.ok) {
-        const errRes = await response.json();
-        throw new Error(errRes.message || 'Brevo API request failed');
+      if (!brevoResponse.ok) {
+        const brevoErr = await brevoResponse.json();
+        throw new Error(brevoErr.message || 'Brevo API request failed');
       }
 
-      console.log('Mail sent successfully via Brevo!');
+      console.log('Mail sent successfully via Brevo API!');
       return { success: true, provider: 'Brevo' };
 
     } catch (brevoError) {
-      console.error(`Brevo also failed: ${brevoError.message}`);
-      throw new Error('All email API providers (Resend, Brevo) failed!');
+      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet API...`);
+
+      // --- 3rd Try: Mailjet API (HTTPS Basic Auth) ---
+      try {
+        const credentials = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_SECRET_KEY}`).toString('base64');
+        
+        const mailjetResponse = await fetch('https://api.mailjet.com/v3.1/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${credentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            Messages: [
+              {
+                From: { Email: "pilot@mailjet.com", Name: "NexKARTBD" },
+                To: [{ Email: to, Name: "Seller" }],
+                Subject: subject,
+                HTMLPart: html,
+                TextPart: text,
+              }
+            ]
+          })
+        });
+
+        if (!mailjetResponse.ok) {
+          const mailjetErr = await mailjetResponse.json();
+          throw new Error(JSON.stringify(mailjetErr) || 'Mailjet API request failed');
+        }
+
+        console.log('Mail sent successfully via Mailjet API!');
+        return { success: true, provider: 'Mailjet' };
+
+      } catch (mailjetError) {
+        console.error(`Mailjet also failed: ${mailjetError.message}`);
+        throw new Error('All email API providers (Resend, Brevo, Mailjet) failed!');
+      }
     }
   }
 };
@@ -113,7 +155,6 @@ const sendWithdrawEmail = async (withdrawDetails) => {
                     .content { padding: 35px 30px; color: #374151; }
                     .content h3 { color: #111827; font-size: 20px; margin-top: 0; margin-bottom: 20px; text-align: center; }
                     .details-box { background-color: #fdf2f8; border-left: 4px solid #db2777; padding: 20px; border-radius: 8px; margin: 25px 0; }
-                    .details-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; color: #4b5563; }
                     .badge { background-color: ${badgeBg}; color: ${statusColor}; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; }
                     .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
                 </style>
@@ -140,7 +181,7 @@ const sendWithdrawEmail = async (withdrawDetails) => {
                             <p style="font-size: 14px; line-height: 1.6; color: #4b5563;">আপনার যেকোনো প্রয়োজনে আমাদের মার্চেন্ট সাপোর্ট টিমের সাথে যোগাযোগ করতে পারেন।</p>
                         </div>
                         <div class="footer">
-                            এটি একটি স্বয়ংক্রিয় সিস্টেম নোটিফিকেশন। দয়া করে এই মেইলে সরাসরি রিপ্লাই করবেন না।<br>
+                            এটি একটি স্বয়ংক্রিয় সিস্টেম নোটিফিকেশন। দয়া করে এই মেইলে সরাসরি রিপ্লাই করবেন না。<br>
                             &copy; ${new Date().getFullYear()} NexKartBD. All rights reserved.
                         </div>
                     </div>
@@ -151,7 +192,7 @@ const sendWithdrawEmail = async (withdrawDetails) => {
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // সরাসরি HTTP API ভিত্তিক ফলব্যাক ফাংশন কল করা হলো
+        // HTTP API ফলব্যাক ফাংশন কল করা হলো
         const result = await sendMailWithFallback({
             to: sellerEmail,
             subject: subjectLine,
