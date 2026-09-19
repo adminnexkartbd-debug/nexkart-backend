@@ -9,17 +9,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style> body { font-family: 'Poppins', sans-serif; } </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+<body class="bg-slate-100 text-slate-800 flex flex-col md:flex-row h-screen overflow-hidden">
+
+  <!-- MOBILE HEADER BAR -->
+  <div class="md:hidden bg-slate-900 text-white h-16 flex items-center justify-between px-4 z-20 shrink-0 border-b border-slate-800">
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-shield-halved text-purple-500 text-lg"></i>
+      <span class="font-bold text-base tracking-wide">Super Admin</span>
+    </div>
+    <button onclick="toggleMobileSidebar()" class="text-slate-300 hover:text-white focus:outline-none p-2">
+      <i id="mobileMenuIcon" class="fa-solid fa-bars text-xl"></i>
+    </button>
+  </div>
 
   <!-- SIDEBAR NAVIGATION -->
-  <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
+  <aside id="sidebarNav" class="w-64 bg-slate-900 text-white flex flex-col justify-between fixed inset-y-0 left-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-300 md:static h-full">
     <div>
-      <div class="h-16 flex items-center gap-3 px-6 bg-slate-950 border-b border-slate-800">
+      <div class="h-16 hidden md:flex items-center gap-3 px-6 bg-slate-950 border-b border-slate-800">
         <i class="fa-solid fa-shield-halved text-purple-500 text-xl"></i>
         <span class="font-bold text-lg tracking-wide">Super Admin</span>
       </div>
 
-      <nav class="mt-6 px-4 space-y-2">
+      <nav class="mt-6 px-4 space-y-2 overflow-y-auto max-h-[calc(100vh-140px)]">
         <a href="/home.html" class="flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-xl font-medium shadow-lg shadow-purple-600/30">
           <i class="fa-solid fa-gauge-high"></i> Dashboard
         </a>
@@ -61,10 +72,10 @@
         <button onclick="openSellerStatusModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-store"></i> Seller Status List
         </button>
-        <!-- NEW WITHDRAWAL REQUESTS BUTTON (পরের লাইনে) -->
-<button onclick="openWithdrawalModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
-  <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
-</button>
+        <!-- NEW WITHDRAWAL REQUESTS BUTTON -->
+        <button onclick="openWithdrawalModal()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
+        </button>
       </nav>
     </div>
 
@@ -76,12 +87,15 @@
     </div>
   </aside>
 
+  <!-- SIDEBAR BACKDROP FOR MOBILE -->
+  <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
+
   <!-- MAIN CONTENT AREA -->
-  <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+  <div class="flex-1 flex flex-col h-full overflow-y-auto">
     
     <!-- HEADER -->
-    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-      <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+    <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <h1 class="text-base md:text-xl font-bold text-slate-800 flex items-center gap-2">
         <i class="fa-solid fa-crown text-amber-500"></i> Super Admin Portal
       </h1>
       
@@ -91,17 +105,17 @@
           <p id="adminName" class="text-sm font-semibold text-slate-700">Loading...</p>
           <span class="text-xs text-purple-600 font-medium">Super Admin</span>
         </div>
-        <img id="adminImage" src="/default-avatar.png" alt="Profile" class="w-10 h-10 rounded-full border-2 border-purple-500 object-cover shadow" />
+        <img id="adminImage" src="/default-avatar.png" alt="Profile" class="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-purple-500 object-cover shadow" />
       </div>
     </header>
 
     <!-- MAIN BODY CARDS -->
-    <main class="p-6 space-y-6">
+    <main class="p-4 md:p-6 space-y-6">
       
-      <div class="bg-purple-950 text-white rounded-2xl p-6 shadow-xl flex items-center justify-between">
+      <div class="bg-purple-950 text-white rounded-2xl p-5 md:p-6 shadow-xl flex items-center justify-between">
         <div>
-          <h2 class="text-2xl font-bold mb-1">স্বাগতম, Super Admin Portal ✨</h2>
-          <p class="text-purple-200 text-sm">যেকোনো কার্ড অথবা বামপাশের মেনুতে ক্লিক করে পপআপ উইন্ডো চালু করুন।</p>
+          <h2 class="text-xl md:text-2xl font-bold mb-1">স্বাগতম, Super Admin Portal ✨</h2>
+          <p class="text-purple-200 text-xs md:text-sm">যেকোনো কার্ড অথবা বামপাশের মেনুতে ক্লিক করে পপআপ উইন্ডো চালু করুন।</p>
         </div>
       </div>
 
@@ -199,19 +213,18 @@
           </div>
         </div>
 
-        <!-- 8. NEW Withdrawal Requests Card (পরের লাইনে) -->
-<div onclick="openWithdrawalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
-  <div class="flex items-center justify-between">
-    <div>
-      <p class="text-xs font-semibold text-slate-400 uppercase">Payouts</p>
-      <h3 class="text-lg font-bold text-slate-800 mt-1">Withdrawal Requests</h3>
-    </div>
-    <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition">
-      <i class="fa-solid fa-money-bill-transfer"></i>
-    </div>
-  </div>
-</div>
-
+        <!-- 8. NEW Withdrawal Requests Card -->
+        <div onclick="openWithdrawalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Payouts</p>
+              <h3 class="text-lg font-bold text-slate-800 mt-1">Withdrawal Requests</h3>
+            </div>
+            <div class="w-12 h-12 bg-violet-100 text-violet-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition">
+              <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+          </div>
+        </div>
 
       </div>
     </main>
@@ -220,29 +233,31 @@
   <!-- POPUP MODALS -->
 
   <!-- POPUP 1: Dynamic New Register Requests Modal -->
-  <div id="registerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="registerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-plus text-purple-600"></i> New Register Requests</h3>
+        <h3 class="text-base md:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-plus text-purple-600"></i> New Register Requests</h3>
         <button onclick="closeModal('registerModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
       
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
-            <tr>
-              <th class="p-3">Profile</th>
-              <th class="p-3">Name</th>
-              <th class="p-3">Email</th>
-              <th class="p-3">Shop</th>
-              <th class="p-3">Status</th>
-              <th class="p-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="registerRequestsBody" class="divide-y divide-slate-100">
-            <!-- Dynamic data will render here -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[600px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+              <tr>
+                <th class="p-3">Profile</th>
+                <th class="p-3">Name</th>
+                <th class="p-3">Email</th>
+                <th class="p-3">Shop</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="registerRequestsBody" class="divide-y divide-slate-100">
+              <!-- Dynamic data will render here -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -254,30 +269,32 @@
   </div>
 
   <!-- POPUP 2: User Verification Modal -->
-  <div id="verificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="verificationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800"><i class="fa-solid fa-user-check text-blue-600"></i> User Verification Requests</h3>
+        <h3 class="text-base md:text-lg font-bold text-slate-800"><i class="fa-solid fa-user-check text-blue-600"></i> User Verification Requests</h3>
         <button onclick="closeModal('verificationModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
       
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
-            <tr>
-              <th class="p-3">User</th>
-              <th class="p-3">Doc Type</th>
-              <th class="p-3">Doc No</th>
-              <th class="p-3">File</th>
-              <th class="p-3">Verified Status</th>
-              <th class="p-3">Doc Status</th>
-              <th class="p-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="verificationRequestsBody" class="divide-y divide-slate-100">
-            <!-- Dynamic Data Render -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[700px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0">
+              <tr>
+                <th class="p-3">User</th>
+                <th class="p-3">Doc Type</th>
+                <th class="p-3">Doc No</th>
+                <th class="p-3">File</th>
+                <th class="p-3">Verified Status</th>
+                <th class="p-3">Doc Status</th>
+                <th class="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="verificationRequestsBody" class="divide-y divide-slate-100">
+              <!-- Dynamic Data Render -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -289,10 +306,10 @@
   </div>
 
   <!-- POPUP 3: Order List Modal -->
-  <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-boxes-packing text-emerald-600"></i> All Order List
         </h3>
         
@@ -301,28 +318,30 @@
             <input type="text" id="orderSearchInput" onkeyup="filterOrders()" placeholder="Search by Order ID or Phone..." class="w-full pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 border-slate-300">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
           </div>
-          <button onclick="closeModal('orderModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
+          <button onclick="closeModal('orderModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2 hidden md:block">&times;</button>
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-            <tr>
-              <th class="p-3">Order Info</th>
-              <th class="p-3">Customer</th>
-              <th class="p-3">Qty / Var</th>
-              <th class="p-3">Total Amount</th>
-              <th class="p-3">Payment Method</th>
-              <th class="p-3">Payment Status</th>
-              <th class="p-3">Order Status</th>
-              <th class="p-3">Date</th>
-            </tr>
-          </thead>
-          <tbody id="orderListTableBody" class="divide-y divide-slate-100">
-            <!-- Dynamic Orders Render -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[800px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Order Info</th>
+                <th class="p-3">Customer</th>
+                <th class="p-3">Qty / Var</th>
+                <th class="p-3">Total Amount</th>
+                <th class="p-3">Payment Method</th>
+                <th class="p-3">Payment Status</th>
+                <th class="p-3">Order Status</th>
+                <th class="p-3">Date</th>
+              </tr>
+            </thead>
+            <tbody id="orderListTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic Orders Render -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -334,13 +353,13 @@
   </div>
 
   <!-- POPUP 4: COMMISSION REPORT MODAL -->
-  <div id="commissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="commissionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <!-- Top Section with Search & Total Commission Summary -->
       <div class="border-b pb-4 space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
             <i class="fa-solid fa-percent text-indigo-600"></i> Commission Reports
           </h3>
           
@@ -350,7 +369,7 @@
         <!-- Filters & Search -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
           <div class="flex items-center gap-2 flex-wrap">
-            <div class="relative w-48 sm:w-60">
+            <div class="relative w-full sm:w-60">
               <input type="text" id="commOrderSearch" onkeyup="filterCommissionData()" placeholder="Search by Order Number..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-300">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
             </div>
@@ -391,20 +410,22 @@
 
       <!-- Commission Table Body -->
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-            <tr>
-              <th class="p-3">Order Number</th>
-              <th class="p-3">Seller Details</th>
-              <th class="p-3">Rate</th>
-              <th class="p-3">Commission Amount</th>
-              <th class="p-3">Date</th>
-            </tr>
-          </thead>
-          <tbody id="commissionTableBody" class="divide-y divide-slate-100">
-            <!-- Dynamic Commission Rows Render -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[600px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Order Number</th>
+                <th class="p-3">Seller Details</th>
+                <th class="p-3">Rate</th>
+                <th class="p-3">Commission Amount</th>
+                <th class="p-3">Date</th>
+              </tr>
+            </thead>
+            <tbody id="commissionTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic Commission Rows Render -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -416,25 +437,25 @@
   </div>
 
   <!-- POPUP 5: SUPPORT & COMPLAINS (TICKETS) MODAL -->
-  <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="ticketModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-ticket text-amber-600"></i> Support Tickets & Complains
         </h3>
         <button onclick="closeModal('ticketModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
 
       <!-- Ticket Management Layout -->
-      <div class="flex-1 flex overflow-hidden border rounded-xl my-3 bg-slate-50">
+      <div class="flex-1 flex flex-col md:flex-row overflow-hidden border rounded-xl my-3 bg-slate-50">
         
         <!-- Left Sidebar: Ticket List -->
-        <div class="w-1/3 md:w-80 border-r bg-white flex flex-col">
+        <div class="w-full md:w-80 border-r bg-white flex flex-col h-1/3 md:h-full">
           <div class="p-3 border-b space-y-2">
             <div class="relative">
-              <input type="text" id="ticketSearchInput" onkeyup="filterTickets()" placeholder="Search Ticket No, Email, Category..." class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300">
+              <input type="text" id="ticketSearchInput" onkeyup="filterTickets()" placeholder="Search Ticket No, Email..." class="w-full pl-8 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 border-slate-300">
               <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
             </div>
             
@@ -453,7 +474,7 @@
         </div>
 
         <!-- Right Side: Ticket Detail View & Reply Panel -->
-        <div class="flex-1 flex flex-col bg-white overflow-hidden">
+        <div class="flex-1 flex flex-col bg-white overflow-hidden h-2/3 md:h-full">
           
           <div id="activeTicketHeader" class="p-3 border-b bg-slate-50 flex items-center justify-between">
             <div>
@@ -472,7 +493,7 @@
 
           <!-- Admin Reply Form -->
           <form id="ticketReplyForm" onsubmit="sendTicketReply(event)" class="p-3 border-t bg-white flex flex-col gap-2">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <select id="ticketStatusSelect" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500" disabled>
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
@@ -502,32 +523,34 @@
   </div>
 
   <!-- POPUP 6: IPR REPORTS MODAL -->
-  <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-file-shield text-rose-600"></i> IPR Reports & Complaints
         </h3>
         <button onclick="closeModal('iprModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
 
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-            <tr>
-              <th class="p-3">Brand Info</th>
-              <th class="p-3">Contact Email</th>
-              <th class="p-3">Infringement Type</th>
-              <th class="p-3">Product URL</th>
-              <th class="p-3">Status</th>
-              <th class="p-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="iprTableBody" class="divide-y divide-slate-100">
-            <!-- Dynamic IPR Data Render -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[650px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Brand Info</th>
+                <th class="p-3">Contact Email</th>
+                <th class="p-3">Infringement Type</th>
+                <th class="p-3">Product URL</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="iprTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic IPR Data Render -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -539,32 +562,34 @@
   </div>
 
   <!-- POPUP 8: SELLER STATUS MODAL -->
-  <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
+  <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
       
       <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
           <i class="fa-solid fa-store text-teal-600"></i> Seller Status List
         </h3>
         <button onclick="closeModal('sellerStatusModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
       </div>
 
       <div class="flex-1 overflow-y-auto my-4">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-            <tr>
-              <th class="p-3">Seller Name</th>
-              <th class="p-3">Shop Name</th>
-              <th class="p-3">Email</th>
-              <th class="p-3">Phone</th>
-              <th class="p-3">Status</th>
-              <th class="p-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="sellerStatusTableBody" class="divide-y divide-slate-100">
-            <!-- Dynamic Seller Data Render -->
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[700px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Seller Name</th>
+                <th class="p-3">Shop Name</th>
+                <th class="p-3">Email</th>
+                <th class="p-3">Phone</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sellerStatusTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic Seller Data Render -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="border-t pt-3 text-right">
@@ -576,78 +601,80 @@
   </div>
 
   <!-- POPUP: WITHDRAWAL REQUESTS MODAL -->
-<div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl max-w-[95vw] w-full h-[90vh] p-6 shadow-2xl relative flex flex-col justify-between">
-    
-    <!-- Top Header & Filters -->
-    <div class="border-b pb-4 space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-money-bill-transfer text-violet-600"></i> Withdrawal Requests Management
-        </h3>
-        <button onclick="closeModal('withdrawalModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
-      </div>
+  <div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 md:p-4">
+    <div class="bg-white rounded-2xl max-w-[98vw] md:max-w-[95vw] w-full h-[92vh] md:h-[90vh] p-4 md:p-6 shadow-2xl relative flex flex-col justify-between">
+      
+      <!-- Top Header & Filters -->
+      <div class="border-b pb-4 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-money-bill-transfer text-violet-600"></i> Withdrawal Requests Management
+          </h3>
+          <button onclick="closeModal('withdrawalModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        </div>
 
-      <!-- Search & Time/Status Filters -->
-      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Transaction ID Search -->
-          <div class="relative w-48 sm:w-60">
-            <input type="text" id="withdrawSearchInput" onkeyup="filterWithdrawals()" placeholder="Search by Transaction ID..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 border-slate-300">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+        <!-- Search & Time/Status Filters -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Transaction ID Search -->
+            <div class="relative w-full sm:w-60">
+              <input type="text" id="withdrawSearchInput" onkeyup="filterWithdrawals()" placeholder="Search by Transaction ID..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-violet-500 border-slate-300">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+
+            <!-- Time Filter -->
+            <select id="withdrawTimeFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+              <option value="all">All Time</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 1 Month</option>
+              <option value="365">Last 1 Year</option>
+            </select>
+
+            <!-- Status Filter -->
+            <select id="withdrawStatusFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+              <option value="all">All Status</option>
+              <option value="pending">Pending Only</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
           </div>
 
-          <!-- Time Filter (7 Days, 1 Month, 1 Year, All) -->
-          <select id="withdrawTimeFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <option value="all">All Time</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 1 Month</option>
-            <option value="365">Last 1 Year</option>
-          </select>
-
-          <!-- Status Filter -->
-          <select id="withdrawStatusFilter" onchange="filterWithdrawals()" class="border border-slate-300 rounded-lg text-xs px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <option value="all">All Status</option>
-            <option value="pending">Pending Only</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-        </div>
-
-        <!-- Total Withdrawal Sum Display -->
-        <div class="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
-          <span>Total Withdrawal:</span>
-          <span id="totalWithdrawSum" class="text-sm font-bold">৳0.00</span>
+          <!-- Total Withdrawal Sum Display -->
+          <div class="bg-violet-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <span>Total Withdrawal:</span>
+            <span id="totalWithdrawSum" class="text-sm font-bold">৳0.00</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Table Body -->
-    <div class="flex-1 overflow-y-auto my-4">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
-          <tr>
-            <th class="p-3">Seller / User</th>
-            <th class="p-3">Amount</th>
-            <th class="p-3">Payment Info</th>
-            <th class="p-3">Transaction ID</th>
-            <th class="p-3">Status</th>
-            <th class="p-3">Date</th>
-          </tr>
-        </thead>
-        <tbody id="withdrawalTableBody" class="divide-y divide-slate-100">
-          <!-- Dynamic Data -->
-        </tbody>
-      </table>
-    </div>
+      <!-- Table Body -->
+      <div class="flex-1 overflow-y-auto my-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm min-w-[700px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
+              <tr>
+                <th class="p-3">Seller / User</th>
+                <th class="p-3">Amount</th>
+                <th class="p-3">Payment Info</th>
+                <th class="p-3">Transaction ID</th>
+                <th class="p-3">Status</th>
+                <th class="p-3">Date</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic Data -->
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-    <div class="border-t pt-3 text-right">
-      <button onclick="closeModal('withdrawalModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
-        Close
-      </button>
+      <div class="border-t pt-3 text-right">
+        <button onclick="closeModal('withdrawalModal')" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-slate-700 transition">
+          Close
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
   <!-- POPUP 7: LOGOUT MODAL -->
   <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -679,8 +706,31 @@
     let allTicketsData = [];
     let activeTicket = null;
 
+    // Mobile Sidebar Toggle Function
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebarNav');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const icon = document.getElementById('mobileMenuIcon');
+      
+      sidebar.classList.toggle('-translate-x-full');
+      backdrop.classList.toggle('hidden');
+      
+      if (sidebar.classList.contains('-translate-x-full')) {
+        icon.classList.remove('fa-xmark');
+        icon.classList.add('fa-bars');
+      } else {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-xmark');
+      }
+    }
+
     function openModal(modalId) {
       document.getElementById(modalId).classList.remove('hidden');
+      // Close mobile sidebar if open when opening a modal
+      const sidebar = document.getElementById('sidebarNav');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+        toggleMobileSidebar();
+      }
     }
 
     function closeModal(modalId) {
@@ -1297,215 +1347,208 @@
     }
 
     // ================= SELLER STATUS LIST LOGIC =================
-async function openSellerStatusModal() {
-  openModal('sellerStatusModal');
-  const tableBody = document.getElementById('sellerStatusTableBody');
-  tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Seller Actions...</td></tr>`;
+    async function openSellerStatusModal() {
+      openModal('sellerStatusModal');
+      const tableBody = document.getElementById('sellerStatusTableBody');
+      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Seller Actions...</td></tr>`;
 
-  try {
-    const res = await fetch('/admin/api/seller-status-list');
-    if (!res.ok) throw new Error('Failed to fetch seller actions');
-    
-    const sellers = await res.json();
-    
-    if (!Array.isArray(sellers) || sellers.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No sellers found.</td></tr>`;
-      return;
+      try {
+        const res = await fetch('/admin/api/seller-status-list');
+        if (!res.ok) throw new Error('Failed to fetch seller actions');
+        
+        const sellers = await res.json();
+        
+        if (!Array.isArray(sellers) || sellers.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No sellers found.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = sellers.map(seller => {
+          const currentAction = seller.action ? seller.action.toLowerCase() : 'active';
+          
+          let actionBadgeColor = 'bg-emerald-100 text-emerald-700';
+          if (currentAction === 'warning') actionBadgeColor = 'bg-amber-100 text-amber-700';
+          else if (currentAction === 'suspended') actionBadgeColor = 'bg-red-100 text-red-700';
+          else if (currentAction === 'inactive') actionBadgeColor = 'bg-slate-200 text-slate-700';
+
+          return `
+            <tr>
+              <td class="p-3 font-semibold text-slate-800">${seller.name || 'N/A'}</td>
+              <td class="p-3 text-slate-700 font-medium">${seller.shop_name || 'N/A'}</td>
+              <td class="p-3 text-slate-600">${seller.email || 'N/A'}</td>
+              <td class="p-3 text-slate-600">${seller.phone || 'N/A'}</td>
+              <td class="p-3">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase ${actionBadgeColor}">${currentAction}</span>
+              </td>
+              <td class="p-3 text-right">
+                <select onchange="updateSellerStatus(${seller.id}, this.value)" class="text-xs font-semibold px-2 py-1.5 rounded-lg border focus:outline-none bg-white border-slate-300">
+                  <option value="" disabled selected>Change Action</option>
+                  <option value="active" ${currentAction === 'active' ? 'selected' : ''}>Active</option>
+                  <option value="warning" ${currentAction === 'warning' ? 'selected' : ''}>Warning</option>
+                  <option value="suspended" ${currentAction === 'suspended' ? 'selected' : ''}>Suspended</option>
+                  <option value="delete" ${currentAction === 'inactive' ? 'selected' : ''}>Delete</option>
+                </select>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error loading seller actions:', err);
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load seller action list.</td></tr>`;
+      }
     }
 
-    tableBody.innerHTML = sellers.map(seller => {
-      // এখানে status-এর বদলে seller.action ব্যবহার করা হয়েছে
-      const currentAction = seller.action ? seller.action.toLowerCase() : 'active';
-      
-      let actionBadgeColor = 'bg-emerald-100 text-emerald-700';
-      if (currentAction === 'warning') actionBadgeColor = 'bg-amber-100 text-amber-700';
-      else if (currentAction === 'suspended') actionBadgeColor = 'bg-red-100 text-red-700';
-      else if (currentAction === 'inactive') actionBadgeColor = 'bg-slate-200 text-slate-700';
+    async function updateSellerStatus(sellerId, targetStatus) {
+      if (!confirm(`Are you sure you want to change seller action to ${targetStatus.toUpperCase()}?`)) {
+        openSellerStatusModal();
+        return;
+      }
 
-      return `
-        <tr>
-          <td class="p-3 font-semibold text-slate-800">${seller.name || 'N/A'}</td>
-          <td class="p-3 text-slate-700 font-medium">${seller.shop_name || 'N/A'}</td>
-          <td class="p-3 text-slate-600">${seller.email || 'N/A'}</td>
-          <td class="p-3 text-slate-600">${seller.phone || 'N/A'}</td>
-          <td class="p-3">
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-full uppercase ${actionBadgeColor}">${currentAction}</span>
-          </td>
-          <td class="p-3 text-right">
-            <select onchange="updateSellerStatus(${seller.id}, this.value)" class="text-xs font-semibold px-2 py-1.5 rounded-lg border focus:outline-none bg-white border-slate-300">
-              <option value="" disabled selected>Change Action</option>
-              <option value="active" ${currentAction === 'active' ? 'selected' : ''}>Active</option>
-              <option value="warning" ${currentAction === 'warning' ? 'selected' : ''}>Warning</option>
-              <option value="suspended" ${currentAction === 'suspended' ? 'selected' : ''}>Suspended</option>
-              <option value="delete" ${currentAction === 'inactive' ? 'selected' : ''}>Delete</option>
-            </select>
-          </td>
-        </tr>
-      `;
-    }).join('');
+      try {
+        const res = await fetch('/admin/api/update-seller-status', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ sellerId, status: targetStatus })
+        });
 
-  } catch (err) {
-    console.error('Error loading seller actions:', err);
-    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load seller action list.</td></tr>`;
-  }
-}
-
-async function updateSellerStatus(sellerId, targetStatus) {
-  if (!confirm(`Are you sure you want to change seller action to ${targetStatus.toUpperCase()}?`)) {
-    openSellerStatusModal();
-    return;
-  }
-
-  try {
-    const res = await fetch('/admin/api/update-seller-status', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ sellerId, status: targetStatus })
-    });
-
-    const data = await res.json();
-    if (res.ok && data.success) {
-      alert('Seller action updated and notification email sent successfully!');
-      openSellerStatusModal();
-    } else {
-      alert(data.error || 'Failed to update action');
-      openSellerStatusModal();
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    alert('Network error while updating seller action');
-    openSellerStatusModal();
-  }
-}
-
-
-let allWithdrawalsData = [];
-
-async function openWithdrawalModal() {
-  openModal('withdrawalModal');
-  const tableBody = document.getElementById('withdrawalTableBody');
-  tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Withdrawals...</td></tr>`;
-
-  try {
-    const res = await fetch('/admin/api/withdrawal-requests');
-    if (!res.ok) throw new Error('Failed to fetch withdrawal requests');
-    
-    allWithdrawalsData = await res.json();
-    filterWithdrawals();
-  } catch (err) {
-    console.error('Error:', err);
-    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load withdrawal list.</td></tr>`;
-  }
-}
-
-function filterWithdrawals() {
-  const searchQuery = document.getElementById('withdrawSearchInput').value.toLowerCase().trim();
-  const timeFilter = document.getElementById('withdrawTimeFilter').value;
-  const statusFilter = document.getElementById('withdrawStatusFilter').value;
-
-  const now = new Date();
-
-  let filtered = allWithdrawalsData.filter(item => {
-    // 1. Transaction ID Search
-    const matchSearch = !searchQuery || (item.transaction_id && String(item.transaction_id).toLowerCase().includes(searchQuery));
-
-    // 2. Status Filter
-    const matchStatus = statusFilter === 'all' || (item.status && item.status.toLowerCase() === statusFilter);
-
-    // 3. Time Filter (7 days, 1 month, 1 year)
-    let matchTime = true;
-    if (timeFilter !== 'all') {
-      const itemDate = new Date(item.created_at || item.created_at);
-      const diffTime = Math.abs(now - itemDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      matchTime = diffDays <= parseInt(timeFilter);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Seller action updated and notification email sent successfully!');
+          openSellerStatusModal();
+        } else {
+          alert(data.error || 'Failed to update action');
+          openSellerStatusModal();
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        alert('Network error while updating seller action');
+        openSellerStatusModal();
+      }
     }
 
-    return matchSearch && matchStatus && matchTime;
-  });
+    let allWithdrawalsData = [];
 
-  renderWithdrawalTable(filtered);
-}
+    async function openWithdrawalModal() {
+      openModal('withdrawalModal');
+      const tableBody = document.getElementById('withdrawalTableBody');
+      tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Loading Withdrawals...</td></tr>`;
 
-function renderWithdrawalTable(items) {
-  const tableBody = document.getElementById('withdrawalTableBody');
-  let totalSum = 0;
-
-  if (!items || items.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No withdrawal requests found.</td></tr>`;
-    document.getElementById('totalWithdrawSum').innerText = `৳0.00`;
-    return;
-  }
-
-  tableBody.innerHTML = items.map(item => {
-    const amount = parseFloat(item.amount) || 0;
-    totalSum += amount;
-    const currentStatus = item.status ? item.status.toLowerCase() : 'pending';
-
-    return `
-      <tr>
-        <td class="p-3">
-          <p class="font-bold text-slate-800 text-xs">${item.user_name || 'N/A'}</p>
-          <span class="text-[10px] text-slate-400">ID: ${item.admin_id || item.user_id || 'N/A'}</span>
-        </td>
-        <td class="p-3 font-bold text-violet-600 text-xs">৳${amount.toFixed(2)}</td>
-        <td class="p-3 text-xs text-slate-600">
-          <p><span class="font-semibold">Type:</span> ${item.payment_type || 'N/A'}</p>
-          <p>${item.mobile_number || item.bank_acc_number || ''}</p>
-        </td>
-        <td class="p-3 text-xs font-mono text-slate-700">${item.transaction_id || 'N/A'}</td>
-        <td class="p-3">
-         <select onchange="updateWithdrawalStatus(${item.id}, this.value)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border focus:outline-none ${
-    currentStatus === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
-    currentStatus === 'rejected' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'
-}">
-    <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
-    <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
-    <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
-</select>
-        </td>
-        <td class="p-3 text-xs text-slate-400">
-          ${new Date(item.created_at || item.created_at).toLocaleDateString()}
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  document.getElementById('totalWithdrawSum').innerText = `৳${totalSum.toFixed(2)}`;
-}
-
-async function updateWithdrawalStatus(id, newStatus) {
-  try {
-    const res = await fetch('/admin/api/update-withdrawal-status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status: newStatus })
-    });
-    const data = await res.json();
-    if (data.success) {
-      // ডেটা সফলভাবে আপডেট হলে লোকাল অ্যারে আপডেট করে টেবিল রিফ্রেশ করা
-      const item = allWithdrawalsData.find(w => w.id === id);
-      if (item) item.status = newStatus;
-      filterWithdrawals();
-    } else {
-      alert(data.error || 'Failed to update status');
+      try {
+        const res = await fetch('/admin/api/withdrawal-requests');
+        if (!res.ok) throw new Error('Failed to fetch withdrawal requests');
+        
+        allWithdrawalsData = await res.json();
+        filterWithdrawals();
+      } catch (err) {
+        console.error('Error:', err);
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Failed to load withdrawal list.</td></tr>`;
+      }
     }
-  } catch (err) {
-    console.error('Error updating withdrawal status:', err);
-    alert('Network error while updating status');
-  }
-}
 
+    function filterWithdrawals() {
+      const searchQuery = document.getElementById('withdrawSearchInput').value.toLowerCase().trim();
+      const timeFilter = document.getElementById('withdrawTimeFilter').value;
+      const statusFilter = document.getElementById('withdrawStatusFilter').value;
 
-window.onload = function() {
+      const now = new Date();
+
+      let filtered = allWithdrawalsData.filter(item => {
+        const matchSearch = !searchQuery || (item.transaction_id && String(item.transaction_id).toLowerCase().includes(searchQuery));
+        const matchStatus = statusFilter === 'all' || (item.status && item.status.toLowerCase() === statusFilter);
+
+        let matchTime = true;
+        if (timeFilter !== 'all') {
+          const itemDate = new Date(item.created_at);
+          const diffTime = Math.abs(now - itemDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          matchTime = diffDays <= parseInt(timeFilter);
+        }
+
+        return matchSearch && matchStatus && matchTime;
+      });
+
+      renderWithdrawalTable(filtered);
+    }
+
+    function renderWithdrawalTable(items) {
+      const tableBody = document.getElementById('withdrawalTableBody');
+      let totalSum = 0;
+
+      if (!items || items.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No withdrawal requests found.</td></tr>`;
+        document.getElementById('totalWithdrawSum').innerText = `৳0.00`;
+        return;
+      }
+
+      tableBody.innerHTML = items.map(item => {
+        const amount = parseFloat(item.amount) || 0;
+        totalSum += amount;
+        const currentStatus = item.status ? item.status.toLowerCase() : 'pending';
+
+        return `
+          <tr>
+            <td class="p-3">
+              <p class="font-bold text-slate-800 text-xs">${item.user_name || 'N/A'}</p>
+              <span class="text-[10px] text-slate-400">ID: ${item.admin_id || item.user_id || 'N/A'}</span>
+            </td>
+            <td class="p-3 font-bold text-violet-600 text-xs">৳${amount.toFixed(2)}</td>
+            <td class="p-3 text-xs text-slate-600">
+              <p><span class="font-semibold">Type:</span> ${item.payment_type || 'N/A'}</p>
+              <p>${item.mobile_number || item.bank_acc_number || ''}</p>
+            </td>
+            <td class="p-3 text-xs font-mono text-slate-700">${item.transaction_id || 'N/A'}</td>
+            <td class="p-3">
+              <select onchange="updateWithdrawalStatus(${item.id}, this.value)" class="text-xs font-semibold px-2.5 py-1 rounded-lg border focus:outline-none ${
+                currentStatus === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' :
+                currentStatus === 'rejected' ? 'bg-red-50 text-red-700 border-red-300' : 'bg-amber-50 text-amber-700 border-amber-300'
+              }">
+                <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
+                <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+              </select>
+            </td>
+            <td class="p-3 text-xs text-slate-400">
+              ${new Date(item.created_at).toLocaleDateString()}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('totalWithdrawSum').innerText = `৳${totalSum.toFixed(2)}`;
+    }
+
+    async function updateWithdrawalStatus(id, newStatus) {
+      try {
+        const res = await fetch('/admin/api/update-withdrawal-status', {
+          content-type: 'application/json',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const item = allWithdrawalsData.find(w => w.id === id);
+          if (item) item.status = newStatus;
+          filterWithdrawals();
+        } else {
+          alert(data.error || 'Failed to update status');
+        }
+      } catch (err) {
+        console.error('Error updating withdrawal status:', err);
+        alert('Network error while updating status');
+      }
+    }
+
+    window.onload = function() {
       fetchCurrentSuperAdmin();
     };
 
     window.onclick = function(event) {
-      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal'];
+      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal', 'withdrawalModal'];
       modals.forEach(id => {
         const modal = document.getElementById(id);
         if (event.target === modal) {
