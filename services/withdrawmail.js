@@ -1,80 +1,63 @@
+const { Resend } = require('resend');
+const SibApiV3Sdk = require('@getbrevo/brevo');
+const Mailjet = require('node-mailjet');
 require('dotenv').config();
 
+// 1. Initialize Clients
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const brevoApiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+brevoApiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY,
+  process.env.MAILJET_SECRET_KEY
+);
+
 /**
- * ১০০% HTTP API ভিত্তিক ফলব্যাক মেল সিস্টেম (Resend -> Brevo -> Mailjet)
- * এখানে কোনো ধরনের SMTP বা পোর্ট (যেমন 465) ব্যবহার করা হয়নি, ফলে ক্লাউড সার্ভারে কোনো নেটওয়ার্ক ব্লক বা এরর আসবে না।
+ * অফিশিয়াল SDK এবং ফলব্যাক মেকানিজম সহ মেইল পাঠানোর ফাংশন
  */
 const sendMailWithFallback = async ({ to, subject, html, text }) => {
   
-  // --- 1st Try: Resend API (HTTPS) ---
+  // --- 1st Try: Resend SDK ---
   try {
-    console.log('Trying with Resend API...');
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'NexKARTbd <onboarding@resend.dev>',
-        to: [to],
-        subject: subject,
-        html: html,
-        text: text
-      })
+    console.log('Trying with Resend SDK...');
+    const { data, error } = await resend.emails.send({
+      from: 'NexKARTbd <onboarding@resend.dev>',
+      to: [to],
+      subject: subject,
+      html: html,
+      text: text,
     });
 
-    const resendData = await resendResponse.json();
-    if (!resendResponse.ok) {
-      throw new Error(resendData.message || 'Resend API failed');
-    }
-
-    console.log('Mail sent successfully via Resend API!');
+    if (error) throw new Error(error.message);
+    console.log('Mail sent successfully via Resend SDK!');
     return { success: true, provider: 'Resend' };
 
   } catch (resendError) {
-    console.log(`Resend failed: ${resendError.message}. Switching to Brevo API...`);
+    console.log(`Resend failed: ${resendError.message}. Switching to Brevo SDK...`);
 
-    // --- 2nd Try: Brevo API (HTTPS) ---
+    // --- 2nd Try: Brevo SDK ---
     try {
-      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          sender: { name: "NexKARTBD", email: "no-reply@nexkartbd.com" },
-          to: [{ email: to }],
-          subject: subject,
-          htmlContent: html,
-          textContent: text
-        })
-      });
+      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = html;
+      sendSmtpEmail.textContent = text;
+      sendSmtpEmail.sender = { name: "NexKARTBD", email: "no-reply@nexkartbd.com" };
+      sendSmtpEmail.to = [{ email: to }];
 
-      if (!brevoResponse.ok) {
-        const brevoErr = await brevoResponse.json();
-        throw new Error(brevoErr.message || 'Brevo API request failed');
-      }
-
-      console.log('Mail sent successfully via Brevo API!');
+      await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log('Mail sent successfully via Brevo SDK!');
       return { success: true, provider: 'Brevo' };
 
     } catch (brevoError) {
-      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet API...`);
+      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet SDK...`);
 
-      // --- 3rd Try: Mailjet API (HTTPS Basic Auth) ---
+      // --- 3rd Try: Mailjet SDK ---
       try {
-        const credentials = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_SECRET_KEY}`).toString('base64');
-        
-        const mailjetResponse = await fetch('https://api.mailjet.com/v3.1/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${credentials}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        await mailjet
+          .post('send', { version: 'v3.1' })
+          .request({
             Messages: [
               {
                 From: { Email: "pilot@mailjet.com", Name: "NexKARTBD" },
@@ -84,15 +67,9 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
                 TextPart: text,
               }
             ]
-          })
-        });
+          });
 
-        if (!mailjetResponse.ok) {
-          const mailjetErr = await mailjetResponse.json();
-          throw new Error(JSON.stringify(mailjetErr) || 'Mailjet API request failed');
-        }
-
-        console.log('Mail sent successfully via Mailjet API!');
+        console.log('Mail sent successfully via Mailjet SDK!');
         return { success: true, provider: 'Mailjet' };
 
       } catch (mailjetError) {
@@ -104,7 +81,7 @@ const sendMailWithFallback = async ({ to, subject, html, text }) => {
 };
 
 /**
- * উইথড্র স্ট্যাটাস অনুযায়ী অত্যন্ত প্রফেশনাল ও আধুনিক ডিজাইনের ইমেইল পাঠানোর ফাংশন
+ * উইথড্র স্ট্যাটাস অনুযায়ী প্রিমিয়াম ডিজাইনের ইমেইল পাঠানোর ফাংশন
  */
 const sendWithdrawEmail = async (withdrawDetails) => {
     try {
@@ -139,7 +116,6 @@ const sendWithdrawEmail = async (withdrawDetails) => {
             subjectLine = 'Important Update Regarding Your Withdrawal - NexKartBD';
         }
 
-        // প্রিমিয়াম ও আধুনিক HTML ডিজাইন
         const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -192,7 +168,6 @@ const sendWithdrawEmail = async (withdrawDetails) => {
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // HTTP API ফলব্যাক ফাংশন কল করা হলো
         const result = await sendMailWithFallback({
             to: sellerEmail,
             subject: subjectLine,
