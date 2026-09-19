@@ -20,8 +20,8 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * ক্রন জব ফাংশন যা প্রতি ১ মিনিট পর পর (অথবা আপনার পছন্দমতো টাইমে) রান করবে 
- * এবং যাদের send_mail = 0 আছে তাদের উইথড্র রিকোয়েস্ট সুপার এডমিনদের ইমেইলে পাঠাবে।
+ * ক্রন জব ফাংশন যা প্রতি ১ মিনিট পর পর রান করবে 
+ * এবং যাদের send_mail = 0 আছে তাদের উইথড্র রিকোয়েস্ট শুধু সুপার এডমিনদের ইমেইলে পাঠাবে।
  */
 const initWithdrawCron = () => {
     // ক্রন এক্সপ্রেশন: প্রতি ১ মিনিট পর পর চলবে ('*/1 * * * *')
@@ -36,32 +36,32 @@ const initWithdrawCron = () => {
                 return; // কোনো নতুন রিকোয়েস্ট না থাকলে স্কিপ করবে
             }
 
-            // ২. admins টেবিল থেকে সুপার এডমিন বা যাদের status = 'approved' তাদের ইমেইল খুঁজে বের করা
+            // ২. admins টেবিল থেকে যাদের status = 'approved' এবং super_admin = 'approved' তাদের ইমেইল খুঁজে বের করা
             const [superAdmins] = await db.query(
-                `SELECT email FROM admins WHERE status = 'approved'`
+                `SELECT email FROM admins WHERE status = 'approved' AND super_admin = 'approved'`
             );
 
             if (superAdmins.length === 0) {
-                console.log('Cron Job: No approved admins found to send email.');
+                console.log('Cron Job: No approved super admins found to send email.');
                 return;
             }
 
-            // সব অনুমোদিত এডমিনের ইমেইলের একটি অ্যারে তৈরি করা
+            // সব অনুমোদিত সুপার এডমিনের ইমেইলের একটি অ্যারে তৈরি করা
             const adminEmails = superAdmins.map(admin => admin.email).filter(Boolean);
 
             if (adminEmails.length === 0) return;
 
-            // ৩. প্রতিটি পেন্ডিং রিকোয়েস্টের জন্য ইমেইল পাঠানো এবং send_mail আপডেট করা
+            // ۳. প্রতিটি পেন্ডিং রিকোয়েস্টের জন্য ইমেইল পাঠানো এবং send_mail আপডেট করা
             for (const reqData of pendingRequests) {
                 const mailOptions = {
-                    from: 'NexKartBD <admin.nexkartbd@gmail.com>',
-                    to: adminEmails, // একসাথে সকল approved এডমিনদের কাছে চলে যাবে
+                    from: 'NexKARTbd <admin.nexkartbd@gmail.com>',
+                    to: adminEmails, // একসাথে সকল approved সুপার এডমিনদের কাছে চলে যাবে
                     subject: `New Withdrawal Request - TRX: ${reqData.transaction_id}`,
                     html: `
                         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
                             <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                                 <h2 style="color: #db2777; text-align: center;">NexKartBD Withdraw Request Notification</h2>
-                                <p>প্রিয় এডমিন,</p>
+                                <p>প্রিয় সুপার এডমিন,</p>
                                 <p>নতুন একটি উইথড্র রিকোয়েস্ট সাবমিট করা হয়েছে। নিচে বিস্তারিত দেওয়া হলো:</p>
                                 
                                 <div style="background: #fdf2f8; padding: 15px; border-left: 4px solid #db2777; margin: 20px 0; border-radius: 4px;">
@@ -82,7 +82,7 @@ const initWithdrawCron = () => {
 
                 // ইমেইল সেন্ড করা
                 await transporter.sendMail(mailOptions);
-                console.log(`Withdraw Email Sent Successfully for TRX: ${reqData.transaction_id}`);
+                console.log(`Withdraw Email Sent Successfully to Super Admin(s) for TRX: ${reqData.transaction_id}`);
 
                 // ৪. ইমেইল পাঠানো সফল হলে withdraw_request টেবিলের send_mail ফিল্ড 1 (true) করে দেওয়া
                 await db.query(
