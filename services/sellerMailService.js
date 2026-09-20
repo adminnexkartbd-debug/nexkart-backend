@@ -1,5 +1,4 @@
 const axios = require('axios');
-const mailjet = require('node-mailjet');
 
 // Helper function: Resend API diye mail pathanor chesta
 async function sendViaResend(to, subject, html) {
@@ -42,32 +41,8 @@ async function sendViaBrevo(to, subject, html) {
     return response.data;
 }
 
-// Helper function: Mailjet API diye mail pathanor chesta
-async function sendViaMailjet(to, subject, html) {
-    const publicKey = process.env.MAILJET_API_KEY;
-    const secretKey = process.env.MAILJET_SECRET_KEY;
-    if (!publicKey || !secretKey) throw new Error('Mailjet API keys missing');
-
-    const mailjetClient = mailjet.apiConnect(publicKey, secretKey);
-    const request = mailjetClient
-        .post('send', { version: 'v3.1' })
-        .request({
-            Messages: [
-                {
-                    From: { Email: "pilot@mailjet.com", Name: "Admin System" },
-                    To: [{ Email: to }],
-                    Subject: subject,
-                    HTMLPart: html
-                }
-            ]
-        });
-    return await request;
-}
-
-// Master Fallback Function (Resend -> Brevo -> Mailjet)
+// Master Fallback Function (Resend -> Brevo) [Mailjet bad deya hoyeche karoh account blocked]
 async function sendEmailWithFallback(to, subject, html) {
-    let lastError = null;
-
     // ১. Prothom chesta Resend diye
     try {
         await sendViaResend(to, subject, html);
@@ -75,7 +50,6 @@ async function sendEmailWithFallback(to, subject, html) {
         return true;
     } catch (err) {
         console.warn("Resend API failed, trying Brevo...", err.message);
-        lastError = err;
     }
 
     // ২. Ditiyo chesta Brevo diye
@@ -84,21 +58,13 @@ async function sendEmailWithFallback(to, subject, html) {
         console.log("Email sent successfully via Brevo API");
         return true;
     } catch (err) {
-        console.warn("Brevo API failed, trying Mailjet...", err.message);
-        lastError = err;
+        console.error("Brevo API also failed.", err.message);
     }
 
-    // ৩. Tritiyo chesta Mailjet diye
-    try {
-        await sendViaMailjet(to, subject, html);
-        console.log("Email sent successfully via Mailjet API");
-        return true;
-    } catch (err) {
-        console.error("All email APIs failed (Resend, Brevo, Mailjet).", err.message);
-        lastError = err;
-    }
-
-    throw lastError;
+    // Jodi kono tai kaj na kore, tobe eror throw na kore false return korbe 
+    // Fole database update ba seller ban/unban request crash korbe na.
+    console.warn("All email APIs failed, but database action will proceed.");
+    return false;
 }
 
 // Exported Functions for Sellers
@@ -140,5 +106,6 @@ const sendSellerUnbanEmail = async (email) => {
 module.exports = {
   sendSellerWarningEmail,
   sendSellerBanEmail,
-  sendSellerUnbanEmail
+  sendSellerUnbanEmail,
+  sendEmailWithFallback
 };
