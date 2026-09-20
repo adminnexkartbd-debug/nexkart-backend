@@ -54,7 +54,7 @@ async function sendViaMailjet(to, subject, html) {
         .request({
             Messages: [
                 {
-                    From: { Email: "admin.nexkartbd@gmail.com", Name: "Admin System" },
+                    From: { Email: "pilot@mailjet.com", Name: "Admin System" },
                     To: [{ Email: to }],
                     Subject: subject,
                     HTMLPart: html
