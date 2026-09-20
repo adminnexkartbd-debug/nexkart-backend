@@ -265,23 +265,20 @@ router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
     }
 
     try {
-        // ১. ইমেইল পাঠানো
+        // ১. ইমেইল পাঠানো (sellerMailService এর fallback system use kore)
         if (email) {
-            const nodemailer = require('nodemailer');
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
-            });
+            const { sendEmailWithFallback } = require('../../services/sellerMailService'); // dorkar hole uporeo import kore rakhte paren
+            
+            const subject = 'Update on Your IPR Infringement Report';
+            const htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                  <h3 style="color: #059669;">IPR Report Resolved</h3>
+                  <p>Apnar IPR report-ti (ID: <b>${id}</b>) sothikbhabe porjalochona ebong somadhan kora hoyeche. Dhonnobad!</p>
+                </div>
+            `;
 
-            await transporter.sendMail({
-                from: '"IPR Protection Team" <mehedi.hasantanvir78@gmail.com>',
-                to: email,
-                subject: 'Update on Your IPR Infringement Report',
-                text: `আপনার IPR রিপোর্টটি (ID: ${id}) সফলভাবে পর্যালোচনা এবং সমাধান করা হয়েছে। ধন্যবাদ!`
-            });
+            // Nodemailer bad diye ekhon ekhane api fallback system kaj korbe
+            await sendEmailWithFallback(email, subject, htmlContent);
         }
 
         // ২. ইমেইল পাঠানো সফল হলে ডাটাবেজে status = 'resolved' হবে
@@ -299,7 +296,6 @@ router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
         return res.status(500).json({ success: false, error: 'Failed to send mail or update status' });
     }
 });
-
 // ================= SELLER STATUS LIST API =================
 // ================= SELLER ACTION/STATUS LIST API =================
 router.get('/api/seller-status-list', ensureSuperAdmin, async (req, res) => {
