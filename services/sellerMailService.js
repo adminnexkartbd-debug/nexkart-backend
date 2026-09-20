@@ -7,7 +7,7 @@ async function sendViaResend(to, subject, html) {
     if (!apiKey) throw new Error('Resend API key missing');
 
     const response = await axios.post('https://api.resend.com/emails', {
-        from: 'Admin System <admin@nexkart.2bd.net>',
+        from: 'Admin System <onboarding@resend.dev>',
         to: [to],
         subject: subject,
         html: html
@@ -27,7 +27,7 @@ async function sendViaBrevo(to, subject, html) {
     if (!apiKey) throw new Error('Brevo API key missing');
 
     const response = await axios.post('https://api.brevo.com/v3/smtp/email', {
-        sender: { name: 'Admin System', email: 'admin.nexkartbd@gmail.com' },
+        sender: { name: 'Admin System', email: 'no-reply@nexkartbd.com' },
         to: [{ email: to }],
         subject: subject,
         htmlContent: html
@@ -101,7 +101,7 @@ async function sendEmailWithFallback(to, subject, html) {
     throw lastError;
 }
 
-// Exported Functions
+// Exported Functions for Sellers
 const sendSellerWarningEmail = async (email, shopName, reason) => {
   const html = `
     <div style="font-family: Arial, sans-serif; padding: 20px;">
