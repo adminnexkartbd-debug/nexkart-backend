@@ -668,8 +668,8 @@ router.post('/forgot-password', async (req, res) => {
         // ৭. Google OAuth2 Refresh Token ব্যবহার করে Access Token নেওয়া এবং Gmail HTTPS API দিয়ে মেইল পাঠানো
         const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
             params: {
-                client_id: process.env.GOOGLE_CLIENT_ID,
-                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                client_id: process.env.GOOGLE_USER_CLIENT_ID,
+                client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
                 refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
                 grant_type: 'refresh_token'
             }
