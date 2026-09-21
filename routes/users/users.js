@@ -584,7 +584,7 @@ router.post('/apply-coupon', async (req, res) => {
     }
 });
 
-
+// ==================== [ FORGOT PASSWORD ROUTE WITH GOOGLE OAUTH HTTPS API ] ====================
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -638,9 +638,6 @@ router.post('/forgot-password', async (req, res) => {
                             </tr>
                             <tr>
                                 <td style="padding: 35px 30px; text-align: center;">
-                                    <div style="width: 60px; height: 60px; background-color: #fff0f3; border-radius: 50%; display: inline-block; margin-bottom: 20px; line-height: 60px;">
-                                        <span style="font-size: 28px; color: #ff4b6e;">🔒</span>
-                                    </div>
                                     <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 20px; font-weight: 600;">Forgot Your Password?</h2>
                                     <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
                                         Hello <strong>${user.name || 'Valued Customer'}</strong>,<br>
@@ -649,35 +646,15 @@ router.post('/forgot-password', async (req, res) => {
                                     <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                                         <tr>
                                             <td align="center" style="border-radius: 8px;" bgcolor="#ff4b6e">
-                                                <a href="${resetUrl}" target="_blank" style="font-size: 15px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 30px; border: 1px solid #ff4b6e; display: inline-block; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 75, 110, 0.3);">
+                                                <a href="${resetUrl}" target="_blank" style="font-size: 15px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 30px; border: 1px solid #ff4b6e; display: inline-block; font-weight: bold;">
                                                     Reset My Password
                                                 </a>
                                             </td>
                                         </tr>
                                     </table>
-                                    <p style="color: #888888; font-size: 12px; margin-top: 25px; line-height: 1.5;">
-                                        ⚠️ This reset link is valid for <strong>15 minutes</strong>.<br>
-                                        If you didn't request a password reset, please ignore this email or contact support.
+                                    <p style="color: #888888; font-size: 12px; margin-top: 25px;">
+                                        This reset link is valid for <strong>15 minutes</strong>.
                                     </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 0 30px;">
-                                    <hr style="border: none; border-top: 1px solid #eeeeee; margin: 0;">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 20px 30px; text-align: left; background-color: #fafafa;">
-                                    <p style="color: #777777; font-size: 11px; line-height: 1.5; margin: 0;">
-                                        Button not working? Copy and paste this URL into your browser:<br>
-                                        <a href="${resetUrl}" style="color: #ff4b6e; word-break: break-all;">${resetUrl}</a>
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td align="center" style="background-color: #333333; padding: 20px; color: #aaaaaa; font-size: 12px;">
-                                    <p style="margin: 0 0 5px 0;">Need help? Contact our support team.</p>
-                                    <p style="margin: 0;">&copy; ${new Date().getFullYear()} NexKart. All rights reserved.</p>
                                 </td>
                             </tr>
                         </table>
@@ -688,76 +665,52 @@ router.post('/forgot-password', async (req, res) => {
         </html>
         `;
 
-        let emailSent = false;
-        let lastError = null;
+        // ৭. Google OAuth2 Refresh Token ব্যবহার করে Access Token নেওয়া এবং Gmail HTTPS API দিয়ে মেইল পাঠানো
+        const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
+            params: {
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+                grant_type: 'refresh_token'
+            }
+        });
 
-        // --- 1st Attempt: Gmail SMTP (Nodemailer) ---
-        try {
-            await transporter.sendMail({
-                from: `"NexKart Support" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: '🔒 Reset Your NexKart Password',
-                html: emailTemplate
-            });
-            emailSent = true;
-        } catch (smtpErr) {
-            console.error('SMTP Email Send Failed, trying Resend...', smtpErr.message);
-            lastError = smtpErr;
-        }
+        const accessToken = tokenResponse.data.access_token;
 
-        // --- 2nd Attempt: Resend API (যদি SMTP ফেইল করে) ---
-        if (!emailSent && process.env.RESEND_API_KEY) {
-            try {
-                const resendResponse = await axios.post('https://api.resend.com/emails', {
-                    from: `NexKart Support <onboarding@resend.dev>`,
-                    to: [email],
-                    subject: '🔒 Reset Your NexKart Password',
-                    html: emailTemplate
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (resendResponse.status === 200 || resendResponse.status === 201) {
-                    emailSent = true;
+        // ৮. Raw Email Format তৈরি করা (RFC 2822 standard)
+        const subject = "🔒 Reset Your NexKart Password";
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+        const messageParts = [
+            `To: ${email}`,
+            `Subject: ${utf8Subject}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/html; charset=utf-8`,
+            ``,
+            emailTemplate
+        ];
+        const message = messageParts.join('\r\n');
+        const encodedMessage = Buffer.from(message)
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        // ৯. Gmail HTTPS API কল করা
+        await axios.post(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
+            { raw: encodedMessage },
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
                 }
-            } catch (resendErr) {
-                console.error('Resend API Failed, trying Mailjet...', resendErr.message);
-                lastError = resendErr;
             }
-        }
-
-        // --- 3rd Attempt: Mailjet API (যদি আগের দুটোই ফেইল করে) ---
-        if (!emailSent && process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
-            try {
-                const mailjet = Mailjet.apiConnect(process.env.MAILJET_API_KEY, process.env.MAILJET_SECRET_KEY);
-                await mailjet.post('send', { version: 'v3.1' }).request({
-                    Messages: [
-                        {
-                            From: { Email: process.env.EMAIL_USER || "admin.nexkartbd@gmail.com", Name: "NexKart Support" },
-                            To: [{ Email: email, Name: user.name || 'Customer' }],
-                            Subject: "🔒 Reset Your NexKart Password",
-                            HTMLPart: emailTemplate
-                        }
-                    ]
-                });
-                emailSent = true;
-            } catch (mailjetErr) {
-                console.error('Mailjet API Failed as well:', mailjetErr.message);
-                lastError = mailjetErr;
-            }
-        }
-
-        // যদি কোনো মাধ্যমেই ইমেইল না যায়
-        if (!emailSent) {
-            throw lastError || new Error('All email gateways failed.');
-        }
+        );
 
         return res.status(200).json({ message: 'Apnar email-e reset link pathano hoyeche! Spam folder-o check korun.' });
 
     } catch (err) {
-        console.error('Forgot Password Email Error:', err);
+        console.error('Google API Email Send Error:', err.response?.data || err.message);
         return res.status(500).json({ message: 'Email pathate somoshya hoyeche! Configuration check korun.' });
     }
 });
