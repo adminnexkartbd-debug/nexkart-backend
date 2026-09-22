@@ -2,7 +2,8 @@
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-Commerce Control Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -37,7 +38,7 @@
 
     <div class="flex h-full overflow-hidden">
 
-        <!-- Sidebar Navigation: Dashboard & Logout only -->
+        <!-- Sidebar Navigation -->
         <aside id="sidebar" class="hidden md:flex md:flex-shrink-0 w-64 bg-slate-900 text-slate-300 flex-col transition-all duration-300 z-20">
             <div class="flex items-center justify-between h-16 px-6 bg-slate-950 text-white">
                 <div class="flex items-center space-x-3">
@@ -52,15 +53,16 @@
                 </a>
             </div>
 
+            <!-- Dynamic Admin Profile Section -->
             <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <img class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500" src="https://placehold.co/100x100/4f46e5/ffffff?text=SA" alt="Super Admin" onerror="this.src='https://placehold.co/100x100/6366f1/ffffff?text=Admin'">
-                    <div>
-                        <p class="text-xs font-semibold text-white">Super Admin</p>
-                        <p class="text-[10px] text-emerald-400"><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span>Online</p>
+                <div class="flex items-center space-x-3 overflow-hidden">
+                    <img id="sidebarAdminAvatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500 flex-shrink-0" src="https://placehold.co/100x100/4f46e5/ffffff?text=Admin" alt="Admin Avatar" onerror="this.src='https://placehold.co/100x100/6366f1/ffffff?text=Admin'">
+                    <div class="truncate">
+                        <p id="sidebarAdminName" class="text-xs font-semibold text-white truncate">Loading...</p>
+                        <p class="text-[10px] text-emerald-400 flex items-center"><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span>Online</p>
                     </div>
                 </div>
-                <button onclick="showToast('Logged out successfully', 'info')" class="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800" title="Logout"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+                <button onclick="logoutAdmin()" class="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800 flex-shrink-0" title="Logout"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
             </div>
         </aside>
 
@@ -81,7 +83,7 @@
                         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
                     <div class="h-6 w-px bg-slate-200"></div>
-                    <button onclick="showToast('Logged out successfully', 'info')" class="flex items-center space-x-2 text-sm font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors">
+                    <button onclick="logoutAdmin()" class="flex items-center space-x-2 text-sm font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>Logout</span>
                     </button>
@@ -98,77 +100,57 @@
                         </div>
                     </div>
 
-                    <!-- Top Metric Cards (Clickable to open detailed modals) -->
+                    <!-- Top Metric Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        
-                        <!-- Avg Seller Commission Card -->
                         <div onclick="openCardModal('commission')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Avg Seller Commission</p>
                                 <h3 class="text-2xl font-bold text-slate-800 mt-1">8.5%</h3>
                                 <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-percent mr-1"></i> View breakdown</span>
                             </div>
-                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                                <i class="fa-solid fa-hand-holding-dollar"></i>
-                            </div>
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                         </div>
 
-                        <!-- Super Admin Status Card -->
                         <div onclick="openCardModal('admin')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition-colors">Super Admin Status</p>
                                 <h3 class="text-2xl font-bold text-emerald-600 mt-1">Secure</h3>
                                 <span class="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-shield-check mr-1"></i> Full Access</span>
                             </div>
-                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                                <i class="fa-solid fa-shield-halved"></i>
-                            </div>
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-shield-halved"></i></div>
                         </div>
 
-                        <!-- Pending Approvals Card -->
                         <div onclick="openCardModal('approvals')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors">Pending Approvals</p>
                                 <h3 class="text-2xl font-bold text-amber-600 mt-1">2 Pending</h3>
                                 <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-clock mr-1"></i> Action needed</span>
                             </div>
-                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                                <i class="fa-solid fa-hourglass-half"></i>
-                            </div>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-hourglass-half"></i></div>
                         </div>
 
-                        <!-- Seller Management Card -->
                         <div onclick="openCardModal('sellers')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Seller Management</p>
                                 <h3 class="text-2xl font-bold text-slate-800 mt-1">48 Active</h3>
                                 <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-store mr-1"></i> Vendors Online</span>
                             </div>
-                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold">
-                                <i class="fa-solid fa-shop"></i>
-                            </div>
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-shop"></i></div>
                         </div>
-
                     </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                    
-                    <!-- Table Title & Search Box Toolbar -->
                     <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div class="flex items-center space-x-3">
                             <h2 class="font-bold text-slate-800 text-lg"><i class="fa-solid fa-users text-indigo-600 mr-2"></i>Registered User Directory</h2>
                         </div>
-                        <!-- Search Box for Name and Email -->
                         <div class="relative w-full sm:w-80">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                                <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                            </span>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
                             <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search by name or email..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
                         </div>
                     </div>
 
-                    <!-- User Data Table -->
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -181,13 +163,10 @@
                                     <th class="py-4 px-6 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="userTableBody" class="divide-y divide-slate-100 text-sm">
-                                <!-- Populated dynamically via JS -->
-                            </tbody>
+                            <tbody id="userTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                         </table>
                     </div>
 
-                    <!-- Table Footer Counter -->
                     <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
                         <div id="userTableCounter">Showing all registered users</div>
                     </div>
@@ -197,16 +176,14 @@
         </div>
     </div>
 
-    <!-- Modal Backdrop & Dialog -->
+    <!-- Modal -->
     <div id="cardModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform scale-95 transition-transform duration-300" id="modalContainer">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
                 <h3 id="modalTitle" class="font-bold text-slate-800 text-lg flex items-center"><i class="fa-solid fa-circle-info text-indigo-600 mr-2"></i>Details</h3>
                 <button onclick="closeCardModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div id="modalBody" class="p-6 text-sm text-slate-600 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <!-- Dynamic Modal Content -->
-            </div>
+            <div id="modalBody" class="p-6 text-sm text-slate-600 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
                 <button onclick="closeCardModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-xl text-sm transition-colors shadow-sm">Close</button>
             </div>
@@ -214,71 +191,21 @@
     </div>
 
     <script>
-        // Mock Registered Users Database
         let users = [
-            {
-                id: 1,
-                name: "Tanvir Ahmed",
-                profileOpeningDate: "Jan 12, 2024",
-                email: "tanvir.ahmed@nexusadmin.com",
-                phone: "+880 1712-345678",
-                password: "SecurePass#91",
-                avatar: "https://placehold.co/100x100/6366f1/ffffff?text=TA"
-            },
-            {
-                id: 2,
-                name: "Nusrat Jahan",
-                profileOpeningDate: "Feb 04, 2024",
-                email: "nusrat.jahan@nexusadmin.com",
-                phone: "+880 1815-987654",
-                password: "Nusrat#2024Pass",
-                avatar: "https://placehold.co/100x100/ec4899/ffffff?text=NJ"
-            },
-            {
-                id: 3,
-                name: "Rahim Chowdhury",
-                profileOpeningDate: "Mar 18, 2024",
-                email: "rahim.c@nexusadmin.com",
-                phone: "+880 1911-223344",
-                password: "RahimSecretKey77",
-                avatar: "https://placehold.co/100x100/10b981/ffffff?text=RC"
-            },
-            {
-                id: 4,
-                name: "Farhana Akter",
-                profileOpeningDate: "Apr 22, 2024",
-                email: "farhana.a@nexusadmin.com",
-                phone: "+880 1521-556677",
-                password: "FarhanaPass*88",
-                avatar: "https://placehold.co/100x100/f59e0b/ffffff?text=FA"
-            },
-            {
-                id: 5,
-                name: "Imran Hossain",
-                profileOpeningDate: "May 10, 2024",
-                email: "imran.h@nexusadmin.com",
-                phone: "+880 1678-990011",
-                password: "ImranSecure#123",
-                avatar: "https://placehold.co/100x100/8b5cf6/ffffff?text=IH"
-            },
-            {
-                id: 6,
-                name: "Sabrina Yasmin",
-                profileOpeningDate: "Jun 01, 2024",
-                email: "sabrina.y@nexusadmin.com",
-                phone: "+880 1319-445566",
-                password: "SabrinaKey#2026",
-                avatar: "https://placehold.co/100x100/ef4444/ffffff?text=SY"
-            }
+            { id: 1, name: "Tanvir Ahmed", profileOpeningDate: "Jan 12, 2024", email: "tanvir.ahmed@nexusadmin.com", phone: "+880 1712-345678", password: "SecurePass#91", avatar: "https://placehold.co/100x100/6366f1/ffffff?text=TA" },
+            { id: 2, name: "Nusrat Jahan", profileOpeningDate: "Feb 04, 2024", email: "nusrat.jahan@nexusadmin.com", phone: "+880 1815-987654", password: "Nusrat#2024Pass", avatar: "https://placehold.co/100x100/ec4899/ffffff?text=NJ" },
+            { id: 3, name: "Rahim Chowdhury", profileOpeningDate: "Mar 18, 2024", email: "rahim.c@nexusadmin.com", phone: "+880 1911-223344", password: "RahimSecretKey77", avatar: "https://placehold.co/100x100/10b981/ffffff?text=RC" },
+            { id: 4, name: "Farhana Akter", profileOpeningDate: "Apr 22, 2024", email: "farhana.a@nexusadmin.com", phone: "+880 1521-556677", password: "FarhanaPass*88", avatar: "https://placehold.co/100x100/f59e0b/ffffff?text=FA" },
+            { id: 5, name: "Imran Hossain", profileOpeningDate: "May 10, 2024", email: "imran.h@nexusadmin.com", phone: "+880 1678-990011", password: "ImranSecure#123", avatar: "https://placehold.co/100x100/8b5cf6/ffffff?text=IH" },
+            { id: 6, name: "Sabrina Yasmin", profileOpeningDate: "Jun 01, 2024", email: "sabrina.y@nexusadmin.com", phone: "+880 1319-445566", password: "SabrinaKey#2026", avatar: "https://placehold.co/100x100/ef4444/ffffff?text=SY" }
         ];
 
-        // Password visibility state tracker
         let revealedPasswords = {};
 
         window.onload = function() {
+            fetchCurrentAdmin();
             renderUserTable(users);
             
-            // Mobile sidebar toggle listener
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 const sidebar = document.getElementById('sidebar');
                 sidebar.classList.toggle('hidden');
@@ -288,7 +215,44 @@
             });
         };
 
-        // Render User Table Function
+        // Fetch Logged-in Admin Info from Backend
+        async function fetchCurrentAdmin() {
+            try {
+                const response = await fetch('/api/control-employee/current-user', { credentials: 'include' });
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const admin = result.data;
+                    document.getElementById('sidebarAdminName').innerText = admin.name || 'Super Admin';
+                    
+                    if (admin.picture) {
+                        document.getElementById('sidebarAdminAvatar').src = admin.picture;
+                    }
+                } else {
+                    document.getElementById('sidebarAdminName').innerText = 'Super Admin';
+                }
+            } catch (error) {
+                console.error('Error fetching current admin:', error);
+                document.getElementById('sidebarAdminName').innerText = 'Super Admin';
+            }
+        }
+
+        // Logout Function
+        async function logoutAdmin() {
+            try {
+                const res = await fetch('/api/control-employee/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ confirmLogout: true })
+                });
+                const data = await res.json();
+                showToast(data.message || 'Logged out successfully', data.success ? 'success' : 'info');
+                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+            } catch (err) {
+                showToast('Logged out successfully', 'success');
+            }
+        }
+
         function renderUserTable(data) {
             const tbody = document.getElementById('userTableBody');
             tbody.innerHTML = '';
@@ -310,36 +274,22 @@
                     <td class="py-4 px-6">
                         <div class="flex items-center space-x-3">
                             <img class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100" src="${user.avatar}" alt="${user.name}" onerror="this.src='https://placehold.co/100x100/6366f1/ffffff?text=USR'">
-                            <div>
-                                <p class="font-semibold text-slate-800">${user.name}</p>
-                            </div>
+                            <div><p class="font-semibold text-slate-800">${user.name}</p></div>
                         </div>
                     </td>
-                    <td class="py-4 px-4 text-slate-600 font-medium text-xs">
-                        <i class="fa-regular fa-calendar mr-1.5 text-slate-400"></i>${user.profileOpeningDate}
-                    </td>
-                    <td class="py-4 px-4 text-slate-600 text-xs">
-                        ${user.email}
-                    </td>
-                    <td class="py-4 px-4 text-slate-600 text-xs font-mono">
-                        ${user.phone}
-                    </td>
+                    <td class="py-4 px-4 text-slate-600 font-medium text-xs"><i class="fa-regular fa-calendar mr-1.5 text-slate-400"></i>${user.profileOpeningDate}</td>
+                    <td class="py-4 px-4 text-slate-600 text-xs">${user.email}</td>
+                    <td class="py-4 px-4 text-slate-600 text-xs font-mono">${user.phone}</td>
                     <td class="py-4 px-4">
                         <div class="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-lg w-fit">
                             <span class="font-mono text-xs text-slate-700 tracking-wider">${displayPassword}</span>
-                            <button onclick="togglePassword(${user.id})" class="text-slate-500 hover:text-indigo-600 p-1 transition-colors" title="Toggle Password Visibility">
-                                <i class="fa-solid ${eyeIcon} text-xs"></i>
-                            </button>
+                            <button onclick="togglePassword(${user.id})" class="text-slate-500 hover:text-indigo-600 p-1 transition-colors"><i class="fa-solid ${eyeIcon} text-xs"></i></button>
                         </div>
                     </td>
                     <td class="py-4 px-6 text-right">
                         <div class="flex items-center justify-end space-x-2">
-                            <button onclick="showToast('Viewing profile for ${user.name}', 'info')" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Profile">
-                                <i class="fa-solid fa-eye text-sm"></i>
-                            </button>
-                            <button onclick="copyPassword('${user.password}')" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Copy Password">
-                                <i class="fa-solid fa-copy text-sm"></i>
-                            </button>
+                            <button onclick="showToast('Viewing profile for ${user.name}', 'info')" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><i class="fa-solid fa-eye text-sm"></i></button>
+                            <button onclick="copyPassword('${user.password}')" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"><i class="fa-solid fa-copy text-sm"></i></button>
                         </div>
                     </td>
                 `;
@@ -349,24 +299,17 @@
             document.getElementById('userTableCounter').innerText = `Showing ${data.length} registered users`;
         }
 
-        // Live Search Filter by Name and Email
         function filterUsers() {
             const query = document.getElementById('userSearchInput').value.toLowerCase().trim();
-            const filtered = users.filter(user => 
-                user.name.toLowerCase().includes(query) || 
-                user.email.toLowerCase().includes(query)
-            );
+            const filtered = users.filter(user => user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query));
             renderUserTable(filtered);
         }
 
-        // Toggle Password Mask/Reveal
         function togglePassword(id) {
             revealedPasswords[id] = !revealedPasswords[id];
-            // Re-apply filter current state
             filterUsers();
         }
 
-        // Secure Copy Password
         function copyPassword(password) {
             const tempInput = document.createElement('textarea');
             tempInput.value = password;
@@ -377,7 +320,6 @@
             showToast('Password copied to clipboard successfully!', 'success');
         }
 
-        // Card Modal Popups Implementation
         function openCardModal(cardType) {
             const modal = document.getElementById('cardModal');
             const modalContainer = document.getElementById('modalContainer');
@@ -389,85 +331,16 @@
 
             if (cardType === 'commission') {
                 titleHTML = '<i class="fa-solid fa-hand-holding-dollar text-blue-600 mr-2"></i>Seller Commission Breakdown';
-                contentHTML = `
-                    <div class="space-y-3">
-                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold uppercase text-blue-600">Standard Marketplace Rate</p>
-                                <h4 class="text-xl font-bold text-slate-800">8.5%</h4>
-                            </div>
-                            <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md font-medium">Active</span>
-                        </div>
-                        <p class="text-xs text-slate-500">Commission is deducted automatically per order payout. Premium vendors enjoy a reduced rate of 6.0%.</p>
-                        <div class="border-t border-slate-100 pt-3">
-                            <h5 class="font-semibold text-slate-700 text-xs mb-2">Recent Commission Adjustments:</h5>
-                            <ul class="space-y-2 text-xs">
-                                <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span>Electronics Category</span><strong class="text-indigo-600">9.0%</strong></li>
-                                <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span>Fashion & Apparel</span><strong class="text-indigo-600">8.0%</strong></li>
-                                <li class="flex justify-between items-center bg-slate-50 p-2 rounded-lg"><span>Home & Kitchen</span><strong class="text-indigo-600">7.5%</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
+                contentHTML = `<div class="space-y-3"><div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-blue-600">Standard Marketplace Rate</p><h4 class="text-xl font-bold text-slate-800">8.5%</h4></div><span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md font-medium">Active</span></div></div>`;
             } else if (cardType === 'admin') {
                 titleHTML = '<i class="fa-solid fa-shield-halved text-emerald-600 mr-2"></i>Super Admin Security Status';
-                contentHTML = `
-                    <div class="space-y-3">
-                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold uppercase text-emerald-600">System Security Level</p>
-                                <h4 class="text-xl font-bold text-emerald-700">Maximum Protection</h4>
-                            </div>
-                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-medium"><i class="fa-solid fa-lock mr-1"></i>Encrypted</span>
-                        </div>
-                        <p class="text-xs text-slate-500">Two-factor authentication (2FA) is enforced for all super admin sessions. Last security audit passed yesterday.</p>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-1">
-                            <p><strong>Primary IP:</strong> 192.168.1.45 (Secure HQ)</p>
-                            <p><strong>Active Session Tokens:</strong> 1 verified</p>
-                        </div>
-                    </div>
-                `;
+                contentHTML = `<div class="space-y-3"><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-emerald-600">System Security Level</p><h4 class="text-xl font-bold text-emerald-700">Maximum Protection</h4></div><span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-medium">Encrypted</span></div></div>`;
             } else if (cardType === 'approvals') {
                 titleHTML = '<i class="fa-solid fa-hourglass-half text-amber-600 mr-2"></i>Pending Staff & Vendor Approvals';
-                contentHTML = `
-                    <div class="space-y-3">
-                        <p class="text-xs text-slate-500">The following requests are awaiting Super Admin authorization:</p>
-                        <div class="space-y-2">
-                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                                <div>
-                                    <p class="font-semibold text-slate-800 text-xs">Arif Rahman (Store Vendor)</p>
-                                    <p class="text-[11px] text-slate-400">Requested Seller Tier 2 Upgrade</p>
-                                </div>
-                                <div class="space-x-1">
-                                    <button onclick="showToast('Vendor approved successfully', 'success'); closeCardModal();" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition-colors">Approve</button>
-                                </div>
-                            </div>
-                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                                <div>
-                                    <p class="font-semibold text-slate-800 text-xs">Sumaiya Akter (Support Staff)</p>
-                                    <p class="text-[11px] text-slate-400">Requested Inventory Manager Access</p>
-                                </div>
-                                <div class="space-x-1">
-                                    <button onclick="showToast('Staff access approved', 'success'); closeCardModal();" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition-colors">Approve</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                contentHTML = `<div class="space-y-3"><p class="text-xs text-slate-500">The following requests are awaiting Super Admin authorization.</p></div>`;
             } else if (cardType === 'sellers') {
                 titleHTML = '<i class="fa-solid fa-shop text-indigo-600 mr-2"></i>Seller Management Overview';
-                contentHTML = `
-                    <div class="space-y-3">
-                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-semibold uppercase text-indigo-600">Active Marketplace Vendors</p>
-                                <h4 class="text-xl font-bold text-slate-800">48 Online</h4>
-                            </div>
-                            <span class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-md font-medium">98.4% Fulfillment Rate</span>
-                        </div>
-                        <p class="text-xs text-slate-500">All registered vendors are currently compliant with marketplace policies and verified via trade licenses.</p>
-                    </div>
-                `;
+                contentHTML = `<div class="space-y-3"><div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-indigo-600">Active Marketplace Vendors</p><h4 class="text-xl font-bold text-slate-800">48 Online</h4></div><span class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-md font-medium">98.4% Fulfillment Rate</span></div></div>`;
             }
 
             titleEl.innerHTML = titleHTML;
@@ -487,33 +360,23 @@
             modal.classList.add('opacity-0');
             modalContainer.classList.remove('scale-100');
             modalContainer.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
-        // Toast Notification System
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer') || createToastContainer();
             const toast = document.createElement('div');
             
             let bgCol = 'bg-slate-900 text-white';
             let icon = '<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i>';
-            if (type === 'error') {
-                icon = '<i class="fa-solid fa-circle-exclamation text-red-400 mr-2"></i>';
-            } else if (type === 'info') {
-                icon = '<i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>';
-            }
+            if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation text-red-400 mr-2"></i>';
+            else if (type === 'info') icon = '<i class="fa-solid fa-circle-info text-blue-400 mr-2"></i>';
 
             toast.className = `pointer-events-auto flex items-center px-4 py-3 rounded-xl shadow-xl ${bgCol} text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0`;
             toast.innerHTML = `${icon}<span>${message}</span>`;
-            
             container.appendChild(toast);
             
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
             setTimeout(() => {
                 toast.classList.add('translate-y-2', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
