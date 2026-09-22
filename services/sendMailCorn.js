@@ -1,95 +1,93 @@
 const cron = require('node-cron');
 const db = require('../db'); 
-const { Resend } = require('resend');
-const Mailjet = require('node-mailjet');
 require('dotenv').config();
 
-// ১. Resend Setup
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// ২. Mailjet Setup
-const mailjet = Mailjet.apiConnect(
-  process.env.MAILJET_API_KEY,
-  process.env.MAILJET_SECRET_KEY
-);
-
-// মাল্টিপল API ফলব্যাক সহ মেইল পাঠানোর ফাংশন (Resend -> Brevo -> Mailjet)
-const sendMailWithFallback = async ({ to, subject, html, text, attachments }) => {
-  // --- 1st Try: Resend ---
-  try {
-    console.log('Trying with Resend...');
-    const payload = {
-      from: 'NexKARTbd <onboarding@resend.dev>',
-      to: Array.isArray(to) ? to : [to],
-      subject: subject,
-      html: html,
-      text: text,
-    };
-    if (attachments) payload.attachments = attachments;
-
-    const data = await resend.emails.send(payload);
-    if (data.error) throw new Error(data.error.message);
-    console.log('Mail sent successfully via Resend!');
-    return { success: true, provider: 'Resend' };
-
-  } catch (resendError) {
-    console.log(`Resend failed: ${resendError.message}. Switching to Brevo...`);
-
-    // --- 2nd Try: Brevo (Using Native Fetch API) ---
+/**
+ * Google OAuth2 ব্যবহার করে সরাসরি Gmail API এর মাধ্যমে মেইল পাঠানোর ফাংশন
+ */
+async function sendViaGoogleOAuth(to, subject, html, text) {
     try {
-      const brevoPayload = {
-        sender: { name: "NexKART", email: "no-reply@nexkartbd.com" },
-        to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }],
-        subject: subject,
-        htmlContent: html,
-        textContent: text
-      };
+        console.log('Generating Google OAuth2 access token for withdraw cron...');
 
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify(brevoPayload)
-      });
+        const clientId = process.env.GOOGLE_USER_CLIENT_ID;
+        const clientSecret = process.env.GOOGLE_USER_CLIENT_SECRET;
+        const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-      if (!response.ok) {
-        const errRes = await response.json();
-        throw new Error(errRes.message || 'Brevo API request failed');
-      }
+        if (!clientId || !clientSecret || !refreshToken) {
+            throw new Error('Google OAuth credentials (Client ID, Secret, or Refresh Token) are missing in environment variables!');
+        }
 
-      console.log('Mail sent successfully via Brevo!');
-      return { success: true, provider: 'Brevo' };
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                client_id: clientId,
+                client_secret: clientSecret,
+                refresh_token: refreshToken,
+                grant_type: 'refresh_token',
+            }),
+        });
 
-    } catch (brevoError) {
-      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet...`);
+        const tokenData = await tokenResponse.json();
 
-      // --- 3rd Try: Mailjet ---
-      try {
-        const mailjetMessages = Array.isArray(to) 
-          ? to.map(email => ({ From: { Email: "pilot@mailjet.com", Name: "NexKART" }, To: [{ Email: email }], Subject: subject, HTMLPart: html, TextPart: text }))
-          : [{ From: { Email: "pilot@mailjet.com", Name: "NexKART" }, To: [{ Email: to }], Subject: subject, HTMLPart: html, TextPart: text }];
+        if (!tokenResponse.ok || !tokenData.access_token) {
+            throw new Error(tokenData.error_description || tokenData.error || 'Failed to generate Google OAuth access token');
+        }
 
-        await mailjet
-          .post('send', { version: 'v3.1' })
-          .request({ Messages: mailjetMessages });
+        const accessToken = tokenData.access_token;
+        console.log('Google Access Token generated successfully. Sending mail via Gmail API...');
 
-        console.log('Mail sent successfully via Mailjet!');
-        return { success: true, provider: 'Mailjet' };
+        // Handle multiple recipients if passed as an array
+        const recipientList = Array.isArray(to) ? to.join(', ') : to;
 
-      } catch (mailjetError) {
-        console.error(`Mailjet also failed: ${mailjetError.message}`);
-        throw new Error('All email providers (Resend, Brevo, Mailjet) failed!');
-      }
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+        const messageParts = [
+            `To: ${recipientList}`,
+            `Subject: ${utf8Subject}`,
+            'MIME-Version: 1.0',
+            'Content-Type: text/html; charset=utf-8',
+            '',
+            html
+        ];
+        const message = messageParts.join('\r\n');
+        
+        const encodedMessage = Buffer.from(message)
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        const gmailResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                raw: encodedMessage,
+            }),
+        });
+
+        const gmailData = await gmailResponse.json();
+
+        if (!gmailResponse.ok) {
+            throw new Error(gmailData.error?.message || 'Failed to send email via Gmail API');
+        }
+
+        console.log('Email sent successfully via Google OAuth Gmail API!');
+        return { success: true, provider: 'Google Gmail API' };
+
+    } catch (error) {
+        console.error(`Google OAuth Mail Error: ${error.message}`);
+        throw error;
     }
-  }
-};
+}
 
 /**
  * ক্রন জব ফাংশন যা প্রতি ১ মিনিট পর পর রান করবে 
- * এবং যাদের send_mail = 0 আছে তাদের উইথড্র রিকোয়েস্ট সুপার এডমিন ও সেলারের কাছে পাঠাবে।
+ * এবং যাদের send_mail = 0 আছে তাদের উইথড্র রিকোয়েস্ট সুপার এডমিন ও সেলারের কাছে মাত্র একবার পাঠাবে।
  */
 const initWithdrawCron = () => {
     // ক্রন এক্সপ্রেশন: প্রতি ১ মিনিট পর পর চলবে ('*/1 * * * *')
@@ -114,7 +112,13 @@ const initWithdrawCron = () => {
             // ৩. প্রতিটি পেন্ডিং রিকোয়েস্টের জন্য কাজ শুরু করা
             for (const reqData of pendingRequests) {
                 
-                // ক. সুপার এডমিনদের জন্য মেইল পাঠানো (যদি সুপার এডমিন থাকে)
+                // সর্তকতা হিসেবে প্রথমেই send_mail = 1 আপডেট করে দেওয়া যাতে ডাবল মেইল সেন্ড হওয়ার কোনো সুযোগ না থাকে
+                await db.query(
+                    `UPDATE withdraw_request SET send_mail = 1 WHERE id = ? AND send_mail = 0`,
+                    [reqData.id]
+                );
+
+                // ক. সুপার এডমিনদের জন্য প্রফেশনাল মেইল পাঠানো
                 if (adminEmails.length > 0) {
                     const adminHtml = `
                         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
@@ -138,16 +142,23 @@ const initWithdrawCron = () => {
                         </div>
                     `;
 
-                    await sendMailWithFallback({
-                        to: adminEmails,
-                        subject: `New Withdrawal Request - TRX: ${reqData.transaction_id}`,
-                        html: adminHtml,
-                        text: `New withdrawal request from ${reqData.user_name} of amount ৳${reqData.amount}`
-                    });
-                    console.log(`Withdraw Email Sent to Super Admin(s) for TRX: ${reqData.transaction_id}`);
+                    // একসাথে সব সুপার এডমিনকে অথবা লুপ চালিয়ে মেইল পাঠানো
+                    for (const adminEmail of adminEmails) {
+                        try {
+                            await sendViaGoogleOAuth(
+                                adminEmail,
+                                `New Withdrawal Request - TRX: ${reqData.transaction_id}`,
+                                adminHtml,
+                                `New withdrawal request from ${reqData.user_name} of amount ৳${reqData.amount}`
+                            );
+                            console.log(`Withdraw Email Sent to Super Admin: ${adminEmail} for TRX: ${reqData.transaction_id}`);
+                        } catch (adminMailErr) {
+                            console.error(`Failed to send email to admin ${adminEmail}:`, adminMailErr.message);
+                        }
+                    }
                 }
 
-                // খ. যে সেলার উইথড্র দিয়েছে তার ইমেইল এবং PDF ইনভয়েস বের করা
+                // খ. যে সেলার উইথড্র দিয়েছে তার ইমেইল খুঁজে বের করা এবং কনফার্মেশন মেইল পাঠানো
                 const [sellerRows] = await db.query(
                     `SELECT email FROM admins WHERE id = ?`,
                     [reqData.admin_id]
@@ -156,68 +167,38 @@ const initWithdrawCron = () => {
                 if (sellerRows.length > 0 && sellerRows[0].email) {
                     const sellerEmail = sellerRows[0].email;
 
-                    // সেলারের জন্য একটি সিম্পল টেক্সট-বেসড বা HTML ইনভয়েস ডিজাইন (যেটি PDF হিসেবে অ্যাটাচ হবে)
-                    const invoiceHtml = `
-                        <html>
-                        <head>
-                            <style>
-                                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; padding: 20px; }
-                                .box { max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 8px; background: #fff; }
-                                h2 { color: #db2777; text-align: center; }
-                                .details { background: #fdf2f8; padding: 15px; border-radius: 6px; margin: 20px 0; }
-                                .details p { margin: 8px 0; }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="box">
-                                <h2>NexKartBD - Withdrawal Invoice</h2>
+                    const sellerHtml = `
+                        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
+                            <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                                <h2 style="color: #db2777; text-align: center;">Withdrawal Request Confirmation</h2>
                                 <p>প্রিয় <strong>${reqData.user_name}</strong>,</p>
-                                <p>আপনার উইথড্র রিকোয়েস্ট সফলভাবে সিস্টেমে রেকর্ড করা হয়েছে। নিচে ইনভয়েস কপি দেওয়া হলো:</p>
-                                <div class="details">
-                                    <p><strong>Transaction ID:</strong> ${reqData.transaction_id}</p>
-                                    <p><strong>Amount:</strong> ৳${reqData.amount}</p>
-                                    <p><strong>Payment Method:</strong> ${String(reqData.payment_type).toUpperCase()}</p>
-                                    <p><strong>Status:</strong> ${reqData.status}</p>
-                                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                                <p>আপনার ৳${reqData.amount} টাকার উইথড্র রিকোয়েস্ট সফলভাবে সিস্টেমে রেকর্ড করা হয়েছে।</p>
+                                
+                                <div style="background: #fdf2f8; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                                    <p style="margin: 8px 0;"><strong>Transaction ID:</strong> ${reqData.transaction_id}</p>
+                                    <p style="margin: 8px 0;"><strong>Amount:</strong> ৳${reqData.amount}</p>
+                                    <p style="margin: 8px 0;"><strong>Payment Method:</strong> ${String(reqData.payment_type).toUpperCase()}</p>
+                                    <p style="margin: 8px 0;"><strong>Status:</strong> ${reqData.status}</p>
+                                    <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
                                 </div>
-                                <p style="text-align: center; font-size: 12px; color: #777;">Thank you for using NexKartBD.</p>
+
+                                <p style="text-align: center; font-size: 12px; color: #777; margin-top: 30px;">Thank you for using NexKartBD.</p>
                             </div>
-                        </body>
-                        </html>
+                        </div>
                     `;
 
-                    // HTML কে বেসড 64 এনকোড করে PDF বা HTML ফাইল হিসেবে অ্যাটাচমেন্ট তৈরি করা (Resend API সাপোর্ট করে)
-                    const base64Invoice = Buffer.from(invoiceHtml).toString('base64');
-
-                    const sellerMailOptions = {
-                        to: sellerEmail,
-                        subject: `Withdrawal Request Confirmation & Invoice - ${reqData.transaction_id}`,
-                        html: `
-                            <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f8; border-radius: 10px;">
-                                <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 8px;">
-                                    <h2 style="color: #db2777; text-align: center;">Withdrawal Request Submitted</h2>
-                                    <p>প্রিয় ${reqData.user_name}, আপনার ৳${reqData.amount} টাকার উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে। মেইলের সাথে ইনভয়েস (PDF) অ্যাটাচ করা আছে।</p>
-                                </div>
-                            </div>
-                        `,
-                        text: `Your withdrawal request of ৳${reqData.amount} has been submitted successfully.`,
-                        attachments: [
-                            {
-                                filename: `Withdraw-Invoice-${reqData.transaction_id}.html`,
-                                content: base64Invoice,
-                            }
-                        ]
-                    };
-
-                    await sendMailWithFallback(sellerMailOptions);
-                    console.log(`Withdraw Confirmation & Invoice Email Sent to Seller: ${sellerEmail}`);
+                    try {
+                        await sendViaGoogleOAuth(
+                            sellerEmail,
+                            `Withdrawal Request Confirmation - ${reqData.transaction_id}`,
+                            sellerHtml,
+                            `Your withdrawal request of ৳${reqData.amount} has been submitted successfully.`
+                        );
+                        console.log(`Withdraw Confirmation Email Sent to Seller: ${sellerEmail}`);
+                    } catch (sellerMailErr) {
+                        console.error(`Failed to send withdrawal email to seller ${sellerEmail}:`, sellerMailErr.message);
+                    }
                 }
-
-                // ৪. ইমেইল পাঠানো সফল হলে withdraw_request টেবিলের send_mail ফিল্ড 1 করে দেওয়া যাতে ডাবল মেইল না যায়
-                await db.query(
-                    `UPDATE withdraw_request SET send_mail = 1 WHERE id = ?`,
-                    [reqData.id]
-                );
             }
 
         } catch (error) {
