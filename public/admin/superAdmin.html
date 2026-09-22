@@ -515,7 +515,7 @@
     </div>
   </div>
 
-  <!-- POPUP 6: IPR REPORTS MODAL -->
+ <!-- POPUP 6: IPR REPORTS MODAL -->
   <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
     <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
@@ -1254,7 +1254,7 @@
       }
     }
 
-    // IPR Reports Modal Open & Render
+   // IPR Reports Modal Open & Render
     async function openIprModal() {
       openModal('iprModal');
       const tableBody = document.getElementById('iprTableBody');
@@ -1271,30 +1271,33 @@
           return;
         }
 
-        tableBody.innerHTML = reports.map(item => `
-          <tr>
-            <td class="p-3 font-semibold text-slate-800">${item.brand_name || 'N/A'}</td>
-            <td class="p-3 text-slate-600">${item.contact_email || 'N/A'}</td>
-            <td class="p-3 font-medium text-slate-700">${item.infringement_type || 'N/A'}</td>
-            <td class="p-3">
-              ${item.product_url ? `<a href="${item.product_url}" target="_blank" class="text-blue-600 underline text-xs">View Product</a>` : 'N/A'}
-            </td>
-            
-            <td class="p-3">
-              <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${
-                item.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-              }">
-                ${item.status || 'pending'}
-              </span>
-            </td>
+        tableBody.innerHTML = reports.map(item => {
+          const isResolved = item.status === 'resolved';
+          return `
+            <tr>
+              <td class="p-3 font-semibold text-slate-800">${item.brand_name || 'N/A'}</td>
+              <td class="p-3 text-slate-600">${item.contact_email || 'N/A'}</td>
+              <td class="p-3 font-medium text-slate-700">${item.infringement_type || 'N/A'}</td>
+              <td class="p-3">
+                ${item.product_url ? `<a href="${item.product_url}" target="_blank" class="text-blue-600 underline text-xs">View Product</a>` : 'N/A'}
+              </td>
+              
+              <td class="p-3">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${
+                  isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                }">
+                  ${item.status || 'pending'}
+                </span>
+              </td>
 
-            <td class="p-3 text-right">
-              ${item.status !== 'resolved' ? 
-                `<button onclick="updateIprStatus(${item.id}, '${item.contact_email}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition">Process & Send Mail</button>` 
-                : `<span class="text-xs text-emerald-600 font-semibold"><i class="fa-solid fa-circle-check"></i> Resolved</span>`}
-            </td>
-          </tr>
-        `).join('');
+              <td class="p-3 text-right">
+                <button id="ipr-btn-${item.id}" onclick="updateIprStatus(${item.id}, '${item.contact_email}', this)" ${isResolved ? 'disabled' : ''} class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  ${isResolved ? 'Resolved' : 'Process & Send Mail'}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
 
       } catch (err) {
         console.error('Error loading IPR reports:', err);
@@ -1302,8 +1305,13 @@
       }
     }
 
-    async function updateIprStatus(id, email) {
-      if (!confirm('Are you sure you want to process this report? A confirmation mail will be sent and status will be updated to RESOLVED.')) return;
+    async function updateIprStatus(id, email, btnElement) {
+      if (!confirm('Are you sure you want to process this report? A confirmation mail will be sent via Google API and status will be updated to RESOLVED.')) return;
+      
+      if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerText = 'Processing...';
+      }
       
       try {
         const res = await fetch('/admin/api/update-ipr-status', {
@@ -1313,17 +1321,24 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert('Mail sent successfully & Status updated to RESOLVED!');
+          alert('Mail sent successfully via Google API & Status updated to RESOLVED!');
           openIprModal();
         } else {
           alert(data.error || 'Failed to update status');
+          if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.innerText = 'Process & Send Mail';
+          }
         }
       } catch (err) {
         console.error('Error:', err);
         alert('Network error while processing');
+        if (btnElement) {
+          btnElement.disabled = false;
+          btnElement.innerText = 'Process & Send Mail';
+        }
       }
     }
-
     // ================= SELLER STATUS LIST LOGIC =================
     async function openSellerStatusModal() {
       openModal('sellerStatusModal');
