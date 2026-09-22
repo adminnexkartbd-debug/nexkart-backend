@@ -1470,8 +1470,6 @@
             view_all: "View All",
             cat_coin_zone: "Coin Zone",
             load_more: "Load More"
-            
-            
         },
         bn: {
             search_placeholder: "কসমেটিকস, স্কিনকেয়ার, ব্র্যান্ড এবং আরও অনেক কিছু খুঁজুন...",
@@ -1539,17 +1537,15 @@
         localStorage.setItem('selectedLang', lang);
     }
 
-    // Dashboard Pagination States
     let currentDashPage = 1;
-    const dashLimit = 8; // প্রতি ক্লিকে লোড হওয়া প্রোডাক্ট সংখ্যা
+    const dashLimit = 8;
 
-    // COOKIE CONSENT SYSTEM
     function checkCookieConsent() {
         const consent = localStorage.getItem('cookieConsent');
         if (!consent) {
             setTimeout(() => {
                 document.getElementById('cookieBanner').classList.add('show');
-            }, 1000); // ১ সেকেন্ড পর পপ-আপ আসবে
+            }, 1000);
         }
     }
 
@@ -1562,11 +1558,6 @@
         localStorage.setItem('cookieConsent', 'declined');
         document.getElementById('cookieBanner').classList.remove('show');
     }
-
-    /* 
-       ডিভাইস তথ্য বা আইপি ট্র্যাকিং সংক্রান্ত ফাংশন পুরোপুরি অফ করা হয়েছে।
-       এখন থেকে ইউজার ঢুকলে অতিরিক্ত ট্র্যাকিং ডেটা ডাটাবেজে সেন্ড হবে না।
-    */
 
     async function loadBannerProducts() {
         const sliderContainer = document.getElementById('dynamicBannerSlider');
@@ -1677,10 +1668,8 @@
     }
     
     document.addEventListener("DOMContentLoaded", async function() {
-        // Cookie Consent চেক
         checkCookieConsent();
 
-        // Language Listener Setup
         const langSelect = document.getElementById('langChange');
         const savedLang = localStorage.getItem('selectedLang') || 'en';
         if (langSelect) {
@@ -1726,7 +1715,6 @@
             if (userProfile) userProfile.classList.add('d-none');
         }
 
-        // পেজ লোডে প্রথম পেজের প্রোডাক্ট লোড করা হবে
         loadDashboardProducts(currentDashPage, false);
     });
 
@@ -1749,12 +1737,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     discountBadge = product.promo_badge.toUpperCase();
                 }
 
-                // ========= [ EKANE COIN BADGE ADD KORUN ] =========
-                let coinOfferBadge = '';
-                if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
-                    coinOfferBadge = `<span class="product-badge" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #000; font-weight: 700;">-${product.coin_percentage_value}%</span>`;
-                }
-                // ================================================
+                // Dashboard-e coin badge rakha hoi ni (requirement onujayi soriye dewa hoyeche)[cite: 32]
 
                 let oldPrice = parseFloat(product.old_price);
                 let salePrice = parseFloat(product.sale_price);
@@ -1789,7 +1772,6 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetId}')">
                         <div class="product-badges-container">
                             ${discountBadge ? `<span class="product-badge">${discountBadge}</span>` : '<span></span>'}
-                            ${coinOfferBadge} <!-- <-- Eta ekhane boshabe -->
                             ${discountPercentTag}
                         </div>
                         <div>
