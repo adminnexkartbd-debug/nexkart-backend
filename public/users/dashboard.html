@@ -1276,7 +1276,13 @@
                 <li><a href="/user/profile"><i class="fa-solid fa-user"></i> <span data-i18n="profile">Profile</span></a></li>
                 <li><a href="/user/my-Order"><i class="fa-solid fa-box-archive"></i> <span data-i18n="my_orders">My Orders</span></a></li>
                 <li><a href="/user/Return-Refund-Requests"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="return_refund">Return & Refund Requests</span></a></li>
-                <li><a href="/user/my_coin.html"><i class="fa-solid fa-coins"></i> <span data-i18n="my_coins">My Coins</span></a></li>
+               <li>
+  <a href="/user/my_coin.html">
+    <i class="fa-solid fa-coins"></i> 
+    <span data-i18n="my_coins">My Coins</span>
+  </a>
+</li>
+                
                 <li><a href="/user/My-Coupons.html"><i class="fa-solid fa-ticket"></i> <span data-i18n="my_coupons">My Coupons</span></a></li>
                 
                 <div class="menu-divider"></div>
@@ -1322,6 +1328,7 @@
                 <li><a href="/user/category.html?type=health"><i class="fa-solid fa-heart-pulse"></i> <span data-i18n="cat_health">Health & Beauty (হেলথ ও বিউটি)</span></a></li>
                 <li><a href="/user/category.html?type=baby_toys"><i class="fa-solid fa-baby-carriage"></i> <span data-i18n="cat_baby">Baby & Toys (বেবি ও টয়েজ)</span></a></li>
                 <li><a href="/user/category.html?promo=new_arrival"><i class="fa-solid fa-gift"></i> <span data-i18n="cat_new_arrival">New Arrivals (নতুন প্রোডাক্ট)</span></a></li>
+                <li><a href="/user/category.html?promo=coin_products"><i class="fa-solid fa-coins"></i> <span data-i18n="cat_coin_zone">Coin Zone (কয়েন জোন)</span></a></li>
             </ul>
         </div>
 
@@ -1461,7 +1468,10 @@
             feat_support_sub: "Dedicated customer care",
             featured_products: "Featured Products",
             view_all: "View All",
+            cat_coin_zone: "Coin Zone",
             load_more: "Load More"
+            
+            
         },
         bn: {
             search_placeholder: "কসমেটিকস, স্কিনকেয়ার, ব্র্যান্ড এবং আরও অনেক কিছু খুঁজুন...",
@@ -1506,6 +1516,7 @@
             feat_support_sub: "ডেডিকেটেড কাস্টমার কেয়ার",
             featured_products: "বিশেষ পণ্যসমূহ",
             view_all: "সব দেখুন",
+            cat_coin_zone: "কয়েন জোন",
             load_more: "আরও লোড করুন"
         }
     };
@@ -1738,6 +1749,13 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     discountBadge = product.promo_badge.toUpperCase();
                 }
 
+                // ========= [ EKANE COIN BADGE ADD KORUN ] =========
+                let coinOfferBadge = '';
+                if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
+                    coinOfferBadge = `<span class="product-badge" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #000; font-weight: 700;">-${product.coin_percentage_value}%</span>`;
+                }
+                // ================================================
+
                 let oldPrice = parseFloat(product.old_price);
                 let salePrice = parseFloat(product.sale_price);
                 let discountPercentTag = '';
@@ -1750,6 +1768,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     }
                     oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
                 }
+
                 let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
                 if (product.primary_image) {
                     let rawImg = product.primary_image.trim();
@@ -1761,6 +1780,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                         imageSrc = '/uploads/' + cleanPath;
                     }
                 }
+                
                 const targetId = product.product_id || product.id;
                 const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
                 const starsHTML = renderStars(parseFloat(avgRating));
@@ -1769,6 +1789,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetId}')">
                         <div class="product-badges-container">
                             ${discountBadge ? `<span class="product-badge">${discountBadge}</span>` : '<span></span>'}
+                            ${coinOfferBadge} <!-- <-- Eta ekhane boshabe -->
                             ${discountPercentTag}
                         </div>
                         <div>
@@ -1803,31 +1824,11 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
             } else {
                 productGrid.innerHTML = productsHTML;
             }
-
-            if (loadMoreContainer) {
-                if (!data.hasMore) {
-                    loadMoreContainer.style.display = 'none';
-                } else {
-                    loadMoreContainer.style.display = 'block';
-                }
-            }
-
-        } else {
-            if (!isLoadMore) {
-                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">কোনো প্রোডাক্ট পাওয়া যায়নি!</div>`;
-                if (loadMoreContainer) loadMoreContainer.style.display = 'none';
-            }
         }
-
     } catch (error) {
         console.error("Error fetching products:", error);
-        if (!isLoadMore) {
-            productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: red;">প্রোডাক্ট লোড করতে ব্যর্থ হয়েছে।</div>`;
-        }
-    } finally {
-        if (btnSpinner) btnSpinner.classList.add('d-none');
     }
-}  
+}
 
 function loadMoreDashboardProducts() {
     currentDashPage++;
