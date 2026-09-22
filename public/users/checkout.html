@@ -227,7 +227,7 @@
           <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
         </div>
 
-        <!-- Coin Discount Option Box (সবসময় দৃশ্যমান থাকবে) -->
+        <!-- Coin Discount Option Box -->
         <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -237,11 +237,12 @@
                 <p class="text-[10px] text-gray-500">Balance: <strong id="checkout-user-coins">0</strong> Coins</p>
               </div>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="apply-coins-checkbox" onchange="toggleCoinDiscount()" class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:width-4 after:transition-all peer-checked:bg-[#ff4b6e]"></div>
+            <label class="relative inline-flex items-center cursor-pointer" id="coin-toggle-label">
+              <input type="checkbox" id="apply-coins-checkbox" onchange="toggleCoinDiscount()" class="sr-only peer" disabled>
+              <div id="coin-toggle-bg" class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:width-4 after:transition-all peer-checked:bg-[#ff4b6e]"></div>
             </label>
           </div>
+          <p id="coin-status-msg" class="text-[10px] text-red-500 font-semibold mt-1 hidden">আপনার পর্যাপ্ত কয়েন নেই!</p>
         </div>
 
         <div class="space-y-2.5 text-xs text-gray-600 pt-2 border-t border-pink-100">
@@ -376,13 +377,30 @@
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
-          // Coin Data Handle (সবসময় শো করবে, ডাটা না থাকলে ডিফল্ট ০ দেখাবে)
+          // Coin Handling: Check if user has coins > 0[cite: 14]
           userAvailableCoins = data.user_coins || 0;
-          coinOfferPercentage = (product.coin_percentage_value) ? parseFloat(product.coin_percentage_value) : 5; // ডিফলท์ ৫% বা প্রোডাক্টের মান
+          coinOfferPercentage = (product.coin_percentage_value) ? parseFloat(product.coin_percentage_value) : 5;
 
           document.getElementById('checkout-coin-percentage').innerText = coinOfferPercentage;
           document.getElementById('checkout-coin-percentage-display').innerText = coinOfferPercentage;
           document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
+
+          const coinCheckbox = document.getElementById('apply-coins-checkbox');
+          const coinToggleLabel = document.getElementById('coin-toggle-label');
+          const coinStatusMsg = document.getElementById('coin-status-msg');
+
+          if (userAvailableCoins > 0) {
+            // Enable coin switch if user has balance[cite: 14]
+            coinCheckbox.disabled = false;
+            coinToggleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+            coinStatusMsg.classList.add('hidden');
+          } else {
+            // Disable coin switch if balance is 0 or missing[cite: 14]
+            coinCheckbox.disabled = true;
+            coinCheckbox.checked = false;
+            coinToggleLabel.classList.add('opacity-50', 'cursor-not-allowed');
+            coinStatusMsg.classList.remove('hidden');
+          }
 
           const stockBadge = document.getElementById('stock-status-badge');
           if (availableStock <= 0 || product.stock_status === 'out_of_stock') {
@@ -439,6 +457,10 @@
 
     function toggleCoinDiscount() {
       const checkbox = document.getElementById('apply-coins-checkbox');
+      if (userAvailableCoins <= 0) {
+        checkbox.checked = false;
+        return;
+      }
       isCoinApplied = checkbox.checked;
 
       const subtotal = productPrice * quantity;
@@ -587,7 +609,7 @@
       const division = document.getElementById('cust-division').value.trim();
       const district = document.getElementById('cust-district').value.trim();
       const upazilla = document.getElementById('cust-upazilla').value.trim();
-      const union_area = document.getElementById('cust-union').value.trim();
+      const union_area = document.getElementById('cust-union').value.post_code ? '' : document.getElementById('cust-union').value.trim();
       const post_code = document.getElementById('cust-postcode').value.trim();
       const block_house = document.getElementById('cust-blockhouse').value.trim();
 
@@ -620,7 +642,7 @@
         division: division,
         district: district,
         upazilla: upazilla,
-        union_area: union_area,
+        union_area: document.getElementById('cust-union').value.trim(),
         post_code: post_code,
         block_house: block_house,
         discount_amount: totalCalculatedDiscount
