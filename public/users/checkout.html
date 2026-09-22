@@ -227,8 +227,8 @@
           <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
         </div>
 
-        <!-- Coin Discount Option Box -->
-        <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2 hidden">
+        <!-- Coin Discount Option Box (সবসময় দৃশ্যমান থাকবে) -->
+        <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-coins text-amber-500 text-base"></i>
@@ -376,15 +376,13 @@
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
-          // Coin Data Handle (সঠিকভাবে ডেটা রিসিভ করার ব্যবস্থা)
+          // Coin Data Handle (সবসময় শো করবে, ডাটা না থাকলে ডিফল্ট ০ দেখাবে)
           userAvailableCoins = data.user_coins || 0;
-          if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value && userAvailableCoins > 0) {
-            coinOfferPercentage = parseFloat(product.coin_percentage_value) || 0;
-            document.getElementById('checkout-coin-percentage').innerText = coinOfferPercentage;
-            document.getElementById('checkout-coin-percentage-display').innerText = coinOfferPercentage;
-            document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
-            document.getElementById('checkout-coin-section').classList.remove('hidden');
-          }
+          coinOfferPercentage = (product.coin_percentage_value) ? parseFloat(product.coin_percentage_value) : 5; // ডিফলท์ ৫% বা প্রোডাক্টের মান
+
+          document.getElementById('checkout-coin-percentage').innerText = coinOfferPercentage;
+          document.getElementById('checkout-coin-percentage-display').innerText = coinOfferPercentage;
+          document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
 
           const stockBadge = document.getElementById('stock-status-badge');
           if (availableStock <= 0 || product.stock_status === 'out_of_stock') {
