@@ -1279,6 +1279,10 @@ router.get('/inquiries/:productId', async (req, res) => {
 router.get('/product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
+        
+        // Current logged-in user ID ber korar jonno
+        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
+
         const productQuery = `
             SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
@@ -1291,6 +1295,16 @@ router.get('/product/:id', async (req, res) => {
         }
         const product = products[0];
         const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
+
+        // User-er valid & unexpired active coins calculation (`coin_expire >= NOW()` ba NULL)
+        let userTotalCoins = 0;
+        if (userId) {
+            const [coinRows] = await db.query(
+                `SELECT SUM(coin_balance) AS total_coin FROM my_coins WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
+                [userId]
+            );
+            userTotalCoins = coinRows[0].total_coin || 0;
+        }
 
         const [sellerProducts] = await db.query(`
             SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
@@ -1321,7 +1335,9 @@ router.get('/product/:id', async (req, res) => {
             product: product,
             gallery_images: images.map(img => img.image_path),
             seller_products: sellerProducts,
-            suggested_products: suggestedProducts
+            suggested_products: suggestedProducts,
+            user_coins: userTotalCoins,           // User-er total active coins[cite: 14]
+            coin_value_in_bdt: 0.30               // Proti 1 coin = 0.30 taka[cite: 14]
         });
     } catch (error) {
         console.error("Product Details Fetch Error:", error);
