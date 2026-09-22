@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); 
 
-// Helper function current admin identifier ber korar jonno
+// Helper function to extract current admin ID
 const getCurrentAdminId = (req) => {
-    return req.session?.adminId || req.headers['x-admin-id'] || req.query.adminId;
+    return req.session?.adminId || req.headers['x-admin-id'] || req.query.adminId || 1; // Fallback to 1 for testing if session is missing
 };
 
 /**
@@ -58,7 +57,7 @@ router.get('/current-user', async (req, res) => {
                     role: adminUser.role,
                     shopName: adminUser.shop_name,
                     phone: adminUser.phone,
-                    picture: adminUser.picture,
+                    picture: adminUser.picture, // Cloudinary image URL from database
                     superAdminStatus: adminUser.super_admin,
                     status: adminUser.status,
                     isVerified: adminUser.is_verified,
@@ -77,11 +76,11 @@ router.get('/current-user', async (req, res) => {
 
 /**
  * @route   POST /api/control-employee/logout
- * @desc    Logout confirmation (Yes/No niye logout handle korbe)
+ * @desc    Logout confirmation handler
  */
 router.post('/logout', (req, res) => {
     try {
-        const { confirmLogout } = req.body; // true (Yes) ba false (No)
+        const { confirmLogout } = req.body;
 
         if (!confirmLogout) {
             return res.status(200).json({
