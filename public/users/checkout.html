@@ -227,6 +227,23 @@
           <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
         </div>
 
+        <!-- Coin Discount Option Box -->
+        <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2 hidden">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-coins text-amber-500 text-base"></i>
+              <div>
+                <h4 class="text-[11px] font-bold text-gray-800">Use Coins (<span id="checkout-coin-percentage">0</span>% Offer)</h4>
+                <p class="text-[10px] text-gray-500">Balance: <strong id="checkout-user-coins">0</strong> Coins</p>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="apply-coins-checkbox" onchange="toggleCoinDiscount()" class="sr-only peer">
+              <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:width-4 after:transition-all peer-checked:bg-[#ff4b6e]"></div>
+            </label>
+          </div>
+        </div>
+
         <div class="space-y-2.5 text-xs text-gray-600 pt-2 border-t border-pink-100">
           <div class="flex justify-between">
             <span>Subtotal Price:</span>
@@ -235,6 +252,10 @@
           <div id="discount-row" class="flex justify-between text-green-600 hidden">
             <span>Discount (<span id="coupon-name-display"></span>):</span>
             <span class="font-bold">- ৳ <span id="summary-discount">0</span></span>
+          </div>
+          <div id="coin-discount-row" class="flex justify-between text-amber-700 hidden">
+            <span>Coin Discount (<span id="checkout-coin-percentage-display">0</span>%):</span>
+            <span class="font-bold">- ৳ <span id="summary-coin-discount">0</span></span>
           </div>
           <div class="flex justify-between">
             <span>Delivery Charge:</span>
@@ -268,6 +289,12 @@
     let appliedDiscount = 0;
     let appliedCouponName = '';
     let availableStock = 0;
+
+    // Coin Variables
+    let userAvailableCoins = 0;
+    let coinOfferPercentage = 0;
+    let coinDiscountAmount = 0;
+    let isCoinApplied = false;
 
     document.addEventListener("DOMContentLoaded", () => {
       if (productId) {
@@ -349,6 +376,16 @@
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
+          // Coin Data Handle
+          userAvailableCoins = data.user_coins || 0;
+          if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value && userAvailableCoins > 0) {
+            coinOfferPercentage = parseFloat(product.coin_percentage_value) || 0;
+            document.getElementById('checkout-coin-percentage').innerText = coinOfferPercentage;
+            document.getElementById('checkout-coin-percentage-display').innerText = coinOfferPercentage;
+            document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
+            document.getElementById('checkout-coin-section').classList.remove('hidden');
+          }
+
           const stockBadge = document.getElementById('stock-status-badge');
           if (availableStock <= 0 || product.stock_status === 'out_of_stock') {
             stockBadge.innerHTML = `<span class="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-md">Out of Stock</span>`;
@@ -402,6 +439,22 @@
       }
     }
 
+    function toggleCoinDiscount() {
+      const checkbox = document.getElementById('apply-coins-checkbox');
+      isCoinApplied = checkbox.checked;
+
+      const subtotal = productPrice * quantity;
+      if (isCoinApplied) {
+        coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+        document.getElementById('coin-discount-row').classList.remove('hidden');
+        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      } else {
+        coinDiscountAmount = 0;
+        document.getElementById('coin-discount-row').classList.add('hidden');
+      }
+      updateTotals();
+    }
+
     function increaseQuantity() {
       const errorMsg = document.getElementById('stock-error-msg');
       if (quantity < availableStock) {
@@ -412,6 +465,11 @@
         errorMsg.classList.remove('hidden');
       }
       document.getElementById('summary-qty').innerText = quantity;
+      if (isCoinApplied) {
+        const subtotal = productPrice * quantity;
+        coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
       updateTotals();
     }
 
@@ -421,6 +479,11 @@
         quantity -= 1;
         errorMsg.classList.add('hidden');
         document.getElementById('summary-qty').innerText = quantity;
+        if (isCoinApplied) {
+          const subtotal = productPrice * quantity;
+          coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+          document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
         updateTotals();
       }
     }
@@ -505,7 +568,8 @@
       }
 
       deliveryCharge = calculatedDeliveryCharge;
-      const finalSubtotal = Math.max(0, subtotal - appliedDiscount);
+      const totalDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
+      const finalSubtotal = Math.max(0, subtotal - totalDiscount);
       const total = finalSubtotal + deliveryCharge;
 
       document.getElementById('summary-subtotal').innerText = `৳ ${subtotal.toLocaleString()}`;
@@ -544,6 +608,8 @@
         return;
       }
 
+      const totalCalculatedDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
+
       const orderData = {
         product_id: productId,
         quantity: quantity,
@@ -559,7 +625,7 @@
         union_area: union_area,
         post_code: post_code,
         block_house: block_house,
-        discount_amount: appliedDiscount
+        discount_amount: totalCalculatedDiscount
       };
 
       try {
