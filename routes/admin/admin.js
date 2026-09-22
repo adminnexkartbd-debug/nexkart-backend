@@ -319,42 +319,6 @@ router.get('/api/admin/reviews/pending-count', ensureActiveAdmin, async (req, re
 });
 
 // ==========================================
-// ১৩.খ. SITE VISITORS API (FIXED WITH SUPER_ADMIN APPROVAL CHECK)
-// ==========================================
-router.get('/api/admin-inbox/site-visitors', async (req, res) => {
-    try {
-        if (!req.isAuthenticated() || req.user.super_admin !== 'approved') {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Can't see site visitors. Super admin approval required." 
-            });
-        }
-
-        const { filter } = req.query;
-        let query = 'SELECT * FROM site_visits ORDER BY last_visited_at DESC';
-        
-        if (filter === 'today') {
-            query = 'SELECT * FROM site_visits WHERE DATE(last_visited_at) = CURDATE() ORDER BY last_visited_at DESC';
-        }
-
-        const [visitors] = await db.query(query);
-
-        return res.status(200).json({ 
-            success: true, 
-            visitorCount: visitors.length,
-            visitors: visitors
-        });
-    } catch (error) {
-        console.error("Site visitor fetch error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: "Database Error",
-            error: error.message 
-        });
-    }
-});
-
-// ==========================================
 // ১৪. সকল অ্যাডমিন HTML ফাইল পেজ রাউটস
 // ==========================================
 router.get('/home.html', ensureActiveAdmin, (req, res) => {
@@ -390,6 +354,9 @@ router.get('/superAdmin.html', ensureSuperAdmin, (req, res) => {
 
 router.get('/withdraw.html', ensureSuperAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/admin/withdraw.html'));
+});
+router.get('/controlEmployee.html', ensureSuperAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/admin/controlEmployee.html'));
 });
 
 router.get('/Return-RefundAdmin.html', ensureSuperAdmin, (req, res) => {
