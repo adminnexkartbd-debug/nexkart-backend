@@ -40,11 +40,11 @@ const upload = multer({
     }
 });
 
-// Upload route with Super Admin email notification
+// Upload route with Super Admin email notification (Fixed brackets here)
 router.post('/api/profile/upload-documents', ensureActiveAdmin, upload.fields([
     { name: 'identity_file', maxCount: 1 },
     { name: 'trade_license_file', maxCount: 1 }
-], async (req, res) => {
+]), async (req, res) => {
     try {
         const userId = req.user.id;
         const { identity_type, identity_number, trade_license_number } = req.body;
