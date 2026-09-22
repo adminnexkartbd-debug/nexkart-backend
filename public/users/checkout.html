@@ -376,7 +376,7 @@
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
-          // Coin Data Handle
+          // Coin Data Handle (সঠিকভাবে ডেটা রিসিভ করার ব্যবস্থা)
           userAvailableCoins = data.user_coins || 0;
           if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value && userAvailableCoins > 0) {
             coinOfferPercentage = parseFloat(product.coin_percentage_value) || 0;
