@@ -707,11 +707,11 @@ router.post('/forgot-password', async (req, res) => {
             }
         );
 
-        return res.status(200).json({ message: 'Apnar email-e reset link pathano hoyeche! Spam folder-o check korun.' });
+        return res.status(200).json({ message: 'A reset link has been sent to your email! Please check your spam folder as well.' });
 
     } catch (err) {
         console.error('Google API Email Send Error:', err.response?.data || err.message);
-        return res.status(500).json({ message: 'Email pathate somoshya hoyeche! Configuration check korun.' });
+        return res.status(500).json({ message: 'There was a problem sending the email! Please check your configuration.' });
     }
 });
 
