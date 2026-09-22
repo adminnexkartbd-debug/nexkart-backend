@@ -177,8 +177,9 @@ router.get('/cslogin', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cslogin.html'));
 });
 
-// ড্যাশবোর্ড রাউট
 router.get('/dashboard', async (req, res) => {
+    // Tracking code off korar jonno nicher ongsho tuku comment out ba remove kore din:
+    /*
     try {
         if (!req.session.visitorId) {
             req.session.visitorId = 'visitor_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
@@ -201,6 +202,7 @@ router.get('/dashboard', async (req, res) => {
     } catch (trackError) {
         console.error("Visit Tracking Error:", trackError);
     }
+    */
 
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'dashboard.html'));
 });
