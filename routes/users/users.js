@@ -1179,7 +1179,6 @@ router.get('/bdgate-success', async (req, res) => {
     res.redirect('/user/dashboard');
 });
 
-// Inquiry Routes
 router.post('/inquiry', async (req, res) => {
     try {
         const { product_id, question, user_name } = req.body;
@@ -1187,22 +1186,75 @@ router.post('/inquiry', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID and Question are required!' });
         }
 
-        const [products] = await db.query('SELECT id FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
+        // ১. প্রোডাক্ট এবং সংশ্লিষ্ট সেলারের (admin_id) তথ্য বের করা
+        const [products] = await db.query('SELECT p.*, a.email AS seller_email, a.shop_name FROM products p LEFT JOIN admins a ON p.admin_id = a.id WHERE p.id = ? OR p.product_id = ?', [product_id, product_id]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'Product not found!' });
         }
         
-        const actualProductId = products[0].id;
+        const product = products[0];
+        const sellerEmail = product.seller_email;
+        const actualProductId = product.id;
         const userNameToSave = user_name || (req.user ? req.user.name : 'Valued Customer');
 
+        // ২. ডাটাবেজে ইনকোয়ারি সেভ করা
         await db.query(
             'INSERT INTO product_inquiries (product_id, question, user_name, created_at) VALUES (?, ?, ?, NOW())',
             [actualProductId, question, userNameToSave]
         );
 
-        return res.json({ success: true, message: 'Inquiry submitted successfully!' });
+        // ৩. যদি সেলারের ইমেইল পাওয়া যায়, তবে Google OAuth API দিয়ে মেইল পাঠানো
+        if (sellerEmail) {
+            const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
+                params: {
+                    client_id: process.env.GOOGLE_USER_CLIENT_ID,
+                    client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
+                    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+                    grant_type: 'refresh_token'
+                }
+            });
+
+            const accessToken = tokenResponse.data.access_token;
+
+            const emailTemplate = `
+                <h3>New Product Inquiry</h3>
+                <p><strong>Product:</strong> ${product.title}</p>
+                <p><strong>Customer Name:</strong> ${userNameToSave}</p>
+                <p><strong>Question:</strong> ${question}</p>
+            `;
+
+            const subject = `❓ New Inquiry for Product: ${product.title}`;
+            const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+            const messageParts = [
+                `To: ${sellerEmail}`,
+                `Subject: ${utf8Subject}`,
+                `MIME-Version: 1.0`,
+                `Content-Type: text/html; charset=utf-8`,
+                ``,
+                emailTemplate
+            ];
+            const message = messageParts.join('\r\n');
+            const encodedMessage = Buffer.from(message)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+            await axios.post(
+                `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
+                { raw: encodedMessage },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+        }
+
+        return res.json({ success: true, message: 'Inquiry submitted and email sent to seller successfully!' });
     } catch (error) {
-        console.error("Inquiry Submit Error:", error);
+        console.error("Inquiry Submit & Email Error:", error.response?.data || error.message);
         return res.status(500).json({ success: false, message: 'Server error while submitting inquiry!' });
     }
 });
