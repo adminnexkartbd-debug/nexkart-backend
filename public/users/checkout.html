@@ -233,7 +233,7 @@
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-coins text-amber-500 text-base"></i>
               <div>
-                <h4 class="text-[11px] font-bold text-gray-800">Use Coins (<span id="checkout-coin-percentage">0</span>% Offer)</h4>
+                <h4 class="text-[11px] font-bold text-gray-800">Use Coins (1 Coin = ৳0.30, Max 4% Off)[cite: 14]</h4>
                 <p class="text-[10px] text-gray-500">Balance: <strong id="checkout-user-coins">0</strong> Coins</p>
               </div>
             </div>
@@ -255,7 +255,7 @@
             <span class="font-bold">- ৳ <span id="summary-discount">0</span></span>
           </div>
           <div id="coin-discount-row" class="flex justify-between text-amber-700 hidden">
-            <span>Coin Discount (<span id="checkout-coin-percentage-display">0</span>%):</span>
+            <span>Coin Discount:</span>
             <span class="font-bold">- ৳ <span id="summary-coin-discount">0</span></span>
           </div>
           <div class="flex justify-between">
@@ -293,7 +293,6 @@
 
     // Coin Variables
     let userAvailableCoins = 0;
-    let coinOfferPercentage = 0;
     let coinDiscountAmount = 0;
     let isCoinApplied = false;
 
@@ -377,12 +376,8 @@
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
-          // Coin Handling: Check if user has coins > 0[cite: 14]
+          // Coin Handling: 1 Coin = 0.30 BDT, Max 4% Discount Check[cite: 14]
           userAvailableCoins = data.user_coins || 0;
-          coinOfferPercentage = (product.coin_percentage_value) ? parseFloat(product.coin_percentage_value) : 5;
-
-          document.getElementById('checkout-coin-percentage').innerText = coinOfferPercentage;
-          document.getElementById('checkout-coin-percentage-display').innerText = coinOfferPercentage;
           document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
 
           const coinCheckbox = document.getElementById('apply-coins-checkbox');
@@ -390,12 +385,10 @@
           const coinStatusMsg = document.getElementById('coin-status-msg');
 
           if (userAvailableCoins > 0) {
-            // Enable coin switch if user has balance[cite: 14]
             coinCheckbox.disabled = false;
             coinToggleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
             coinStatusMsg.classList.add('hidden');
           } else {
-            // Disable coin switch if balance is 0 or missing[cite: 14]
             coinCheckbox.disabled = true;
             coinCheckbox.checked = false;
             coinToggleLabel.classList.add('opacity-50', 'cursor-not-allowed');
@@ -455,6 +448,17 @@
       }
     }
 
+    function calculateCoinDiscount() {
+      const subtotal = productPrice * quantity;
+      // Proti 1 coin = 0.30 taka[cite: 14]
+      let rawCoinDiscount = userAvailableCoins * 0.30;
+      // Max 4% of subtotal limit[cite: 14]
+      let maxAllowedDiscount = (subtotal * 4) / 100;
+      
+      // Joto hobe tar modhye jei ta choto shetai hobe (jodi 10 coin thake taile 3 tk hobe, abar 100 coin thakle 4% er besi hobe na)[cite: 14]
+      return Math.min(rawCoinDiscount, maxAllowedDiscount);
+    }
+
     function toggleCoinDiscount() {
       const checkbox = document.getElementById('apply-coins-checkbox');
       if (userAvailableCoins <= 0) {
@@ -463,9 +467,8 @@
       }
       isCoinApplied = checkbox.checked;
 
-      const subtotal = productPrice * quantity;
       if (isCoinApplied) {
-        coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+        coinDiscountAmount = calculateCoinDiscount();
         document.getElementById('coin-discount-row').classList.remove('hidden');
         document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       } else {
@@ -486,8 +489,7 @@
       }
       document.getElementById('summary-qty').innerText = quantity;
       if (isCoinApplied) {
-        const subtotal = productPrice * quantity;
-        coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+        coinDiscountAmount = calculateCoinDiscount();
         document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       }
       updateTotals();
@@ -500,8 +502,7 @@
         errorMsg.classList.add('hidden');
         document.getElementById('summary-qty').innerText = quantity;
         if (isCoinApplied) {
-          const subtotal = productPrice * quantity;
-          coinDiscountAmount = (subtotal * coinOfferPercentage) / 100;
+          coinDiscountAmount = calculateCoinDiscount();
           document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
         updateTotals();
@@ -588,6 +589,12 @@
       }
 
       deliveryCharge = calculatedDeliveryCharge;
+      
+      if (isCoinApplied) {
+        coinDiscountAmount = calculateCoinDiscount();
+        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+
       const totalDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
       const finalSubtotal = Math.max(0, subtotal - totalDiscount);
       const total = finalSubtotal + deliveryCharge;
@@ -609,7 +616,7 @@
       const division = document.getElementById('cust-division').value.trim();
       const district = document.getElementById('cust-district').value.trim();
       const upazilla = document.getElementById('cust-upazilla').value.trim();
-      const union_area = document.getElementById('cust-union').value.post_code ? '' : document.getElementById('cust-union').value.trim();
+      const union_area = document.getElementById('cust-union').value.trim();
       const post_code = document.getElementById('cust-postcode').value.trim();
       const block_house = document.getElementById('cust-blockhouse').value.trim();
 
@@ -642,7 +649,7 @@
         division: division,
         district: district,
         upazilla: upazilla,
-        union_area: document.getElementById('cust-union').value.trim(),
+        union_area: union_area,
         post_code: post_code,
         block_house: block_house,
         discount_amount: totalCalculatedDiscount
