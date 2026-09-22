@@ -1,105 +1,79 @@
 require('dotenv').config();
 
 /**
- * ১০০% পিওর HTTP API ফলব্যাক মেল সিস্টেম (Resend -> Brevo -> Mailjet)
- * এখানে কোনো প্রকার Nodemailer বা SMTP পোর্ট ব্যবহার করা হয়নি। ফলে Render সার্ভারে কোনো টাইমআউট বা কানেকশন এরর আসবে না।
+ * Google OAuth2 ব্যবহার করে সরাসরি Gmail API এর মাধ্যমে মেল পাঠানোর ফাংশন
  */
-const sendMailWithFallback = async ({ to, subject, html, text }) => {
-  
-  // --- 1st Try: Resend API ---
+const sendMailWithGoogleOAuth = async ({ to, subject, html, text }) => {
   try {
-    console.log('Trying with Resend API...');
-    const resendResponse = await fetch('https://api.resend.com/emails', {
+    console.log('Generating Google OAuth2 access token...');
+
+    // ১. রিফ্রেশ টোকেন ব্যবহার করে নতুন অ্যাক্সেস টোকেন জেনারেট করা
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
-        from: 'NexKARTbd <onboarding@resend.dev>',
-        to: [to],
-        subject: subject,
-        html: html,
-        text: text
-      })
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_USER_CLIENT_ID,
+        client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+        grant_type: 'refresh_token',
+      }),
     });
 
-    const resendData = await resendResponse.json();
-    if (!resendResponse.ok) {
-      throw new Error(resendData.message || 'Resend API failed');
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error_description || tokenData.error || 'Failed to generate Google OAuth access token');
     }
 
-    console.log('Mail sent successfully via Resend API!');
-    return { success: true, provider: 'Resend' };
+    const accessToken = tokenData.access_token;
+    console.log('Google Access Token generated successfully. Sending email...');
 
-  } catch (resendError) {
-    console.log(`Resend failed: ${resendError.message}. Switching to Brevo API...`);
+    // ২. জিমেইল পাঠানোর জন্য ইমেইল ফরম্যাটকে MIME (RFC 2822) ফরম্যাটে রূপান্তর করা
+    // জিমেইল এপিআই-তে পাঠানোর জন্য বেসসিজ কোডিং (Base64url) করতে হয়
+    const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+    const messageParts = [
+      `To: ${to}`,
+      `Subject: ${utf8Subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      html
+    ];
+    const message = messageParts.join('\r\n');
+    
+    // Base64url এনকোডিং
+    const encodedMessage = Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
 
-    // --- 2nd Try: Brevo API ---
-    try {
-      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify({
-          sender: { name: "NexKARTBD", email: "no-reply@nexkartbd.com" },
-          to: [{ email: to }],
-          subject: subject,
-          htmlContent: html,
-          textContent: text
-        })
-      });
+    // ৩. Gmail API এ রিকোয়েস্ট পাঠানো
+    const gmailResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        raw: encodedMessage,
+      }),
+    });
 
-      if (!brevoResponse.ok) {
-        const brevoErr = await brevoResponse.json();
-        throw new Error(brevoErr.message || 'Brevo API request failed');
-      }
+    const gmailData = await gmailResponse.json();
 
-      console.log('Mail sent successfully via Brevo API!');
-      return { success: true, provider: 'Brevo' };
-
-    } catch (brevoError) {
-      console.log(`Brevo failed: ${brevoError.message}. Switching to Mailjet API...`);
-
-      // --- 3rd Try: Mailjet API ---
-      try {
-        const credentials = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_SECRET_KEY}`).toString('base64');
-        
-        const mailjetResponse = await fetch('https://api.mailjet.com/v3.1/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${credentials}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            Messages: [
-              {
-                From: { Email: "pilot@mailjet.com", Name: "NexKARTBD" },
-                To: [{ Email: to, Name: "Valued Seller" }],
-                Subject: subject,
-                HTMLPart: html,
-                TextPart: text,
-              }
-            ]
-          })
-        });
-
-        if (!mailjetResponse.ok) {
-          const mailjetErr = await mailjetResponse.json();
-          throw new Error(JSON.stringify(mailjetErr) || 'Mailjet API request failed');
-        }
-
-        console.log('Mail sent successfully via Mailjet API!');
-        return { success: true, provider: 'Mailjet' };
-
-      } catch (mailjetError) {
-        console.error(`Mailjet also failed: ${mailjetError.message}`);
-        throw new Error('All email API providers (Resend, Brevo, Mailjet) failed!');
-      }
+    if (!gmailResponse.ok) {
+      throw new Error(gmailData.error?.message || 'Failed to send email via Gmail API');
     }
+
+    console.log('Mail sent successfully via Google OAuth Gmail API!');
+    return { success: true, provider: 'Google Gmail API' };
+
+  } catch (error) {
+    console.error(`Google OAuth Mail Error: ${error.message}`);
+    throw error;
   }
 };
 
@@ -192,15 +166,15 @@ const sendWithdrawEmail = async (withdrawDetails) => {
 
         const textContent = `প্রিয় ${withdrawDetails.userName}, আপনার ৳${withdrawDetails.amount} টাকার উত্তোলনের অনুরোধের বর্তমান স্ট্যাটাস: ${statusText}. ট্রানজেকশন আইডি: ${withdrawDetails.transactionId}`;
 
-        // ফলব্যাক মেল ফাংশন কল করা হলো
-        const result = await sendMailWithFallback({
+        // Google OAuth API এর মাধ্যমে মেল ফাংশন কল করা হলো
+        await sendMailWithGoogleOAuth({
             to: sellerEmail,
             subject: subjectLine,
             html: htmlContent,
             text: textContent
         });
 
-        console.log(`Withdraw Status (${statusText}) Email Sent Successfully to Seller via ${result.provider}!`);
+        console.log(`Withdraw Status (${statusText}) Email Sent Successfully to Seller via Google OAuth!`);
         return { success: true };
 
     } catch (error) {
