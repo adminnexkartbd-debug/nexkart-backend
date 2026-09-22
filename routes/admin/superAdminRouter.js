@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const db = require('../../db');
+const { google } = require('googleapis');
 
 const { sendWithdrawEmail } = require('../../services/withdrawmail');
 const { 
@@ -256,7 +257,7 @@ router.get('/api/ipr-reports', ensureSuperAdmin, async (req, res) => {
     }
 });
 
-// ২. Email পাঠানোর পর Status Update (resolved) করার API
+// ২. Email পাঠানোর পর Status Update (resolved) করার API (Google API use kore)
 router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
     const { id, email } = req.body;
 
@@ -265,9 +266,19 @@ router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
     }
 
     try {
-        // ১. ইমেইল পাঠানো (sellerMailService এর fallback system use kore)
+        // ১. Google API OAuth2 client setup ebong mail pathano
         if (email) {
-            const { sendEmailWithFallback } = require('../../services/sellerMailService'); // dorkar hole uporeo import kore rakhte paren
+            const oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_USER_CLIENT_ID,
+                process.env.GOOGLE_USER_CLIENT_SECRET,
+                process.env.GOOGLE_OAUTH_REDIRECT_URI
+            );
+
+            oauth2Client.setCredentials({
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+            });
+
+            const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
             
             const subject = 'Update on Your IPR Infringement Report';
             const htmlContent = `
@@ -277,26 +288,48 @@ router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
                 </div>
             `;
 
-            // Nodemailer bad diye ekhon ekhane api fallback system kaj korbe
-            await sendEmailWithFallback(email, subject, htmlContent);
+            const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+            const messageParts = [
+                `To: ${email}`,
+                `Subject: ${utf8Subject}`,
+                'MIME-Version: 1.0',
+                'Content-Type: text/html; charset=utf-8',
+                '',
+                htmlContent,
+            ];
+            const message = messageParts.join('\n');
+            const encodedMessage = Buffer.from(message)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+            await gmail.users.messages.send({
+                userId: 'me',
+                request_body: {
+                    raw: encodedMessage,
+                },
+                requestBody: {
+                    raw: encodedMessage,
+                }
+            });
         }
 
-        // ২. ইমেইল পাঠানো সফল হলে ডাটাবেজে status = 'resolved' হবে
+        // ২. Dataabase e status 'resolved' update kora
         const query = "UPDATE ipr_reports SET status = 'resolved' WHERE id = ?";
         const [result] = await db.query(query, [id]);
 
         if (result.affectedRows > 0) {
-            return res.json({ success: true, message: 'Mail sent successfully & status updated to resolved' });
+            return res.json({ success: true, message: 'Mail sent successfully via Google API & status updated to resolved' });
         } else {
             return res.status(404).json({ success: false, error: 'IPR report not found' });
         }
 
     } catch (err) {
-        console.error('Error in sending mail or database update:', err);
-        return res.status(500).json({ success: false, error: 'Failed to send mail or update status' });
+        console.error('Error in Google API mail sending or database update:', err);
+        return res.status(500).json({ success: false, error: 'Failed to send mail via Google API or update status' });
     }
 });
-// ================= SELLER STATUS LIST API =================
 // ================= SELLER ACTION/STATUS LIST API =================
 router.get('/api/seller-status-list', ensureSuperAdmin, async (req, res) => {
     const query = `
