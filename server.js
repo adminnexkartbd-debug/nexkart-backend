@@ -220,6 +220,8 @@ const productRouter = require('./routes/admin/productRoutes');
 const adminInboxRouter = require('./routes/admin/adminInbox');
 const inquariedRouter = require('./routes/admin/Inquaried_sl'); 
 const orderListRouter = require('./routes/admin/order-listRouter');
+const controlEmployeRouter = require('./routes/admin/controlEmployeRouter');
+
 const cartRouter = require('./routes/users/cart.router');
 const adminReviewRouter = require('./routes/admin/adminReviewRouter');
 const verifyDocumentsRouter = require('./routes/admin/verifyDocuments'); 
@@ -270,6 +272,7 @@ app.use('/api/admin/reviews', adminReviewRouter);
 app.use('/api/message-center', messageCenterRouter);
 app.use('/api/admin', adminSettingRoute);
 app.use('/api/coins', coinRoutes);
+app.use('/api/control-employee', controlEmployeRouter);
 
 app.use('/admin/uploads', express.static(path.join(__dirname, 'uploads')));
 
