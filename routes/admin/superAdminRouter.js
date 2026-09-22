@@ -280,11 +280,17 @@ router.post('/api/update-ipr-status', ensureSuperAdmin, async (req, res) => {
 
             const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
             
-            const subject = 'Update on Your IPR Infringement Report';
+            const subject = 'Update Regarding Your Intellectual Property Rights (IPR) Infringement Report';
             const htmlContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                  <h3 style="color: #059669;">IPR Report Resolved</h3>
-                  <p>Apnar IPR report-ti (ID: <b>${id}</b>) sothikbhabe porjalochona ebong somadhan kora hoyeche. Dhonnobad!</p>
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                  <h2 style="color: #047857; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-top: 0;">IPR Report Status: Resolved</h2>
+                  <p>Dear Valued Brand Representative,</p>
+                  <p>Thank you for bringing this matter to our attention. We have carefully reviewed your Intellectual Property Rights (IPR) infringement report (Report ID: <b>${id}</b>).</p>
+                  <p>Our team has successfully processed your request and taken the necessary action regarding the reported product listing in accordance with our marketplace policies.</p>
+                  <p style="margin-top: 25px;">Thank you for your cooperation and for helping us maintain a safe, secure, and authentic marketplace.</p>
+                  <br/>
+                  <p style="margin-bottom: 0;">Best regards,</p>
+                  <p style="margin-top: 5px;"><b>NexKart Administration Team</b></p>
                 </div>
             `;
 
