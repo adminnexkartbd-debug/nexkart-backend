@@ -969,22 +969,24 @@
     }
 
     async function changeOrderState(id, field, value) {
-      try {
-        const res = await fetch('/admin/api/update-order-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, field, value })
-        });
-        const data = await res.json();
-        if (!data.success) {
-          alert(data.error || 'Failed to update order');
-        }
-      } catch (err) {
-        console.error('Error updating order:', err);
-        alert('Network error while updating status');
-      }
+  try {
+    const res = await fetch('/admin/api/update-order-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, field, value })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Order status updated and confirmation email sent successfully via Google API!');
+      openOrderModal(); // Order list refresh korar jonno
+    } else {
+      alert(data.error || 'Failed to update order');
     }
-
+  } catch (err) {
+    console.error('Error updating order:', err);
+    alert('Network error while updating status');
+  }
+}
     // ================= COMMISSION REPORT LOGIC =================
     async function openCommissionModal() {
       openModal('commissionModal');
@@ -1126,7 +1128,7 @@
       }).join('');
     }
 
-    function selectTicket(id) {
+   function selectTicket(id) {
       activeTicket = allTicketsData.find(t => t.id === id);
       if (!activeTicket) return;
 
@@ -1139,18 +1141,30 @@
 
       document.getElementById('ticketHeaderStatus').innerHTML = `<span class="text-xs px-2.5 py-1 rounded-full font-bold uppercase ${badgeColor}">${activeTicket.status}</span>`;
 
-      // Form enablement
-      document.getElementById('ticketReplyText').disabled = false;
-      document.getElementById('ticketReplyBtn').disabled = false;
-      
+      const replyTextarea = document.getElementById('ticketReplyText');
+      const replyBtn = document.getElementById('ticketReplyBtn');
       const statusSelect = document.getElementById('ticketStatusSelect');
-      statusSelect.disabled = false;
+
       statusSelect.value = activeTicket.status || 'open';
+
+      // যদি টিকিটটি ইতিমধ্যে closed থাকে, তবে ইনপুট ও বাটন ডিজেবল করে দেওয়া (ar reply dite parbe na)
+      if (activeTicket.status === 'closed') {
+        replyTextarea.value = '';
+        replyTextarea.disabled = true;
+        replyTextarea.placeholder = 'This ticket is closed. Further replies are disabled.';
+        replyBtn.disabled = true;
+        statusSelect.disabled = true;
+      } else {
+        replyTextarea.disabled = false;
+        replyTextarea.placeholder = 'Write official admin reply...';
+        replyBtn.disabled = false;
+        statusSelect.disabled = false;
+      }
 
       renderTicketDetails(activeTicket);
       filterTickets();
     }
-
+   
     function renderTicketDetails(ticket) {
       const container = document.getElementById('ticketBodyContainer');
 
