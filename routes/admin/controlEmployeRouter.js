@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-// Apnar project er database connection file ekhane require korun 
-// (Jemon: '../../db' ba '../../config/db' - apnar project structure onujayi path thik kore deben)
-const db = require('../../db'); 
+// Apnar database file er sothik path ekhane din. 
+// Jodi database connection file 'src/config/db.js' e thake, tabe '../../config/db' din.
+// Jodi root folder e thake, tabe onno path hote pare.
+let db;
+try {
+    db = require('../../db'); // Proyojonmoto path poriborton korun (e.g., '../../config/db')
+} catch (e) {
+    console.error('Database module load error:', e.message);
+}
 
 /**
  * @route   POST /api/control-employee/verify-pin
@@ -17,19 +23,26 @@ router.post('/verify-pin', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Pin number is required.' });
         }
 
+        // Fallback jodi db undefined thake
+        const activeDb = db || req.app.get('db');
+        if (!activeDb) {
+            console.error('Database connection is not initialized or exported properly.');
+            return res.status(500).json({ success: false, message: 'Database connection error on server.' });
+        }
+
         const query = `SELECT secreat_code_admin FROM secreat LIMIT 1`;
 
-        db.query(query, (err, results) => {
+        activeDb.query(query, (err, results) => {
             if (err) {
                 console.error('Database error fetching secret code:', err);
                 return res.status(500).json({ success: false, message: 'Internal server error' });
             }
 
-            if (results.length === 0) {
+            if (!results || results.length === 0) {
                 return res.status(404).json({ success: false, message: 'Secret code configuration not found in database.' });
             }
 
-            // Clean database value by removing commas and whitespace
+            // Clean database value and user input
             const rawDbPin = String(results[0].secreat_code_admin).replace(/,/g, '').trim();
             const cleanUserPin = String(pin).replace(/,/g, '').trim();
 
