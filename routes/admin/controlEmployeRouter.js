@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); // Apnar project er path anujaayi thik rakben
+const db = require('../../db');
 
 router.post('/verify-pin', async (req, res) => {
     try {
@@ -35,7 +35,7 @@ router.post('/verify-pin', async (req, res) => {
     }
 });
 
-// Get Commission Rate from Database
+// Get Commission Rate from Database (comision table & commision_rate column)
 router.get('/get-commission', async (req, res) => {
     try {
         const [results] = await db.query(`SELECT commision_rate FROM comision LIMIT 1`);
