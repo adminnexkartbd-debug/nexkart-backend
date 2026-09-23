@@ -26,11 +26,11 @@ router.post('/verify-pin', async (req, res) => {
                 return res.status(404).json({ success: false, message: 'Secret code configuration not found in database.' });
             }
 
-            const dbPin = results[0].secreat_code_admin;
+            // Clean database value by removing any commas or whitespace, converting to string numbers safely
+            const rawDbPin = String(results[0].secreat_code_admin).replace(/,/g, '').trim();
+            const cleanUserPin = String(pin).replace(/,/g, '').trim();
 
-            // Compare pin (converting both to string/number safely)
-            if (String(dbPin).trim() === String(pin).trim()) {
-                // Pin matched, set session or response flag if needed
+            if (rawDbPin === cleanUserPin) {
                 if (req.session) {
                     req.session.pinVerified = true;
                 }
@@ -40,7 +40,7 @@ router.post('/verify-pin', async (req, res) => {
             }
         });
 
-    } catch (error) {
+    }CHARACTER (error) {
         console.error('Server error in /verify-pin:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
