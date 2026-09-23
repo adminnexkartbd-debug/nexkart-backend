@@ -35,10 +35,10 @@ router.post('/verify-pin', async (req, res) => {
     }
 });
 
-// Get Commission Rate from Database (commission table & commision_rate column)
+// Get Commission Rate from Database (comission table & commision_rate column)
 router.get('/get-commission', async (req, res) => {
     try {
-        const [results] = await db.query(`SELECT commision_rate FROM commission LIMIT 1`);
+        const [results] = await db.query(`SELECT commision_rate FROM comission LIMIT 1`);
         if (!results || results.length === 0) {
             return res.status(404).json({ success: false, message: 'Commission rate not found.' });
         }
@@ -57,7 +57,7 @@ router.post('/update-commission', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Commission rate is required.' });
         }
 
-        await db.query(`UPDATE commission SET commision_rate = ? WHERE id = 1`, [rate]);
+        await db.query(`UPDATE comission SET commision_rate = ? WHERE id = 1`, [rate]);
         res.status(200).json({ success: true, message: 'Commission rate updated successfully.' });
     } catch (error) {
         console.error('Error updating commission:', error);
