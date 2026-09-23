@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: https://placehold.co https://res.cloudinary.com https://*.cloudinary.com https://via.placeholder.com https://dummyimage.com https://*.dummyimage.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://ui-avatars.com https://images.unsplash.com https://*.unsplash.com https://www.svgrepo.com *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-Commerce Control Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,12 +53,12 @@
                 </a>
             </div>
 
-            <!-- Dynamic Admin Profile Section -->
+            <!-- Static Admin Profile Section -->
             <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex items-center justify-between">
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="sidebarAdminAvatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500 flex-shrink-0" src="https://placehold.co/100x100/4f46e5/ffffff?text=Admin" alt="Admin Avatar" onerror="this.src='https://placehold.co/100x100/6366f1/ffffff?text=Admin'">
+                    <img id="sidebarAdminAvatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500 flex-shrink-0" src="https://placehold.co/100x100/4f46e5/ffffff?text=Admin" alt="Admin Avatar">
                     <div class="truncate">
-                        <p id="sidebarAdminName" class="text-xs font-semibold text-white truncate">Loading...</p>
+                        <p id="sidebarAdminName" class="text-xs font-semibold text-white truncate">Super Admin</p>
                         <p class="text-[10px] text-emerald-400 flex items-center"><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span>Online</p>
                     </div>
                 </div>
@@ -97,7 +96,7 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                         <div>
                             <h1 class="text-2xl font-bold text-slate-900 tracking-tight"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i>Admin Dashboard Overview</h1>
-                            <p class="text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users.</p>
+                            <p class="text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users[cite: 1].</p>
                         </div>
                     </div>
 
@@ -192,6 +191,42 @@
     </div>
 
     <script>
+        // Authentication & Authorization Check on Page Load
+        async function checkAdminAuth() {
+            try {
+                const response = await fetch('/api/control-employee/current-user');
+                const data = await response.json();
+
+                if (!data.success) {
+                    // Jodi user login obsthay na thake
+                    window.location.href = '/auth/llogin.html';
+                    return;
+                }
+
+                // Jodi user login thake, tahole super_admin status check korbe
+                const superAdminStatus = data.data.superAdminStatus; // Backend theke asa value (e.g., 'approved' ba 'pending')
+                
+                if (superAdminStatus === 'pending') {
+                    // Jodi pending thake tahole admin/home.html e chole jabe
+                    window.location.href = '/admin/home.html';
+                    return;
+                }
+                
+                // Jodi 'approved' thake tahole page e thakbe ebong UI update korbe
+                if (data.data.name) {
+                    document.getElementById('sidebarAdminName').innerText = data.data.name;
+                }
+                if (data.data.picture) {
+                    document.getElementById('sidebarAdminAvatar').src = data.data.picture;
+                }
+
+            } catch (error) {
+                console.error('Auth check error:', error);
+                // Error hole ba session na thakle login page e pathiye dibe
+                window.location.href = '/auth/llogin.html';
+            }
+        }
+
         let users = [
             { id: 1, name: "Tanvir Ahmed", profileOpeningDate: "Jan 12, 2024", email: "tanvir.ahmed@nexusadmin.com", phone: "+880 1712-345678", password: "SecurePass#91", avatar: "https://placehold.co/100x100/6366f1/ffffff?text=TA" },
             { id: 2, name: "Nusrat Jahan", profileOpeningDate: "Feb 04, 2024", email: "nusrat.jahan@nexusadmin.com", phone: "+880 1815-987654", password: "Nusrat#2024Pass", avatar: "https://placehold.co/100x100/ec4899/ffffff?text=NJ" },
@@ -204,7 +239,9 @@
         let revealedPasswords = {};
 
         window.onload = function() {
-            fetchCurrentAdmin();
+            // Prothome authentication ebong authorization check run korbe
+            checkAdminAuth();
+
             renderUserTable(users);
             
             document.getElementById('sidebarToggle').addEventListener('click', function() {
@@ -216,42 +253,10 @@
             });
         };
 
-        // Fetch Logged-in Admin Info from Backend
-        async function fetchCurrentAdmin() {
-            try {
-                const response = await fetch('/api/control-employee/current-user', { credentials: 'include' });
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    const admin = result.data;
-                    document.getElementById('sidebarAdminName').innerText = admin.name || 'Super Admin';
-                    
-                    if (admin.picture) {
-                        document.getElementById('sidebarAdminAvatar').src = admin.picture;
-                    }
-                } else {
-                    document.getElementById('sidebarAdminName').innerText = 'Super Admin';
-                }
-            } catch (error) {
-                console.error('Error fetching current admin:', error);
-                document.getElementById('sidebarAdminName').innerText = 'Super Admin';
-            }
-        }
-
-        // Logout Function
-        async function logoutAdmin() {
-            try {
-                const res = await fetch('/api/control-employee/logout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ confirmLogout: true })
-                });
-                const data = await res.json();
-                showToast(data.message || 'Logged out successfully', data.success ? 'success' : 'info');
-                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-            } catch (err) {
-                showToast('Logged out successfully', 'success');
-            }
+        // Logout Function (Direct Local Redirection)
+        function logoutAdmin() {
+            showToast('Logged out successfully', 'success');
+            setTimeout(() => { window.location.href = '/auth/llogin.html'; }, 1500);
         }
 
         function renderUserTable(data) {
