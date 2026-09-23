@@ -199,7 +199,7 @@
 
                 if (!data.success) {
                     // Jodi user login obsthay na thake
-                    window.location.href = '/auth/llogin.html';
+                    window.location.href = '/login.html';
                     return;
                 }
 
@@ -223,7 +223,7 @@
             } catch (error) {
                 console.error('Auth check error:', error);
                 // Error hole ba session na thakle login page e pathiye dibe
-                window.location.href = '/auth/llogin.html';
+                window.location.href = '/login.html';
             }
         }
 
@@ -256,7 +256,7 @@
         // Logout Function (Direct Local Redirection)
         function logoutAdmin() {
             showToast('Logged out successfully', 'success');
-            setTimeout(() => { window.location.href = '/auth/llogin.html'; }, 1500);
+            setTimeout(() => { window.location.href = '/login.html'; }, 1500);
         }
 
         function renderUserTable(data) {
