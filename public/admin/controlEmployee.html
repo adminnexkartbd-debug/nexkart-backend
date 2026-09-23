@@ -36,7 +36,7 @@
 </head>
 <body class="h-full bg-slate-100 text-slate-800 antialiased">
 
-    <!-- Pin Verification Popup Modal (Visible by default until correct pin is entered) -->
+    <!-- Pin Verification Popup Modal -->
     <div id="pinModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
@@ -119,8 +119,8 @@
                         <div onclick="openCardModal('commission')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Avg Seller Commission</p>
-                                <h3 class="text-2xl font-bold text-slate-800 mt-1">8.5%</h3>
-                                <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-percent mr-1"></i> View breakdown</span>
+                                <h3 id="cardCommissionDisplay" class="text-2xl font-bold text-slate-800 mt-1">Loading...</h3>
+                                <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-percent mr-1"></i> Edit & View breakdown</span>
                             </div>
                             <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                         </div>
@@ -205,13 +205,70 @@
     </div>
 
     <script>
+        let currentCommissionRate = 0;
+
+        // Fetch Commission Rate from Backend API
+        async function fetchCommissionRate() {
+            try {
+                const response = await fetch('/api/control-employee/get-commission');
+                const data = await response.json();
+                if (data.success) {
+                    currentCommissionRate = data.rate;
+                    document.getElementById('cardCommissionDisplay').innerText = data.rate + '%';
+                } else {
+                    document.getElementById('cardCommissionDisplay').innerText = 'N/A';
+                }
+            } catch (error) {
+                console.error('Error fetching commission:', error);
+                document.getElementById('cardCommissionDisplay').innerText = 'Error';
+            }
+        }
+
+        // Update Commission Rate via API
+        async function updateCommission() {
+            const inputVal = document.getElementById('newCommissionInput').value;
+            if (!inputVal || isNaN(inputVal)) {
+                showToast('Please enter a valid number', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/control-employee/update-commission', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rate: inputVal })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Commission updated successfully!', 'success');
+                    fetchCommissionRate();
+                    closeCardModal();
+                } else {
+                    showToast(data.message || 'Failed to update commission', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating commission:', error);
+                showToast('Server error while updating commission', 'error');
+            }
+        }
+
         // Verify Pin Function via API
         async function verifyPin(event) {
             event.preventDefault();
             const pinInput = document.getElementById('pinInput').value;
             const errorMsg = document.getElementById('pinErrorMsg');
+            const submitBtn = event.target.querySelector('button[type="submit"]');
             
             errorMsg.classList.add('hidden');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Verifying Pin...
+            `;
 
             try {
                 const response = await fetch('/api/control-employee/verify-pin', {
@@ -222,18 +279,24 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    // Hide pin modal once verified successfully
-                    const pinModal = document.getElementById('pinModal');
-                    pinModal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                    setTimeout(() => { pinModal.classList.add('hidden'); }, 300);
-                    showToast('Pin verified successfully!', 'success');
-                } else {
-                    errorMsg.innerText = data.message || 'Incorrect pin number.';
-                    errorMsg.classList.remove('hidden');
-                }
+                setTimeout(() => {
+                    if (data.success) {
+                        const pinModal = document.getElementById('pinModal');
+                        pinModal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                        setTimeout(() => { pinModal.classList.add('hidden'); }, 300);
+                        showToast('Pin verified successfully!', 'success');
+                        fetchCommissionRate(); // Load commission after verification
+                    } else {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                        errorMsg.innerText = data.message || 'Incorrect pin number.';
+                        errorMsg.classList.remove('hidden');
+                    }
+                }, 500);
             } catch (error) {
                 console.error('Pin verification error:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
                 errorMsg.innerText = 'Server error during pin verification.';
                 errorMsg.classList.remove('hidden');
             }
@@ -252,6 +315,7 @@
 
         window.onload = function() {
             renderUserTable(users);
+            fetchCommissionRate(); // Initial fetch
             
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 const sidebar = document.getElementById('sidebar');
@@ -340,8 +404,25 @@
             let contentHTML = '';
 
             if (cardType === 'commission') {
-                titleHTML = '<i class="fa-solid fa-hand-holding-dollar text-blue-600 mr-2"></i>Seller Commission Breakdown';
-                contentHTML = `<div class="space-y-3"><div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-blue-600">Standard Marketplace Rate</p><h4 class="text-xl font-bold text-slate-800">8.5%</h4></div><span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md font-medium">Active</span></div></div>`;
+                titleHTML = '<i class="fa-solid fa-hand-holding-dollar text-blue-600 mr-2"></i>Edit & Manage Seller Commission';
+                contentHTML = `
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-blue-600">Current Rate</p>
+                                <h4 class="text-xl font-bold text-slate-800">${currentCommissionRate}%</h4>
+                            </div>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md font-medium">Active</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Set New Commission Rate (%)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="newCommissionInput" value="${currentCommissionRate}" step="0.1" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                                <button onclick="updateCommission()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition-colors shadow-sm">Update</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             } else if (cardType === 'admin') {
                 titleHTML = '<i class="fa-solid fa-shield-halved text-emerald-600 mr-2"></i>System Security Status';
                 contentHTML = `<div class="space-y-3"><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-emerald-600">System Security Level</p><h4 class="text-xl font-bold text-emerald-700">Pin Protection Active</h4></div><span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-medium">Verified</span></div></div>`;
