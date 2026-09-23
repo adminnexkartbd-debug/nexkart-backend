@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../db'); // আপনার প্রজেক্টের পাথ অনুযায়ী ঠিক করে নিবেন
+const db = require('../../db'); // Apnar project er path anujaayi thik rakben
 
 router.post('/verify-pin', async (req, res) => {
     try {
@@ -17,7 +17,6 @@ router.post('/verify-pin', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Secret code configuration not found in database.' });
         }
 
-        // ডাটাবেজের ভ্যালু এবং ইউজার ইনপুট উভয়কেই Number বা Integer এ রূপান্তর করে নিখুঁত তুলনা
         const dbPin = Number(results[0].secreat_code_admin);
         const userPin = Number(pin);
 
@@ -33,6 +32,36 @@ router.post('/verify-pin', async (req, res) => {
     } catch (error) {
         console.error('Server error in /verify-pin:', error);
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+});
+
+// Get Commission Rate from Database
+router.get('/get-commission', async (req, res) => {
+    try {
+        const [results] = await db.query(`SELECT commision_rate FROM comision LIMIT 1`);
+        if (!results || results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Commission rate not found.' });
+        }
+        res.status(200).json({ success: true, rate: results[0].commision_rate });
+    } catch (error) {
+        console.error('Error fetching commission:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Update Commission Rate in Database
+router.post('/update-commission', async (req, res) => {
+    try {
+        const { rate } = req.body;
+        if (rate === undefined || rate === null || rate === '') {
+            return res.status(400).json({ success: false, message: 'Commission rate is required.' });
+        }
+
+        await db.query(`UPDATE comision SET commision_rate = ? WHERE id = 1`, [rate]);
+        res.status(200).json({ success: true, message: 'Commission rate updated successfully.' });
+    } catch (error) {
+        console.error('Error updating commission:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
