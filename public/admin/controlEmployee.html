@@ -2,10 +2,9 @@
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: https://placehold.co https://res.cloudinary.com https://*.cloudinary.com https://via.placeholder.com https://dummyimage.com https://*.dummyimage.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://ui-avatars.com https://images.unsplash.com https://*.unsplash.com https://www.svgrepo.com *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-Commerce Control Center</title>
-    <!-- Favicon fix to prevent default-src none block -->
     <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -58,7 +57,7 @@
             <!-- Static Admin Profile Section -->
             <div class="p-4 bg-slate-950/50 border-t border-slate-800 flex items-center justify-between">
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <img id="sidebarAdminAvatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500 flex-shrink-0" src="https://placehold.co/100x100/4f46e5/ffffff?text=Admin" alt="Admin Avatar">
+                    <div id="sidebarAdminAvatar" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-indigo-500 flex-shrink-0">SA</div>
                     <div class="truncate">
                         <p id="sidebarAdminName" class="text-xs font-semibold text-white truncate">Super Admin</p>
                         <p class="text-[10px] text-emerald-400 flex items-center"><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span>Online</p>
@@ -98,7 +97,7 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                         <div>
                             <h1 class="text-2xl font-bold text-slate-900 tracking-tight"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i>Admin Dashboard Overview</h1>
-                            <p class="text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users[cite: 1].</p>
+                            <p class="text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users.</p>
                         </div>
                     </div>
 
@@ -193,7 +192,6 @@
     </div>
 
     <script>
-        // Authentication & Authorization Check on Page Load
         async function checkAdminAuth() {
             try {
                 const response = await fetch('/api/control-employee/current-user');
@@ -213,9 +211,8 @@
                 
                 if (data.data.name) {
                     document.getElementById('sidebarAdminName').innerText = data.data.name;
-                }
-                if (data.data.picture) {
-                    document.getElementById('sidebarAdminAvatar').src = data.data.picture;
+                    const initials = data.data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    document.getElementById('sidebarAdminAvatar').innerText = initials;
                 }
 
             } catch (error) {
@@ -225,12 +222,12 @@
         }
 
         let users = [
-            { id: 1, name: "Tanvir Ahmed", profileOpeningDate: "Jan 12, 2024", email: "tanvir.ahmed@nexusadmin.com", phone: "+880 1712-345678", password: "SecurePass#91", avatar: "https://placehold.co/100x100/6366f1/ffffff?text=TA" },
-            { id: 2, name: "Nusrat Jahan", profileOpeningDate: "Feb 04, 2024", email: "nusrat.jahan@nexusadmin.com", phone: "+880 1815-987654", password: "Nusrat#2024Pass", avatar: "https://placehold.co/100x100/ec4899/ffffff?text=NJ" },
-            { id: 3, name: "Rahim Chowdhury", profileOpeningDate: "Mar 18, 2024", email: "rahim.c@nexusadmin.com", phone: "+880 1911-223344", password: "RahimSecretKey77", avatar: "https://placehold.co/100x100/10b981/ffffff?text=RC" },
-            { id: 4, name: "Farhana Akter", profileOpeningDate: "Apr 22, 2024", email: "farhana.a@nexusadmin.com", phone: "+880 1521-556677", password: "FarhanaPass*88", avatar: "https://placehold.co/100x100/f59e0b/ffffff?text=FA" },
-            { id: 5, name: "Imran Hossain", profileOpeningDate: "May 10, 2024", email: "imran.h@nexusadmin.com", phone: "+880 1678-990011", password: "ImranSecure#123", avatar: "https://placehold.co/100x100/8b5cf6/ffffff?text=IH" },
-            { id: 6, name: "Sabrina Yasmin", profileOpeningDate: "Jun 01, 2024", email: "sabrina.y@nexusadmin.com", phone: "+880 1319-445566", password: "SabrinaKey#2026", avatar: "https://placehold.co/100x100/ef4444/ffffff?text=SY" }
+            { id: 1, name: "Tanvir Ahmed", profileOpeningDate: "Jan 12, 2024", email: "tanvir.ahmed@nexusadmin.com", phone: "+880 1712-345678", password: "SecurePass#91" },
+            { id: 2, name: "Nusrat Jahan", profileOpeningDate: "Feb 04, 2024", email: "nusrat.jahan@nexusadmin.com", phone: "+880 1815-987654", password: "Nusrat#2024Pass" },
+            { id: 3, name: "Rahim Chowdhury", profileOpeningDate: "Mar 18, 2024", email: "rahim.c@nexusadmin.com", phone: "+880 1911-223344", password: "RahimSecretKey77" },
+            { id: 4, name: "Farhana Akter", profileOpeningDate: "Apr 22, 2024", email: "farhana.a@nexusadmin.com", phone: "+880 1521-556677", password: "FarhanaPass*88" },
+            { id: 5, name: "Imran Hossain", profileOpeningDate: "May 10, 2024", email: "imran.h@nexusadmin.com", phone: "+880 1678-990011", password: "ImranSecure#123" },
+            { id: 6, name: "Sabrina Yasmin", profileOpeningDate: "Jun 01, 2024", email: "sabrina.y@nexusadmin.com", phone: "+880 1319-445566", password: "SabrinaKey#2026" }
         ];
 
         let revealedPasswords = {};
@@ -267,13 +264,14 @@
                 const isRevealed = revealedPasswords[user.id] || false;
                 const displayPassword = isRevealed ? user.password : '••••••••••••';
                 const eyeIcon = isRevealed ? 'fa-eye-slash' : 'fa-eye';
+                const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
                 tr.innerHTML = `
                     <td class="py-4 px-6">
                         <div class="flex items-center space-x-3">
-                            <img class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100" src="${user.avatar}" alt="${user.name}" onerror="this.src='https://placehold.co/100x100/6366f1/ffffff?text=USR'">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs ring-2 ring-slate-100 flex-shrink-0">${initials}</div>
                             <div><p class="font-semibold text-slate-800">${user.name}</p></div>
                         </div>
                     </td>
