@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-// Helper function to extract current admin ID
+// Helper function to extract current admin ID correctly matching server session keys
 const getCurrentAdminId = (req) => {
-    return req.session?.adminId || req.headers['x-admin-id'] || req.query.adminId || 1; // Fallback to 1 for testing if session is missing
+    return req.session?.admin_id || req.session?.seller_id || req.session?.adminId || req.headers['x-admin-id'] || req.query.adminId || null;
 };
 
 /**
@@ -57,7 +57,7 @@ router.get('/current-user', async (req, res) => {
                     role: adminUser.role,
                     shopName: adminUser.shop_name,
                     phone: adminUser.phone,
-                    picture: adminUser.picture, // Cloudinary image URL from database
+                    picture: adminUser.picture,
                     superAdminStatus: adminUser.super_admin,
                     status: adminUser.status,
                     isVerified: adminUser.is_verified,
