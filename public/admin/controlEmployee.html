@@ -5,6 +5,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; img-src 'self' data: blob: https://placehold.co https://res.cloudinary.com https://*.cloudinary.com https://via.placeholder.com https://dummyimage.com https://*.dummyimage.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://ui-avatars.com https://images.unsplash.com https://*.unsplash.com https://www.svgrepo.com *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - E-Commerce Control Center</title>
+    <!-- Favicon fix to prevent default-src none block -->
+    <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -198,21 +200,17 @@
                 const data = await response.json();
 
                 if (!data.success) {
-                    // Jodi user login obsthay na thake
-                    window.location.href = '/login.html';
+                    window.location.href = '/admin/login.html';
                     return;
                 }
 
-                // Jodi user login thake, tahole super_admin status check korbe
-                const superAdminStatus = data.data.superAdminStatus; // Backend theke asa value (e.g., 'approved' ba 'pending')
+                const superAdminStatus = data.data.superAdminStatus;
                 
                 if (superAdminStatus === 'pending') {
-                    // Jodi pending thake tahole admin/home.html e chole jabe
                     window.location.href = '/admin/home.html';
                     return;
                 }
                 
-                // Jodi 'approved' thake tahole page e thakbe ebong UI update korbe
                 if (data.data.name) {
                     document.getElementById('sidebarAdminName').innerText = data.data.name;
                 }
@@ -222,8 +220,7 @@
 
             } catch (error) {
                 console.error('Auth check error:', error);
-                // Error hole ba session na thakle login page e pathiye dibe
-                window.location.href = '/login.html';
+                window.location.href = '/admin/login.html';
             }
         }
 
@@ -239,9 +236,7 @@
         let revealedPasswords = {};
 
         window.onload = function() {
-            // Prothome authentication ebong authorization check run korbe
             checkAdminAuth();
-
             renderUserTable(users);
             
             document.getElementById('sidebarToggle').addEventListener('click', function() {
@@ -253,10 +248,9 @@
             });
         };
 
-        // Logout Function (Direct Local Redirection)
         function logoutAdmin() {
             showToast('Logged out successfully', 'success');
-            setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+            setTimeout(() => { window.location.href = '/admin/login.html'; }, 1500);
         }
 
         function renderUserTable(data) {
