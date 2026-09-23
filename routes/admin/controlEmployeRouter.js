@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
+// Apnar project er database connection file ekhane require korun 
+// (Jemon: '../../db' ba '../../config/db' - apnar project structure onujayi path thik kore deben)
+const db = require('../../db'); 
+
 /**
  * @route   POST /api/control-employee/verify-pin
  * @desc    Verify entered admin pin against 'secreat' table 'secreat_code_admin'
@@ -13,7 +17,6 @@ router.post('/verify-pin', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Pin number is required.' });
         }
 
-        const db = req.app.get('db');
         const query = `SELECT secreat_code_admin FROM secreat LIMIT 1`;
 
         db.query(query, (err, results) => {
@@ -26,7 +29,7 @@ router.post('/verify-pin', async (req, res) => {
                 return res.status(404).json({ success: false, message: 'Secret code configuration not found in database.' });
             }
 
-            // Clean database value by removing any commas or whitespace, converting to string numbers safely
+            // Clean database value by removing commas and whitespace
             const rawDbPin = String(results[0].secreat_code_admin).replace(/,/g, '').trim();
             const cleanUserPin = String(pin).replace(/,/g, '').trim();
 
@@ -40,7 +43,7 @@ router.post('/verify-pin', async (req, res) => {
             }
         });
 
-    }CHARACTER (error) {
+    } catch (error) {
         console.error('Server error in /verify-pin:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
