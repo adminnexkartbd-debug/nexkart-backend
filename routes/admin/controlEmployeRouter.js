@@ -1,115 +1,48 @@
 const express = require('express');
 const router = express.Router();
 
-// Helper function to extract current admin ID correctly matching server session keys
-const getCurrentAdminId = (req) => {
-    return req.session?.admin_id || req.session?.seller_id || req.session?.adminId || req.headers['x-admin-id'] || req.query.adminId || null;
-};
-
 /**
- * @route   GET /api/control-employee/current-user
- * @desc    Fetch current logged-in user details from the 'admins' table
+ * @route   POST /api/control-employee/verify-pin
+ * @desc    Verify entered admin pin against 'secreat' table 'secreat_code_admin'
  */
-router.get('/current-user', async (req, res) => {
+router.post('/verify-pin', async (req, res) => {
     try {
-        const adminId = getCurrentAdminId(req);
+        const { pin } = req.body;
 
-        if (!adminId) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Unauthorized: No active admin session found.' 
-            });
+        if (!pin) {
+            return res.status(400).json({ success: false, message: 'Pin number is required.' });
         }
 
-        const query = `
-            SELECT 
-                id, google_id, name, email, picture, role, parent_admin_id,
-                action, shop_name, phone, address, facebook_link, slogan, 
-                shop_about, payment_type, mobile_number, bank_acc_name, 
-                bank_acc_number, bank_name, bank_branch, routing_number, 
-                status, is_verified, super_admin, created_at, total_sales, 
-                total_withdraw, is_deletion_pending
-            FROM admins 
-            WHERE id = ?
-        `;
+        const db = req.app.get('db');
+        const query = `SELECT secreat_code_admin FROM secreat LIMIT 1`;
 
-        const db = req.app.get('db'); 
-        
-        db.query(query, [adminId], (err, results) => {
+        db.query(query, (err, results) => {
             if (err) {
-                console.error('Database error fetching current admin:', err);
+                console.error('Database error fetching secret code:', err);
                 return res.status(500).json({ success: false, message: 'Internal server error' });
             }
 
             if (results.length === 0) {
-                return res.status(404).json({ success: false, message: 'Admin user not found in database.' });
+                return res.status(404).json({ success: false, message: 'Secret code configuration not found in database.' });
             }
 
-            const adminUser = results[0];
+            const dbPin = results[0].secreat_code_admin;
 
-            return res.status(200).json({
-                success: true,
-                message: 'Current admin details fetched successfully',
-                data: {
-                    id: adminUser.id,
-                    name: adminUser.name,
-                    email: adminUser.email,
-                    role: adminUser.role,
-                    shopName: adminUser.shop_name,
-                    phone: adminUser.phone,
-                    picture: adminUser.picture,
-                    superAdminStatus: adminUser.super_admin,
-                    status: adminUser.status,
-                    isVerified: adminUser.is_verified,
-                    totalSales: adminUser.total_sales,
-                    totalWithdraw: adminUser.total_withdraw,
-                    createdAt: adminUser.created_at
+            // Compare pin (converting both to string/number safely)
+            if (String(dbPin).trim() === String(pin).trim()) {
+                // Pin matched, set session or response flag if needed
+                if (req.session) {
+                    req.session.pinVerified = true;
                 }
-            });
+                return res.status(200).json({ success: true, message: 'Pin verified successfully.' });
+            } else {
+                return res.status(401).json({ success: false, message: 'Incorrect pin number. Please try again.' });
+            }
         });
 
     } catch (error) {
-        console.error('Server error in /current-user:', error);
+        console.error('Server error in /verify-pin:', error);
         res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-/**
- * @route   POST /api/control-employee/logout
- * @desc    Logout confirmation handler
- */
-router.post('/logout', (req, res) => {
-    try {
-        const { confirmLogout } = req.body;
-
-        if (!confirmLogout) {
-            return res.status(200).json({
-                success: false,
-                message: 'Logout cancelled by user.'
-            });
-        }
-
-        if (req.session) {
-            req.session.destroy((err) => {
-                if (err) {
-                    return res.status(500).json({ success: false, message: 'Could not log out, please try again.' });
-                }
-                res.clearCookie('connect.sid');
-                return res.status(200).json({
-                    success: true,
-                    message: 'Successfully logged out.'
-                });
-            });
-        } else {
-            return res.status(200).json({
-                success: true,
-                message: 'Successfully logged out.'
-            });
-        }
-
-    } catch (error) {
-        console.error('Logout error:', error);
-        res.status(500).json({ success: false, message: 'Internal server error during logout' });
     }
 });
 
