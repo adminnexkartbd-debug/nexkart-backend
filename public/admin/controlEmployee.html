@@ -194,7 +194,10 @@
     <script>
         async function checkAdminAuth() {
             try {
-                const response = await fetch('/api/control-employee/current-user');
+                // Added credentials: 'include' to pass cookies/session to the backend API
+                const response = await fetch('/api/control-employee/current-user', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
 
                 if (!data.success) {
