@@ -65,4 +65,15 @@ router.post('/update-commission', async (req, res) => {
     }
 });
 
+// Get Registered Users from Database
+router.get('/get-users', async (req, res) => {
+    try {
+        const [results] = await db.query(`SELECT id, name, created_at, email, phone_number, password FROM users`);
+        res.status(200).json({ success: true, users: results });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;
