@@ -285,7 +285,7 @@
                         pinModal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
                         setTimeout(() => { pinModal.classList.add('hidden'); }, 300);
                         showToast('Pin verified successfully!', 'success');
-                        fetchCommissionRate(); // Load commission after verification
+                        fetchCommissionRate();
                     } else {
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalBtnText;
@@ -315,7 +315,7 @@
 
         window.onload = function() {
             renderUserTable(users);
-            fetchCommissionRate(); // Initial fetch
+            fetchCommissionRate();
             
             document.getElementById('sidebarToggle').addEventListener('click', function() {
                 const sidebar = document.getElementById('sidebar');
