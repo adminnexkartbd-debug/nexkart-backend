@@ -126,58 +126,30 @@
 
           <div class="pt-2">
             <label class="block text-xs font-bold text-gray-700 mb-2">Payment Method</label>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-2 gap-2">
               <label id="cod-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-[#ff4b6e] bg-white transition-all">
                 <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
                 <span class="text-xs font-bold text-gray-800">COD</span>
               </label>
               
               <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
-                <input type="radio" name="payment" value="paysuite" id="payment-paysuite" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">PaySuite</span>
-              </label>
-
-              <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
-                <input type="radio" name="payment" value="bdgate" id="payment-bdgate" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">BDGate</span>
+                <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                <span class="text-xs font-bold text-gray-800">bKash Payment</span>
               </label>
             </div>
-            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">Cash on Delivery (COD) is disabled for this product, please select an online payment gateway.</p>
+            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">Cash on Delivery (COD) is disabled for this product, please select bKash online payment.</p>
           </div>
 
-          <div id="paysuite-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
-            <label class="block text-xs font-bold text-gray-800">Select PaySuite Payment Method:</label>
-            <div id="paysuite-gateways-grid" class="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              <div class="text-xs text-gray-500 col-span-full">Loading PaySuite gateways...</div>
-            </div>
-            <p class="text-[10px] text-gray-500 italic">* Payment will be processed via PaySuite API.</p>
-          </div>
-
-          <div id="bdgate-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
-            <label class="block text-xs font-bold text-gray-800">Select BDGate Payment Method:</label>
-            <div id="bdgate-gateways-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              <label class="gateway-card selected p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+            <label class="block text-xs font-bold text-gray-800">Select Payment Gateway:</label>
+            <div id="bkash-gateways-grid" class="grid grid-cols-2 gap-2">
+              <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
                 <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid fa-mobile-screen text-pink-600 text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">bKash</span>
-              </label>
-              <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
-                <input type="radio" name="online_gateway" value="nagad" class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid fa-wallet text-orange-600 text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">Nagad</span>
-              </label>
-              <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
-                <input type="radio" name="online_gateway" value="rocket" class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid fa-credit-card text-purple-600 text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">Rocket</span>
-              </label>
-              <label class="gateway-card p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
-                <input type="radio" name="online_gateway" value="card" class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid fa-credit-card text-blue-600 text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">Card / Bank</span>
+                <i class="fa-solid fa-mobile-screen text-pink-600 text-lg"></i>
+                <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
               </label>
             </div>
-            <p class="text-[10px] text-gray-500 italic">* Payment will be processed via BDGate API.</p>
+            <p class="text-[10px] text-gray-500 italic">* Payment will be processed securely via bKash gateway.</p>
           </div>
 
         </form>
@@ -227,7 +199,6 @@
           <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
         </div>
 
-        <!-- Coin Discount Option Box -->
         <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -291,7 +262,6 @@
     let appliedCouponName = '';
     let availableStock = 0;
 
-    // Coin Variables
     let userAvailableCoins = 0;
     let coinDiscountAmount = 0;
     let isCoinApplied = false;
@@ -301,7 +271,6 @@
         fetchCheckoutProduct();
       }
       loadUserProfileData();
-      fetchPaySuiteGateways();
 
       if (selectedVariant && selectedVariant.trim() !== '') {
         const variantBox = document.getElementById('variant-detail-box');
@@ -315,54 +284,18 @@
 
     function togglePaymentGateways() {
       const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      const paysuiteContainer = document.getElementById('paysuite-gateways-container');
-      const bdgateContainer = document.getElementById('bdgate-gateways-container');
+      const bkashContainer = document.getElementById('bkash-gateways-container');
 
-      paysuiteContainer.classList.add('hidden');
-      bdgateContainer.classList.add('hidden');
+      bkashContainer.classList.add('hidden');
 
-      if (paymentMethod === 'paysuite') {
-        paysuiteContainer.classList.remove('hidden');
-      } else if (paymentMethod === 'bdgate') {
-        bdgateContainer.classList.remove('hidden');
+      if (paymentMethod === 'online') {
+        bkashContainer.classList.remove('hidden');
       }
     }
 
     function highlightGateway(element) {
       document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
       element.closest('.gateway-card').classList.add('selected');
-    }
-
-    async function fetchPaySuiteGateways() {
-      try {
-        const res = await fetch('/user/get-paysuite-gateways');
-        const data = await res.json();
-        const grid = document.getElementById('paysuite-gateways-grid');
-        if (!grid) return;
-
-        if (data.success && data.gateways && data.gateways.length > 0) {
-          grid.innerHTML = '';
-          data.gateways.forEach((gw, index) => {
-            const isChecked = index === 0 ? 'checked' : '';
-            const cardSelected = index === 0 ? 'selected' : '';
-            const iconClass = gw.icon || 'fa-wallet';
-            const colorClass = gw.color || 'text-pink-600';
-            
-            const html = `
-              <label class="gateway-card ${cardSelected} p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
-                <input type="radio" name="online_gateway" value="${gw.id || gw.gateway}" ${isChecked} class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid ${iconClass} ${colorClass} text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">${gw.name || gw.gateway_name}</span>
-              </label>
-            `;
-            grid.insertAdjacentHTML('beforeend', html);
-          });
-        } else {
-          grid.innerHTML = `<p class="text-xs text-gray-500 col-span-full text-center">No online gateways found.</p>`;
-        }
-      } catch (err) {
-        console.error("Error fetching gateways:", err);
-      }
     }
 
     async function fetchCheckoutProduct() {
@@ -415,7 +348,7 @@
           const codRadio = document.getElementById('payment-cod');
           const codContainer = document.getElementById('cod-container');
           const codNotice = document.getElementById('cod-notice');
-          const paysuiteRadio = document.getElementById('payment-paysuite');
+          const onlineRadio = document.getElementById('payment-online');
 
           if (codAvailable === 0) {
             codRadio.disabled = true;
@@ -423,7 +356,7 @@
             codContainer.style.cursor = "not-allowed";
             codContainer.classList.remove('border-[#ff4b6e]', 'bg-white');
             codNotice.classList.remove('hidden');
-            paysuiteRadio.checked = true;
+            onlineRadio.checked = true;
             togglePaymentGateways();
           } else {
             codRadio.disabled = false;
@@ -450,10 +383,7 @@
     function calculateCoinDiscount() {
       const subtotal = productPrice * quantity;
       let rawCoinDiscount = userAvailableCoins * 0.30;
-      // Max 4% of subtotal limit[cite: 14]
       let maxAllowedDiscount = (subtotal * 4) / 100;
-      
-      // Joto hobe tar modhye jei ta choto shetai hobe (jodi 10 coin thake taile 3 tk hobe, abar 100 coin thakle 4% er besi hobe na)[cite: 14]
       return Math.min(rawCoinDiscount, maxAllowedDiscount);
     }
 
@@ -621,10 +551,12 @@
       const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
       
       let selectedGateway = null;
-      if (paymentMethod === 'paysuite' || paymentMethod === 'bdgate') {
+      if (paymentMethod === 'online') {
         const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
         if (selectedGatewayRadio) {
           selectedGateway = selectedGatewayRadio.value;
+        } else {
+          selectedGateway = 'bkash';
         }
       }
 
@@ -662,7 +594,7 @@
         const result = await response.json();
 
         if (result.success) {
-          if ((paymentMethod === 'paysuite' || paymentMethod === 'bdgate') && result.payment_url) {
+          if (paymentMethod === 'online' && result.payment_url) {
             window.location.href = result.payment_url;
           } else {
             alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
