@@ -32,7 +32,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Auto scrolling container styling */
         #userTableContainer {
             max-height: 400px;
             overflow-y: auto;
@@ -210,10 +209,43 @@
         </div>
     </div>
 
+    <!-- Full Screen Seller Management Modal -->
+    <div id="sellerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+            <h3 class="font-bold text-lg flex items-center"><i class="fa-solid fa-shop text-indigo-400 mr-2"></i>Seller Management Dashboard</h3>
+            <button onclick="closeSellerModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="relative w-full sm:w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                <input type="text" id="sellerEmailSearchInput" onkeyup="filterSellers()" placeholder="Search sellers by email..." class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+            </div>
+            <div class="text-xs text-slate-500 font-medium" id="sellerCountDisplay">Showing all sellers</div>
+        </div>
+        <div class="flex-1 bg-slate-100 overflow-y-auto p-6 custom-scrollbar">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                            <th class="py-4 px-6">Seller Name & Email</th>
+                            <th class="py-4 px-4">Phone</th>
+                            <th class="py-4 px-4">Password</th>
+                            <th class="py-4 px-4">Total Sale</th>
+                            <th class="py-4 px-4">Total Withdraw</th>
+                            <th class="py-4 px-4">Verification</th>
+                            <th class="py-4 px-4">Super Admin Status</th>
+                            <th class="py-4 px-6 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sellerTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentCommissionRate = 0;
 
-        // Fetch Commission Rate from Backend API
         async function fetchCommissionRate() {
             try {
                 const response = await fetch('/api/control-employee/get-commission');
@@ -230,7 +262,6 @@
             }
         }
 
-        // Update Commission Rate via API
         async function updateCommission() {
             const inputVal = document.getElementById('newCommissionInput').value;
             if (!inputVal || isNaN(inputVal)) {
@@ -258,7 +289,6 @@
             }
         }
 
-        // Verify Pin Function via API
         async function verifyPin(event) {
             event.preventDefault();
             const pinInput = document.getElementById('pinInput').value;
@@ -311,7 +341,6 @@
         let users = [];
         let revealedPasswords = {};
 
-        // Fetch Users from Database API
         async function fetchUsers() {
             try {
                 const response = await fetch('/api/control-employee/get-users');
@@ -333,7 +362,100 @@
             }
         }
 
-        // Auto Scroll Functionality
+        let sellersList = [];
+
+        async function fetchSellers() {
+            try {
+                const response = await fetch('/api/control-employee/get-sellers');
+                const data = await response.json();
+                if (data.success) {
+                    sellersList = data.sellers;
+                    renderSellerTable(sellersList);
+                }
+            } catch (error) {
+                console.error('Error fetching sellers:', error);
+                showToast('Failed to load sellers', 'error');
+            }
+        }
+
+        function renderSellerTable(data) {
+            const tbody = document.getElementById('sellerTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-slate-400 font-medium"><i class="fa-solid fa-store-slash text-3xl mb-2 block"></i>No sellers found</td></tr>`;
+                document.getElementById('sellerCountDisplay').innerText = `Showing 0 sellers`;
+                return;
+            }
+
+            data.forEach(seller => {
+                const isVerified = seller.is_verified === 1 || seller.is_verified === true;
+                const verificationBadge = isVerified 
+                    ? `<span class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center"><i class="fa-solid fa-check mr-1"></i>Verified (1)</span>` 
+                    : `<span class="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center"><i class="fa-solid fa-xmark mr-1"></i>Not Verified (0)</span>`;
+
+                const superAdminStatus = seller.super_admin || 'pending';
+                const statusBadge = superAdminStatus === 'approved'
+                    ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold uppercase">Approved</span>`
+                    : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold uppercase">Pending</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <p class="font-semibold text-slate-800">${seller.name || 'N/A'}</p>
+                        <p class="text-xs text-slate-500">${seller.email || 'N/A'}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs font-mono text-slate-600">${seller.phone_number || seller.phone || 'N/A'}</td>
+                    <td class="py-4 px-4 text-xs font-mono text-slate-700 bg-slate-50 rounded">${seller.password || 'N/A'}</td>
+                    <td class="py-4 px-4 text-xs font-bold text-slate-800">$${Number(seller.total_sale || 0).toFixed(2)}</td>
+                    <td class="py-4 px-4 text-xs font-bold text-slate-800">$${Number(seller.total_withdraw || 0).toFixed(2)}</td>
+                    <td class="py-4 px-4">${verificationBadge}</td>
+                    <td class="py-4 px-4">
+                        <div class="flex items-center space-x-2">
+                            ${statusBadge}
+                            <select onchange="updateSuperAdminStatus(${seller.id}, this.value)" class="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
+                                <option value="pending" ${superAdminStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="approved" ${superAdminStatus === 'approved' ? 'selected' : ''}>Approved</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <button onclick="showToast('Seller ID: ${seller.id} updated', 'success')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors">Details</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('sellerCountDisplay').innerText = `Showing ${data.length} sellers`;
+        }
+
+        async function updateSuperAdminStatus(sellerId, newStatus) {
+            try {
+                const response = await fetch('/api/control-employee/update-seller-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: sellerId, super_admin: newStatus })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Super admin status updated successfully!', 'success');
+                    fetchSellers();
+                } else {
+                    showToast(data.message || 'Failed to update status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showToast('Server error', 'error');
+            }
+        }
+
+        function filterSellers() {
+            const query = document.getElementById('sellerEmailSearchInput').value.toLowerCase().trim();
+            const filtered = sellersList.filter(s => (s.email || '').toLowerCase().includes(query));
+            renderSellerTable(filtered);
+        }
+
         function initAutoScroll() {
             const container = document.getElementById('userTableContainer');
             if (!container) return;
@@ -434,6 +556,11 @@
         }
 
         function openCardModal(cardType) {
+            if (cardType === 'sellers') {
+                openSellerModal();
+                return;
+            }
+
             const modal = document.getElementById('cardModal');
             const modalContainer = document.getElementById('modalContainer');
             const titleEl = document.getElementById('modalTitle');
@@ -468,9 +595,6 @@
             } else if (cardType === 'approvals') {
                 titleHTML = '<i class="fa-solid fa-hourglass-half text-amber-600 mr-2"></i>Pending Staff & Vendor Approvals';
                 contentHTML = `<div class="space-y-3"><p class="text-xs text-slate-500">The following requests are awaiting verification.</p></div>`;
-            } else if (cardType === 'sellers') {
-                titleHTML = '<i class="fa-solid fa-shop text-indigo-600 mr-2"></i>Seller Management Overview';
-                contentHTML = `<div class="space-y-3"><div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-indigo-600">Active Marketplace Vendors</p><h4 class="text-xl font-bold text-slate-800">48 Online</h4></div><span class="text-xs bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-md font-medium">98.4% Fulfillment Rate</span></div></div>`;
             }
 
             titleEl.innerHTML = titleHTML;
@@ -482,6 +606,23 @@
                 modalContainer.classList.remove('scale-95');
                 modalContainer.classList.add('scale-100');
             }, 10);
+        }
+
+        function openSellerModal() {
+            fetchSellers();
+            const modal = document.getElementById('sellerModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function closeSellerModal() {
+            const modal = document.getElementById('sellerModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
         }
 
         function closeCardModal() {
