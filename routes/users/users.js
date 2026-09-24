@@ -930,133 +930,598 @@ router.post('/update-profile', upload.single('profile_image'), async (req, res) 
     }
 });
 
-// ==================== [PLACE ORDER ROUTE WITH bKash PAYMENT SUCCESS INTEGRATION] ====================
+// ==================== PLACE ORDER ROUTE ====================
 router.post('/place-order', async (req, res) => {
     try {
-        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
-        
+
+        // =====================================================
+        // 1. USER ID
+        // =====================================================
+        const userId = req.user
+            ? req.user.id
+            : (
+                req.session && req.session.user
+                    ? req.session.user.id
+                    : (
+                        req.session && req.session.userId
+                            ? req.session.userId
+                            : null
+                    )
+            );
+
         if (!userId) {
-            return res.status(401).json({ success: false, message: 'Unauthorized: Please login first!' });
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized: Please login first!'
+            });
         }
 
-        const { 
-            product_id, quantity, variant, payment_method, selected_gateway, 
-            name, email, phone, division, district, upazilla, union_area, post_code, block_house, 
-            discount_amount 
+
+        // =====================================================
+        // 2. GET ORDER DATA FROM FRONTEND
+        // =====================================================
+        const {
+            product_id,
+            quantity,
+            variant,
+            payment_method,
+            selected_gateway,
+
+            name,
+            email,
+            phone,
+
+            division,
+            district,
+            upazilla,
+            union_area,
+            post_code,
+            block_house,
+
+            discount_amount
         } = req.body;
 
-        if (!product_id || !quantity || !name || !phone || !district || !block_house) {
-            return res.status(400).json({ success: false, message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!' });
+
+        // =====================================================
+        // 3. BASIC VALIDATION
+        // =====================================================
+        if (
+            !product_id ||
+            !quantity ||
+            !name ||
+            !phone ||
+            !district ||
+            !block_house
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!'
+            });
         }
 
+
+        // =====================================================
+        // 4. ORDER QUANTITY
+        // =====================================================
         const orderQty = parseInt(quantity, 10) || 1;
 
-        const [products] = await db.query('SELECT * FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
-        
-        if (!products || products.length === 0) {
-            return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
+        if (orderQty <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid quantity!'
+            });
         }
+
+
+        // =====================================================
+        // 5. FIND PRODUCT
+        // =====================================================
+        const [products] = await db.query(
+            'SELECT * FROM products WHERE id = ? OR product_id = ?',
+            [product_id, product_id]
+        );
+
+
+        if (!products || products.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'প্রোডাক্ট পাওয়া যায়নি!'
+            });
+        }
+
 
         const product = products[0];
+
+
+        // =====================================================
+        // 6. CHECK STOCK
+        // =====================================================
         const currentStock = parseInt(product.stock_quantity, 10) || 0;
 
+
         if (currentStock <= 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট (Out of Stock) হয়ে গেছে!' 
+            return res.status(400).json({
+                success: false,
+                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট (Out of Stock) হয়ে গেছে!'
             });
         }
+
 
         if (currentStock < orderQty) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `দুঃখিত, পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${currentStock} টি স্টক আছে।` 
+            return res.status(400).json({
+                success: false,
+                message:
+                    `দুঃখিত, পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${currentStock} টি স্টক আছে।`
             });
         }
 
-        const seller_id = product.admin_id || 0;
-        const salePrice = parseFloat(product.sale_price || 0);
-        let baseDeliveryCharge = Number(product.delivery_charge) || 60;
-        const deliveryLimit = Number(product.delivery_limit) || 1;
 
+        // =====================================================
+        // 7. SELLER / ADMIN ID
+        // =====================================================
+        const seller_id = product.admin_id;
+
+
+        if (!seller_id) {
+
+            console.error(
+                "❌ Seller/Admin ID missing for product:",
+                product.id
+            );
+
+            return res.status(400).json({
+                success: false,
+                message: "এই product-এর seller/admin ID পাওয়া যায়নি!"
+            });
+        }
+
+
+        // =====================================================
+        // 8. PRODUCT PRICE
+        // =====================================================
+        const salePrice = parseFloat(product.sale_price || 0);
+
+
+        // =====================================================
+        // 9. DELIVERY CHARGE
+        // =====================================================
+        let baseDeliveryCharge =
+            Number(product.delivery_charge) || 60;
+
+
+        const deliveryLimit =
+            Number(product.delivery_limit) || 1;
+
+
+        // Free shipping
         if (Number(product.free_shipping) === 1) {
             baseDeliveryCharge = 0;
         }
 
+
         let deliveryCharge = baseDeliveryCharge;
-        if (deliveryLimit > 0 && baseDeliveryCharge > 0) {
-            const multiplier = Math.ceil(orderQty / deliveryLimit);
-            deliveryCharge = baseDeliveryCharge * multiplier;
+
+
+        if (
+            deliveryLimit > 0 &&
+            baseDeliveryCharge > 0
+        ) {
+
+            const multiplier =
+                Math.ceil(orderQty / deliveryLimit);
+
+            deliveryCharge =
+                baseDeliveryCharge * multiplier;
         }
 
-        const subtotal = salePrice * orderQty;
-        const appliedDiscount = parseFloat(discount_amount || 0);
-        const totalAmount = Math.max(0, subtotal - appliedDiscount) + deliveryCharge;
-        
-        const fullShippingAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
-        const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
-        const gatewayUsed = payment_method === 'online' ? (selected_gateway || 'bkash') : null;
-        const paymentStatus = payment_method === 'online' ? 'Pending Payment' : 'Pending';
 
-    const insertQuery = `
-    INSERT INTO orders (
-        order_id, user_id, product_id, seller_id, quantity, variant, 
-        subtotal_price, delivery_charge, discount_amount, total_amount, payment_method, 
-        selected_gateway, payment_status, customer_name, customer_email, 
-        customer_phone, shipping_address, vat_cm, qtyCalculate, sendMail, created_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, NOW())
-`;
+        // =====================================================
+        // 10. PRICE CALCULATION
+        // =====================================================
+        const subtotal =
+            salePrice * orderQty;
 
-       await db.query(insertQuery, [
-    orderId, userId, product.id, seller_id, orderQty, variant || null,
-    subtotal, deliveryCharge, appliedDiscount, totalAmount, payment_method, gatewayUsed,
-    paymentStatus, name, email, phone, fullShippingAddress
-]);
-        const currentSoldQty = parseInt(product.sold_qty, 10) || 0;
-        const newStock = Math.max(0, currentStock - orderQty);
-        const newSoldQty = currentSoldQty + orderQty;
-        const newStockStatus = newStock === 0 ? 'out_of_stock' : 'in_stock';
+
+        const appliedDiscount =
+            parseFloat(discount_amount || 0);
+
+
+        const totalAmount =
+            Math.max(
+                0,
+                subtotal - appliedDiscount
+            ) + deliveryCharge;
+
+
+        // =====================================================
+        // 11. SHIPPING ADDRESS
+        // =====================================================
+        const fullShippingAddress = [
+            block_house,
+            union_area,
+            upazilla,
+            district,
+            division,
+            post_code
+                ? `Post Code: ${post_code}`
+                : ''
+        ]
+            .filter(Boolean)
+            .join(', ');
+
+
+        // =====================================================
+        // 12. CREATE ORDER ID
+        // =====================================================
+        const orderId =
+            'NXK-' +
+            Date.now().toString().slice(-8) +
+            Math.floor(100 + Math.random() * 900);
+
+
+        // =====================================================
+        // 13. PAYMENT INFORMATION
+        // =====================================================
+        const gatewayUsed =
+            payment_method === 'online'
+                ? (selected_gateway || 'bkash')
+                : null;
+
+
+        const paymentStatus =
+            payment_method === 'online'
+                ? 'Pending Payment'
+                : 'Pending';
+
+
+        // =====================================================
+        // 14. DEBUG INFORMATION
+        // =====================================================
+        console.log("========================================");
+        console.log("📦 NEW ORDER");
+        console.log("========================================");
+        console.log("Order ID:", orderId);
+        console.log("User ID:", userId);
+        console.log("Product ID:", product.id);
+        console.log("Seller ID:", seller_id);
+        console.log("Quantity:", orderQty);
+        console.log("Variant:", variant);
+        console.log("Sale Price:", salePrice);
+        console.log("Subtotal:", subtotal);
+        console.log("Delivery:", deliveryCharge);
+        console.log("Discount:", appliedDiscount);
+        console.log("Total:", totalAmount);
+        console.log("Payment Method:", payment_method);
+        console.log("Gateway:", gatewayUsed);
+        console.log("Payment Status:", paymentStatus);
+        console.log("Customer Name:", name);
+        console.log("Customer Email:", email);
+        console.log("Customer Phone:", phone);
+        console.log("Shipping Address:", fullShippingAddress);
+        console.log("========================================");
+
+
+        // =====================================================
+        // 15. INSERT ORDER INTO DATABASE
+        // =====================================================
+        const insertQuery = `
+            INSERT INTO orders (
+                order_id,
+                user_id,
+                product_id,
+                seller_id,
+                quantity,
+                variant,
+                subtotal_price,
+                delivery_charge,
+                discount_amount,
+                total_amount,
+                payment_method,
+                selected_gateway,
+                payment_status,
+                customer_name,
+                customer_email,
+                customer_phone,
+                shipping_address,
+                vat_cm,
+                qtyCalculate,
+                sendMail,
+                created_at
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                0, 0, 0, NOW()
+            )
+        `;
+
+
+        try {
+
+            const [insertResult] =
+                await db.query(
+                    insertQuery,
+                    [
+                        orderId,
+                        userId,
+                        product.id,
+                        seller_id,
+                        orderQty,
+                        variant || null,
+
+                        subtotal,
+                        deliveryCharge,
+                        appliedDiscount,
+                        totalAmount,
+
+                        payment_method,
+                        gatewayUsed,
+                        paymentStatus,
+
+                        name,
+                        email,
+                        phone,
+                        fullShippingAddress
+                    ]
+                );
+
+
+            console.log(
+                "✅ ORDER INSERT SUCCESS:",
+                insertResult.insertId
+            );
+
+
+        } catch (dbError) {
+
+            console.error(
+                "❌ ORDER INSERT DATABASE ERROR"
+            );
+
+            console.error(
+                "Code:",
+                dbError.code
+            );
+
+            console.error(
+                "Message:",
+                dbError.message
+            );
+
+            console.error(
+                "SQL State:",
+                dbError.sqlState
+            );
+
+            console.error(
+                "SQL:",
+                dbError.sql
+            );
+
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Order database error: " +
+                    dbError.message
+            });
+        }
+
+
+        // =====================================================
+        // 16. UPDATE PRODUCT STOCK
+        // =====================================================
+        const currentSoldQty =
+            parseInt(product.sold_qty, 10) || 0;
+
+
+        const newStock =
+            Math.max(
+                0,
+                currentStock - orderQty
+            );
+
+
+        const newSoldQty =
+            currentSoldQty + orderQty;
+
+
+        const newStockStatus =
+            newStock === 0
+                ? 'out_of_stock'
+                : 'in_stock';
+
 
         await db.query(
-            `UPDATE products SET stock_quantity = ?, sold_qty = ?, stock_status = ? WHERE id = ?`,
-            [newStock, newSoldQty, newStockStatus, product.id]
+            `
+            UPDATE products
+            SET
+                stock_quantity = ?,
+                sold_qty = ?,
+                stock_status = ?
+            WHERE id = ?
+            `,
+            [
+                newStock,
+                newSoldQty,
+                newStockStatus,
+                product.id
+            ]
         );
 
-        const orderData = {
-            order_id: orderId,
-            customer_name: name,
-            customer_email: email,
-            customer_phone: phone,
-            shipping_address: fullShippingAddress,
-            payment_method: payment_method,
-            selected_gateway: gatewayUsed,
-            payment_status: paymentStatus,
-            quantity: orderQty,
-            variant: variant,
-            subtotal_price: subtotal,
-            delivery_charge: deliveryCharge,
-            total_amount: totalAmount
-        };
-        sendInvoiceEmail(orderData, product.title);
 
-       // bkash payment gateway integration - Safe Demo Flow
-if (payment_method === 'online' && gatewayUsed === 'bkash') {
-    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    
-    // সরাসরি ডিমো সাকসেস পেজে রিডাইরেক্ট করার ব্যবস্থা (API ফেইল করলেও অর্ডার কনফার্ম থাকবে)
-    return res.json({
-        success: true,
-        order_id: orderId,
-        selected_gateway: 'BKASH',
-        payment_url: `${baseUrl}/user/bkash-success?order_id=${orderId}`
-    });
-}
-        return res.json({ success: true, order_id: orderId, message: 'Order placed successfully!' });
+        console.log("✅ PRODUCT STOCK UPDATED");
+        console.log("New Stock:", newStock);
+        console.log("New Sold Qty:", newSoldQty);
+
+
+        // =====================================================
+        // 17. ORDER DATA FOR EMAIL
+        // =====================================================
+        const orderData = {
+
+            order_id: orderId,
+
+            customer_name: name,
+
+            customer_email: email,
+
+            customer_phone: phone,
+
+            shipping_address:
+                fullShippingAddress,
+
+            payment_method:
+                payment_method,
+
+            selected_gateway:
+                gatewayUsed,
+
+            payment_status:
+                paymentStatus,
+
+            quantity:
+                orderQty,
+
+            variant:
+                variant,
+
+            subtotal_price:
+                subtotal,
+
+            delivery_charge:
+                deliveryCharge,
+
+            total_amount:
+                totalAmount
+        };
+
+
+        // =====================================================
+        // 18. SEND INVOICE EMAIL
+        // =====================================================
+        try {
+
+            sendInvoiceEmail(
+                orderData,
+                product.title
+            );
+
+            console.log(
+                "✅ Invoice email sent"
+            );
+
+        } catch (emailError) {
+
+            console.error(
+                "⚠️ Invoice email error:",
+                emailError.message
+            );
+
+            // Email error হলেও order fail হবে না
+        }
+
+
+        // =====================================================
+        // 19. BKASH PAYMENT FLOW
+        // =====================================================
+        if (
+            payment_method === 'online' &&
+            gatewayUsed === 'bkash'
+        ) {
+
+            const baseUrl =
+                process.env.APP_URL ||
+                `${req.protocol}://${req.get('host')}`;
+
+
+            console.log(
+                "💳 bKash payment flow"
+            );
+
+
+            return res.json({
+
+                success: true,
+
+                order_id:
+                    orderId,
+
+                selected_gateway:
+                    'BKASH',
+
+                payment_url:
+                    `${baseUrl}/user/bkash-success?order_id=${orderId}`
+            });
+        }
+
+
+        // =====================================================
+        // 20. NORMAL ORDER SUCCESS
+        // =====================================================
+        console.log(
+            "🎉 ORDER PLACED SUCCESSFULLY:",
+            orderId
+        );
+
+
+        return res.json({
+
+            success: true,
+
+            order_id:
+                orderId,
+
+            message:
+                'Order placed successfully!'
+        });
+
 
     } catch (error) {
-        console.error("Place Order Error:", error);
-        return res.status(500).json({ success: false, message: 'Server Error during order placement!' });
+
+        // =====================================================
+        // 21. MAIN ERROR HANDLER
+        // =====================================================
+        console.error(
+            "❌ PLACE ORDER ERROR:"
+        );
+
+        console.error(
+            "Error Code:",
+            error.code
+        );
+
+        console.error(
+            "Error Message:",
+            error.message
+        );
+
+        console.error(
+            "SQL State:",
+            error.sqlState
+        );
+
+        console.error(
+            "SQL:",
+            error.sql
+        );
+
+        console.error(
+            "Full Error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Order failed: " +
+                (error.message ||
+                    "Server Error during order placement!")
+        });
     }
 });
 
