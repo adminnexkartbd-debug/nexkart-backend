@@ -999,21 +999,20 @@ router.post('/place-order', async (req, res) => {
         const paymentStatus = payment_method === 'online' ? 'Pending Payment' : 'Pending';
 
     const insertQuery = `
-            INSERT INTO orders (
-                order_id, user_id, product_id, seller_id, quantity, variant, 
-                subtotal_price, delivery_charge, discount_amount, total_amount, payment_method, 
-                selected_gateway, payment_status, customer_name, customer_email, 
-                customer_phone, shipping_address, created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-        `;
+    INSERT INTO orders (
+        order_id, user_id, product_id, seller_id, quantity, variant, 
+        subtotal_price, delivery_charge, discount_amount, total_amount, payment_method, 
+        selected_gateway, payment_status, customer_name, customer_email, 
+        customer_phone, shipping_address, vat_cm, qtyCalculate, sendMail, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, NOW())
+`;
 
-        await db.query(insertQuery, [
-            orderId, userId, product.id, seller_id, orderQty, variant || null,
-            subtotal, deliveryCharge, appliedDiscount, totalAmount, payment_method, gatewayUsed,
-            paymentStatus, name, email, phone, fullShippingAddress
-        ]);
-
+       await db.query(insertQuery, [
+    orderId, userId, product.id, seller_id, orderQty, variant || null,
+    subtotal, deliveryCharge, appliedDiscount, totalAmount, payment_method, gatewayUsed,
+    paymentStatus, name, email, phone, fullShippingAddress
+]);
         const currentSoldQty = parseInt(product.sold_qty, 10) || 0;
         const newStock = Math.max(0, currentStock - orderQty);
         const newSoldQty = currentSoldQty + orderQty;
