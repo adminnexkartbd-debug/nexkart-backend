@@ -930,13 +930,12 @@ router.post('/update-profile', upload.single('profile_image'), async (req, res) 
     }
 });
 
-// ==================== PLACE ORDER ROUTE ====================
+// ==================== PLACE ORDER ====================
 router.post('/place-order', async (req, res) => {
+
     try {
 
-        // =====================================================
-        // 1. USER ID
-        // =====================================================
+        // ================= USER ID =================
         const userId = req.user
             ? req.user.id
             : (
@@ -957,34 +956,38 @@ router.post('/place-order', async (req, res) => {
         }
 
 
-        // =====================================================
-        // 2. GET ORDER DATA FROM FRONTEND
-        // =====================================================
+        // ================= REQUEST DATA =================
         const {
             product_id,
             quantity,
             variant,
             payment_method,
             selected_gateway,
-
             name,
             email,
             phone,
-
             division,
             district,
             upazilla,
             union_area,
             post_code,
             block_house,
-
             discount_amount
         } = req.body;
 
 
-        // =====================================================
-        // 3. BASIC VALIDATION
-        // =====================================================
+        console.log("========== PLACE ORDER REQUEST ==========");
+        console.log("User ID:", userId);
+        console.log("Product ID:", product_id);
+        console.log("Quantity:", quantity);
+        console.log("Payment:", payment_method);
+        console.log("Gateway:", selected_gateway);
+        console.log("Customer:", name);
+        console.log("Phone:", phone);
+        console.log("=========================================");
+
+
+        // ================= VALIDATION =================
         if (
             !product_id ||
             !quantity ||
@@ -1000,12 +1003,9 @@ router.post('/place-order', async (req, res) => {
         }
 
 
-        // =====================================================
-        // 4. ORDER QUANTITY
-        // =====================================================
-        const orderQty = parseInt(quantity, 10) || 1;
+        const orderQty = parseInt(quantity, 10);
 
-        if (orderQty <= 0) {
+        if (!orderQty || orderQty <= 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid quantity!'
@@ -1013,11 +1013,14 @@ router.post('/place-order', async (req, res) => {
         }
 
 
-        // =====================================================
-        // 5. FIND PRODUCT
-        // =====================================================
+        // ================= GET PRODUCT =================
         const [products] = await db.query(
-            'SELECT * FROM products WHERE id = ? OR product_id = ?',
+            `
+            SELECT *
+            FROM products
+            WHERE id = ? OR product_id = ?
+            LIMIT 1
+            `,
             [product_id, product_id]
         );
 
@@ -1025,24 +1028,28 @@ router.post('/place-order', async (req, res) => {
         if (!products || products.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'প্রোডাক্ট পাওয়া যায়নি!'
+                message: 'Product not found!'
             });
         }
 
 
         const product = products[0];
 
+        console.log("Product Found:", product.id);
+        console.log("Product Title:", product.title);
+        console.log("Product Admin ID:", product.admin_id);
+        console.log("Product Stock:", product.stock_quantity);
 
-        // =====================================================
-        // 6. CHECK STOCK
-        // =====================================================
-        const currentStock = parseInt(product.stock_quantity, 10) || 0;
+
+        // ================= STOCK =================
+        const currentStock =
+            parseInt(product.stock_quantity, 10) || 0;
 
 
         if (currentStock <= 0) {
             return res.status(400).json({
                 success: false,
-                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট (Out of Stock) হয়ে গেছে!'
+                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট!'
             });
         }
 
@@ -1051,40 +1058,57 @@ router.post('/place-order', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message:
-                    `দুঃখিত, পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${currentStock} টি স্টক আছে।`
+                    `পর্যাপ্ত stock নেই! বর্তমানে ${currentStock} টি আছে।`
             });
         }
 
 
-        // =====================================================
-        // 7. SELLER / ADMIN ID
-        // =====================================================
+        // ================= SELLER ID =================
         const seller_id = product.admin_id;
 
 
         if (!seller_id) {
 
             console.error(
-                "❌ Seller/Admin ID missing for product:",
-                product.id
+                "❌ PRODUCT ADMIN ID MISSING"
             );
 
             return res.status(400).json({
                 success: false,
-                message: "এই product-এর seller/admin ID পাওয়া যায়নি!"
+                message:
+                    'এই product-এর seller/admin ID পাওয়া যায়নি!'
             });
         }
 
 
-        // =====================================================
-        // 8. PRODUCT PRICE
-        // =====================================================
-        const salePrice = parseFloat(product.sale_price || 0);
+        // ================= VERIFY SELLER =================
+        const [sellerRows] = await db.query(
+            `SELECT id FROM admins WHERE id = ? LIMIT 1`,
+            [seller_id]
+        );
 
 
-        // =====================================================
-        // 9. DELIVERY CHARGE
-        // =====================================================
+        if (!sellerRows || sellerRows.length === 0) {
+
+            console.error(
+                "❌ SELLER NOT FOUND:",
+                seller_id
+            );
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    `Seller/Admin ID ${seller_id} পাওয়া যায়নি!`
+            });
+        }
+
+
+        // ================= PRICE =================
+        const salePrice =
+            parseFloat(product.sale_price) || 0;
+
+
+        // ================= DELIVERY =================
         let baseDeliveryCharge =
             Number(product.delivery_charge) || 60;
 
@@ -1093,13 +1117,13 @@ router.post('/place-order', async (req, res) => {
             Number(product.delivery_limit) || 1;
 
 
-        // Free shipping
         if (Number(product.free_shipping) === 1) {
             baseDeliveryCharge = 0;
         }
 
 
-        let deliveryCharge = baseDeliveryCharge;
+        let deliveryCharge =
+            baseDeliveryCharge;
 
 
         if (
@@ -1108,22 +1132,22 @@ router.post('/place-order', async (req, res) => {
         ) {
 
             const multiplier =
-                Math.ceil(orderQty / deliveryLimit);
+                Math.ceil(
+                    orderQty / deliveryLimit
+                );
 
             deliveryCharge =
                 baseDeliveryCharge * multiplier;
         }
 
 
-        // =====================================================
-        // 10. PRICE CALCULATION
-        // =====================================================
+        // ================= TOTAL =================
         const subtotal =
             salePrice * orderQty;
 
 
         const appliedDiscount =
-            parseFloat(discount_amount || 0);
+            parseFloat(discount_amount) || 0;
 
 
         const totalAmount =
@@ -1133,9 +1157,7 @@ router.post('/place-order', async (req, res) => {
             ) + deliveryCharge;
 
 
-        // =====================================================
-        // 11. SHIPPING ADDRESS
-        // =====================================================
+        // ================= ADDRESS =================
         const fullShippingAddress = [
             block_house,
             union_area,
@@ -1150,18 +1172,16 @@ router.post('/place-order', async (req, res) => {
             .join(', ');
 
 
-        // =====================================================
-        // 12. CREATE ORDER ID
-        // =====================================================
+        // ================= ORDER ID =================
         const orderId =
             'NXK-' +
             Date.now().toString().slice(-8) +
-            Math.floor(100 + Math.random() * 900);
+            Math.floor(
+                100 + Math.random() * 900
+            );
 
 
-        // =====================================================
-        // 13. PAYMENT INFORMATION
-        // =====================================================
+        // ================= PAYMENT =================
         const gatewayUsed =
             payment_method === 'online'
                 ? (selected_gateway || 'bkash')
@@ -1174,36 +1194,20 @@ router.post('/place-order', async (req, res) => {
                 : 'Pending';
 
 
-        // =====================================================
-        // 14. DEBUG INFORMATION
-        // =====================================================
-        console.log("========================================");
-        console.log("📦 NEW ORDER");
-        console.log("========================================");
+        console.log("========== ORDER CALCULATION ==========");
         console.log("Order ID:", orderId);
-        console.log("User ID:", userId);
-        console.log("Product ID:", product.id);
         console.log("Seller ID:", seller_id);
-        console.log("Quantity:", orderQty);
-        console.log("Variant:", variant);
         console.log("Sale Price:", salePrice);
+        console.log("Quantity:", orderQty);
         console.log("Subtotal:", subtotal);
         console.log("Delivery:", deliveryCharge);
         console.log("Discount:", appliedDiscount);
         console.log("Total:", totalAmount);
-        console.log("Payment Method:", payment_method);
-        console.log("Gateway:", gatewayUsed);
         console.log("Payment Status:", paymentStatus);
-        console.log("Customer Name:", name);
-        console.log("Customer Email:", email);
-        console.log("Customer Phone:", phone);
-        console.log("Shipping Address:", fullShippingAddress);
         console.log("========================================");
 
 
-        // =====================================================
-        // 15. INSERT ORDER INTO DATABASE
-        // =====================================================
+        // ================= INSERT ORDER =================
         const insertQuery = `
             INSERT INTO orders (
                 order_id,
@@ -1239,7 +1243,7 @@ router.post('/place-order', async (req, res) => {
 
         try {
 
-            const [insertResult] =
+            const [result] =
                 await db.query(
                     insertQuery,
                     [
@@ -1255,12 +1259,12 @@ router.post('/place-order', async (req, res) => {
                         appliedDiscount,
                         totalAmount,
 
-                        payment_method,
+                        payment_method || 'cod',
                         gatewayUsed,
                         paymentStatus,
 
                         name,
-                        email,
+                        email || null,
                         phone,
                         fullShippingAddress
                     ]
@@ -1268,29 +1272,33 @@ router.post('/place-order', async (req, res) => {
 
 
             console.log(
-                "✅ ORDER INSERT SUCCESS:",
-                insertResult.insertId
+                "✅ ORDER INSERTED:",
+                result.insertId
             );
 
 
         } catch (dbError) {
 
             console.error(
-                "❌ ORDER INSERT DATABASE ERROR"
+                "========================================"
             );
 
             console.error(
-                "Code:",
+                "❌ MYSQL ORDER INSERT ERROR"
+            );
+
+            console.error(
+                "CODE:",
                 dbError.code
             );
 
             console.error(
-                "Message:",
+                "MESSAGE:",
                 dbError.message
             );
 
             console.error(
-                "SQL State:",
+                "SQL STATE:",
                 dbError.sqlState
             );
 
@@ -1299,133 +1307,121 @@ router.post('/place-order', async (req, res) => {
                 dbError.sql
             );
 
+            console.error(
+                "========================================"
+            );
+
 
             return res.status(500).json({
                 success: false,
                 message:
-                    "Order database error: " +
+                    'Database Error: ' +
                     dbError.message
             });
         }
 
 
-        // =====================================================
-        // 16. UPDATE PRODUCT STOCK
-        // =====================================================
-        const currentSoldQty =
-            parseInt(product.sold_qty, 10) || 0;
+        // ================= UPDATE STOCK =================
+        try {
+
+            const currentSoldQty =
+                parseInt(product.sold_qty, 10) || 0;
 
 
-        const newStock =
-            Math.max(
-                0,
-                currentStock - orderQty
+            const newStock =
+                Math.max(
+                    0,
+                    currentStock - orderQty
+                );
+
+
+            const newSoldQty =
+                currentSoldQty + orderQty;
+
+
+            const newStockStatus =
+                newStock === 0
+                    ? 'out_of_stock'
+                    : 'in_stock';
+
+
+            await db.query(
+                `
+                UPDATE products
+                SET
+                    stock_quantity = ?,
+                    sold_qty = ?,
+                    stock_status = ?
+                WHERE id = ?
+                `,
+                [
+                    newStock,
+                    newSoldQty,
+                    newStockStatus,
+                    product.id
+                ]
             );
 
 
-        const newSoldQty =
-            currentSoldQty + orderQty;
+            console.log(
+                "✅ STOCK UPDATED"
+            );
 
 
-        const newStockStatus =
-            newStock === 0
-                ? 'out_of_stock'
-                : 'in_stock';
+        } catch (stockError) {
+
+            console.error(
+                "❌ STOCK UPDATE ERROR:",
+                stockError
+            );
+
+            // Order already inserted, তাই এখানে order fail করানো হচ্ছে না
+        }
 
 
-        await db.query(
-            `
-            UPDATE products
-            SET
-                stock_quantity = ?,
-                sold_qty = ?,
-                stock_status = ?
-            WHERE id = ?
-            `,
-            [
-                newStock,
-                newSoldQty,
-                newStockStatus,
-                product.id
-            ]
-        );
-
-
-        console.log("✅ PRODUCT STOCK UPDATED");
-        console.log("New Stock:", newStock);
-        console.log("New Sold Qty:", newSoldQty);
-
-
-        // =====================================================
-        // 17. ORDER DATA FOR EMAIL
-        // =====================================================
-        const orderData = {
-
-            order_id: orderId,
-
-            customer_name: name,
-
-            customer_email: email,
-
-            customer_phone: phone,
-
-            shipping_address:
-                fullShippingAddress,
-
-            payment_method:
-                payment_method,
-
-            selected_gateway:
-                gatewayUsed,
-
-            payment_status:
-                paymentStatus,
-
-            quantity:
-                orderQty,
-
-            variant:
-                variant,
-
-            subtotal_price:
-                subtotal,
-
-            delivery_charge:
-                deliveryCharge,
-
-            total_amount:
-                totalAmount
-        };
-
-
-        // =====================================================
-        // 18. SEND INVOICE EMAIL
-        // =====================================================
+        // ================= EMAIL =================
         try {
 
-            sendInvoiceEmail(
+            const orderData = {
+                order_id: orderId,
+                customer_name: name,
+                customer_email: email,
+                customer_phone: phone,
+                shipping_address: fullShippingAddress,
+                payment_method: payment_method,
+                selected_gateway: gatewayUsed,
+                payment_status: paymentStatus,
+                quantity: orderQty,
+                variant: variant,
+                subtotal_price: subtotal,
+                delivery_charge: deliveryCharge,
+                total_amount: totalAmount
+            };
+
+
+            await sendInvoiceEmail(
                 orderData,
                 product.title
             );
 
+
             console.log(
-                "✅ Invoice email sent"
+                "✅ INVOICE EMAIL SENT"
             );
+
 
         } catch (emailError) {
 
             console.error(
-                "⚠️ Invoice email error:",
+                "⚠️ EMAIL ERROR:",
                 emailError.message
             );
 
-            // Email error হলেও order fail হবে না
+            // Email error হলে order fail হবে না
         }
 
 
-        // =====================================================
-        // 19. BKASH PAYMENT FLOW
-        // =====================================================
+        // ================= BKASH =================
         if (
             payment_method === 'online' &&
             gatewayUsed === 'bkash'
@@ -1436,43 +1432,20 @@ router.post('/place-order', async (req, res) => {
                 `${req.protocol}://${req.get('host')}`;
 
 
-            console.log(
-                "💳 bKash payment flow"
-            );
-
-
             return res.json({
-
                 success: true,
-
-                order_id:
-                    orderId,
-
-                selected_gateway:
-                    'BKASH',
-
+                order_id: orderId,
+                selected_gateway: 'BKASH',
                 payment_url:
                     `${baseUrl}/user/bkash-success?order_id=${orderId}`
             });
         }
 
 
-        // =====================================================
-        // 20. NORMAL ORDER SUCCESS
-        // =====================================================
-        console.log(
-            "🎉 ORDER PLACED SUCCESSFULLY:",
-            orderId
-        );
-
-
+        // ================= SUCCESS =================
         return res.json({
-
             success: true,
-
-            order_id:
-                orderId,
-
+            order_id: orderId,
             message:
                 'Order placed successfully!'
         });
@@ -1480,25 +1453,26 @@ router.post('/place-order', async (req, res) => {
 
     } catch (error) {
 
-        // =====================================================
-        // 21. MAIN ERROR HANDLER
-        // =====================================================
         console.error(
-            "❌ PLACE ORDER ERROR:"
+            "========================================"
         );
 
         console.error(
-            "Error Code:",
+            "❌ PLACE ORDER ERROR"
+        );
+
+        console.error(
+            "CODE:",
             error.code
         );
 
         console.error(
-            "Error Message:",
+            "MESSAGE:",
             error.message
         );
 
         console.error(
-            "SQL State:",
+            "SQL STATE:",
             error.sqlState
         );
 
@@ -1508,19 +1482,21 @@ router.post('/place-order', async (req, res) => {
         );
 
         console.error(
-            "Full Error:",
+            "FULL ERROR:",
             error
+        );
+
+        console.error(
+            "========================================"
         );
 
 
         return res.status(500).json({
-
             success: false,
-
             message:
-                "Order failed: " +
+                'Order Error: ' +
                 (error.message ||
-                    "Server Error during order placement!")
+                    'Unknown server error')
         });
     }
 });
