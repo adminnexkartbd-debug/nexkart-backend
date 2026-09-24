@@ -1041,67 +1041,18 @@ router.post('/place-order', async (req, res) => {
         };
         sendInvoiceEmail(orderData, product.title);
 
-        // bkash payment gateway integration for online payment success simulation/flow
-        if (payment_method === 'online' && gatewayUsed === 'bkash') {
-            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-            const callbackUrl = `${baseUrl}/user/bkash/callback?order_id=${orderId}`;
-
-            try {
-                // bKash Tokenized Checkout API integration call or success redirect URL simulation
-                const bkashAuth = await axios.post('https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant', {
-                    app_key: process.env.BKASH_APP_KEY,
-                    app_secret: process.env.BKASH_APP_SECRET
-                }, {
-                    headers: {
-                        'username': process.env.BKASH_USERNAME,
-                        'password': process.env.BKASH_PASSWORD,
-                        'Content-Type': 'application/json'
-                    }
-                }).catch(() => null);
-
-                let paymentRedirectUrl = `${baseUrl}/user/bkash-success?order_id=${orderId}`;
-                
-                if (bkashAuth && bkashAuth.data && bkashAuth.data.id_token) {
-                    const idToken = bkashAuth.data.id_token;
-                    const createPayment = await axios.post('https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/create', {
-                        mode: '0011',
-                        payerReference: phone,
-                        callbackURL: callbackUrl,
-                        amount: totalAmount.toFixed(2),
-                        currency: 'BDT',
-                        intent: 'sale',
-                        merchantInvoiceNumber: orderId
-                    }, {
-                        headers: {
-                            'Authorization': idToken,
-                            'X-APP-Key': process.env.BKASH_APP_KEY,
-                            'Content-Type': 'application/json'
-                        }
-                    }).catch(() => null);
-
-                    if (createPayment && createPayment.data && createPayment.data.bkashURL) {
-                        paymentRedirectUrl = createPayment.data.bkashURL;
-                    }
-                }
-
-                return res.json({
-                    success: true,
-                    order_id: orderId,
-                    selected_gateway: 'BKASH',
-                    payment_url: paymentRedirectUrl
-                });
-
-            } catch (bkashErr) {
-                console.error("bKash API Error:", bkashErr.message);
-                return res.json({
-                    success: true,
-                    order_id: orderId,
-                    selected_gateway: 'BKASH',
-                    payment_url: `${baseUrl}/user/bkash-success?order_id=${orderId}`
-                });
-            }
-        }
-
+       // bkash payment gateway integration - Safe Demo Flow
+if (payment_method === 'online' && gatewayUsed === 'bkash') {
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    
+    // সরাসরি ডিমো সাকসেস পেজে রিডাইরেক্ট করার ব্যবস্থা (API ফেইল করলেও অর্ডার কনফার্ম থাকবে)
+    return res.json({
+        success: true,
+        order_id: orderId,
+        selected_gateway: 'BKASH',
+        payment_url: `${baseUrl}/user/bkash-success?order_id=${orderId}`
+    });
+}
         return res.json({ success: true, order_id: orderId, message: 'Order placed successfully!' });
 
     } catch (error) {
