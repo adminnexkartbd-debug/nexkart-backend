@@ -91,7 +91,7 @@ router.get('/get-sellers', async (req, res) => {
                 COALESCE((SELECT SUM(o.total_amount) FROM orders o WHERE o.seller_id = a.id), 0) AS total_sale,
                 COALESCE((SELECT SUM(w.amount) FROM withdraw_request w WHERE w.seller_id = a.id AND w.status = 'approved'), 0) AS total_withdraw
             FROM admins a 
-            WHERE a.role = 'seller'
+            WHERE LOWER(a.role) = 'seller'
         `;
         const [results] = await db.query(query);
         res.status(200).json({ success: true, sellers: results });
