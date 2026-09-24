@@ -100,6 +100,7 @@ router.get('/get-sellers', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 // Update Seller Super Admin Status (pending/approved)
 router.post('/update-seller-status', async (req, res) => {
     try {
