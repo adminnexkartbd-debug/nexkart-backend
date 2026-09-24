@@ -76,22 +76,22 @@ router.get('/get-users', async (req, res) => {
     }
 });
 
-// Get Sellers from Admins Table with Total Sales and Withdraws
+// Get Sellers from Admins Table with Total Sales and Withdraws (Fixed to match database schema)
 router.get('/get-sellers', async (req, res) => {
     try {
         const query = `
             SELECT 
-                a.id, 
-                a.name, 
-                a.email, 
-                a.phone_number, 
-                a.password, 
-                a.is_verified, 
-                a.super_admin,
-                COALESCE((SELECT SUM(o.total_amount) FROM orders o WHERE o.seller_id = a.id), 0) AS total_sale,
-                COALESCE((SELECT SUM(w.amount) FROM withdraw_request w WHERE w.seller_id = a.id AND w.status = 'approved'), 0) AS total_withdraw
-            FROM admins a 
-            WHERE LOWER(a.role) = 'seller'
+                id, 
+                name, 
+                email, 
+                phone_number, 
+                password, 
+                is_verified, 
+                super_admin,
+                COALESCE(total_sales, 0) AS total_sale,
+                COALESCE(total_withdraw, 0) AS total_withdraw
+            FROM admins 
+            WHERE LOWER(role) = 'seller'
         `;
         const [results] = await db.query(query);
         res.status(200).json({ success: true, sellers: results });
