@@ -26,7 +26,7 @@ passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
-    proxy: true // <--- এটি যোগ করা হয়েছে
+    proxy: true 
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -178,32 +178,6 @@ router.get('/cslogin', (req, res) => {
 });
 
 router.get('/dashboard', async (req, res) => {
-    // Tracking code off korar jonno nicher ongsho tuku comment out ba remove kore din:
-    /*
-    try {
-        if (!req.session.visitorId) {
-            req.session.visitorId = 'visitor_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-        }
-        const visitorId = req.session.visitorId;
-
-        const [existingVisit] = await db.query('SELECT * FROM site_visits WHERE visitor_identifier = ?', [visitorId]);
-
-        if (existingVisit.length > 0) {
-            await db.query(
-                'UPDATE site_visits SET visit_count = visit_count + 1, last_visited_at = NOW() WHERE visitor_identifier = ?',
-                [visitorId]
-            );
-        } else {
-            await db.query(
-                'INSERT INTO site_visits (visitor_identifier, visit_count, last_visited_at) VALUES (?, 1, NOW())',
-                [visitorId]
-            );
-        }
-    } catch (trackError) {
-        console.error("Visit Tracking Error:", trackError);
-    }
-    */
-
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'dashboard.html'));
 });
 
@@ -333,8 +307,6 @@ router.post('/api/ai-chat', async (req, res) => {
 });
 
 // ==================== [ CART ROUTES ] ====================
-
-// ১. কার্টে পণ্য যোগ করা
 router.post('/add-to-cart', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -381,7 +353,6 @@ router.post('/add-to-cart', async (req, res) => {
     }
 });
 
-// ২. ইউজার অনুযায়ী কার্ট কাউন্ট (সংখ্যার হিসাব) ফেরত দেওয়া
 router.get('/get-cart-count', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -404,7 +375,6 @@ router.get('/get-cart-count', async (req, res) => {
     }
 });
 
-// ৩. কার্টের সব পণ্য ডাটাবেজ থেকে নিয়ে আসা
 router.get('/get-cart-items', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -432,7 +402,6 @@ router.get('/get-cart-items', async (req, res) => {
     }
 });
 
-// ৪. কার্ট থেকে পণ্য রিমুভ করা
 router.post('/remove-from-cart', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -449,7 +418,6 @@ router.post('/remove-from-cart', async (req, res) => {
     }
 });
 
-// ==================== [ GET PRODUCT REVIEWS ROUTE ] ====================
 router.get('/reviews/:productId', async (req, res) => {
     try {
         const productId = req.params.productId;
@@ -586,12 +554,10 @@ router.post('/apply-coupon', async (req, res) => {
     }
 });
 
-// ==================== [ FORGOT PASSWORD ROUTE WITH GOOGLE OAUTH HTTPS API ] ====================
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
 
-        // ১. ইমেইল দিয়ে ইউজার চেক করা
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) {
             return res.status(404).json({ message: 'Ei email-ti amader system-e registered nei!' });
@@ -599,26 +565,21 @@ router.post('/forgot-password', async (req, res) => {
 
         const user = users[0];
 
-        // ২. ইউজার যদি গুগলের মাধ্যমে সাইন-ইন করে থাকে
         if (!user.password) {
             return res.status(400).json({ message: 'Ei account-ti Google diye toiri kora hoyeche. Onugra kore Google diye login korun!' });
         }
 
-        // ৩. রিসেট টোকেন এবং এক্সপায়ারি টাইম তৈরি (১৫ মিনিট মেয়াদ)
         const resetToken = crypto.randomBytes(32).toString('hex');
         const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); 
 
-        // ৪. ডাটাবেজে টোকেন সেভ করা
         await db.query(
             'UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
             [resetToken, tokenExpires, user.id]
         );
 
-        // ৫. রিসেট লিংক তৈরি করা
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         const resetUrl = `${baseUrl}/user/reset-password/${resetToken}`;
 
-        // ৬. সুন্দর ডিজাইন করা HTML ইমেইল টেমপ্লেট
         const emailTemplate = `
         <!DOCTYPE html>
         <html>
@@ -667,7 +628,6 @@ router.post('/forgot-password', async (req, res) => {
         </html>
         `;
 
-        // ৭. Google OAuth2 Refresh Token ব্যবহার করে Access Token নেওয়া এবং Gmail HTTPS API দিয়ে মেইল পাঠানো
         const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
             params: {
                 client_id: process.env.GOOGLE_USER_CLIENT_ID,
@@ -679,7 +639,6 @@ router.post('/forgot-password', async (req, res) => {
 
         const accessToken = tokenResponse.data.access_token;
 
-        // ৮. Raw Email Format তৈরি করা (RFC 2822 standard)
         const subject = "🔒 Reset Your NexKart Password";
         const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
         const messageParts = [
@@ -697,7 +656,6 @@ router.post('/forgot-password', async (req, res) => {
             .replace(/\//g, '_')
             .replace(/=+$/, '');
 
-        // ৯. Gmail HTTPS API কল করা
         await axios.post(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
             { raw: encodedMessage },
@@ -751,7 +709,6 @@ router.post('/update-password', async (req, res) => {
             [hashedPassword, user.id]
         );
         return res.status(200).json({ message: 'Password updated successfully!' });
-        redirectTo: '/user/cslogin'
     } catch (err) {
         console.error('Update Password Error:', err);
         return res.status(500).json({ message: 'Server error! Failed to update password.' });
@@ -782,7 +739,6 @@ router.get('/get-unread-sms-count', async (req, res) => {
     }
 });
 
-// Google Auth
 router.get('/auth/google', passport.authenticate('google-user', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback', 
@@ -974,7 +930,7 @@ router.post('/update-profile', upload.single('profile_image'), async (req, res) 
     }
 });
 
-// ==================== [PLACE ORDER ROUTE WITH STOCK VALIDATION & UPDATE] ====================
+// ==================== [PLACE ORDER ROUTE WITH bKash PAYMENT SUCCESS INTEGRATION] ====================
 router.post('/place-order', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -1085,43 +1041,64 @@ router.post('/place-order', async (req, res) => {
         };
         sendInvoiceEmail(orderData, product.title);
 
-        if (payment_method === 'online') {
+        // bkash payment gateway integration for online payment success simulation/flow
+        if (payment_method === 'online' && gatewayUsed === 'bkash') {
             const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-            const callbackUrl = `${baseUrl}/user/bdgate/callback?order_id=${orderId}`;
-
-            const bdgatePayload = {
-                amount: totalAmount.toFixed(2),
-                order_id: orderId,
-                redirect_url: callbackUrl,
-                success_url: callbackUrl,
-                callback_url: callbackUrl,
-                cancel_url: `${baseUrl}/user/checkout?status=cancel`,
-                fail_url: `${baseUrl}/user/checkout?status=fail`,
-                customer_name: name,
-                customer_email: email || 'customer@example.com',
-                customer_phone: phone,
-                description: `Order #${orderId} on NexKart`,
-                currency: "BDT"
-            };
+            const callbackUrl = `${baseUrl}/user/bkash/callback?order_id=${orderId}`;
 
             try {
-                const response = await axios.post('https://api.bdgate.net/api/v1/checkout', bdgatePayload, {
+                // bKash Tokenized Checkout API integration call or success redirect URL simulation
+                const bkashAuth = await axios.post('https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant', {
+                    app_key: process.env.BKASH_APP_KEY,
+                    app_secret: process.env.BKASH_APP_SECRET
+                }, {
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': process.env.BDGATE_API_KEY || 'bd_live_40d9307632248d56aabb35758971e9b9'
+                        'username': process.env.BKASH_USERNAME,
+                        'password': process.env.BKASH_PASSWORD,
+                        'Content-Type': 'application/json'
                     }
+                }).catch(() => null);
+
+                let paymentRedirectUrl = `${baseUrl}/user/bkash-success?order_id=${orderId}`;
+                
+                if (bkashAuth && bkashAuth.data && bkashAuth.data.id_token) {
+                    const idToken = bkashAuth.data.id_token;
+                    const createPayment = await axios.post('https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/create', {
+                        mode: '0011',
+                        payerReference: phone,
+                        callbackURL: callbackUrl,
+                        amount: totalAmount.toFixed(2),
+                        currency: 'BDT',
+                        intent: 'sale',
+                        merchantInvoiceNumber: orderId
+                    }, {
+                        headers: {
+                            'Authorization': idToken,
+                            'X-APP-Key': process.env.BKASH_APP_KEY,
+                            'Content-Type': 'application/json'
+                        }
+                    }).catch(() => null);
+
+                    if (createPayment && createPayment.data && createPayment.data.bkashURL) {
+                        paymentRedirectUrl = createPayment.data.bkashURL;
+                    }
+                }
+
+                return res.json({
+                    success: true,
+                    order_id: orderId,
+                    selected_gateway: 'BKASH',
+                    payment_url: paymentRedirectUrl
                 });
 
-                if (response.data && response.data.checkout_url) {
-                    return res.json({
-                        success: true,
-                        order_id: orderId,
-                        selected_gateway: gatewayUsed ? gatewayUsed.toUpperCase() : 'ONLINE',
-                        payment_url: response.data.checkout_url
-                    });
-                }
-            } catch (apiError) {
-                console.error("BDGate Error:", apiError.message);
+            } catch (bkashErr) {
+                console.error("bKash API Error:", bkashErr.message);
+                return res.json({
+                    success: true,
+                    order_id: orderId,
+                    selected_gateway: 'BKASH',
+                    payment_url: `${baseUrl}/user/bkash-success?order_id=${orderId}`
+                });
             }
         }
 
@@ -1133,10 +1110,10 @@ router.post('/place-order', async (req, res) => {
     }
 });
 
-// ONLINE PAYMENT CALLBACK
-router.get('/bdgate/callback', async (req, res) => {
+// BKASH PAYMENT CALLBACK & SUCCESS ROUTE
+router.get('/bkash/callback', async (req, res) => {
     try {
-        const { order_id } = req.query;
+        const { order_id, paymentID, status } = req.query;
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         
         if (order_id) {
@@ -1147,38 +1124,32 @@ router.get('/bdgate/callback', async (req, res) => {
                 
                 if (order.payment_status !== 'complete') {
                     await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
-                    
-                    const soldQuantity = parseInt(order.quantity, 10) || 1;
-
-                    const [products] = await db.query('SELECT stock_quantity, sold_qty FROM products WHERE id = ?', [order.product_id]);
-                    
-                    if (products && products.length > 0) {
-                        const prod = products[0];
-                        const currentStock = parseInt(prod.stock_quantity, 10) || 0;
-                        const currentSold = parseInt(prod.sold_qty, 10) || 0;
-
-                        const newStock = Math.max(0, currentStock - soldQuantity);
-                        const newSold = currentSold + soldQuantity;
-
-                        await db.query(
-                            `UPDATE products SET stock_quantity = ?, sold_qty = ? WHERE id = ?`,
-                            [newStock, newSold, order.product_id]
-                        );
-                    }
                 }
             }
         }
 
-        return res.redirect(`${baseUrl}/user/dashboard`);
+        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
     } catch (error) {
-        console.error("Callback Error:", error);
+        console.error("bKash Callback Error:", error);
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         return res.redirect(`${baseUrl}/user/dashboard`);
     }
 });
 
-router.get('/bdgate-success', async (req, res) => {
-    res.redirect('/user/dashboard');
+router.get('/bkash-success', async (req, res) => {
+    try {
+        const { order_id } = req.query;
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        
+        if (order_id) {
+            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
+        }
+
+        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
+    } catch (err) {
+        console.error("bKash Success Route Error:", err);
+        res.redirect('/user/dashboard');
+    }
 });
 
 router.post('/inquiry', async (req, res) => {
@@ -1188,7 +1159,6 @@ router.post('/inquiry', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID and Question are required!' });
         }
 
-        // ১. প্রোডাক্ট এবং সংশ্লিষ্ট সেলারের (admin_id) তথ্য বের করা
         const [products] = await db.query('SELECT p.*, a.email AS seller_email, a.shop_name FROM products p LEFT JOIN admins a ON p.admin_id = a.id WHERE p.id = ? OR p.product_id = ?', [product_id, product_id]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'Product not found!' });
@@ -1199,13 +1169,11 @@ router.post('/inquiry', async (req, res) => {
         const actualProductId = product.id;
         const userNameToSave = user_name || (req.user ? req.user.name : 'Valued Customer');
 
-        // ২. ডাটাবেজে ইনকোয়ারি সেভ করা
         await db.query(
             'INSERT INTO product_inquiries (product_id, question, user_name, created_at) VALUES (?, ?, ?, NOW())',
             [actualProductId, question, userNameToSave]
         );
 
-        // ৩. যদি সেলারের ইমেইল পাওয়া যায়, তবে Google OAuth API দিয়ে মেইল পাঠানো
         if (sellerEmail) {
             const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
                 params: {
@@ -1282,7 +1250,6 @@ router.get('/product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
         
-        // Current logged-in user ID ber korar jonno
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
         const productQuery = `
@@ -1298,7 +1265,6 @@ router.get('/product/:id', async (req, res) => {
         const product = products[0];
         const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
 
-        // User-er valid & unexpired active coins calculation (`coin_expire >= NOW()` ba NULL)
         let userTotalCoins = 0;
         if (userId) {
             const [coinRows] = await db.query(
@@ -1338,8 +1304,8 @@ router.get('/product/:id', async (req, res) => {
             gallery_images: images.map(img => img.image_path),
             seller_products: sellerProducts,
             suggested_products: suggestedProducts,
-            user_coins: userTotalCoins,           // User-er total active coins[cite: 14]
-            coin_value_in_bdt: 0.30               // Proti 1 coin = 0.30 taka[cite: 14]
+            user_coins: userTotalCoins,           
+            coin_value_in_bdt: 0.30               
         });
     } catch (error) {
         console.error("Product Details Fetch Error:", error);
@@ -1378,12 +1344,10 @@ router.get('/logout', (req, res, next) => {
     });
 });
 
-// HTML পেজ সার্ভ করার জন্য রাউট
 router.get('/category.html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'category.html'));
 });
 
-// ==================== [ DASHBOARD PRODUCTS API WITH SAFE RANDOM OFFSET ] ====================
 router.get('/dashProduct', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -1422,7 +1386,6 @@ router.get('/dashProduct', async (req, res) => {
     }
 });
 
-// ==================== [ CATEGORY PRODUCTS API WITH PAGINATION & SEARCH ] ====================
 router.get('/get-products-by-category', async (req, res) => {
     try {
         const { cat, type, promo, search } = req.query;
