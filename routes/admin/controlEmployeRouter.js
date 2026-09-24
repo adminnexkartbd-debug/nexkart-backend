@@ -35,7 +35,7 @@ router.post('/verify-pin', async (req, res) => {
     }
 });
 
-// Get Commission Rate from Database (comission table & commision_rate column)
+// Get Commission Rate from Database
 router.get('/get-commission', async (req, res) => {
     try {
         const [results] = await db.query(`SELECT commision_rate FROM comission LIMIT 1`);
@@ -76,7 +76,7 @@ router.get('/get-users', async (req, res) => {
     }
 });
 
-// Get Sellers from Admins Table with Total Sales and Withdraws (Fixed to match database schema)
+// Get Sellers from Admins Table with Total Sales and Withdraws
 router.get('/get-sellers', async (req, res) => {
     try {
         const query = `
@@ -84,14 +84,14 @@ router.get('/get-sellers', async (req, res) => {
                 id, 
                 name, 
                 email, 
-                phone_number, 
+                phone AS phone_number, 
                 password, 
                 is_verified, 
                 super_admin,
                 COALESCE(total_sales, 0) AS total_sale,
                 COALESCE(total_withdraw, 0) AS total_withdraw
             FROM admins 
-            WHERE LOWER(role) = 'seller'
+            WHERE role = 'seller'
         `;
         const [results] = await db.query(query);
         res.status(200).json({ success: true, sellers: results });
