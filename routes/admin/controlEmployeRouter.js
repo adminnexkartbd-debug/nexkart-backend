@@ -76,4 +76,45 @@ router.get('/get-users', async (req, res) => {
     }
 });
 
+// Get Sellers from Admins Table with Total Sales and Withdraws
+router.get('/get-sellers', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                a.id, 
+                a.name, 
+                a.email, 
+                a.phone_number, 
+                a.password, 
+                a.is_verified, 
+                a.super_admin,
+                COALESCE((SELECT SUM(o.total_amount) FROM orders o WHERE o.seller_id = a.id), 0) AS total_sale,
+                COALESCE((SELECT SUM(w.amount) FROM withdraw_request w WHERE w.seller_id = a.id AND w.status = 'approved'), 0) AS total_withdraw
+            FROM admins a 
+            WHERE a.role = 'seller'
+        `;
+        const [results] = await db.query(query);
+        res.status(200).json({ success: true, sellers: results });
+    } catch (error) {
+        console.error('Error fetching sellers:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Update Seller Super Admin Status (pending/approved)
+router.post('/update-seller-status', async (req, res) => {
+    try {
+        const { id, super_admin } = req.body;
+        if (!id || !super_admin) {
+            return res.status(400).json({ success: false, message: 'Seller ID and status are required.' });
+        }
+
+        await db.query(`UPDATE admins SET super_admin = ? WHERE id = ?`, [super_admin, id]);
+        res.status(200).json({ success: true, message: 'Seller super admin status updated successfully.' });
+    } catch (error) {
+        console.error('Error updating seller status:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;
