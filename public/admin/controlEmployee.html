@@ -62,15 +62,16 @@
         </div>
     </div>
 
-    <div class="flex h-full overflow-hidden">
+    <div class="flex h-full overflow-hidden relative">
 
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="hidden md:flex md:flex-shrink-0 w-64 bg-slate-900 text-slate-300 flex-col transition-all duration-300 z-20">
+        <aside id="sidebar" class="hidden md:flex md:flex-shrink-0 w-64 bg-slate-900 text-slate-300 flex-col transition-all duration-300 z-30 absolute inset-y-0 left-0 md:relative">
             <div class="flex items-center justify-between h-16 px-6 bg-slate-950 text-white">
                 <div class="flex items-center space-x-3">
                     <div class="bg-indigo-600 p-2 rounded-lg text-white font-bold text-lg"><i class="fa-solid fa-store"></i></div>
                     <span class="font-bold text-lg tracking-wide">NexusAdmin</span>
                 </div>
+                <button id="sidebarClose" class="text-slate-400 hover:text-white md:hidden"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             
             <div class="flex-1 flex flex-col overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
@@ -91,15 +92,15 @@
         </aside>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden w-full">
             
             <!-- Top Header Navbar -->
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 shadow-sm">
-                <div class="flex items-center space-x-4">
-                    <button id="sidebarToggle" class="text-slate-500 hover:text-slate-700 md:hidden focus:outline-none">
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-10 shadow-sm flex-shrink-0">
+                <div class="flex items-center space-x-3">
+                    <button id="sidebarToggle" class="text-slate-500 hover:text-slate-700 md:hidden focus:outline-none p-1">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    <span class="text-sm font-bold text-slate-800">E-Commerce Control Center</span>
+                    <span class="text-xs md:text-sm font-bold text-slate-800 truncate">E-Commerce Control Center</span>
                 </div>
                 <div class="flex items-center space-x-4">
                     <button onclick="showToast('No new notifications', 'info')" class="relative p-2 text-slate-600 hover:text-indigo-600 rounded-full hover:bg-slate-100 transition-colors">
@@ -109,60 +110,60 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto bg-slate-50 p-6 custom-scrollbar">
+            <main class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 custom-scrollbar">
                 
                 <div class="mb-8">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                         <div>
-                            <h1 class="text-2xl font-bold text-slate-900 tracking-tight"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i>Admin Dashboard Overview</h1>
-                            <p class="text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users.</p>
+                            <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight"><i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i>Admin Dashboard Overview</h1>
+                            <p class="text-xs md:text-sm text-slate-500 mt-1">Monitor key metrics, manage seller commissions, review pending approvals, and inspect registered users.</p>
                         </div>
                     </div>
 
                     <!-- Top Metric Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        <div onclick="openCardModal('commission')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                        <div onclick="openCardModal('commission')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Avg Seller Commission</p>
-                                <h3 id="cardCommissionDisplay" class="text-2xl font-bold text-slate-800 mt-1">Loading...</h3>
-                                <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-percent mr-1"></i> Edit & View breakdown</span>
+                                <h3 id="cardCommissionDisplay" class="text-xl md:text-2xl font-bold text-slate-800 mt-1">Loading...</h3>
+                                <span class="text-[11px] text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-percent mr-1"></i> Edit & View breakdown</span>
                             </div>
-                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                         </div>
 
-                        <div onclick="openCardModal('admin')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
+                        <div onclick="openCardModal('admin')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition-colors">System Status</p>
-                                <h3 class="text-2xl font-bold text-emerald-600 mt-1">Secure</h3>
-                                <span class="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-shield-check mr-1"></i> Pin Verified</span>
+                                <h3 class="text-xl md:text-2xl font-bold text-emerald-600 mt-1">Secure</h3>
+                                <span class="text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-shield-check mr-1"></i> Pin Verified</span>
                             </div>
-                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
                         </div>
 
-                        <div onclick="openCardModal('approvals')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
+                        <div onclick="openCardModal('approvals')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors">Pending Approvals</p>
-                                <h3 class="text-2xl font-bold text-amber-600 mt-1">2 Pending</h3>
-                                <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-clock mr-1"></i> Action needed</span>
+                                <h3 class="text-xl md:text-2xl font-bold text-amber-600 mt-1">2 Pending</h3>
+                                <span class="text-[11px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-clock mr-1"></i> Action needed</span>
                             </div>
-                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-hourglass-half"></i></div>
                         </div>
 
-                        <div onclick="openCardModal('sellers')" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+                        <div onclick="openCardModal('sellers')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Seller Management</p>
-                                <h3 id="cardSellerCountDisplay" class="text-2xl font-bold text-slate-800 mt-1">Loading...</h3>
-                                <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-store mr-1"></i> Vendors Online</span>
+                                <h3 id="cardSellerCountDisplay" class="text-xl md:text-2xl font-bold text-slate-800 mt-1">Loading...</h3>
+                                <span class="text-[11px] text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-store mr-1"></i> Vendors Online</span>
                             </div>
-                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-shop"></i></div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-shop"></i></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                    <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div class="p-4 md:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div class="flex items-center space-x-3">
-                            <h2 class="font-bold text-slate-800 text-lg"><i class="fa-solid fa-users text-indigo-600 mr-2"></i>Registered User Directory</h2>
+                            <h2 class="font-bold text-slate-800 text-base md:text-lg"><i class="fa-solid fa-users text-indigo-600 mr-2"></i>Registered User Directory</h2>
                         </div>
                         <div class="relative w-full sm:w-80">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
@@ -171,16 +172,14 @@
                     </div>
 
                     <div class="overflow-x-auto" id="userTableContainer">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
-                                    <th class="py-4 px-6 bg-slate-50">User Name</th>
-                                    <th class="py-4 px-4 bg-slate-50">Profile Opening Date</th>
-                                    <th class="py-4 px-4 bg-slate-50">Email Address</th>
-                                    <th class="py-4 px-6">Seller Name & Shop</th>
-                                    <th class="py-4 px-4 bg-slate-50">Phone Number</th>
-                                    <th class="py-4 px-4 bg-slate-50">Password Credentials</th>
-                                    <th class="py-4 px-6 text-right bg-slate-50">Actions</th>
+                                    <th class="py-3 px-4 md:py-4 md:px-6 bg-slate-50">User Name</th>
+                                    <th class="py-3 px-3 md:py-4 md:px-4 bg-slate-50">Profile Opening Date</th>
+                                    <th class="py-3 px-3 md:py-4 md:px-4 bg-slate-50">Email Address</th>
+                                    <th class="py-3 px-4 md:py-4 md:px-6 bg-slate-50">Phone Number</th>
+                                    <th class="py-3 px-3 md:py-4 md:px-4 bg-slate-50">Password Credentials</th>
                                 </tr>
                             </thead>
                             <tbody id="userTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -212,34 +211,36 @@
 
     <!-- Full Screen Seller Management Modal -->
     <div id="sellerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-            <h3 class="font-bold text-lg flex items-center"><i class="fa-solid fa-shop text-indigo-400 mr-2"></i>Seller Management Dashboard</h3>
+        <div class="bg-slate-900 text-white px-4 md:px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+            <h3 class="font-bold text-base md:text-lg flex items-center"><i class="fa-solid fa-shop text-indigo-400 mr-2"></i>Seller Management Dashboard</h3>
             <button onclick="closeSellerModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
-        <div class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="bg-white border-b border-slate-200 px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-shrink-0">
             <div class="relative w-full sm:w-96">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
                 <input type="text" id="sellerEmailSearchInput" onkeyup="filterSellers()" placeholder="Search sellers by email..." class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
             </div>
             <div class="text-xs text-slate-500 font-medium" id="sellerCountDisplay">Showing all sellers</div>
         </div>
-        <div class="flex-1 bg-slate-100 overflow-y-auto p-6 custom-scrollbar">
+        <div class="flex-1 bg-slate-100 overflow-y-auto p-4 md:p-6 custom-scrollbar">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-                            <th class="py-4 px-6">Seller Name & Email</th>
-                            <th class="py-4 px-4">Phone</th>
-                            <th class="py-4 px-4">Password</th>
-                            <th class="py-4 px-4">Total Sale</th>
-                            <th class="py-4 px-4">Total Withdraw</th>
-                            <th class="py-4 px-4">Verification</th>
-                            <th class="py-4 px-4">Super Admin Status</th>
-                            <th class="py-4 px-6 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sellerTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-4 px-6">Seller Name & Shop</th>
+                                <th class="py-4 px-4">Phone</th>
+                                <th class="py-4 px-4">Password</th>
+                                <th class="py-4 px-4">Total Sale</th>
+                                <th class="py-4 px-4">Total Withdraw</th>
+                                <th class="py-4 px-4">Verification</th>
+                                <th class="py-4 px-4">Super Admin Status</th>
+                                <th class="py-4 px-6 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellerTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -420,6 +421,7 @@
                 tr.innerHTML = `
                     <td class="py-4 px-6">
                         <p class="font-semibold text-slate-800">${seller.name || 'N/A'}</p>
+                        <p class="text-xs text-indigo-600 font-medium"><i class="fa-solid fa-store mr-1"></i>${seller.shop_name || 'No Shop Name'}</p>
                         <p class="text-xs text-slate-500">${seller.email || 'N/A'}</p>
                     </td>
                     <td class="py-4 px-4 text-xs font-mono text-slate-600">${seller.phone_number || seller.phone || 'N/A'}</td>
@@ -495,13 +497,19 @@
             fetchSellersCount();
             initAutoScroll();
             
-            document.getElementById('sidebarToggle').addEventListener('click', function() {
-                const sidebar = document.getElementById('sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarClose = document.getElementById('sidebarClose');
+
+            sidebarToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('hidden');
-                sidebar.classList.toggle('absolute');
-                sidebar.classList.toggle('inset-y-0');
-                sidebar.classList.toggle('left-0');
             });
+
+            if (sidebarClose) {
+                sidebarClose.addEventListener('click', function() {
+                    sidebar.classList.add('hidden');
+                });
+            }
         };
 
         function renderUserTable(data) {
@@ -509,50 +517,24 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400 font-medium"><i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>No matching users found</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-slate-400 font-medium"><i class="fa-solid fa-user-slash text-2xl mb-2 block"></i>No matching users found</td></tr>`;
                 document.getElementById('userTableCounter').innerText = `Showing 0 users`;
                 return;
             }
 
-           data.forEach(seller => {
-    const isVerified = seller.is_verified === 1 || seller.is_verified === true;
-    const verificationBadge = isVerified 
-        ? `<span class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center"><i class="fa-solid fa-check mr-1"></i>Verified (1)</span>` 
-        : `<span class="bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center"><i class="fa-solid fa-xmark mr-1"></i>Not Verified (0)</span>`;
+            data.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 md:py-4 md:px-6 font-semibold text-slate-800">${user.name}</td>
+                    <td class="py-3 px-3 md:py-4 md:px-4 text-xs font-medium text-slate-600">${user.profileOpeningDate}</td>
+                    <td class="py-3 px-3 md:py-4 md:px-4 text-xs text-slate-600">${user.email}</td>
+                    <td class="py-3 px-4 md:py-4 md:px-6 text-xs font-mono text-slate-600">${user.phone}</td>
+                    <td class="py-3 px-3 md:py-4 md:px-4 text-xs font-mono text-slate-700 bg-slate-50/50">${user.password}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-    const superAdminStatus = seller.super_admin || 'pending';
-    const statusBadge = superAdminStatus === 'approved'
-        ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold uppercase">Approved</span>`
-        : `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold uppercase">Pending</span>`;
-
-    const tr = document.createElement('tr');
-    tr.className = "hover:bg-slate-50 transition-colors";
-    tr.innerHTML = `
-        <td class="py-4 px-6">
-            <p class="font-semibold text-slate-800">${seller.name || 'N/A'}</p>
-            <p class="text-xs text-indigo-600 font-medium"><i class="fa-solid fa-store mr-1"></i>${seller.shop_name || 'No Shop Name'}</p>
-            <p class="text-xs text-slate-500">${seller.email || 'N/A'}</p>
-        </td>
-        <td class="py-4 px-4 text-xs font-mono text-slate-600">${seller.phone_number || seller.phone || 'N/A'}</td>
-        <td class="py-4 px-4 text-xs font-mono text-slate-700 bg-slate-50 rounded">${seller.password || 'N/A'}</td>
-        <td class="py-4 px-4 text-xs font-bold text-slate-800">TK ${Number(seller.total_sale || 0).toFixed(2)}</td>
-        <td class="py-4 px-4 text-xs font-bold text-slate-800">TK ${Number(seller.total_withdraw || 0).toFixed(2)}</td>
-        <td class="py-4 px-4">${verificationBadge}</td>
-        <td class="py-4 px-4">
-            <div class="flex items-center space-x-2">
-                ${statusBadge}
-                <select onchange="updateSuperAdminStatus(${seller.id}, this.value)" class="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
-                    <option value="pending" ${superAdminStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                    <option value="approved" ${superAdminStatus === 'approved' ? 'selected' : ''}>Approved</option>
-                </select>
-            </div>
-        </td>
-        <td class="py-4 px-6 text-right">
-            <button onclick="showToast('Seller ID: ${seller.id} updated', 'success')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors">Details</button>
-        </td>
-    `;
-    tbody.appendChild(tr);
-});
             document.getElementById('userTableCounter').innerText = `Showing ${data.length} registered users`;
         }
 
@@ -560,21 +542,6 @@
             const query = document.getElementById('userSearchInput').value.toLowerCase().trim();
             const filtered = users.filter(user => user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query));
             renderUserTable(filtered);
-        }
-
-        function togglePassword(id) {
-            revealedPasswords[id] = !revealedPasswords[id];
-            filterUsers();
-        }
-
-        function copyPassword(password) {
-            const tempInput = document.createElement('textarea');
-            tempInput.value = password;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            showToast('Password copied to clipboard successfully!', 'success');
         }
 
         function openCardModal(cardType) {
