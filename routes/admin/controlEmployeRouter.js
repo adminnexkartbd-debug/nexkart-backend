@@ -76,7 +76,6 @@ router.get('/get-users', async (req, res) => {
     }
 });
 
-// Get Sellers from Admins Table with Total Sales and Withdraws
 router.get('/get-sellers', async (req, res) => {
     try {
         const query = `
@@ -84,6 +83,7 @@ router.get('/get-sellers', async (req, res) => {
                 id, 
                 name, 
                 email, 
+                shop_name, 
                 phone AS phone_number, 
                 password, 
                 is_verified, 
@@ -100,7 +100,6 @@ router.get('/get-sellers', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
 // Update Seller Super Admin Status (pending/approved)
 router.post('/update-seller-status', async (req, res) => {
     try {
