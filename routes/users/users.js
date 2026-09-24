@@ -998,19 +998,19 @@ router.post('/place-order', async (req, res) => {
         const gatewayUsed = payment_method === 'online' ? (selected_gateway || 'bkash') : null;
         const paymentStatus = payment_method === 'online' ? 'Pending Payment' : 'Pending';
 
-        const insertQuery = `
+    const insertQuery = `
             INSERT INTO orders (
                 order_id, user_id, product_id, seller_id, quantity, variant, 
-                subtotal_price, delivery_charge, total_amount, payment_method, 
+                subtotal_price, delivery_charge, discount_amount, total_amount, payment_method, 
                 selected_gateway, payment_status, customer_name, customer_email, 
                 customer_phone, shipping_address, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
         await db.query(insertQuery, [
             orderId, userId, product.id, seller_id, orderQty, variant || null,
-            subtotal, deliveryCharge, totalAmount, payment_method, gatewayUsed,
+            subtotal, deliveryCharge, appliedDiscount, totalAmount, payment_method, gatewayUsed,
             paymentStatus, name, email, phone, fullShippingAddress
         ]);
 
