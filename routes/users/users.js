@@ -22,6 +22,53 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// ==================== [ TRACKING HELPERS (GA4 & FB CAPI) ] ====================
+const TRACKING_CONFIG = {
+    FB_PIXEL_ID: process.env.FACEBOOK_PIXEL_ID,
+    FB_ACCESS_TOKEN: process.env.FACEBOOK_ACCESS_TOKEN,
+    GA4_MEASUREMENT_ID: process.env.GA4_MEASUREMENT_ID,
+    GA4_API_SECRET: process.env.GA4_API_SECRET
+};
+
+async function sendFacebookCAPI(eventName, userData, customData) {
+    if (!TRACKING_CONFIG.FB_PIXEL_ID || !TRACKING_CONFIG.FB_ACCESS_TOKEN) return;
+    try {
+        await axios.post(`https://graph.facebook.com/v18.0/${TRACKING_CONFIG.FB_PIXEL_ID}/events`, {
+            data: [{
+                event_name: eventName,
+                event_time: Math.floor(Date.now() / 1000),
+                action_source: 'website',
+                user_data: {
+                    em: userData.email ? crypto.createHash('sha256').update(userData.email.trim().toLowerCase()).digest('hex') : undefined,
+                    ph: userData.phone ? crypto.createHash('sha256').update(userData.phone.trim()).digest('hex') : undefined,
+                    fn: userData.name ? crypto.createHash('sha256').update(userData.name.trim().toLowerCase()).digest('hex') : undefined,
+                    client_ip_address: userData.client_ip_address,
+                    client_user_agent: userData.client_user_agent
+                },
+                custom_data: customData
+            }],
+            access_token: TRACKING_CONFIG.FB_ACCESS_TOKEN
+        });
+    } catch (err) {
+        console.error("Facebook CAPI Error:", err.response?.data || err.message);
+    }
+}
+
+async function sendGA4Measurement(eventName, clientId, payloadData) {
+    if (!TRACKING_CONFIG.GA4_MEASUREMENT_ID || !TRACKING_CONFIG.GA4_API_SECRET) return;
+    try {
+        await axios.post(`https://www.google-analytics.com/mp/collect?measurement_id=${TRACKING_CONFIG.GA4_MEASUREMENT_ID}&api_secret=${TRACKING_CONFIG.GA4_API_SECRET}`, {
+            client_id: clientId || 'anonymous',
+            events: [{
+                name: eventName,
+                params: payloadData
+            }]
+        });
+    } catch (err) {
+        console.error("GA4 Measurement Protocol Error:", err.response?.data || err.message);
+    }
+}
+
 passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
@@ -96,7 +143,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Payment Method:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-transform: uppercase;">${orderData.payment_method} ${orderData.selected_gateway ? '(' + orderData.selected_gateway + ')' : ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-transform: uppercase;">${orderData.payment_method}${orderData.selected_gateway ? '(' + orderData.selected_gateway + ')' : ''}</td>
                     </tr>
                     <tr style="background-color: #f8f9fa;">
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Payment Status:</strong></td>
@@ -116,8 +163,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
                     <tbody>
                         <tr>
                             <td style="padding: 8px; border: 1px solid #ddd;">
-                                ${productTitle}
-                                ${orderData.variant ? `<br><small style="color: #777;">Variant: ${orderData.variant}</small>` : ''}
+                                ${productTitle}${orderData.variant ? `<br><small style="color: #777;">Variant: ${orderData.variant}</small>` : ''}
                             </td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${orderData.quantity}</td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">৳${orderData.subtotal_price}</td>
@@ -272,7 +318,7 @@ router.post('/api/ai-chat', async (req, res) => {
             const [products] = await db.query('SELECT title, description, sale_price, regular_price, category FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
             if (products.length > 0) {
                 const p = products[0];
-                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description: ${p.description}. `;
+                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description:${p.description}. `;
             }
         }
 
@@ -284,7 +330,7 @@ router.post('/api/ai-chat', async (req, res) => {
             });
         }
 
-        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question: ${message}`;
+        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question:${message}`;
         
         const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
@@ -320,7 +366,7 @@ router.post('/add-to-cart', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID is required!' });
         }
 
-        const [products] = await db.query('SELECT id FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
+        const [products] = await db.query('SELECT * FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
         
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'Product not found in database!' });
@@ -345,6 +391,33 @@ router.post('/add-to-cart', async (req, res) => {
                 [userId, actualProductId, qtyToAdd]
             );
         }
+
+        // ==================== TRACKING EVENT: ADD TO CART ====================
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        await sendFacebookCAPI('AddToCart', {
+            client_ip_address: clientIp,
+            client_user_agent: userAgent
+        }, {
+            currency: 'BDT',
+            value: products[0].sale_price * qtyToAdd,
+            contents: [{
+                id: products[0].product_id || products[0].id,
+                quantity: qtyToAdd
+            }]
+        });
+
+        await sendGA4Measurement('add_to_cart', userId.toString(), {
+            currency: 'BDT',
+            value: products[0].sale_price * qtyToAdd,
+            items: [{
+                item_id: products[0].product_id || products[0].id,
+                item_name: products[0].title,
+                price: products[0].sale_price,
+                quantity: qtyToAdd
+            }]
+        });
 
         return res.json({ success: true, message: 'Product added to cart successfully!' });
     } catch (error) {
@@ -1374,8 +1447,6 @@ router.post('/place-order', async (req, res) => {
                 "❌ STOCK UPDATE ERROR:",
                 stockError
             );
-
-            // Order already inserted, তাই এখানে order fail করানো হচ্ছে না
         }
 
 
@@ -1416,9 +1487,42 @@ router.post('/place-order', async (req, res) => {
                 "⚠️ EMAIL ERROR:",
                 emailError.message
             );
-
-            // Email error হলে order fail হবে না
         }
+
+        // ==================== TRACKING EVENT: PURCHASE ====================
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        await sendFacebookCAPI('Purchase', {
+            email: email,
+            phone: phone,
+            name: name,
+            client_ip_address: clientIp,
+            client_user_agent: userAgent
+        }, {
+            currency: 'BDT',
+            value: totalAmount,
+            order_id: orderId,
+            contents: [{
+                id: product.product_id || product.id,
+                quantity: orderQty,
+                item_price: salePrice
+            }]
+        });
+
+        await sendGA4Measurement('purchase', userId.toString(), {
+            transaction_id: orderId,
+            value: totalAmount,
+            currency: 'BDT',
+            tax: 0,
+            shipping: deliveryCharge,
+            items: [{
+                item_id: product.product_id || product.id,
+                item_name: product.title,
+                price: salePrice,
+                quantity: orderQty
+            }]
+        });
 
 
         // ================= BKASH =================
