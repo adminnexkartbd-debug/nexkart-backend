@@ -11,6 +11,13 @@ require('dotenv').config();
 const app = express();
 app.use(compression());
 
+// ১. ট্র্যাকিং আইডিগুলো ফ্রন্টএন্ডে পাঠানোর জন্য একটি API রাউট
+app.get('/api/config', (req, res) => {
+    res.json({
+        gaId: process.env.GOOGLE_ANALYTICS_ID,
+        pixelId: process.env.FACEBOOK_PIXEL_ID
+    });
+});
 // ==================== ১. ডায়নামিক সিকিউরিটি (CSP) ও মিডলওয়্যার ====================
 app.use(
   helmet.contentSecurityPolicy({
