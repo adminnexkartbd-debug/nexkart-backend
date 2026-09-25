@@ -14,7 +14,7 @@ app.use(compression());
 // ১. ট্র্যাকিং আইডিগুলো ফ্রন্টএন্ডে পাঠানোর জন্য একটি API রাউট
 app.get('/api/config', (req, res) => {
     res.json({
-        gaId: process.env.GOOGLE_ANALYTICS_ID,
+        gaId: process.env.GA4_MEASUREMENT_ID, // ba GOOGLE_ANALYTICS_ID
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
