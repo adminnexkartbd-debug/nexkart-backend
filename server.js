@@ -31,7 +31,9 @@ app.use(
         "https://cdnjs.cloudflare.com", 
         "https://cdn.jsdelivr.net", 
         "https://cdn.tailwindcss.com",
-        "https://unpkg.com" 
+        "https://www.googletagmanager.com", 
+        "https://unpkg.com",
+        "https://www.google-analytics.com" 
       ], 
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
