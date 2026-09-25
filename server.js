@@ -33,7 +33,8 @@ app.use(
         "https://cdn.tailwindcss.com",
         "https://www.googletagmanager.com", 
         "https://unpkg.com",
-        "https://www.google-analytics.com" 
+        "https://www.google-analytics.com",
+        "https://connect.facebook.net" // ফেসবুক পিক্সেলের জন্য যুক্ত করা হলো
       ], 
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
@@ -42,7 +43,8 @@ app.use(
         "https://cdnjs.cloudflare.com", 
         "https://fonts.googleapis.com",
         "https://cdn.jsdelivr.net", 
-        "https://unpkg.com" 
+        "https://unpkg.com",
+        "https://www.googletagmanager.com" // GTM ডিবাগ স্টাইলের জন্য যুক্ত করা হলো
       ],
       imgSrc: [
         "'self'", 
@@ -58,9 +60,11 @@ app.use(
         "https://ui-avatars.com",
         "https://images.unsplash.com",
         "https://*.unsplash.com",
-        "https://www.svgrepo.com"
+        "https://www.svgrepo.com",
+        "https://www.google.com.bd", // GA audiences ইমেজ রিকোয়েস্টের জন্য
+        "https://www.google.com",
+        "https://www.googletagmanager.com"
       ],
-      // এখানে Cloudinary যুক্ত করা হয়েছে 👇
       mediaSrc: [
         "'self'", 
         "data:", 
@@ -68,8 +72,16 @@ app.use(
         "https://res.cloudinary.com", 
         "https://*.cloudinary.com"
       ],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-      frameSrc: ["'self'", "https://adminnexkartbd-debug.github.io"], 
+      fontSrc: [
+        "'self'", 
+        "https://cdnjs.cloudflare.com", 
+        "https://fonts.gstatic.com"
+      ],
+      frameSrc: [
+        "'self'", 
+        "https://adminnexkartbd-debug.github.io",
+        "https://tagassistant.google.com" // Tag Assistant এর ফ্রেমিং ব্লক দূর করার জন্য
+      ], 
     },
   })
 );
