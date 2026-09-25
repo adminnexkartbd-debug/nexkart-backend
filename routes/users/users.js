@@ -1952,4 +1952,12 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
+// ফ্রন্টএন্ডে ট্র্যাকিং আইডি পাঠানোর জন্য API রাউট
+router.get('/api/config', (req, res) => {
+    res.json({
+        gaId: process.env.GA4_MEASUREMENT_ID,
+        pixelId: process.env.FACEBOOK_PIXEL_ID
+    });
+});
+
 module.exports = router;
