@@ -104,6 +104,43 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
+// ==================== ডায়নামিক সাইটম্যাপ রাউট (ইউজার ও প্রোডাক্ট ফোকাসড) ====================
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        
+        // ১. মূল ইউজার ড্যাশবোর্ড / হোমপেজ
+        xml += `  <url>\n`;
+        xml += `    <loc>https://www.nexkartbd.com/</loc>\n`;
+        xml += `    <changefreq>daily</changefreq>\n`;
+        xml += `    <priority>1.0</priority>\n`;
+        xml += `  </url>\n`;
+
+        // ২. ডাটাবেজ থেকে পাবলিক প্রোডাক্ট পেজগুলো যুক্ত করা
+        try {
+            const [products] = await db.query("SELECT id, updated_at FROM products LIMIT 500");
+            products.forEach(product => {
+                xml += `  <url>\n`;
+                xml += `    <loc>https://www.nexkartbd.com/product?id=${product.id}</loc>\n`;
+                xml += `    <changefreq>weekly</changefreq>\n`;
+                xml += `    <priority>0.8</priority>\n`;
+                xml += `  </url>\n`;
+            });
+        } catch (dbErr) {
+            console.log("Sitemap DB fetch error:", dbErr.message);
+        }
+
+        xml += `</urlset>`;
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (err) {
+        console.error("Sitemap Generation Error:", err);
+        res.status(500).send("Error generating sitemap");
+    }
+});
+
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use(express.static(path.join(__dirname, 'public')));
