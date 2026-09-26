@@ -11,7 +11,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexKart - Dashboard & Home</title>
+    
+    <!-- On-Page SEO Meta Tags -->
+    <title>NexKart - Dashboard & Home | Best Online Shopping in Bangladesh</title>
+    <meta name="description" content="Discover trendy cosmetics, skincare, electronics, fashion, and exclusive beauty products on NexKart with fast delivery and best deals.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.nexkartbd.com/">
+
+    <!-- Open Graph / Social Media SEO Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="NexKart - Dashboard & Home | Best Online Shopping">
+    <meta property="og:description" content="Explore top-quality products, super deals, and exclusive cosmetics on NexKart. Shop now!">
+    <meta property="og:url" content="https://www.nexkartbd.com/">
+
+    <!-- Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "NexKartBD",
+      "url": "https://www.nexkartbd.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.nexkartbd.com/user/category.html?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
@@ -668,7 +695,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             padding-bottom: 15px;
         }
 
-        .section-title h2 {
+        .section-title h1 {
             font-size: 24px;
             color: var(--text-dark);
             font-weight: 700;
@@ -676,7 +703,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             position: relative;
         }
 
-        .section-title h2::after {
+        .section-title h1::after {
             content: '';
             position: absolute;
             bottom: -17px;
@@ -688,7 +715,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             transition: width 0.3s ease;
         }
 
-        .section-title h2:hover::after {
+        .section-title h1:hover::after {
             width: 100px;
         }
 
@@ -1171,7 +1198,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 font-size: 12px;
             }
 
-            .section-title h2 {
+            .section-title h1 {
                 font-size: 18px;
             }
 
@@ -1407,7 +1434,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- ৫. প্রোডাক্ট সেকশন (Featured Products) -->
     <section class="products-section">
         <div class="section-title">
-            <h2 data-i18n="featured_products">Featured Products</h2>
+            <h1 data-i18n="featured_products">Featured Products</h1>
             <a href="/user/category.html?type=all" class="view-all"><span data-i18n="view_all">View All</span> <i class="fa-solid fa-arrow-right"></i></a>
         </div>
 
@@ -1750,8 +1777,6 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                     discountBadge = product.promo_badge.toUpperCase();
                 }
 
-                // Dashboard-e coin badge rakha hoi ni (requirement onujayi soriye dewa hoyeche)[cite: 32]
-
                 let oldPrice = parseFloat(product.old_price);
                 let salePrice = parseFloat(product.sale_price);
                 let discountPercentTag = '';
@@ -1791,11 +1816,12 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                             <img src="${imageSrc}" 
                                  alt="${product.title}" 
                                  class="product-img" 
+                                 loading="lazy"
                                  onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
                             <span class="product-category">${product.category || 'General'}</span>
                             <h3 class="product-title" title="${product.title}">${product.title}</h3>
                             
-                            <div class="product-rating">
+                            <div class="product-rating" aria-label="Rating ${avgRating} out of 5">
                                 ${starsHTML}
                                 <span>(${avgRating})</span>
                             </div>

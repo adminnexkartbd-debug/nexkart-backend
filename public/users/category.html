@@ -14,14 +14,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- SEO Dynamic Titles & Meta Tags -->
     <title id="seoTitle">NexKart - Category Products & Deals</title>
     <meta id="seoDescription" name="description" content="Browse quality products on NexKart. Find the best deals on categories, promos, and trending items with fast delivery.">
-    <meta name="robots" content="index, follow">
-    <link id="seoCanonical" rel="canonical" href="https://yourdomain.com/user/category.html">
+    <meta id="seoRobots" name="robots" content="index, follow">
+    <link id="seoCanonical" rel="canonical" href="https://www.nexkartbd.com/user/category.html">
 
     <!-- Open Graph / Social Media SEO -->
     <meta property="og:type" content="website">
     <meta id="ogTitle" property="og:title" content="NexKart - Category Products">
     <meta id="ogDescription" property="og:description" content="Explore top-quality products on NexKart. Shop now for high discounts and affordable prices.">
-    <meta id="ogUrl" property="og:url" content="https://yourdomain.com/user/category.html">
+    <meta id="ogUrl" property="og:url" content="https://www.nexkartbd.com/user/category.html">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -438,11 +438,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         const headingElem = document.getElementById('categoryNameHeading');
         if (headingElem) headingElem.innerText = headingText;
 
-        // Dynamic SEO Tags Updating
+        // Dynamic SEO Tags Updating with Advanced Clean URLs
         const seoTitle = document.getElementById('seoTitle');
         const seoDesc = document.getElementById('seoDescription');
+        const seoRobots = document.getElementById('seoRobots');
         const ogTitle = document.getElementById('ogTitle');
         const ogDesc = document.getElementById('ogDescription');
+        const ogUrl = document.getElementById('ogUrl');
         const seoCanonical = document.getElementById('seoCanonical');
 
         const pageTitle = `${headingText} | NexKart Online Shopping`;
@@ -452,7 +454,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (ogTitle) ogTitle.setAttribute('content', pageTitle);
         if (seoDesc) seoDesc.setAttribute('content', pageDesc);
         if (ogDesc) ogDesc.setAttribute('content', pageDesc);
-        if (seoCanonical) seoCanonical.setAttribute('href', window.location.href);
+        
+        // Ensure clean canonical without pagination parameters to prevent duplicate issues
+        const cleanCanonicalUrl = window.location.origin + window.location.pathname + (cat ? `?cat=${cat}` : type ? `?type=${type}` : promo ? `?promo=${promo}` : '');
+        if (seoCanonical) seoCanonical.setAttribute('href', cleanCanonicalUrl);
+        if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+        // If search results page, set robots to noindex to prevent low-value index bloat
+        if (search && seoRobots) {
+            seoRobots.setAttribute('content', 'noindex, follow');
+        }
 
         fetchCategoryProducts(cat, type, promo, search, currentPage, false);
     });
