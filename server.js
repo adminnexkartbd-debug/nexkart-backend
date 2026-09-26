@@ -11,6 +11,11 @@ require('dotenv').config();
 const app = express();
 app.use(compression());
 
+app.get('/sitemap.xml', (req, res) => {
+    res.setHeader('Content-Type', 'application/xml');
+    res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
 // ১. ট্র্যাকিং আইডিগুলো ফ্রন্টএন্ডে পাঠানোর জন্য একটি API রাউট
 app.get('/api/config', (req, res) => {
     res.json({
