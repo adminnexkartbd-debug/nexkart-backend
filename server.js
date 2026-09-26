@@ -22,7 +22,7 @@ app.get('/api/config', (req, res) => {
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: ["'self'"],
+      defaultSrc: ["'self'", "https://www.googletagmanager.com"], // এখানে গুগল ট্যাগ ম্যানেজার যোগ করতে হবে
       connectSrc: ["'self'", "http://localhost:*", "https://*", "wss://*", "ws://*"], 
       scriptSrc: [
         "'self'", 
@@ -34,7 +34,8 @@ app.use(
         "https://www.googletagmanager.com", 
         "https://unpkg.com",
         "https://www.google-analytics.com",
-        "https://connect.facebook.net" // ফেসবুক পিক্সেলের জন্য যুক্ত করা হলো
+        "https://connect.facebook.net"
+        // ভুল করে দেওয়া " www.nexkartbd.com/" এখানে রাখা যাবে না, এটি কেটে দিন
       ], 
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
@@ -44,7 +45,7 @@ app.use(
         "https://fonts.googleapis.com",
         "https://cdn.jsdelivr.net", 
         "https://unpkg.com",
-        "https://www.googletagmanager.com" // GTM ডিবাগ স্টাইলের জন্য যুক্ত করা হলো
+        "https://www.googletagmanager.com"
       ],
       imgSrc: [
         "'self'", 
@@ -61,9 +62,11 @@ app.use(
         "https://images.unsplash.com",
         "https://*.unsplash.com",
         "https://www.svgrepo.com",
-        "https://www.google.com.bd", // GA audiences ইমেজ রিকোয়েস্টের জন্য
+        "https://www.google.com.bd",
         "https://www.google.com",
-        "https://www.googletagmanager.com"
+        "https://www.googletagmanager.com",
+        "https://fonts.gstatic.com", // আইকন লোড করার জন্য এটি যোগ করুন
+        "https://www.facebook.com"   // ফেসবুক পিক্সেল ইমজ ট্র্যাক করার জন্য এটি যোগ করুন
       ],
       mediaSrc: [
         "'self'", 
@@ -80,12 +83,11 @@ app.use(
       frameSrc: [
         "'self'", 
         "https://adminnexkartbd-debug.github.io",
-        "https://tagassistant.google.com" // Tag Assistant এর ফ্রেমিং ব্লক দূর করার জন্য
+        "https://tagassistant.google.com"
       ], 
     },
   })
 );
-
 // বডি পার্সার
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
