@@ -259,9 +259,9 @@ router.get(['/return-policy', '/return-policy.html'], (req, res) => {
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 
 router.get('/my_coin', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html')));
-router.get('/settings.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
+router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
-router.get('/profile.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
+router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
 router.get('/product-details', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
 router.get('/product-details.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
