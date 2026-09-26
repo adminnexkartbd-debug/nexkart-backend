@@ -727,6 +727,94 @@
     }
   }
 
+  // (চ) SITE VISITORS FETCH FUNCTION (UPDATED WITH SUPER_ADMIN CHECK)
+  async function fetchSiteVisitors() {
+    const allowedBox = document.getElementById('visitorAllowedContent');
+    const errorBox = document.getElementById('visitorErrorContent');
+
+    // super_admin approved না হলে error মেসেজ প্রদর্শন করবে
+    if (!isUserSuperAdminApproved) {
+      if (allowedBox) allowedBox.classList.add('hidden');
+      if (errorBox) errorBox.classList.remove('hidden');
+      return;
+    }
+
+    // super_admin approved হলে অরিজিনাল Visitor Section দৃশ্যমান হবে
+    if (allowedBox) allowedBox.classList.remove('hidden');
+    if (errorBox) errorBox.classList.add('hidden');
+
+    try {
+      const labelElem = document.getElementById('visitorCountLabel');
+      if (labelElem) labelElem.innerText = "Today's Visitors";
+
+      const response = await fetch('/api/admin-inbox/site-visitors?filter=today', { credentials: 'include' });
+      
+      if (response.status === 403) {
+        if (allowedBox) allowedBox.classList.add('hidden');
+        if (errorBox) errorBox.classList.remove('hidden');
+        return;
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON response");
+      }
+
+      const data = await response.json();
+      if (data.success && data.visitors) {
+        const totalVisitorsElem = document.getElementById('totalVisitorsCount');
+        if (totalVisitorsElem) totalVisitorsElem.innerText = data.visitorCount || data.visitors.length;
+        
+        const container = document.getElementById('visitorListContainer');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (data.visitors.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 text-center mt-8">No visitors found.</p>`;
+          return;
+        }
+
+        data.visitors.forEach(item => {
+          let formattedDate = new Date(item.last_visited_at || item.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-2 bg-white rounded-lg border border-slate-100 shadow-2xs text-xs';
+          row.innerHTML = `
+            <div class="flex items-center gap-2 truncate">
+              <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+              <span class="font-mono font-medium text-slate-700 truncate max-w-[120px]">${item.visitor_identifier || item.ip_address || 'Visitor'}</span>
+            </div>
+            <div class="flex items-center gap-3 text-[10px] text-slate-400">
+              <span>Visits: <strong class="text-slate-600">${item.visit_count || 1}</strong></span>
+              <span class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">${formattedDate}</span>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+
+        startAutoScroll();
+      }
+    } catch (error) {
+      console.error('Failed to load site visitors:', error);
+    }
+  }
+
+  function startAutoScroll() {
+    const box = document.getElementById('autoScrollVisitorBox');
+    const content = document.getElementById('visitorListContainer');
+    let scrollStep = 1;
+    let scrollSpeed = 40; 
+    
+    if (window.visitorScrollInterval) clearInterval(window.visitorScrollInterval);
+
+    window.visitorScrollInterval = setInterval(() => {
+      if (!box || !content) return;
+      if (box.scrollTop >= (content.scrollHeight - box.clientHeight)) {
+        box.scrollTop = 0;
+      } else {
+        box.scrollTop += scrollStep;
+      }
+    }, scrollSpeed);
+  }
 
  async function initAdminDashboard() {
   try {
