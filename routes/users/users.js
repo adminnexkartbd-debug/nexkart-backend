@@ -195,7 +195,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
 
     try {
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com',
             to: orderData.customer_email,
             subject: `NexKart Invoice - Order #${orderData.order_id}`,
             html: emailTemplate
@@ -209,6 +209,9 @@ let temporaryUserData = {};
 
 router.get('/cssignup', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cssignup.html'));
+});
+router.get('/userAbout', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'userAbout.html'));
 });
 router.get('/psrst', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'psrst.html'));
@@ -238,11 +241,11 @@ router.get('/message-center.html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'message-center.html'));
 });
 
-router.get('/My-Coupons.html', (req, res) => {
+router.get('/My-Coupons', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'My-Coupons.html'));
 });
 
-router.get('/my_coin.html', (req, res) => {
+router.get('/my_coin', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html'));
 });
 
