@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title id="pageTitle">About Us - NexKartBD</title>
+    <meta name="description" content="Learn more about NexKartBD, your trusted cross-border e-commerce destination in Bangladesh. Sourced globally from China, India, Thailand & Malaysia. Pay easily with local methods.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.nexkartbd.com/user/userAbout.html">
+
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="About Us - NexKartBD">
+    <meta property="og:description" content="Discover NexKartBD - Global products from China, India, Thailand & Malaysia delivered to your doorstep in Bangladesh with local payment options.">
+    <meta property="og:type" content="website">
+
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+            color: #2d3436;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: #ffffff;
+            color: #e11d48;
+            border: 1px solid #fecdd3;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #e11d48;
+            color: #ffffff;
+        }
+
+        .lang-switch select {
+            padding: 8px 14px;
+            border: 1.5px solid #ffccd5;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #e11d48;
+            font-weight: 600;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.08);
+        }
+
+        /* Main Card */
+        .about-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(225, 29, 72, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        /* Logo Styling */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 120px;
+            height: auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(225, 29, 72, 0.15);
+            border: 2px solid #fecdd3;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #881337;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #4b5563;
+            margin-bottom: 15px;
+        }
+
+        /* Highlight Box for Global Sourcing */
+        .highlight-box {
+            background: #fff1f2;
+            border-left: 4px solid #e11d48;
+            padding: 20px;
+            border-radius: 0 16px 16px 0;
+            margin: 25px 0;
+        }
+
+        .highlight-box h3 {
+            color: #be123c;
+            font-size: 17px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        /* Countries Grid */
+        .countries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .country-card {
+            background: #ffffff;
+            border: 1px solid #fecdd3;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #881337;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(225,29,72,0.04);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .feature-item {
+            background: #fdf2f4;
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid #fecdd3;
+        }
+
+        .feature-item i {
+            font-size: 22px;
+            color: #e11d48;
+            margin-bottom: 8px;
+        }
+
+        .feature-item h4 {
+            font-size: 15px;
+            color: #881337;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .feature-item p {
+            font-size: 13px;
+            margin-bottom: 0;
+        }
+
+        /* Contact Details Section */
+        .contact-section {
+            background: linear-gradient(135deg, #e11d48, #fb7185);
+            color: white;
+            padding: 22px;
+            border-radius: 16px;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 20px rgba(225, 29, 72, 0.2);
+        }
+
+        .contact-section h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .contact-info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .contact-item a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsiveness Improvements */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .about-card {
+                padding: 20px 15px;
+                border-radius: 15px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .highlight-box {
+                padding: 15px;
+            }
+            .countries-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Top Bar with Back & Language Switcher -->
+        <div class="top-bar">
+            <a href="/user/dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="back">Back</span></a>
+            
+            <div class="lang-switch">
+                <select id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="bn">বাংলা</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Card -->
+        <div class="about-card">
+            <!-- Website Logo -->
+            <div class="logo-container">
+                <img src="logo/nexkart.png" alt="NexKartBD Logo">
+            </div>
+
+            <h1 id="mainTitle"><i class="fa-solid fa-store"></i> About NexKartBD</h1>
+            <p id="mainDesc">Welcome to NexKartBD (nexkartbd.com) – Your Premier Cross-Border E-Commerce & Online Shopping Destination in Bangladesh! We bridge the gap between global markets and your doorstep by bringing you a wide collection of trendy cosmetics, skincare essentials, fashion, electronics, and lifestyle items.</p>
+
+            <!-- Global Sourcing & Local Payments Highlight Box -->
+            <div class="highlight-box">
+                <h3 id="globalTitle">🌐 Sourced Globally, Delivered Locally Without International Cards!</h3>
+                <p id="globalDesc">No international credit or debit card? No problem! NexKartBD empowers you to seamlessly order premium products sourced directly from major international manufacturing hubs. Explore and shop high-demand items effortlessly using convenient local payment gateways (bKash, Nagad, Rocket, or Cash on Delivery).</p>
+                
+                <div class="countries-grid">
+                    <div class="country-card">🇨🇳 China (Direct)</div>
+                    <div class="country-card">🇮🇳 India</div>
+                    <div class="country-card">🇹🇭 Thailand</div>
+                    <div class="country-card">🇲🇾 Malaysia</div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="features-grid">
+                <div class="feature-item">
+                    <i class="fa-solid fa-globe"></i>
+                    <h4 id="feat1Title">Global Sourcing</h4>
+                    <p id="feat1Desc">Direct access to authentic products from China, India, Thailand & Malaysia.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <h4 id="feat2Title">Easy Local Payments</h4>
+                    <p id="feat2Desc">Pay securely using bKash, Nagad, Rocket, or Cash on Delivery.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-shield-check"></i>
+                    <h4 id="feat3Title">100% Quality Assured</h4>
+                    <p id="feat3Desc">Carefully curated items meeting high standards for our valued buyers.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    <h4 id="feat4Title">Fast Nationwide Delivery</h4>
+                    <p id="feat4Desc">Reliable shipping service right to your home across Bangladesh.</p>
+                </div>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="contact-section">
+                <h3 id="contactHeading"><i class="fa-solid fa-headset"></i> Need Help? Contact Us</h3>
+                <div class="contact-info-list">
+                    <div class="contact-item">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>Email: <a href="mailto:support.nexkartbd@gmail.com">support.nexkartbd@gmail.com</a></span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fa-solid fa-phone"></i>
+                        <span>Hotline: <a href="tel:01312146797">01312146797</a>, <a href="tel:01987825699">01987825699</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Translation Script -->
+    <script>
+        const translations = {
+            en: {
+                back: "Back",
+                mainTitle: "About NexKartBD",
+                mainDesc: "Welcome to NexKartBD (nexkartbd.com) – Your Premier Cross-Border E-Commerce & Online Shopping Destination in Bangladesh! We bridge the gap between global markets and your doorstep by bringing you a wide collection of trendy cosmetics, skincare essentials, fashion, electronics, and lifestyle items.",
+                globalTitle: "🌐 Sourced Globally, Delivered Locally Without International Cards!",
+                globalDesc: "No international credit or debit card? No problem! NexKartBD empowers you to seamlessly order premium products sourced directly from major international manufacturing hubs. Explore and shop high-demand items effortlessly using convenient local payment gateways (bKash, Nagad, Rocket, or Cash on Delivery).",
+                feat1Title: "Global Sourcing",
+                feat1Desc: "Direct access to authentic products from China, India, Thailand & Malaysia.",
+                feat2Title: "Easy Local Payments",
+                feat2Desc: "Pay securely using bKash, Nagad, Rocket, or Cash on Delivery.",
+                feat3Title: "100% Quality Assured",
+                feat3Desc: "Carefully curated items meeting high standards for our valued buyers.",
+                feat4Title: "Fast Nationwide Delivery",
+                feat4Desc: "Reliable shipping service right to your home across Bangladesh.",
+                contactHeading: "Need Help? Contact Us"
+            },
+            bn: {
+                back: "পেছনে",
+                mainTitle: "NexKartBD সম্পর্কে",
+                mainDesc: "NexKartBD (nexkartbd.com)-এ আপনাকে স্বাগতম - বাংলাদেশের অন্যতম সেরা ক্রস-বর্ডার ই-কমার্স ও অনলাইন শপিং গন্তব্য! আমরা আন্তর্জাতিক বাজার থেকে ট্রেন্ডি কসমেটিকস, স্কিনকেয়ার, ফ্যাশন, ইলেকট্রনিক্স এবং লাইফস্টাইল পণ্য সরাসরি আপনার দোরগোড়ায় পৌঁছে দিচ্ছি।",
+                globalTitle: "🌐 আন্তর্জাতিক কার্ড ছাড়াই গ্লোবাল সোর্সিং ও লোকাল পেমেন্টের সুবিধা!",
+                globalDesc: "আপনার কি কোনো আন্তর্জাতিক ক্রেডিট বা ডেবিট কার্ড নেই? কোনো চিন্তা নেই! NexKartBD-এর মাধ্যমে আপনি চায়না, ভারত, থাইল্যান্ড এবং মালয়েশিয়ার মতো জনপ্রিয় গ্লোবাল হাব থেকে পছন্দের পণ্যগুলো খুব সহজেই লোকাল পেমেন্ট মেথড (বিকাশ, নগদ, রকেট বা ক্যাশ অন ডেলিভারি) ব্যবহার করে অর্ডার করতে পারবেন।",
+                feat1Title: "গ্লোবাল প্রোডাক্ট সোর্সিং",
+                feat1Desc: "চায়না, ভারত, থাইল্যান্ড ও মালয়েশিয়া থেকে সরাসরি মানসম্মত পণ্যের সমাহার।",
+                feat2Title: "লোকাল পেমেন্ট সুবিধা",
+                feat2Desc: "বিকাশ, নগদ, রকেট কিংবা ক্যাশ অন ডেলিভারিতে পেমেন্ট করার সুব্যবস্থা।",
+                feat3Title: "১০০% কোয়ালিটি নিশ্চিত",
+                feat3Desc: "গ্রাহকদের সন্তুষ্টির জন্য বাছাইকৃত এবং মানসম্মত পণ্যের নিশ্চয়তা।",
+                feat4Title: "দ্রুত দেশব্যাপী ডেলিভারি",
+                feat4Desc: "পুরো বাংলাদেশে দ্রুত ও নির্ভরযোগ্য হোম ডেলিভারি সেবা।",
+                contactHeading: "সাহায্য প্রয়োজন? আমাদের সাথে যোগাযোগ করুন"
+            }
+        };
+
+        function changeLanguage(lang) {
+            localStorage.setItem('selectedLang', lang);
+            document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-store"></i> ` + translations[lang].mainTitle;
+            document.getElementById('mainDesc').innerText = translations[lang].mainDesc;
+            document.getElementById('globalTitle').innerText = translations[lang].globalTitle;
+            document.getElementById('globalDesc').innerText = translations[lang].globalDesc;
+            document.getElementById('feat1Title').innerText = translations[lang].feat1Title;
+            document.getElementById('feat1Desc').innerText = translations[lang].feat1Desc;
+            document.getElementById('feat2Title').innerText = translations[lang].feat2Title;
+            document.getElementById('feat2Desc').innerText = translations[lang].feat2Desc;
+            document.getElementById('feat3Title').innerText = translations[lang].feat3Title;
+            document.getElementById('feat3Desc').innerText = translations[lang].feat3Desc;
+            document.getElementById('feat4Title').innerText = translations[lang].feat4Title;
+            document.getElementById('feat4Desc').innerText = translations[lang].feat4Desc;
+            document.getElementById('contactHeading').innerHTML = `<i class="fa-solid fa-headset"></i> ` + translations[lang].contactHeading;
+            document.querySelector('.back-btn span').innerText = translations[lang].back;
+        }
+
+        // Load saved language on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedLang = localStorage.getItem('selectedLang') || 'en';
+            document.getElementById('langSelector').value = savedLang;
+            changeLanguage(savedLang);
+        });
+    </script>
+</body>
+</html>
