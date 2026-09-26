@@ -65,8 +65,9 @@ app.use(
         "https://www.google.com.bd",
         "https://www.google.com",
         "https://www.googletagmanager.com",
-        "https://fonts.gstatic.com", // আইকন লোড করার জন্য এটি যোগ করুন
-        "https://www.facebook.com"   // ফেসবুক পিক্সেল ইমজ ট্র্যাক করার জন্য এটি যোগ করুন
+        "https://www.googletagmanager.com",
+        "https://fonts.gstatic.com", 
+        "https://www.facebook.com"  
       ],
       mediaSrc: [
         "'self'", 
