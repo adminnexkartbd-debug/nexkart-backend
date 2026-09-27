@@ -22,7 +22,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <!-- Open Graph / Facebook Meta Tags -->
   <meta property="og:type" content="product">
   <meta id="og-title" property="og:title" content="NexKartBD - Product Details">
-  <meta id="og-[#og-description]" property="og:description" content="NexKartBD থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
+  <meta id="og-description" property="og:description" content="NexKartBD থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
   <meta id="og-image" property="og:image" content="">
   <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product-details">
   <meta property="og:site_name" content="NexKartBD">
@@ -524,10 +524,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let currentVideoUrl = null;
     let activeMediaIndex = 0;
     
-    // URL Params handles both ID and Slug
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-    const productSlug = urlParams.get('slug');
+    // Dynamic identifier (Slug or ID)
+    let currentIdentifier = null;
+    let currentIdentifierType = 'id';
 
     let currentStockPrice = 0;
     let productQuantity = 1;
@@ -617,7 +616,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             try {
               const response = await fetch(mainImgSrc);
               const blob = await response.blob();
-              const file = new File([blob], `product-${productId || productSlug || 'item'}.jpg`, { type: blob.type });
+              const file = new File([blob], `product-${currentIdentifier || 'item'}.jpg`, { type: blob.type });
 
               if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 shareData.files = [file];
@@ -806,10 +805,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function executeOrderRedirect() {
-      const activeIdentifier = window.currentLoadedProductId || productId || productSlug;
+      const activeIdentifier = window.currentLoadedProductId || currentIdentifier;
       if (!activeIdentifier) return;
       
-      let orderUrl = `/user/checkout?id=${activeIdentifier}&qty=${productQuantity}`;
+      let orderUrl = `/user/checkout?${currentIdentifierType}=${activeIdentifier}&qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -838,7 +837,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     async function addToDatabaseCart() {
-      const activeProductId = window.currentLoadedProductId || productId;
+      const activeProductId = window.currentLoadedProductId;
       if (!activeProductId) return;
 
       try {
@@ -866,7 +865,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     async function submitInquiry() {
       const input = document.getElementById('user-inquiry-input');
       const questionText = input.value.trim();
-      const activeProductId = window.currentLoadedProductId || productId;
+      const activeProductId = window.currentLoadedProductId;
 
       if (!questionText) {
         alert('Please write your question!');
@@ -898,7 +897,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     async function loadInquiries(targetProductId) {
-      const activeId = targetProductId || window.currentLoadedProductId || productId;
+      const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
       try {
@@ -1027,14 +1026,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       let discountBadge = '';
       if (Number(product.regular_price) > Number(product.sale_price)) {
           const discount = Math.round(((product.regular_price - product.sale_price) / product.regular_price) * 100);
-          discountBadge = `<span class="absolute top-3 left-3 bg-[#ff4b6e] text-white text-[11px] font-semibold px-2 py-0.5 rounded-md z-10">${discount}% OFF</span>`;
+          discountBadge = `<span class="absolute top-3 left-3 bg-[#ff4b6e] text-[#ffffff] text-[11px] font-semibold px-2 py-0.5 rounded-md z-10">${discount}% OFF</span>`;
       }
 
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      // Handle Slug url or fallback to ID
-      const targetParam = product.slug ? `slug=${product.slug}` : `id=${product.product_id || product.id}`;
+      // Handle both Slug or ID navigation correctly using slug_name / slug / id
+      const productSlug = product.slug_name || product.slug;
+      const targetParam = productSlug ? `slug=${encodeURIComponent(productSlug)}` : `id=${product.product_id || product.id}`;
 
       return `
         <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
@@ -1075,7 +1075,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKartBD থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
-      const pageUrl = window.location.href;
+      
+      const productSlug = product.slug_name || product.slug;
+      const canonicalUrl = productSlug 
+        ? `${window.location.origin}/user/product-details?slug=${encodeURIComponent(productSlug)}`
+        : window.location.href;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1091,12 +1095,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('seo-title').innerText = title;
       document.getElementById('seo-description').setAttribute('content', metaDescription);
       document.getElementById('seo-keywords').setAttribute('content', keywords);
-      document.getElementById('seo-canonical').setAttribute('href', pageUrl);
+      document.getElementById('seo-canonical').setAttribute('href', canonicalUrl);
 
       document.getElementById('og-title').setAttribute('content', title);
       document.getElementById('og-description').setAttribute('content', metaDescription);
       document.getElementById('og-image').setAttribute('content', imageUrl);
-      document.getElementById('og-url').setAttribute('content', pageUrl);
+      document.getElementById('og-url').setAttribute('content', canonicalUrl);
 
       document.getElementById('tw-title').setAttribute('content', title);
       document.getElementById('tw-description').setAttribute('content', metaDescription);
@@ -1115,7 +1119,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         },
         "offers": {
           "@type": "Offer",
-          "url": pageUrl,
+          "url": canonicalUrl,
           "priceCurrency": "BDT",
           "price": product.sale_price || "0",
           "itemCondition": "https://schema.org/NewCondition",
@@ -1307,7 +1311,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </span>`;
       } else {
         verifiedBadgeContainer.innerHTML = `
-          <span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-300">
+          <span class="bg-[#f1f5f9] text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-gray-300">
             Unverified
           </span>`;
       }
@@ -1448,13 +1452,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    // Dynamic API fetch based on Slug or ID
+    // Dynamic API fetch based on Slug or ID (Using slug_name field from server)
     async function fetchProductData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productSlug = urlParams.get('slug') || urlParams.get('slug_name');
+      const productId = urlParams.get('id');
+
       let requestUrl = '';
       if (productSlug) {
+        currentIdentifier = productSlug;
+        currentIdentifierType = 'slug';
         requestUrl = `/user/product/slug/${encodeURIComponent(productSlug)}`;
       } else if (productId) {
-        requestUrl = `/user/product/${encodeURIComponent(productId)}`;
+        currentIdentifier = productId;
+        currentIdentifierType = 'id';
+        requestUrl = `/user/product/${productId}`;
       } else {
         return;
       }
@@ -1479,6 +1491,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // 3. Render Details
         if (data.success && data.product) {
+          // Sync server slug_name if available
+          const serverSlug = data.product.slug_name || data.product.slug;
+          if (serverSlug) {
+            currentIdentifier = serverSlug;
+            currentIdentifierType = 'slug';
+          }
+
           renderProductDetails(
             data.product,
             data.gallery_images,
@@ -1493,7 +1512,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     async function loadProductReviews(targetProductId) {
-      const activeId = targetProductId || window.currentLoadedProductId || productId;
+      const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
       try {
