@@ -232,7 +232,11 @@ app.get('/auth/google/callback',
         }
     }
 );
-
+// Express.js Backend Route
+app.get('/user/product/:slug', (req, res) => {
+  // SEO URL er jonno HTML page response
+  res.sendFile(path.join(__dirname, 'public/product-details.html'));
+});
 // ==================== ৪. রাউট মাউন্টিং ====================
 const adminRoutes = require('./routes/admin/admin');
 const userRoutes = require('./routes/users/users');
