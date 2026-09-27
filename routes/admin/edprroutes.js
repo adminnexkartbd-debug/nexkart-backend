@@ -37,6 +37,52 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
+// ==========================================
+// 🛠️ HELPER: SEO Friendly Unique Slug Generator
+// ==========================================
+async function generateUniqueSlug(title, currentProductId = null) {
+  if (!title) return '';
+
+  // ১. টাইটেলকে ক্লিন করে URL Friendly ফরম্যাটে রূপান্তর (Bangla + English support)
+  let baseSlug = title
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\_]+/g, '-')       // Space ba underscore ke hyphen (-) kora
+    .replace(/[^\w\u0980-\u09FF\-]+/g, '') // Bangla o English chara bakigulo bad dewa
+    .replace(/\-\-+/g, '-')        // Multiple hyphen ke 1-ti kora
+    .replace(/^-+/, '')             // Starting hyphen trim kora
+    .replace(/-+$/, '');            // Ending hyphen trim kora
+
+  if (!baseSlug) {
+    baseSlug = 'product-' + Date.now();
+  }
+
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  // ২. Database-e unique slug ache kina check kora
+  while (true) {
+    let query = 'SELECT id FROM products WHERE slug = ?';
+    let params = [uniqueSlug];
+
+    if (currentProductId) {
+      query += ' AND id != ?';
+      params.push(currentProductId);
+    }
+
+    const [rows] = await db.query(query, params);
+    if (rows.length === 0) {
+      break; // Unique slug pawa geche
+    }
+
+    uniqueSlug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  return uniqueSlug;
+}
+
 function getCloudinaryPublicId(url) {
   if (!url || !url.includes('cloudinary.com')) return null;
   try {
@@ -124,7 +170,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ৩. প্রোডাক্ট এড করার রাউট
+// ৩. প্রোডাক্ট এড করার রাউট (এখানে Slug Auto Generate যুক্ত করা হয়েছে)
 router.post('/add', upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'product_video', maxCount: 1 }
@@ -149,6 +195,9 @@ router.post('/add', upload.fields([
       free_shipping, regular_price, old_price, sale_price, stock_quantity,
       stock_status, description, keywords, highlights, coin_offer_toggle, coin_percentage
     } = req.body;
+
+    // 🔥 Dynamic Unique Slug Generator
+    const slug = await generateUniqueSlug(title);
 
     const cod = cod_available ? 1 : 0;
     const openBox = open_box_inspection ? 1 : 0;
@@ -180,15 +229,15 @@ router.post('/add', upload.fields([
 
     const productQuery = `
       INSERT INTO products (
-        product_id, admin_id, title, category, sub_category, products_variant, shipping_from, promo_badge, 
+        product_id, admin_id, title, slug, category, sub_category, products_variant, shipping_from, promo_badge, 
         product_highlights, guarantee, return_policy, cod_available, open_box_inspection, 
         free_shipping, delivery_charge, delivery_limit, delivery_time, regular_price, old_price, sale_price, stock_quantity, sold_qty,
         stock_status, description, keywords, brand_name, video_url, coin_offer, coin_percentage_value, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const productValues = [
-      product_id, adminId, title, category, sub_category || null, variantData, shipping_from, promo_badge,
+      product_id, adminId, title, slug, category, sub_category || null, variantData, shipping_from, promo_badge,
       highlightsString, guarantee, return_policy, cod, openBox, freeShip,
       delivery_charge || 60, delivery_limit || 1, delivery_time || '2-3 Days', regular_price, cleanOldPrice, sale_price || null, stock_quantity, soldQty,
       cleanStockStatus, description, keywords, cleanBrand, videoUrl, coinOffer, coinPercentageVal
@@ -203,7 +252,8 @@ router.post('/add', upload.fields([
 
     return res.status(200).json({ 
       success: true, 
-      message: "সফলভাবে প্রোডাক্টটি অ্যাড করা হয়েছে! 🎉" 
+      message: "সফলভাবে প্রোডাক্টটি অ্যাড করা হয়েছে! 🎉",
+      slug: slug
     });
 
   } catch (error) {
@@ -212,7 +262,7 @@ router.post('/add', upload.fields([
   }
 });
 
-// ৪. প্রোডাক্ট আপডেট করার রাউট
+// ৪. প্রোডাক্ট আপডেট করার রাউট (এখানে Slug update Logic যুক্ত করা হয়েছে)
 router.put('/update/:id', upload.fields([
     { name: 'replaced_images', maxCount: 10 },
     { name: 'new_images', maxCount: 10 },
@@ -242,6 +292,12 @@ router.put('/update/:id', upload.fields([
             coin_offer_toggle, coin_percentage, remove_video,
             'highlights[]': highlightsArray, highlights
         } = req.body;
+
+        // 🔥 Title change hole notun slug generate kora, onyathay ager slug ta rakha
+        let slug = existingProduct.slug;
+        if (title && title.trim() !== existingProduct.title) {
+          slug = await generateUniqueSlug(title, productId);
+        }
 
         const cod = cod_available === 'on' ? 1 : 0;
         const openBox = open_box_inspection === 'on' ? 1 : 0;
@@ -288,7 +344,7 @@ router.put('/update/:id', upload.fields([
 
         const updateQuery = `
             UPDATE products SET 
-                product_id = ?, title = ?, delivery_limit = ?, category = ?, sub_category = ?, products_variant = ?, shipping_from = ?, promo_badge = ?,
+                product_id = ?, title = ?, slug = ?, delivery_limit = ?, category = ?, sub_category = ?, products_variant = ?, shipping_from = ?, promo_badge = ?,
                 product_highlights = ?, guarantee = ?, return_policy = ?, cod_available = ?, open_box_inspection = ?,
                 free_shipping = ?, delivery_charge = ?, delivery_time = ?, regular_price = ?, old_price = ?, sale_price = ?, stock_quantity = ?,
                 stock_status = ?, description = ?, keywords = ?, brand_name = ?, video_url = ?, coin_offer = ?, coin_percentage_value = ?
@@ -296,7 +352,7 @@ router.put('/update/:id', upload.fields([
         `;
 
         await db.query(updateQuery, [
-            product_id, title, delivery_limit || 1, category, sub_category || null, variantData, shipping_from, promo_badge,
+            product_id, title, slug, delivery_limit || 1, category, sub_category || null, variantData, shipping_from, promo_badge,
             highlightsString, guarantee, return_policy, cod, openBox,
             freeShip, delivery_charge || 60, delivery_time || '2-3 Days', regular_price, cleanOldPrice, sale_price || null, stock_quantity,
             cleanStockStatus, description, keywords, cleanBrand, videoUrl, coinOffer, coinPercentageVal, productId, adminId

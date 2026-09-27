@@ -14,16 +14,24 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Multer Cloudinary Storage Setup
+// Multer Cloudinary Storage Setup (Supports Images and Videos)
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'uploads',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'],
-    public_id: (req, file) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      return uniqueSuffix;
-    },
+  params: async (req, file) => {
+    let resourceType = 'image';
+    let allowedFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    
+    if (file.mimetype.startsWith('video/')) {
+      resourceType = 'auto';
+      allowedFormats = ['mp4', 'mov', 'avi', 'webm', 'mkv'];
+    }
+
+    return {
+      folder: 'uploads',
+      resource_type: resourceType,
+      allowed_formats: allowedFormats,
+      public_id: Date.now() + '-' + Math.round(Math.random() * 1E9),
+    };
   },
 });
 
@@ -36,6 +44,71 @@ const parseCheckboxValue = (val) => {
   }
   return 0;
 };
+
+// ==========================================
+// 🛠️ HELPER: SEO Friendly Unique Slug Generator
+// ==========================================
+async function generateUniqueSlug(title, currentProductId = null) {
+  if (!title) return '';
+
+  // ১. টাইটেলকে ক্লিন করে URL Friendly ফরম্যাটে রূপান্তর (বাংলা ও ইংরেজি সাপোর্ট সহ)
+  let baseSlug = title
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\_]+/g, '-')       // স্পেস বা আন্ডারস্কোরকে হাইফেন (-) করা
+    .replace(/[^\w\u0980-\u09FF\-]+/g, '') // বাংলা ও ইংরেজি অক্ষর/সংখ্যা ছাড়া বাকি সব চিহ্ন বাদ দেওয়া
+    .replace(/\-\-+/g, '-')        // পর পর একাধিক হাইফেন থাকলে ১টি করা
+    .replace(/^-+/, '')             // শুরুর হাইফেন ট্রিম করা
+    .replace(/-+$/, '');            // শেষের হাইফেন ট্রিম করা
+
+  if (!baseSlug) {
+    baseSlug = 'product-' + Date.now();
+  }
+
+  let uniqueSlug = baseSlug;
+  let counter = 1;
+
+  // ২. ডাটাবেসে আগের কোনো ইউনিক স্ল্যাগ আছে কিনা চেক করে Unique Slug বানানো
+  while (true) {
+    let query = 'SELECT id FROM products WHERE slug = ?';
+    let params = [uniqueSlug];
+
+    if (currentProductId) {
+      query += ' AND id != ?';
+      params.push(currentProductId);
+    }
+
+    const [rows] = await db.query(query, params);
+    if (rows.length === 0) {
+      break; // ইউনিক পাওয়া গেছে
+    }
+
+    uniqueSlug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  return uniqueSlug;
+}
+
+// Cloudinary URL থেকে public_id বের করার হেলপার
+function getCloudinaryPublicId(url) {
+  if (!url || !url.includes('cloudinary.com')) return null;
+  try {
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    
+    let publicIdWithExt = parts[1].replace(/^v\d+\//, '');
+    const lastDotIndex = publicIdWithExt.lastIndexOf('.');
+    if (lastDotIndex !== -1) {
+      return publicIdWithExt.substring(0, lastDotIndex);
+    }
+    return publicIdWithExt;
+  } catch (e) {
+    console.error("Public ID parsing error:", e);
+    return null;
+  }
+}
 
 // GET All Products (Supports Search by Product ID and Title)
 router.get('/all', async (req, res) => {
@@ -76,7 +149,47 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// ADD Product (Supports Images, Video, and Coin Offer Data)
+// GET Single Product by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
+
+    if (!adminId) {
+      return res.status(401).json({ success: false, message: "Unauthorized! অনুগ্রহ করে আবার লগইন করুন।" });
+    }
+
+    const productId = req.params.id;
+
+    const [products] = await db.query('SELECT * FROM products WHERE id = ? AND admin_id = ?', [productId, adminId]);
+    
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, message: 'প্রোডাক্টটি পাওয়া যায়নি বা আপনার অনুমতি নেই!' });
+    }
+
+    const product = products[0];
+    const [images] = await db.query('SELECT id, image_path FROM product_images WHERE product_id = ?', [product.id]);
+
+    return res.status(200).json({
+      success: true,
+      product: {
+        ...product,
+        images: images,
+        highlights: product.product_highlights || '',
+        sub_category: product.sub_category || '',
+        products_variant: product.products_variant || null,
+        product_video: product.product_video || null,
+        coin_offer: product.coin_offer || 'no',
+        coin_percentage_value: product.coin_percentage_value || null
+      }
+    });
+
+  } catch (err) {
+    console.error('Fetch Single Product Error:', err);
+    return res.status(500).json({ success: false, message: 'সার্ভার এরর!' });
+  }
+});
+
+// ADD Product (Supports Images, Video, Coin Offer Data, and Slug)
 router.post('/add', upload.fields([
     { name: 'images', maxCount: 10 },
     { name: 'product_video', maxCount: 1 }
@@ -106,6 +219,9 @@ router.post('/add', upload.fields([
       products_variant, coin_offer_toggle, coin_percentage
     } = req.body;
 
+    // 🔥 Dynamic Unique Slug Generator
+    const slug = await generateUniqueSlug(title);
+
     const soldQty = 0;
     const cleanBrand = (brand_name && String(brand_name).trim() !== '') ? String(brand_name).trim() : 'N/A';
     const finalStockStatus = (stock_status && String(stock_status).trim() !== '') ? stock_status : 'in_stock';
@@ -130,18 +246,19 @@ router.post('/add', upload.fields([
 
     const productQuery = `
       INSERT INTO products (
-        product_id, admin_id, title, category, sub_category, shipping_from, promo_badge, 
+        product_id, admin_id, title, slug, category, sub_category, shipping_from, promo_badge, 
         product_highlights, products_variant, guarantee, return_policy, cod_available, open_box_inspection, free_shipping,
         delivery_charge, delivery_limit, delivery_time, 
         regular_price, sale_price, stock_quantity, sold_qty, stock_status, 
         description, keywords, brand_name, product_video, coin_offer, coin_percentage_value, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const productValues = [
       product_id, 
       adminId, 
       title, 
+      slug,
       category, 
       sub_category || null, 
       shipping_from, 
@@ -178,7 +295,8 @@ router.post('/add', upload.fields([
 
     return res.status(200).json({ 
       success: true, 
-      message: "সফলভাবে প্রোডাক্ট, ভিডিও এবং কয়েন অফার সহ অ্যাড করা হয়েছে! 🎉" 
+      message: "সফলভাবে প্রোডাক্ট, ভিডিও এবং কয়েন অফার সহ অ্যাড করা হয়েছে! 🎉",
+      slug: slug
     });
 
   } catch (error) {
@@ -187,10 +305,11 @@ router.post('/add', upload.fields([
   }
 });
 
-// UPDATE Product
+// UPDATE Product (Supports Slug update, Image update, Video update & Coin offer update)
 router.put('/update/:id', upload.fields([
     { name: 'replaced_images', maxCount: 10 },
-    { name: 'new_images', maxCount: 10 }
+    { name: 'new_images', maxCount: 10 },
+    { name: 'product_video', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
@@ -206,14 +325,22 @@ router.put('/update/:id', upload.fields([
             return res.status(403).json({ success: false, message: "এই প্রোডাক্টটি আপডেট করার অনুমতি আপনার নেই!" });
         }
 
+        const existingProduct = checkProd[0];
+
         const {
             product_id, title, brand_name, category, sub_category, shipping_from, promo_badge,
             delivery_charge, delivery_time, delivery_limit, guarantee, return_policy, 
             cod_available, open_box_inspection, free_shipping,
             regular_price, sale_price, stock_quantity, stock_status, description, keywords,
             kept_image_ids, replaced_original_ids, 'highlights[]': highlightsArray, highlights,
-            products_variant
+            products_variant, coin_offer_toggle, coin_percentage, remove_video
         } = req.body;
+
+        // 🔥 টাইটেল পরিবর্তন হলে নতুন Slug তৈরি, তা না হলে আগেরটি রাখা
+        let slug = existingProduct.slug;
+        if (title && title.trim() !== existingProduct.title) {
+          slug = await generateUniqueSlug(title, productId);
+        }
         
         const cleanBrand = (brand_name && String(brand_name).trim() !== '') ? String(brand_name).trim() : 'N/A';
         const finalStockStatus = (stock_status && String(stock_status).trim() !== '') ? stock_status : 'in_stock';
@@ -221,6 +348,30 @@ router.put('/update/:id', upload.fields([
         const finalCod = parseCheckboxValue(cod_available);
         const finalOpenBox = parseCheckboxValue(open_box_inspection);
         const finalFreeShipping = parseCheckboxValue(free_shipping);
+
+        const finalCoinOffer = coin_offer_toggle || existingProduct.coin_offer || 'no';
+        const finalCoinPercentage = (finalCoinOffer === 'yes' && coin_percentage) ? coin_percentage : (finalCoinOffer === 'yes' ? existingProduct.coin_percentage_value : null);
+
+        let productVideoPath = existingProduct.product_video;
+        if (remove_video === '1') {
+            if (existingProduct.product_video) {
+                const oldVideoPublicId = getCloudinaryPublicId(existingProduct.product_video);
+                if (oldVideoPublicId) {
+                    await cloudinary.uploader.destroy(oldVideoPublicId, { resource_type: 'video' }).catch(err => console.error("Cloudinary Video Delete Error:", err));
+                }
+            }
+            productVideoPath = null;
+        }
+
+        if (req.files && req.files['product_video'] && req.files['product_video'][0]) {
+            if (existingProduct.product_video) {
+                const oldVideoPublicId = getCloudinaryPublicId(existingProduct.product_video);
+                if (oldVideoPublicId) {
+                    await cloudinary.uploader.destroy(oldVideoPublicId, { resource_type: 'video' }).catch(err => console.error("Cloudinary Video Delete Error:", err));
+                }
+            }
+            productVideoPath = req.files['product_video'][0].path;
+        }
 
         let finalHighlights = highlightsArray || highlights;
         let list = [];
@@ -236,18 +387,18 @@ router.put('/update/:id', upload.fields([
         
         const updateQuery = `
             UPDATE products SET 
-                product_id = ?, title = ?, delivery_limit = ?, category = ?, sub_category = ?, shipping_from = ?, promo_badge = ?,
+                product_id = ?, title = ?, slug = ?, delivery_limit = ?, category = ?, sub_category = ?, shipping_from = ?, promo_badge = ?,
                 product_highlights = ?, products_variant = ?, guarantee = ?, return_policy = ?, cod_available = ?, open_box_inspection = ?, free_shipping = ?, delivery_charge = ?, delivery_time = ?,
                 regular_price = ?, sale_price = ?, stock_quantity = ?, stock_status = ?,
-                description = ?, keywords = ?, brand_name = ?
+                description = ?, keywords = ?, brand_name = ?, product_video = ?, coin_offer = ?, coin_percentage_value = ?
             WHERE id = ? AND admin_id = ?
         `;
 
         await db.query(updateQuery, [
-            product_id, title, delivery_limit || 1, category, sub_category || null, shipping_from, promo_badge,
+            product_id, title, slug, delivery_limit || 1, category, sub_category || null, shipping_from, promo_badge,
             highlightsString, finalVariant, guarantee, return_policy, finalCod, finalOpenBox, finalFreeShipping, delivery_charge || 60, delivery_time || '2-3 Days',
             regular_price, finalSalePrice, stock_quantity,
-            finalStockStatus, description, keywords, cleanBrand, productId, adminId
+            finalStockStatus, description, keywords, cleanBrand, productVideoPath, finalCoinOffer, finalCoinPercentage, productId, adminId
         ]);
 
         let keptIds = [];
@@ -257,9 +408,13 @@ router.put('/update/:id', upload.fields([
             keptIds = [];
         }
 
-        const [existingImages] = await db.query('SELECT id FROM product_images WHERE product_id = ?', [productId]);
+        const [existingImages] = await db.query('SELECT id, image_path FROM product_images WHERE product_id = ?', [productId]);
         for (let img of existingImages) {
             if (!keptIds.includes(String(img.id)) && !keptIds.includes(img.id)) {
+                const publicId = getCloudinaryPublicId(img.image_path);
+                if (publicId) {
+                    await cloudinary.uploader.destroy(publicId).catch(err => console.error("Cloudinary Delete Error:", err));
+                }
                 await db.query('DELETE FROM product_images WHERE id = ?', [img.id]);
             }
         }
@@ -270,6 +425,14 @@ router.put('/update/:id', upload.fields([
             
             for (let i = 0; i < repFiles.length; i++) {
                 if (repOriginalIds[i]) {
+                    const [oldImg] = await db.query('SELECT image_path FROM product_images WHERE id = ?', [repOriginalIds[i]]);
+                    if (oldImg.length > 0) {
+                        const oldPublicId = getCloudinaryPublicId(oldImg[0].image_path);
+                        if (oldPublicId) {
+                            await cloudinary.uploader.destroy(oldPublicId).catch(err => console.error("Cloudinary Delete Error:", err));
+                        }
+                    }
+
                     const newPath = repFiles[i].path;
                     await db.query('UPDATE product_images SET image_path = ? WHERE id = ?', [newPath, repOriginalIds[i]]);
                 }
@@ -289,6 +452,54 @@ router.put('/update/:id', upload.fields([
         console.error('Update Error:', err);
         return res.status(500).json({ success: false, message: 'সার্ভারে আপডেট করতে সমস্যা হয়েছে!' });
     }
+});
+
+// DELETE Product
+router.delete('/delete/:id', async (req, res) => {
+  try {
+    const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
+
+    if (!adminId) {
+      return res.status(401).json({ success: false, message: "Unauthorized! অনুগ্রহ করে আবার লগইন করুন।" });
+    }
+
+    const productId = req.params.id;
+
+    const [products] = await db.query(`SELECT * FROM products WHERE id = ? AND admin_id = ?`, [productId, adminId]);
+    if (products.length === 0) {
+      return res.status(403).json({ success: false, message: "এই প্রোডাক্টটি ডিলিট করার অনুমতি আপনার নেই!" });
+    }
+
+    const product = products[0];
+
+    if (product.product_video) {
+      const videoPublicId = getCloudinaryPublicId(product.product_video);
+      if (videoPublicId) {
+        await cloudinary.uploader.destroy(videoPublicId, { resource_type: 'video' }).catch(err => console.error("Video Cloudinary Delete Error:", err));
+      }
+    }
+
+    const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [productId]);
+
+    for (let img of images) {
+      const publicId = getCloudinaryPublicId(img.image_path);
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudErr) {
+          console.error(`Failed to delete Cloudinary image (${publicId}):`, cloudErr);
+        }
+      }
+    }
+
+    await db.query(`DELETE FROM product_images WHERE product_id = ?`, [productId]);
+    await db.query(`DELETE FROM products WHERE id = ?`, [productId]);
+
+    return res.status(200).json({ success: true, message: "প্রোডাক্ট এবং ছবি/ভিডিও সফলভাবে ডিলিট করা হয়েছে!" });
+  } catch (err) {
+    console.error('Delete Error:', err);
+    return res.status(500).json({ success: false, message: "ডেটাবেজ থেকে ডিলিট করতে সমস্যা হয়েছে!" });
+  }
 });
 
 module.exports = router;
