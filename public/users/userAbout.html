@@ -306,7 +306,8 @@
                 <img src="logo/nexkart.png" alt="NexKartBD Logo">
             </div>
 
-            <h1 id="mainTitle"><i class="fa-solid fa-store"></i> About NexKartBD</h1>
+            <!-- Changed Icon here to fa-circle-info -->
+            <h1 id="mainTitle"><i class="fa-solid fa-circle-info"></i> About NexKartBD</h1>
             <p id="mainDesc">Welcome to NexKartBD (nexkartbd.com) – Your Premier Cross-Border E-Commerce & Online Shopping Destination in Bangladesh! We bridge the gap between global markets and your doorstep by bringing you a wide collection of trendy cosmetics, skincare essentials, fashion, electronics, and lifestyle items.</p>
 
             <!-- Global Sourcing & Local Payments Highlight Box -->
@@ -415,7 +416,7 @@
 
         function changeLanguage(lang) {
             localStorage.setItem('selectedLang', lang);
-            document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-store"></i> ` + translations[lang].mainTitle;
+            document.getElementById('mainTitle').innerHTML = `<i class="fa-solid fa-circle-info"></i> ` + translations[lang].mainTitle;
             document.getElementById('mainDesc').innerText = translations[lang].mainDesc;
             document.getElementById('globalTitle').innerText = translations[lang].globalTitle;
             document.getElementById('globalDesc').innerText = translations[lang].globalDesc;
