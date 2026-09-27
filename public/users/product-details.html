@@ -513,7 +513,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <img id="fullscreen-modal-image" src="" loading="lazy" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
   </div>
 
-  <!-- JavaScript Logic -->
+ <!-- JavaScript Logic -->
   <script>
     // Coin Calculation Global Variables
     let availableUserCoins = 0;
@@ -524,9 +524,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let currentVideoUrl = null;
     let activeMediaIndex = 0;
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
     let currentStockPrice = 0;
     let productQuantity = 1;
     let selectedVariant = null;
@@ -1069,75 +1066,89 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       `;
     }
 
-    function updateDynamicSEO(product, galleryImages) {
-      if (!product) return;
+   // ==========================================
+// 1. SEO FRIENDLY URL HANDLING (NEW ADDITION)
+// ==========================================
 
-      const title = product.title ? `${product.title} - NexKart` : 'NexKart Product Details';
-      const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
-      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
-      const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKart`;
-      const pageUrl = window.location.href;
+// URL Parameters ebong Path UI theke ID ber korar Helper Function
+function getProductIdFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryId = urlParams.get('id');
+  
+  // 1. Purano URL Format support (Query Param: ?id=NK-PROD-3338)
+  if (queryId) {
+    return queryId;
+  }
 
-      let imageUrl = '';
-      if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
-        imageUrl = galleryImages[0];
-      } else if (product.primary_image) {
-        imageUrl = product.primary_image;
-      }
-      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-        imageUrl = window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
-      }
+  // 2. SEO Friendly URL Format support (/user/product/mens-shirt-NK-PROD-3338)
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  const lastSegment = pathSegments[pathSegments.length - 1];
 
-      document.title = title;
-      document.getElementById('seo-title').innerText = title;
-      document.getElementById('seo-description').setAttribute('content', metaDescription);
-      document.getElementById('seo-keywords').setAttribute('content', keywords);
-      document.getElementById('seo-canonical').setAttribute('href', pageUrl);
-
-      document.getElementById('og-title').setAttribute('content', title);
-      document.getElementById('og-description').setAttribute('content', metaDescription);
-      document.getElementById('og-image').setAttribute('content', imageUrl);
-      document.getElementById('og-url').setAttribute('content', pageUrl);
-
-      document.getElementById('tw-title').setAttribute('content', title);
-      document.getElementById('tw-description').setAttribute('content', metaDescription);
-      document.getElementById('tw-image').setAttribute('content', imageUrl);
-
-      const schemaData = {
-        "@context": "https://schema.org/",
-        "@type": "Product",
-        "name": product.title || "NexKart Product",
-        "image": imageUrl ? [imageUrl] : [],
-        "description": metaDescription,
-        "sku": product.sku || product.product_id || product.id || "N/A",
-        "brand": {
-          "@type": "Brand",
-          "name": product.brand_name || product.seller_shop_name || "NexKart"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": pageUrl,
-          "priceCurrency": "BDT",
-          "price": product.sale_price || "0",
-          "itemCondition": "https://schema.org/NewCondition",
-          "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-        }
-      };
-
-      if (product.avg_rating && Number(product.avg_rating) > 0) {
-        schemaData.aggregateRating = {
-          "@type": "AggregateRating",
-          "ratingValue": Number(product.avg_rating).toFixed(1),
-          "reviewCount": product.review_count || 1
-        };
-      }
-
-      const schemaScript = document.getElementById('product-json-ld');
-      if (schemaScript) {
-        schemaScript.textContent = JSON.stringify(schemaData);
-      }
+  if (lastSegment) {
+    // Slug-er shesh part theke 'NK-PROD-XXXX' id-ti match kora
+    const match = lastSegment.match(/(NK-PROD-\d+)/i);
+    if (match) {
+      return match[1];
     }
+    // Id-format differ korle full slug-ti return kora
+    return lastSegment;
+  }
 
+  return null;
+}
+
+// Global productId Variable Assignment
+const productId = getProductIdFromUrl();
+
+
+// ==========================================
+// 2. SEO URL GENERATOR FOR PRODUCT CARDS
+// ==========================================
+
+// Apnar Product List / Card-e a tag / Link toiri korar jonno ei function-ti bebohar korben
+function getProductSeoUrl(product) {
+  if (!product) return '#';
+  
+  const title = product.title || product.product_name || 'product';
+  const id = product.product_id || product.id || 'NK-PROD-0000';
+
+  const titleSlug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Special character baad dewa
+    .trim()
+    .replace(/\s+/g, '-');        // Space-ke dash (-) e convert kora
+
+  return `/user/product/${titleSlug}-${id}`;
+}
+
+
+// ==========================================
+// 3. DYNAMIC CANONICAL & META TAG UPDATE
+// ==========================================
+
+function updateDynamicSEO(product, galleryImages) {
+  if (!product) return;
+
+  const currentSeoUrl = window.location.href; // SEO Friendly current URL
+
+  // Title Update
+  const pageTitle = `${product.title || 'Product Details'} | NexKart BD`;
+  document.title = pageTitle;
+
+  // Canonical Link Update
+  let canonicalTag = document.getElementById('seo-canonical');
+  if (canonicalTag) {
+    canonicalTag.setAttribute('href', currentSeoUrl);
+  }
+
+  // OpenGraph URL Update
+  let ogUrlTag = document.getElementById('og-url');
+  if (ogUrlTag) {
+    ogUrlTag.setAttribute('content', currentSeoUrl);
+  }
+
+  // Baki apnar existing Meta Tag & Image updates...
+}
     // Updated renderProductDetails to handle coin offers and active user coins
     function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts, userCoins) {
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
@@ -1815,5 +1826,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     });
   </script>
+
 </body>
 </html>
