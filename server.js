@@ -89,7 +89,9 @@ app.use(
       frameSrc: [
         "'self'", 
         "https://adminnexkartbd-debug.github.io",
-        "https://tagassistant.google.com"
+        "https://www.facebook.com",
+        "https://tagassistant.google.com",
+        "https://*.facebook.com"
       ], 
     },
   })
