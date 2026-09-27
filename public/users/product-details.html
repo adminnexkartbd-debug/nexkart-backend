@@ -17,14 +17,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta id="seo-description" name="description" content="NexKartBD থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন। দ্রুত ডেলিভারি এবং ক্যাশ অন ডেলিভারি সুবিধা!">
   <meta id="seo-keywords" name="keywords" content="NexKartBD, Ecommerce, Buy Online, Shopping Bangladesh, Product Details">
   <meta name="robots" content="index, follow">
-  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/product">
+  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/user/product-details">
 
   <!-- Open Graph / Facebook Meta Tags -->
   <meta property="og:type" content="product">
   <meta id="og-title" property="og:title" content="NexKartBD - Product Details">
   <meta id="og-description" property="og:description" content="NexKartBD থেকে সেরা দামে এবং আকর্ষণীয় অফারে পণ্য কিনুন।">
   <meta id="og-image" property="og:image" content="">
-  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/product">
+  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product-details">
   <meta property="og:site_name" content="NexKartBD">
 
   <!-- Twitter Meta Tags -->
@@ -187,7 +187,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     
     <!-- Top Bar -->
     <div class="flex items-center justify-between py-2">
-      <a href="/" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+      <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
         <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
       </a>
 
@@ -291,7 +291,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <p id="seller-slogan" class="text-xs text-gray-500 mt-0.5">Be Your Own Kind of Beautiful</p>
               </div>
             </div>
-            <a id="visit-store-btn" href="/store" class="w-full sm:w-auto bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-xs font-bold px-4 py-2.5 rounded-xl border border-pink-200 transition-all flex items-center justify-center gap-1.5 shadow-sm">
+            <a id="visit-store-btn" href="/user/seller-profile" class="w-full sm:w-auto bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-xs font-bold px-4 py-2.5 rounded-xl border border-pink-200 transition-all flex items-center justify-center gap-1.5 shadow-sm">
               <i class="fa-solid fa-store"></i> Visit Store
             </a>
           </div>
@@ -559,7 +559,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      const top = (window.innerHeight - height) / 2;
 
      const popup = window.open(
-       '/auth/google/popup',
+       '/user/auth/google/popup',
        'GoogleLoginPopup',
        `width=${width},height=${height},top=${top},left=${left}`
      );
@@ -676,17 +676,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function redirectToLogin() {
       const currentUrl = window.location.href; 
 
-      fetch('/save-redirect-url', {
+      fetch('/user/save-redirect-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ redirectTo: currentUrl })
       })
       .then(() => {
-          window.location.href = '/auth/google'; 
+          window.location.href = '/user/auth/google'; 
       })
       .catch(err => {
           console.error("Error saving redirect URL:", err);
-          window.location.href = '/auth/google';
+          window.location.href = '/user/auth/google';
       });
     }
 
@@ -769,7 +769,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               loginBtn.innerText = 'Signing In...';
           }
 
-          const response = await fetch('/pop-login', {
+          const response = await fetch('/user/pop-login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email, password })
@@ -808,7 +808,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const activeIdentifier = window.currentLoadedProductSlug || window.currentLoadedProductId || currentIdentifier;
       if (!activeIdentifier) return;
       
-      let orderUrl = `/checkout?product=${encodeURIComponent(activeIdentifier)}&qty=${productQuantity}`;
+      const paramKey = window.currentLoadedProductSlug ? 'slug' : currentIdentifierType;
+      let orderUrl = `/user/checkout?${paramKey}=${encodeURIComponent(activeIdentifier)}&qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -817,7 +818,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     async function checkLoginAndProceed(actionType) {
       try {
-        const response = await fetch('/api/current_user');
+        const response = await fetch('/user/current_user');
         if (response.ok) {
           const userData = await response.json();
           if (userData && (userData.id || userData.userId)) {
@@ -841,7 +842,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (!activeProductId) return;
 
       try {
-        const response = await fetch('/api/add-to-cart', {
+        const response = await fetch('/user/add-to-cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -873,7 +874,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
 
       try {
-        const response = await fetch('/api/inquiry', {
+        const response = await fetch('/user/inquiry', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -901,7 +902,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (!activeId) return;
 
       try {
-        const response = await fetch(`/api/inquiries/${activeId}`);
+        const response = await fetch(`/user/inquiries/${activeId}`);
         const data = await response.json();
 
         if (data.success && data.inquiries) {
@@ -1032,16 +1033,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      // Clean SEO Friendly URL
-      const productSlug = product.slug || product.slug_name || product.product_id || product.id;
-      const targetUrl = `/product/${encodeURIComponent(productSlug)}`;
+      // Handle Slug or ID navigation correctly
+      const productSlug = product.slug || product.slug_name;
+      const targetParam = productSlug ? `slug=${encodeURIComponent(productSlug)}` : `id=${product.product_id || product.id}`;
 
       return `
-        <div onclick="window.location.href='${targetUrl}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
-                    <img src="${imageSrc}" alt="${product.title || 'Product'}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
+                    <img src="${imageSrc}" alt="${product.title || 'Product'}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'180\' viewBox=\'0 0 250 180\'><rect width=\'100%\' height=\'100%\' fill=\'%23f3f4f6\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%239ca3af\' font-family=\'sans-serif\' font-size=\'14\'>Image Not Found</text></svg>';">
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] text-gray-400 uppercase tracking-wider">${product.category || 'General'}</span>
@@ -1076,8 +1077,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKartBD থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const productSlug = product.slug || product.slug_name || product.product_id || product.id;
-      const canonicalUrl = `${window.location.origin}/product/${encodeURIComponent(productSlug)}`;
+      const productSlug = product.slug || product.slug_name;
+      const canonicalUrl = productSlug 
+        ? `${window.location.origin}/user/product-details?slug=${encodeURIComponent(productSlug)}`
+        : window.location.href;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1143,11 +1146,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       window.currentLoadedProductId = product.product_id || product.id;
       window.currentLoadedProductSlug = product.slug || product.slug_name || null;
 
-      // Ensure URL rewrites to SEO Friendly Slug format
-      const activeSlug = window.currentLoadedProductSlug || window.currentLoadedProductId;
-      if (activeSlug) {
-        const newUrl = `/product/${encodeURIComponent(activeSlug)}`;
-        if (window.location.pathname !== newUrl) {
+      // Ensure URL rewrites to SEO Slug format dynamically
+      if (window.currentLoadedProductSlug) {
+        const newUrl = `${window.location.pathname}?slug=${encodeURIComponent(window.currentLoadedProductSlug)}`;
+        if (window.location.search !== `?slug=${encodeURIComponent(window.currentLoadedProductSlug)}`) {
           window.history.replaceState({ path: newUrl }, '', newUrl);
         }
       }
@@ -1270,7 +1272,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             btn.type = 'button';
             btn.className = `variant-btn uppercase font-semibold text-xs px-3.5 py-1.5 rounded-xl border transition-all cursor-pointer ${
               isFirst 
-                ? 'bg-[#ff4b6e] text-[#ffffff] border-[#ff4b6e] shadow-md' 
+                ? 'bg-[#ff4b6e] text-white border-[#ff4b6e] shadow-md' 
                 : 'bg-white text-gray-700 border-pink-200 hover:border-[#ff4b6e]'
             }`;
             btn.innerText = v;
@@ -1297,7 +1299,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const visitStoreBtn = document.getElementById('visit-store-btn');
       const sellerId = product.admin_id || product.seller_id;
       if (visitStoreBtn && sellerId) {
-        visitStoreBtn.href = `/store/${sellerId}`;
+        visitStoreBtn.href = `/user/store/${sellerId}`;
       }
 
       const sellerAvatar = document.getElementById('seller-avatar');
@@ -1460,26 +1462,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    // Dynamic API fetch based on Path / Slug for SEO Routing
+    // Dynamic API fetch based on Slug or ID (Prioritizes Slug for SEO Routing)
     async function fetchProductData() {
-      const pathSegments = window.location.pathname.split('/').filter(Boolean);
       const urlParams = new URLSearchParams(window.location.search);
-      
-      let productSlug = pathSegments.length > 1 && pathSegments[0] === 'product' ? pathSegments[1] : null;
-      if (!productSlug) {
-        productSlug = urlParams.get('slug') || urlParams.get('slug_name');
-      }
+      const productSlug = urlParams.get('slug') || urlParams.get('slug_name');
       const productId = urlParams.get('id');
 
       let requestUrl = '';
       if (productSlug) {
         currentIdentifier = productSlug;
         currentIdentifierType = 'slug';
-        requestUrl = `/api/product/slug/${encodeURIComponent(productSlug)}`;
+        requestUrl = `/user/product/slug/${encodeURIComponent(productSlug)}`;
       } else if (productId) {
         currentIdentifier = productId;
         currentIdentifierType = 'id';
-        requestUrl = `/api/product/${productId}`;
+        requestUrl = `/user/product/${productId}`;
       } else {
         return;
       }
@@ -1493,7 +1490,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         // 2. Fetch User Coin Balance
         let userCoins = 0;
         try {
-          const coinResponse = await fetch('/api/my-coin-balance');
+          const coinResponse = await fetch('/user/my-coin-balance');
           const coinData = await coinResponse.json();
           if (coinData.success) {
             userCoins = coinData.total_coins || 0;
@@ -1528,7 +1525,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (!activeId) return;
 
       try {
-        const response = await fetch(`/api/reviews/${activeId}`);
+        const response = await fetch(`/user/reviews/${activeId}`);
         const data = await response.json();
 
         const totalCountElem = document.getElementById('total-reviews-count');
