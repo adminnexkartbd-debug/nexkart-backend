@@ -235,6 +235,34 @@
             text-decoration: underline;
         }
 
+        /* Social Media Links Style */
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .social-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .social-btn:hover {
+            background: white;
+            color: #e11d48;
+        }
+
         /* Mobile Responsiveness Improvements */
         @media (max-width: 768px) {
             body {
@@ -330,6 +358,19 @@
                         <i class="fa-solid fa-phone"></i>
                         <span>Hotline: <a href="tel:01312146797">01312146797</a>, <a href="tel:01987825699">01987825699</a></span>
                     </div>
+                </div>
+
+                <!-- Social Media Links -->
+                <div class="social-links">
+                    <a href="https://www.facebook.com/nexkartbd.shop/" target="_blank" class="social-btn">
+                        <i class="fa-brands fa-facebook"></i> Facebook
+                    </a>
+                    <a href="https://www.instagram.com/nexkartbd.shop/" target="_blank" class="social-btn">
+                        <i class="fa-brands fa-instagram"></i> Instagram
+                    </a>
+                    <a href="https://www.tiktok.com/@nexkartbd" target="_blank" class="social-btn">
+                        <i class="fa-brands fa-tiktok"></i> TikTok
+                    </a>
                 </div>
             </div>
         </div>
