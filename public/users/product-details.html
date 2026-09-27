@@ -526,7 +526,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     
     // Dynamic identifier (Slug or ID)
     let currentIdentifier = null;
-    let currentIdentifierType = 'id';
+    let currentIdentifierType = 'slug';
 
     let currentStockPrice = 0;
     let productQuantity = 1;
@@ -733,7 +733,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         btn.classList.add('bg-white', 'text-gray-700', 'border-pink-200');
       });
       element.classList.remove('bg-white', 'text-gray-700', 'border-pink-200');
-      element.classList.add('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
+      element.classList.add('bg-[#ff4b6e]', 'text-[#ffffff]', 'border-[#ff4b6e]', 'shadow-md');
       selectedVariant = variantName;
     }
 
@@ -805,10 +805,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function executeOrderRedirect() {
-      const activeIdentifier = window.currentLoadedProductId || currentIdentifier;
+      const activeIdentifier = window.currentLoadedProductSlug || window.currentLoadedProductId || currentIdentifier;
       if (!activeIdentifier) return;
       
-      let orderUrl = `/user/checkout?${currentIdentifierType}=${activeIdentifier}&qty=${productQuantity}`;
+      const paramKey = window.currentLoadedProductSlug ? 'slug' : currentIdentifierType;
+      let orderUrl = `/user/checkout?${paramKey}=${encodeURIComponent(activeIdentifier)}&qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -1032,8 +1033,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      // Handle both Slug or ID navigation correctly using slug_name / slug / id
-      const productSlug = product.slug_name || product.slug;
+      // Handle Slug or ID navigation correctly
+      const productSlug = product.slug || product.slug_name;
       const targetParam = productSlug ? `slug=${encodeURIComponent(productSlug)}` : `id=${product.product_id || product.id}`;
 
       return `
@@ -1076,7 +1077,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKartBD থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const productSlug = product.slug_name || product.slug;
+      const productSlug = product.slug || product.slug_name;
       const canonicalUrl = productSlug 
         ? `${window.location.origin}/user/product-details?slug=${encodeURIComponent(productSlug)}`
         : window.location.href;
@@ -1143,6 +1144,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts, userCoins) {
       window.currentLoadedProductId = product.product_id || product.id;
+      window.currentLoadedProductSlug = product.slug || product.slug_name || null;
+
+      // Ensure URL rewrites to SEO Slug format dynamically
+      if (window.currentLoadedProductSlug) {
+        const newUrl = `${window.location.pathname}?slug=${encodeURIComponent(window.currentLoadedProductSlug)}`;
+        if (window.location.search !== `?slug=${encodeURIComponent(window.currentLoadedProductSlug)}`) {
+          window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
+      }
 
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
       document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
@@ -1452,7 +1462,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    // Dynamic API fetch based on Slug or ID (Using slug_name field from server)
+    // Dynamic API fetch based on Slug or ID (Prioritizes Slug for SEO Routing)
     async function fetchProductData() {
       const urlParams = new URLSearchParams(window.location.search);
       const productSlug = urlParams.get('slug') || urlParams.get('slug_name');
@@ -1491,8 +1501,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         // 3. Render Details
         if (data.success && data.product) {
-          // Sync server slug_name if available
-          const serverSlug = data.product.slug_name || data.product.slug;
+          const serverSlug = data.product.slug || data.product.slug_name;
           if (serverSlug) {
             currentIdentifier = serverSlug;
             currentIdentifierType = 'slug';
