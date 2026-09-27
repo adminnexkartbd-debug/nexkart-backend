@@ -64,6 +64,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         }
       }
     }
+  
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -513,9 +514,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <img id="fullscreen-modal-image" src="" loading="lazy" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg scale-95 transition-transform duration-300" alt="Fullscreen Product Image">
   </div>
 
- <!-- JavaScript Logic -->
+  <!-- JavaScript Logic -->
   <script>
-    // Coin Calculation Global Variables
+   // Global Variables & Configurations
     let availableUserCoins = 0;
     let coinPercentageValue = 0;
     let coinDiscountValue = 0;
@@ -524,6 +525,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let currentVideoUrl = null;
     let activeMediaIndex = 0;
     
+    // URL Params handles both ID and Slug
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    const productSlug = urlParams.get('slug');
+
     let currentStockPrice = 0;
     let productQuantity = 1;
     let selectedVariant = null;
@@ -580,72 +586,58 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      }
    });
 
-   window.addEventListener('message', function (event) {
-     if (event.data && event.data.message === 'login_completed') {
-       closeLoginModal();
+   async function shareProduct() {
+      const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
+      const salePrice = document.getElementById('product-sale-price').innerText || '';
+      const category = document.getElementById('product-category').innerText || '';
+      const sku = document.getElementById('product-sku').innerText || '';
+      const shareUrl = window.location.href;
 
-       if (pendingAction === 'order') {
-         executeOrderRedirect();
-       } else if (pendingAction === 'cart') {
-         addToDatabaseCart();
-       } else {
-         window.location.reload(); 
-       }
-     }
-   });
+      let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
 
- async function shareProduct() {
-  const productTitle = document.getElementById('product-title').innerText || 'NexKart Product';
-  const salePrice = document.getElementById('product-sale-price').innerText || '';
-  const category = document.getElementById('product-category').innerText || '';
-  const sku = document.getElementById('product-sku').innerText || '';
-  const shareUrl = window.location.href;
-
-  let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
-
-  if (currentVideoUrl) {
-    let formattedVidUrl = currentVideoUrl;
-    if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
-      formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
-    }
-    shareText += `🎥 Watch Video: ${formattedVidUrl}\n\n`;
-  }
-
-  shareText += `🔗 Buy Link: ${shareUrl}`;
-
-  if (navigator.share) {
-    try {
-      let shareData = {
-        title: productTitle,
-        text: shareText,
-        url: shareUrl
-      };
-
-      const mainImgSrc = currentProductImages[0] || (document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '');
-      if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-        try {
-          const response = await fetch(mainImgSrc);
-          const blob = await response.blob();
-          const file = new File([blob], `product-${productId || 'item'}.jpg`, { type: blob.type });
-
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            shareData.files = [file];
-          }
-        } catch (e) {
-          console.warn('Image fetch failed, sharing link only:', e);
+      if (currentVideoUrl) {
+        let formattedVidUrl = currentVideoUrl;
+        if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
+          formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
         }
+        shareText += `🎥 Watch Video: ${formattedVidUrl}\n\n`;
       }
 
-      await navigator.share(shareData);
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error('Share failed:', err);
-    }
-  } else {
-    navigator.clipboard.writeText(shareText).then(() => {
-      alert('Product details copied to clipboard!');
-    });
-  }
-} 
+      shareText += `🔗 Buy Link: ${shareUrl}`;
+
+      if (navigator.share) {
+        try {
+          let shareData = {
+            title: productTitle,
+            text: shareText,
+            url: shareUrl
+          };
+
+          const mainImgSrc = currentProductImages[0] || (document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '');
+          if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
+            try {
+              const response = await fetch(mainImgSrc);
+              const blob = await response.blob();
+              const file = new File([blob], `product-${productId || productSlug || 'item'}.jpg`, { type: blob.type });
+
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                shareData.files = [file];
+              }
+            } catch (e) {
+              console.warn('Image fetch failed, sharing link only:', e);
+            }
+          }
+
+          await navigator.share(shareData);
+        } catch (err) {
+          if (err.name !== 'AbortError') console.error('Share failed:', err);
+        }
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Product details copied to clipboard!');
+        });
+      }
+    } 
 
     function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
@@ -674,11 +666,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }, 300);
     }
 
-    document.getElementById('image-fullscreen-modal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeFullscreenModal();
-      }
-    });
+    const fsModal = document.getElementById('image-fullscreen-modal');
+    if(fsModal) {
+      fsModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeFullscreenModal();
+        }
+      });
+    }
 
     function redirectToLogin() {
       const currentUrl = window.location.href; 
@@ -723,7 +718,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function calculateTotalPrice() {
       let finalUnitPrice = currentStockPrice;
       
-      // Jodi coin discount thake tahole unit price theke minus hobe
       if (coinDiscountValue > 0) {
         finalUnitPrice = Math.max(0, currentStockPrice - coinDiscountValue);
       }
@@ -813,8 +807,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function executeOrderRedirect() {
-      if (!productId) return;
-      let orderUrl = `/user/checkout?id=${productId}&qty=${productQuantity}`;
+      const activeIdentifier = window.currentLoadedProductId || productId || productSlug;
+      if (!activeIdentifier) return;
+      
+      let orderUrl = `/user/checkout?id=${activeIdentifier}&qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -843,13 +839,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     async function addToDatabaseCart() {
-      if (!productId) return;
+      const activeProductId = window.currentLoadedProductId || productId;
+      if (!activeProductId) return;
+
       try {
         const response = await fetch('/user/add-to-cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            product_id: productId, 
+            product_id: activeProductId, 
             quantity: productQuantity,
             variant: selectedVariant 
           })
@@ -869,7 +867,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     async function submitInquiry() {
       const input = document.getElementById('user-inquiry-input');
       const questionText = input.value.trim();
-      
+      const activeProductId = window.currentLoadedProductId || productId;
+
       if (!questionText) {
         alert('Please write your question!');
         return;
@@ -880,7 +879,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            product_id: productId,
+            product_id: activeProductId,
             question: questionText,
             user_name: 'Valued Customer'
           })
@@ -890,7 +889,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (data.success) {
           alert('Inquiry submitted successfully!');
           input.value = '';
-          loadInquiries();
+          loadInquiries(activeProductId);
         } else {
           alert('Error: ' + data.message);
         }
@@ -899,11 +898,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    async function loadInquiries() {
-      if (!productId) return;
+    async function loadInquiries(targetProductId) {
+      const activeId = targetProductId || window.currentLoadedProductId || productId;
+      if (!activeId) return;
 
       try {
-        const response = await fetch(`/user/inquiries/${productId}`);
+        const response = await fetch(`/user/inquiries/${activeId}`);
         const data = await response.json();
 
         if (data.success && data.inquiries) {
@@ -1034,8 +1034,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
+      // Handle both Slug or ID navigation
+      const targetParam = product.slug ? `slug=${product.slug}` : `id=${product.product_id || product.id}`;
+
       return `
-        <div onclick="window.location.href='/user/product-details?id=${product.product_id || product.id}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1066,91 +1069,78 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       `;
     }
 
-   // ==========================================
-// 1. SEO FRIENDLY URL HANDLING (NEW ADDITION)
-// ==========================================
+    function updateDynamicSEO(product, galleryImages) {
+      if (!product) return;
 
-// URL Parameters ebong Path UI theke ID ber korar Helper Function
-function getProductIdFromUrl() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const queryId = urlParams.get('id');
-  
-  // 1. Purano URL Format support (Query Param: ?id=NK-PROD-3338)
-  if (queryId) {
-    return queryId;
-  }
+      const title = product.title ? `${product.title} - NexKart` : 'NexKart Product Details';
+      const rawDesc = product.description ? product.description.replace(/<[^>]*>?/gm, '').trim() : '';
+      const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} অনলাইনে কিনুন NexKart থেকে। সেরা দাম ও আকর্ষণীয় অফারে!`;
+      const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKart`;
+      const pageUrl = window.location.href;
 
-  // 2. SEO Friendly URL Format support (/user/product/mens-shirt-NK-PROD-3338)
-  const pathSegments = window.location.pathname.split('/').filter(Boolean);
-  const lastSegment = pathSegments[pathSegments.length - 1];
+      let imageUrl = '';
+      if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
+        imageUrl = galleryImages[0];
+      } else if (product.primary_image) {
+        imageUrl = product.primary_image;
+      }
+      if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+        imageUrl = window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+      }
 
-  if (lastSegment) {
-    // Slug-er shesh part theke 'NK-PROD-XXXX' id-ti match kora
-    const match = lastSegment.match(/(NK-PROD-\d+)/i);
-    if (match) {
-      return match[1];
+      document.title = title;
+      document.getElementById('seo-title').innerText = title;
+      document.getElementById('seo-description').setAttribute('content', metaDescription);
+      document.getElementById('seo-keywords').setAttribute('content', keywords);
+      document.getElementById('seo-canonical').setAttribute('href', pageUrl);
+
+      document.getElementById('og-title').setAttribute('content', title);
+      document.getElementById('og-description').setAttribute('content', metaDescription);
+      document.getElementById('og-image').setAttribute('content', imageUrl);
+      document.getElementById('og-url').setAttribute('content', pageUrl);
+
+      document.getElementById('tw-title').setAttribute('content', title);
+      document.getElementById('tw-description').setAttribute('content', metaDescription);
+      document.getElementById('tw-image').setAttribute('content', imageUrl);
+
+      const schemaData = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.title || "NexKart Product",
+        "image": imageUrl ? [imageUrl] : [],
+        "description": metaDescription,
+        "sku": product.sku || product.product_id || product.id || "N/A",
+        "brand": {
+          "@type": "Brand",
+          "name": product.brand_name || product.seller_shop_name || "NexKart"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": pageUrl,
+          "priceCurrency": "BDT",
+          "price": product.sale_price || "0",
+          "itemCondition": "https://schema.org/NewCondition",
+          "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+        }
+      };
+
+      if (product.avg_rating && Number(product.avg_rating) > 0) {
+        schemaData.aggregateRating = {
+          "@type": "AggregateRating",
+          "ratingValue": Number(product.avg_rating).toFixed(1),
+          "reviewCount": product.review_count || 1
+        };
+      }
+
+      const schemaScript = document.getElementById('product-json-ld');
+      if (schemaScript) {
+        schemaScript.textContent = JSON.stringify(schemaData);
+      }
     }
-    // Id-format differ korle full slug-ti return kora
-    return lastSegment;
-  }
 
-  return null;
-}
-
-// Global productId Variable Assignment
-const productId = getProductIdFromUrl();
-
-
-// ==========================================
-// 2. SEO URL GENERATOR FOR PRODUCT CARDS
-// ==========================================
-
-// Apnar Product List / Card-e a tag / Link toiri korar jonno ei function-ti bebohar korben
-function getProductSeoUrl(product) {
-  if (!product) return '#';
-  
-  const title = product.title || product.product_name || 'product';
-  const id = product.product_id || product.id || 'NK-PROD-0000';
-
-  const titleSlug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Special character baad dewa
-    .trim()
-    .replace(/\s+/g, '-');        // Space-ke dash (-) e convert kora
-
-  return `/user/product/${titleSlug}-${id}`;
-}
-
-
-// ==========================================
-// 3. DYNAMIC CANONICAL & META TAG UPDATE
-// ==========================================
-
-function updateDynamicSEO(product, galleryImages) {
-  if (!product) return;
-
-  const currentSeoUrl = window.location.href; // SEO Friendly current URL
-
-  // Title Update
-  const pageTitle = `${product.title || 'Product Details'} | NexKart BD`;
-  document.title = pageTitle;
-
-  // Canonical Link Update
-  let canonicalTag = document.getElementById('seo-canonical');
-  if (canonicalTag) {
-    canonicalTag.setAttribute('href', currentSeoUrl);
-  }
-
-  // OpenGraph URL Update
-  let ogUrlTag = document.getElementById('og-url');
-  if (ogUrlTag) {
-    ogUrlTag.setAttribute('content', currentSeoUrl);
-  }
-
-  // Baki apnar existing Meta Tag & Image updates...
-}
-    // Updated renderProductDetails to handle coin offers and active user coins
     function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts, userCoins) {
+      window.currentLoadedProductId = product.product_id || product.id;
+
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
       document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
       document.getElementById('product-category').innerText = product.category || 'General';
@@ -1287,7 +1277,7 @@ function updateDynamicSEO(product, galleryImages) {
       document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
 
       document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKart Official';
-      document.getElementById('seller-slogan').innerText = product.seller_slogan || 'Best Quality Guaranteed';
+      document.getElementById('seller-[#ff4b6e]').innerText = product.seller_slogan || 'Best Quality Guaranteed';
 
       const visitStoreBtn = document.getElementById('visit-store-btn');
       const sellerId = product.admin_id || product.seller_id;
@@ -1417,9 +1407,10 @@ function updateDynamicSEO(product, galleryImages) {
         specBtnContainer.classList.add('hidden');
       }
 
-      // Load Product Media (Video + Images)
       loadProductMedia(product, galleryImages);
       setupImageFullscreen();
+      loadProductReviews(product.product_id || product.id);
+      loadInquiries(product.product_id || product.id);
     }
 
     function toggleDescription() {
@@ -1454,11 +1445,19 @@ function updateDynamicSEO(product, galleryImages) {
       }
     }
 
+    // Dynamic API fetch based on Slug or ID
     async function fetchProductData() {
-      if (!productId) return;
+      let requestUrl = '';
+      if (productSlug) {
+        requestUrl = `/user/product/slug/${productSlug}`;
+      } else if (productId) {
+        requestUrl = `/user/product/${productId}`;
+      } else {
+        return;
+      }
 
       try {
-        const response = await fetch(`/user/product/${productId}`);
+        const response = await fetch(requestUrl);
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
         
         const data = await response.json();
@@ -1470,11 +1469,12 @@ function updateDynamicSEO(product, galleryImages) {
       }
     }
 
-    async function loadProductReviews() {
-      if (!productId) return;
+    async function loadProductReviews(targetProductId) {
+      const activeId = targetProductId || window.currentLoadedProductId || productId;
+      if (!activeId) return;
 
       try {
-        const response = await fetch(`/user/reviews/${productId}`);
+        const response = await fetch(`/user/reviews/${activeId}`);
         const data = await response.json();
 
         const totalCountElem = document.getElementById('total-reviews-count');
@@ -1673,7 +1673,7 @@ function updateDynamicSEO(product, galleryImages) {
       if (currentMedia.type === 'video') {
         viewerBox.innerHTML = `
           <div class="relative w-full h-full flex items-center justify-center bg-black rounded-2xl overflow-hidden">
-            <video controls controlsList="nodownload" preload="metadata" class="w-full h-full max-h-[600px] object-contain rounded-xl shadow-lg">
+            <video id="custom-product-video" controls controlsList="nodownload" preload="metadata" class="w-full h-full max-h-[600px] object-contain rounded-xl shadow-lg">
               <source src="${currentMedia.url}" type="video/mp4">
               আপনার ব্রাউজার ভিডিও সাপোর্ট করছে না।
             </video>
@@ -1703,7 +1703,7 @@ function updateDynamicSEO(product, galleryImages) {
       if (video.paused) {
           video.play();
           if (playIcon) playIcon.className = 'fa-solid fa-pause text-2xl';
-          if (playBtn) playBtn.classList.add('opacity-0', 'hover:opacity-100');
+          if (playBtn) playBtn.classList.add('opacity-0');
       } else {
           video.pause();
           if (playIcon) playIcon.className = 'fa-solid fa-play text-2xl ml-1';
@@ -1712,120 +1712,106 @@ function updateDynamicSEO(product, galleryImages) {
     }
 
     function renderThumbnails(mediaList) {
-      const thumbContainer = document.getElementById('thumbnail-container');
-      if (!thumbContainer) return;
-      thumbContainer.innerHTML = '';
+      const container = document.getElementById('thumbnail-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (!mediaList || mediaList.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'flex';
 
       mediaList.forEach((media, index) => {
-        let thumbHTML = '';
+        const isSelected = index === activeMediaIndex;
+        const thumbBtn = document.createElement('div');
+        thumbBtn.className = `thumb-slide-item w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 flex items-center justify-center relative bg-white ${
+          isSelected ? 'border-[#ff4b6e] shadow-md scale-105' : 'border-pink-100 hover:border-pink-300 opacity-70 hover:opacity-100'
+        }`;
+
         if (media.type === 'video') {
-          const fallbackImg = currentProductImages[0] || '';
-          thumbHTML = `
-            <div class="thumb-slide-item">
-              <button onclick="switchMedia(${index})" class="thumb-btn relative w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-black overflow-hidden p-0 transition-all flex items-center justify-center cursor-pointer">
-                ${fallbackImg ? `<img src="${fallbackImg}" class="w-full h-full object-cover opacity-50">` : ''}
-                <div class="absolute inset-0 flex items-center justify-center text-white text-base bg-black/40">
-                  <i class="fa-solid fa-circle-play text-[#ff4b6e] text-2xl"></i>
-                </div>
-              </button>
+          thumbBtn.innerHTML = `
+            <div class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-white relative">
+              <i class="fa-solid fa-circle-play text-xl text-red-500"></i>
+              <span class="text-[9px] font-bold mt-0.5">Video</span>
             </div>
           `;
         } else {
-          thumbHTML = `
-            <div class="thumb-slide-item">
-              <button onclick="switchMedia(${index})" class="thumb-btn w-20 h-20 rounded-2xl border-2 ${activeMediaIndex === index ? 'border-[#ff4b6e] opacity-100 shadow-md scale-95' : 'border-pink-200 opacity-60'} bg-white overflow-hidden p-1 transition-all cursor-pointer">
-                <img src="${media.url}" alt="Thumbnail ${index + 1}" loading="lazy" class="object-cover w-full h-full rounded-xl" onerror="this.style.display='none';">
-              </button>
-            </div>
+          thumbBtn.innerHTML = `
+            <img src="${media.url}" alt="Thumbnail ${index + 1}" class="w-full h-full object-contain p-1">
           `;
         }
-        thumbContainer.innerHTML += thumbHTML;
-      });
-    }
 
-    function switchMedia(index) {
-      activeMediaIndex = index;
-      let mediaList = [];
-      if (currentVideoUrl) {
-          let formattedVideoUrl = currentVideoUrl;
-          if (!formattedVideoUrl.startsWith('http://') && !formattedVideoUrl.startsWith('https://')) {
-              formattedVideoUrl = formattedVideoUrl.startsWith('/') ? formattedVideoUrl : '/' + formattedVideoUrl;
-          }
-          mediaList.push({ type: 'video', url: formattedVideoUrl });
-      }
-      currentProductImages.forEach(img => {
-          let formattedImgUrl = img ? String(img).trim() : '';
-          if (formattedImgUrl && !formattedImgUrl.startsWith('http://') && !formattedImgUrl.startsWith('https://')) {
-              formattedImgUrl = formattedImgUrl.startsWith('/') ? formattedImgUrl : '/' + formattedImgUrl;
-          }
-          mediaList.push({ type: 'image', url: formattedImgUrl });
-      });
+        thumbBtn.onclick = () => {
+          activeMediaIndex = index;
+          renderMainMediaViewer(mediaList);
+          renderThumbnails(mediaList);
+        };
 
-      renderMainMediaViewer(mediaList);
-      renderThumbnails(mediaList);
+        container.appendChild(thumbBtn);
+      });
     }
 
     function renderSpecificationImages(images) {
-      const specImageContainer = document.getElementById('specification-images-gallery');
-      const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-      if (!specImageContainer) return;
-      
-      specImageContainer.innerHTML = '';
+      const specGallery = document.getElementById('specification-images-gallery');
+      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+
+      if (!specGallery) return;
+      specGallery.innerHTML = '';
+
       specImagesList = images || [];
-      visibleSpecImgCount = 1;
 
       if (!specImagesList || specImagesList.length === 0) {
-        if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
+        if (toggleBtnContainer) toggleBtnContainer.classList.add('hidden');
         return;
       }
 
-      renderSpecImagesBatch();
+      visibleSpecImgCount = 1;
+      displaySpecImages();
     }
 
-    function renderSpecImagesBatch() {
-      const specImageContainer = document.getElementById('specification-images-gallery');
-      const specImgBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-      if (!specImageContainer) return;
+    function displaySpecImages() {
+      const specGallery = document.getElementById('specification-images-gallery');
+      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
 
-      specImageContainer.innerHTML = '';
+      if (!specGallery) return;
+      specGallery.innerHTML = '';
 
-      const currentImagesToDisplay = specImagesList.slice(0, visibleSpecImgCount);
+      const imagesToShow = specImagesList.slice(0, visibleSpecImgCount);
 
-      currentImagesToDisplay.forEach((imgUrl) => {
+      imagesToShow.forEach((imgUrl, idx) => {
         let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
         if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
           formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
         }
 
-        if (formattedUrl) {
-          specImageContainer.innerHTML += `
-            <div class="spec-img-card w-full rounded-3xl overflow-hidden border border-pink-100 bg-white shadow-sm hover:shadow-md transition-all p-2 sm:p-4 flex justify-center">
-              <img src="${formattedUrl}" alt="Specification Gallery Image" loading="lazy" class="w-full h-auto max-h-[750px] object-contain rounded-2xl" onerror="this.parentElement.style.display='none';">
-            </div>
-          `;
-        }
+        const imgCard = document.createElement('div');
+        imgCard.className = 'w-full rounded-2xl overflow-hidden border border-pink-200 bg-white/90 shadow-sm p-2 transition-all duration-300';
+        imgCard.innerHTML = `
+          <img src="${formattedUrl}" alt="Specification Image ${idx + 1}" loading="lazy" class="w-full h-auto object-contain rounded-xl max-h-[800px] mx-auto">
+        `;
+        specGallery.appendChild(imgCard);
       });
 
-      if (visibleSpecImgCount < specImagesList.length) {
-        if (specImgBtnContainer) specImgBtnContainer.classList.remove('hidden');
-      } else {
-        if (specImgBtnContainer) specImgBtnContainer.classList.add('hidden');
+      if (toggleBtnContainer) {
+        if (visibleSpecImgCount < specImagesList.length) {
+          toggleBtnContainer.classList.remove('hidden');
+        } else {
+          toggleBtnContainer.classList.add('hidden');
+        }
       }
     }
 
     function loadMoreSpecImages() {
-      visibleSpecImgCount += 1;
-      renderSpecImagesBatch();
+      visibleSpecImgCount += 2;
+      displaySpecImages();
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      if (productId) {
-        fetchProductData();
-        loadInquiries();
-        loadProductReviews();
-      }
+    // Initialize Page Load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProductData();
     });
   </script>
-
+  
 </body>
 </html>
