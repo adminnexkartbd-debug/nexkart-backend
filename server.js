@@ -232,10 +232,8 @@ app.get('/auth/google/callback',
         }
     }
 );
-// Express.js Backend Route
-app.get('/user/product/:slug', (req, res) => {
-  // SEO URL er jonno HTML page response
-  res.sendFile(path.join(__dirname, 'public/product-details.html'));
+app.get('/user/product-details/:slug', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/user/product-details.html'));
 });
 // ==================== ৪. রাউট মাউন্টিং ====================
 const adminRoutes = require('./routes/admin/admin');
