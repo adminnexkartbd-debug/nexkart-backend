@@ -1277,7 +1277,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
 
       document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKart Official';
-      document.getElementById('seller-[#ff4b6e]').innerText = product.seller_slogan || 'Best Quality Guaranteed';
+      
+      const sellerSloganElem = document.getElementById('seller-slogan');
+      if (sellerSloganElem) {
+        sellerSloganElem.innerText = product.seller_slogan || 'Best Quality Guaranteed';
+      }
 
       const visitStoreBtn = document.getElementById('visit-store-btn');
       const sellerId = product.admin_id || product.seller_id;
