@@ -14,9 +14,61 @@
 <body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
 
   <!-- ========================================== -->
-  <!-- 1. SIDEBAR NAVIGATION                      -->
+  <!-- MOBILE OVERLAY BACKDROP & DRAWER           -->
   <!-- ========================================== -->
-  <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between hidden md:flex">
+  <div id="mobileDrawerBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+  
+  <aside id="mobileDrawer" class="fixed top-0 left-0 bottom-0 w-64 bg-slate-900 text-white flex flex-col justify-between z-50 transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden">
+    <div>
+      <!-- Mobile Drawer Header -->
+      <div class="h-16 flex items-center justify-between px-6 bg-slate-950 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-wand-magic-sparkles text-pink-500 text-xl"></i>
+          <span class="font-bold text-lg tracking-wide">NexKartBD</span>
+        </div>
+        <button id="closeMobileDrawerBtn" class="text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Links -->
+      <nav class="mt-6 px-4 space-y-2">
+        <a href="/home.html" class="flex items-center gap-3 px-4 py-3 bg-pink-600 text-white rounded-xl font-medium shadow-lg shadow-pink-600/30">
+          <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="/adminProduct.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-box-open"></i> Products
+        </a>
+        <a href="/auth/order-lists.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-cart-shopping"></i> Orders
+        </a>
+        <a href="./controlEmployee.html" id="mobileControlEmployeeBtn" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-user-shield"></i> Control Employee
+        </a>
+        <a href="./AdminProfile.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-circle-user"></i> Profile
+        </a>
+        <a href="/superAdmin.html" id="mobileSuperAdminBtn" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-circle-user"></i> Super Admin Panel
+        </a>
+        <a href="/admin/adminAbout.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-gear"></i> Settings
+        </a>
+      </nav>
+    </div>
+
+    <!-- Mobile Logout Button -->
+    <div class="p-4 border-t border-slate-800">
+      <button id="mobileLogoutBtn" class="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-800 hover:bg-red-600/20 text-red-400 hover:text-red-300 rounded-xl font-medium border border-slate-700 transition cursor-pointer">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 1. DESKTOP SIDEBAR NAVIGATION             -->
+  <!-- ========================================== -->
+  <aside class="w-64 bg-slate-900 text-white flex-col justify-between hidden md:flex">
     <div>
       <!-- Logo Header -->
       <div class="h-16 flex items-center gap-3 px-6 bg-slate-950 border-b border-slate-800">
@@ -35,18 +87,15 @@
         <a href="/auth/order-lists.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
           <i class="fa-solid fa-cart-shopping"></i> Orders
         </a>
-    
-
-        <!-- Control Employee Link -->
         <a href="./controlEmployee.html" id="controlEmployeeBtn" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
           <i class="fa-solid fa-user-shield"></i> Control Employee
         </a>
         <a href="./AdminProfile.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
           <i class="fa-solid fa-circle-user"></i> Profile
         </a>
-       <a href="/superAdmin.html" id="superAdminBtn" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
-  <i class="fa-solid fa-circle-user"></i> Super Admin Panel
-</a>
+        <a href="/superAdmin.html" id="superAdminBtn" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
+          <i class="fa-solid fa-circle-user"></i> Super Admin Panel
+        </a>
         <a href="/admin/adminAbout.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
           <i class="fa-solid fa-gear"></i> Settings
         </a>
@@ -129,8 +178,14 @@
   <div class="flex-1 flex flex-col h-screen overflow-y-auto">
     
     <!-- HEADER -->
-    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-      <h1 class="text-xl font-bold text-slate-800">Dashboard</h1>
+    <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div class="flex items-center gap-3">
+        <!-- Mobile Menu Toggle Button -->
+        <button id="openMobileDrawerBtn" class="md:hidden p-2 text-slate-600 hover:text-slate-900 focus:outline-none">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+        <h1 class="text-lg md:text-xl font-bold text-slate-800">Dashboard</h1>
+      </div>
       
       <!-- Profile Info -->
       <div class="flex items-center gap-3">
@@ -146,7 +201,7 @@
     </header>
 
     <!-- BODY CONTENT -->
-    <main class="p-6 space-y-6">
+    <main class="p-4 md:p-6 space-y-6">
       
       <!-- Welcome Banner -->
       <div class="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
@@ -175,9 +230,8 @@
           </div>
         </div>
 
-        <!-- Visitor Area Box (Super Admin Check Handled Dynamic) -->
+        <!-- Visitor Area Box -->
         <div id="visitorSectionWrapper" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
-          <!-- Allowed Visitor Content -->
           <div id="visitorAllowedContent" class="space-y-4 hidden flex-1 flex flex-col justify-between">
             <div>
               <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-1">
@@ -197,7 +251,6 @@
                 </div>
               </div>
 
-              <!-- অটো স্ক্রলিং ভিজিটর লিস্ট বক্স -->
               <div class="space-y-1.5">
                 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Recent Visitors Feed</span>
                 <div id="autoScrollVisitorBox" class="h-28 overflow-hidden relative border border-slate-100 rounded-xl bg-slate-50/50 p-2">
@@ -214,7 +267,6 @@
             </div>
           </div>
 
-          <!-- Error Message Container (For standard/unapproved users) -->
           <div id="visitorErrorContent" class="flex flex-col items-center justify-center text-center p-6 space-y-3 bg-red-50/50 border border-red-100 rounded-xl my-auto">
             <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xl shadow-inner">
               <i class="fa-solid fa-lock"></i>
@@ -300,7 +352,6 @@
             <i class="fa-solid fa-ticket text-indigo-600 text-xs"></i> Create Coupon
           </a>
           
-          <!-- Stock Alert Button -->
           <a href="#" id="stockAlertBtn" class="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 font-medium text-sm rounded-xl border border-red-200 transition active:scale-95">
             <i class="fa-solid fa-triangle-exclamation text-red-600 text-xs"></i> Stock Alert
             <span id="stockAlertCount" class="bg-red-200 text-red-800 text-xs px-2 py-0.5 rounded-full font-bold">...</span>
@@ -346,7 +397,6 @@
           </div>
         </div>
 
-        <!-- Dynamic Top Products with Auto-Scroll -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-3">
@@ -355,8 +405,6 @@
               </h3>
               <span class="text-[10px] text-slate-400 font-medium uppercase">Sorted by Sold Qty</span>
             </div>
-            
-            <!-- Auto scroll box for top products -->
             <div id="autoScrollTopProductsBox" class="h-48 overflow-hidden relative border border-slate-100 rounded-xl bg-slate-50/50 p-2">
               <div id="topProductsList" class="space-y-2 transition-all duration-500">
                 <p class="text-xs text-slate-400 text-center mt-16">প্রোডাক্ট লোড হচ্ছে...</p>
@@ -373,26 +421,56 @@
   <!-- COMPLETE DASHBOARD SCRIPT SECTION          -->
   <!-- ========================================== -->
  <script>
-  // Global Super Admin state
   let isUserSuperAdminApproved = false;
+
+  // ==========================================
+  // 0. MOBILE DRAWER TOGGLE LOGIC
+  // ==========================================
+  const openMobileDrawerBtn = document.getElementById('openMobileDrawerBtn');
+  const closeMobileDrawerBtn = document.getElementById('closeMobileDrawerBtn');
+  const mobileDrawer = document.getElementById('mobileDrawer');
+  const mobileDrawerBackdrop = document.getElementById('mobileDrawerBackdrop');
+
+  function openDrawer() {
+    if (mobileDrawer && mobileDrawerBackdrop) {
+      mobileDrawerBackdrop.classList.remove('hidden');
+      mobileDrawer.classList.remove('-translate-x-full');
+    }
+  }
+
+  function closeDrawer() {
+    if (mobileDrawer && mobileDrawerBackdrop) {
+      mobileDrawer.classList.add('-translate-x-full');
+      mobileDrawerBackdrop.classList.add('hidden');
+    }
+  }
+
+  if (openMobileDrawerBtn) openMobileDrawerBtn.addEventListener('click', openDrawer);
+  if (closeMobileDrawerBtn) closeMobileDrawerBtn.addEventListener('click', closeDrawer);
+  if (mobileDrawerBackdrop) mobileDrawerBackdrop.addEventListener('click', closeDrawer);
 
   // ==========================================
   // ১. LOGOUT CONFIRMATION MODAL LOGIC
   // ==========================================
   const logoutBtn = document.getElementById('logoutBtn');
+  const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
   const logoutModal = document.getElementById('logoutModal');
   const modalContainer = document.getElementById('modalContainer');
   const modalCancelBtn = document.getElementById('modalCancelBtn');
 
-  if (logoutBtn && logoutModal && modalContainer) {
-    logoutBtn.addEventListener('click', () => {
+  function triggerLogoutModal() {
+    closeDrawer();
+    if (logoutModal && modalContainer) {
       logoutModal.classList.remove('hidden');
       setTimeout(() => {
         modalContainer.classList.remove('scale-95', 'opacity-0');
         modalContainer.classList.add('scale-100', 'opacity-100');
       }, 10);
-    });
+    }
   }
+
+  if (logoutBtn) logoutBtn.addEventListener('click', triggerLogoutModal);
+  if (mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', triggerLogoutModal);
 
   const closeLogoutModal = () => {
     if (logoutModal && modalContainer) {
@@ -404,15 +482,10 @@
     }
   };
 
-  if (modalCancelBtn) {
-    modalCancelBtn.addEventListener('click', closeLogoutModal);
-  }
-
+  if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeLogoutModal);
   if (logoutModal) {
     logoutModal.addEventListener('click', (e) => {
-      if (e.target === logoutModal) {
-        closeLogoutModal();
-      }
+      if (e.target === logoutModal) closeLogoutModal();
     });
   }
 
@@ -453,7 +526,6 @@
     });
   }
 
-  // Helper Function: Product Image Extraction
   function getProductImageUrl(item) {
     if (item.thumbnail_image) return item.thumbnail_image;
     if (item.image) return item.image;
@@ -597,18 +669,15 @@
   // ৩. ALL API FETCH FUNCTIONS
   // ==========================================
 
-  // (ক) টোটাল ইউজার কাউন্ট
   async function fetchTotalUsers() {
     try {
       const response = await fetch('/auth/api/stats/total_users', { credentials: 'include' });
-      
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("সার্ভার থেকে JSON ডাটা পাওয়া যায়নি!");
       }
 
       const data = await response.json();
-      
       const userElem = document.getElementById('totalUsersCount');
       if (userElem) {
         if (data.success && data.total !== undefined) {
@@ -624,7 +693,6 @@
     }
   }
 
-  // (খ) অর্ডার এর স্ট্যাটিস্টিকস
   async function fetchOrderStats() {
     try {
       const response = await fetch('/auth/api/stats/order_stats', { credentials: 'include' });
@@ -645,7 +713,6 @@
     }
   }
 
-  // (গ) ইউজার ইনকোয়ারি কাউন্ট
   async function fetchInquiryPendingCount() {
     try {
       const response = await fetch('/api/admin/inquiries/pending-count');
@@ -664,7 +731,6 @@
     }
   }
 
-  // (ঘ) টোটাল প্রোডাক্ট কাউন্ট
   async function fetchTotalProducts() {
     try {
       const response = await fetch('/auth/api/stats/total_products', { credentials: 'include' });
@@ -678,7 +744,6 @@
     }
   }
 
-  // (ঙ) অ্যাক্টিভ প্রোডাক্ট কাউন্ট
   async function fetchActiveProductsCount() {
     try {
       const response = await fetch('/auth/api/stats/active_products', { credentials: 'include' });
@@ -713,7 +778,6 @@
       const badgeElement = document.getElementById('smsPendingCount');
       if (badgeElement && data.success) {
         badgeElement.innerText = data.pendingCount;
-        
         if (Number(data.pendingCount) === 0) {
           badgeElement.classList.add('bg-slate-200', 'text-slate-600');
           badgeElement.classList.remove('bg-teal-200', 'text-teal-700');
@@ -727,19 +791,16 @@
     }
   }
 
-  // (চ) SITE VISITORS FETCH FUNCTION (UPDATED WITH SUPER_ADMIN CHECK)
   async function fetchSiteVisitors() {
     const allowedBox = document.getElementById('visitorAllowedContent');
     const errorBox = document.getElementById('visitorErrorContent');
 
-    // super_admin approved না হলে error মেসেজ প্রদর্শন করবে
     if (!isUserSuperAdminApproved) {
       if (allowedBox) allowedBox.classList.add('hidden');
       if (errorBox) errorBox.classList.remove('hidden');
       return;
     }
 
-    // super_admin approved হলে অরিজিনাল Visitor Section দৃশ্যমান হবে
     if (allowedBox) allowedBox.classList.remove('hidden');
     if (errorBox) errorBox.classList.add('hidden');
 
@@ -822,7 +883,6 @@
     if (response.ok) {
       const user = await response.json();
       
-      // Global flag আপডেট
       isUserSuperAdminApproved = (user.super_admin === 'approved');
 
       if (document.getElementById('admin-name')) document.getElementById('admin-name').innerText = user.name || 'Admin';
@@ -830,37 +890,37 @@
       if (document.getElementById('admin-email')) document.getElementById('admin-email').innerText = user.email || '';
       if (user.picture && document.getElementById('admin-picture')) document.getElementById('admin-picture').src = user.picture;
 
-      // Total Sales সেট করা
       const salesElem = document.getElementById('totalSalesAmount');
       if (salesElem) {
         salesElem.innerText = `৳ ${Number(user.total_sales || 0).toLocaleString()}`;
       }
 
-      // Control Employee Click Handler (super_admin approved না হলে অ্যাক্সেস নিবে না)
-      const controlEmpBtn = document.getElementById('controlEmployeeBtn');
-      if (controlEmpBtn) {
-        controlEmpBtn.addEventListener('click', (e) => {
-          if (user.super_admin !== 'approved') {
-            e.preventDefault();
-            alert("you cant see this");
-          }
-        });
-      }
-
-      // Super Admin Panel Click Handler (super_admin approved না হলে অ্যাক্সেস নিবে না)
-      const superAdminBtn = document.getElementById('superAdminBtn');
-      if (superAdminBtn) {
-        superAdminBtn.addEventListener('click', (e) => {
+      // Handler for desktop & mobile Control Employee Buttons
+      const handleControlEmpClick = (e) => {
+        if (user.super_admin !== 'approved') {
           e.preventDefault();
-          if (user.super_admin === 'approved') {
-            window.location.href = '/admin/superAdmin.html';
-          } else {
-            alert("you cant see this");
-          }
-        });
-      }
+          alert("you cant see this");
+        }
+      };
+      const controlEmpBtn = document.getElementById('controlEmployeeBtn');
+      const mobileControlEmpBtn = document.getElementById('mobileControlEmployeeBtn');
+      if (controlEmpBtn) controlEmpBtn.addEventListener('click', handleControlEmpClick);
+      if (mobileControlEmpBtn) mobileControlEmpBtn.addEventListener('click', handleControlEmpClick);
 
-      // Verification Check
+      // Handler for desktop & mobile Super Admin Buttons
+      const handleSuperAdminClick = (e) => {
+        e.preventDefault();
+        if (user.super_admin === 'approved') {
+          window.location.href = '/admin/superAdmin.html';
+        } else {
+          alert("you cant see this");
+        }
+      };
+      const superAdminBtn = document.getElementById('superAdminBtn');
+      const mobileSuperAdminBtn = document.getElementById('mobileSuperAdminBtn');
+      if (superAdminBtn) superAdminBtn.addEventListener('click', handleSuperAdminClick);
+      if (mobileSuperAdminBtn) mobileSuperAdminBtn.addEventListener('click', handleSuperAdminClick);
+
       if (user && (user.is_verified === 0 || user.is_verified === '0' || user.is_verified === false)) {
         if (!window.location.pathname.includes('home.html')) {
           alert("⚠️ আপনার অ্যাকাউন্টটি এখনো ভেরিফাই করা হয়নি!");
@@ -879,13 +939,9 @@
 async function fetchReviewPendingCount() {
   try {
     const response = await fetch('/auth/api/admin/reviews/pending-count', { credentials: 'include' });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
     const data = await response.json();
-
     const badgeElem = document.getElementById('reviewPendingCount');
     if (badgeElem && data.success) {
       badgeElem.innerText = data.pendingCount;
@@ -904,7 +960,6 @@ async function fetchReviewPendingCount() {
   }
 }
 
-  // (ঝ) কারেন্ট ইউজারের সাম্প্রতিক অর্ডার ফেচ এবং Sales Analytics গ্রাফ ডায়নামিক করা
   async function fetchRecentOrdersAndAnalytics() {
     try {
       const response = await fetch('/admin/orders-list/api/get-orders', { credentials: 'include' });
@@ -990,14 +1045,11 @@ async function fetchReviewPendingCount() {
     }
   }
 
-  // (ঞ) TOP PRODUCTS
   async function fetchTopProducts() {
     try {
       const response = await fetch('/auth/api/seller-products', { credentials: 'include' });
 
-      if (!response.ok) {
-        throw new Error(`Server status error: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Server status error: ${response.status}`);
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
