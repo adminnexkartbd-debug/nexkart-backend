@@ -575,31 +575,36 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
         const response = await fetch(queryUrl);
         const data = await response.json();
 
+        // Helper Function for Cleaning Image URL
+        const formatImageUrl = (rawImg) => {
+            if (!rawImg) return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+            
+            let img = rawImg.trim();
+            
+            // 1. If absolute URL or Cloudinary URL exists inside path
+            if (img.includes('http://') || img.includes('https://')) {
+                const httpIndex = img.indexOf('http');
+                return img.substring(httpIndex);
+            }
+            if (img.includes('cloudinary.com')) {
+                const cloudIndex = img.indexOf('cloudinary.com');
+                return 'https://' + img.substring(cloudIndex);
+            }
+
+            // 2. Local uploads folder relative path
+            let cleanPath = img.replace(/^(\/?uploads\/)+/, '');
+            return '/uploads/' + cleanPath;
+        };
+
         // ---------------- DYNAMIC CATEGORY IMAGE HANDLER ----------------
         if (!isLoadMore) {
             const headerImgElem = document.getElementById('categoryHeaderImg');
             if (headerImgElem) {
                 let catImgSrc = '';
                 if (data.category_image) {
-                    let rawCatImg = data.category_image.trim();
-                    if (rawCatImg.startsWith('http://') || rawCatImg.startsWith('https://')) {
-                        catImgSrc = rawCatImg;
-                    } else if (rawCatImg.includes('cloudinary.com')) {
-                        catImgSrc = rawCatImg.startsWith('http') ? rawCatImg : 'https://' + rawCatImg.replace(/^\/+/, '');
-                    } else {
-                        let cleanPath = rawCatImg.replace(/^(\/?uploads\/)+/, '');
-                        catImgSrc = '/uploads/' + cleanPath;
-                    }
+                    catImgSrc = formatImageUrl(data.category_image);
                 } else if (data.products && data.products.length > 0 && data.products[0].primary_image) {
-                    let rawImg = data.products[0].primary_image.trim();
-                    if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
-                        catImgSrc = rawImg;
-                    } else if (rawImg.includes('cloudinary.com')) {
-                        catImgSrc = rawImg.startsWith('http') ? rawImg : 'https://' + rawImg.replace(/^\/+/, '');
-                    } else {
-                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-                        catImgSrc = '/uploads/' + cleanPath;
-                    }
+                    catImgSrc = formatImageUrl(data.products[0].primary_image);
                 }
 
                 if (catImgSrc) {
@@ -636,19 +641,7 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
                     oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
                 }
 
-                let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
-
-                if (product.primary_image) {
-                    let rawImg = product.primary_image.trim();
-                    if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
-                        imageSrc = rawImg;
-                    } else if (rawImg.includes('cloudinary.com')) {
-                        imageSrc = rawImg.startsWith('http') ? rawImg : 'https://' + rawImg.replace(/^\/+/, '');
-                    } else {
-                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-                        imageSrc = '/uploads/' + cleanPath;
-                    }
-                }
+                const imageSrc = formatImageUrl(product.primary_image);
                 const targetId = product.product_id || product.id;
                 const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
                 const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
@@ -709,7 +702,6 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
         if (btnSpinner) btnSpinner.classList.add('d-none');
     }
 }
-
 function loadMoreCategoryProducts() {
         currentPage++;
         const urlParams = new URLSearchParams(window.location.search);
