@@ -468,7 +468,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         fetchCategoryProducts(cat, type, promo, search, currentPage, false);
     });
 
-    async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadMore = false) {
+// category.html
+async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadMore = false) {
     const productGrid = document.getElementById('categoryProductGrid');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
     const btnSpinner = document.getElementById('btnSpinner');
@@ -476,85 +477,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if (btnSpinner) btnSpinner.classList.remove('d-none');
 
     try {
-        let queryUrl = '/user/get-products-by-category?';
-        if (cat) queryUrl += `cat=${encodeURIComponent(cat)}&`;
-        if (type) queryUrl += `type=${encodeURIComponent(type)}&`;
-        if (promo) queryUrl += `promo=${encodeURIComponent(promo)}&`;
-        if (search) queryUrl += `search=${encodeURIComponent(search)}&`; 
-        
-        queryUrl += `page=${page}&limit=${limit}`;
+        let queryUrl = `/user/get-products-by-category?page=${page}&limit=${limit}`;
+
+        // URL Parameters setup
+        if (promo) {
+            queryUrl += `&promo=${encodeURIComponent(promo)}`;
+        } else {
+            if (cat) queryUrl += `&cat=${encodeURIComponent(cat)}`;
+            if (type) queryUrl += `&type=${encodeURIComponent(type)}`;
+        }
+        if (search) queryUrl += `&search=${encodeURIComponent(search)}`;
 
         const response = await fetch(queryUrl);
         const data = await response.json();
 
         if (data.success && data.products.length > 0) {
-const productsHTML = data.products.map((product, index) => {
-    // ========= [ EKANE COIN BADGE ADD KORUN ] =========
-    let coinOfferBadge = '';
-    if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
-        coinOfferBadge = `<span class="product-badge" style="position: absolute; top: 15px; left: 15px; background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #000; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; z-index: 2;">-${product.coin_percentage_value}%</span>`;
-    }
-    // ================================================
+            const productsHTML = data.products.map((product, index) => {
+                let coinOfferBadge = '';
+                if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
+                    coinOfferBadge = `<span class="product-badge" style="position: absolute; top: 15px; left: 15px; background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #000; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; z-index: 2;">-${product.coin_percentage_value}% Coin</span>`;
+                }
 
-    let oldPrice = parseFloat(product.old_price);
-    let salePrice = parseFloat(product.sale_price);
-    let discountPercentTag = '';
-    let oldPriceHTML = '';
+                let oldPrice = parseFloat(product.old_price);
+                let salePrice = parseFloat(product.sale_price);
+                let discountPercentTag = '';
+                let oldPriceHTML = '';
 
-    if (!isNaN(oldPrice) && !isNaN(salePrice) && oldPrice > salePrice) {
-        let discountPercent = Math.round(((oldPrice - salePrice) / oldPrice) * 100);
-        if (discountPercent > 0) {
-            discountPercentTag = `<span class="discount-badge">-${discountPercent}%</span>`;
-        }
-        oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
-    }
+                if (!isNaN(oldPrice) && !isNaN(salePrice) && oldPrice > salePrice) {
+                    let discountPercent = Math.round(((oldPrice - salePrice) / oldPrice) * 100);
+                    if (discountPercent > 0) {
+                        discountPercentTag = `<span class="discount-badge">-${discountPercent}%</span>`;
+                    }
+                    oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
+                }
 
-    let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
-    if (product.primary_image) {
-        let rawImg = product.primary_image.trim();
-        if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
-            let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
-            imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
-        } else {
-            let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-            imageSrc = '/uploads/' + cleanPath;
-        }
-    }
+                let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+                if (product.primary_image) {
+                    let rawImg = product.primary_image.trim();
+                    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
+                        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+                    } else {
+                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        imageSrc = '/uploads/' + cleanPath;
+                    }
+                }
 
-    const targetId = product.product_id || product.id;
-    const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
-    const starsHTML = renderStars(parseFloat(avgRating));
-    const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
-    const animDelay = (index * 0.05) + 's';
+                const targetId = product.product_id || product.id;
+                const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
+                const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
 
-    return `
-        <article class="product-card" style="cursor: pointer; animation-delay: ${animDelay};" onclick="checkLoginAndRedirect('${targetId}')">
-            ${coinOfferBadge} <!-- <-- Eta ekhane boshabe -->
-            ${discountPercentTag}
-            <div>
-                <img src="${imageSrc}" 
-                     alt="${safeTitle}" 
-                     class="product-img" 
-                     loading="lazy"
-                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
-                <span class="product-category">${product.category || 'General'}</span>
-                <h2 class="product-title" title="${safeTitle}">${product.title}</h2>
-                
-                <div class="product-rating" aria-label="Rating ${avgRating} out of 5">
-                    ${starsHTML}
-                    <span>(${avgRating})</span>
-                </div>
-            </div>
+                return `
+                    <article class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetId}')">
+                        ${coinOfferBadge}
+                        ${discountPercentTag}
+                        <div>
+                            <img src="${imageSrc}" alt="${safeTitle}" class="product-img" loading="lazy">
+                            <span class="product-category">${product.category || 'General'}</span>
+                            <h2 class="product-title" title="${safeTitle}">${product.title}</h2>
+                        </div>
+                        <div class="product-bottom">
+                            <div class="price-box">
+                                <span class="current-price">৳ ${product.sale_price}</span>
+                                ${oldPriceHTML}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
 
-            <div class="product-bottom">
-                <div class="price-box">
-                    <span class="current-price">৳ ${product.sale_price}</span>
-                    ${oldPriceHTML}
-                </div>
-            </div>
-        </article>
-    `;
-}).join('');
             if (isLoadMore) {
                 productGrid.insertAdjacentHTML('beforeend', productsHTML);
             } else {
@@ -564,25 +555,20 @@ const productsHTML = data.products.map((product, index) => {
             if (loadMoreContainer) {
                 loadMoreContainer.style.display = data.hasMore ? 'block' : 'none';
             }
-
-            injectItemListSchema(data.products);
-
         } else {
             if (!isLoadMore) {
-                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">কোনো প্রোডাক্ট পাওয়া যায়নি!</div>`;
+                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">Konokaron-e Coin Offer-er poduct pawa jayni!</div>`;
                 if (loadMoreContainer) loadMoreContainer.style.display = 'none';
             }
         }
     } catch (error) {
         console.error("Error fetching category products:", error);
-        if (!isLoadMore) {
-            productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: red;">প্রোডাক্ট লোড করতে ব্যর্থ হয়েছে।</div>`;
-        }
     } finally {
         if (btnSpinner) btnSpinner.classList.add('d-none');
     }
 }
-    function loadMoreCategoryProducts() {
+
+function loadMoreCategoryProducts() {
         currentPage++;
         const urlParams = new URLSearchParams(window.location.search);
         const cat = urlParams.get('cat');
