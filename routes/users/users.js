@@ -69,6 +69,7 @@ async function sendGA4Measurement(eventName, clientId, payloadData) {
     }
 }
 
+// 1. NORMAL GOOGLE STRATEGY (cslogin er jonno)
 passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
@@ -109,6 +110,51 @@ passport.use('google-user', new GoogleStrategy({
         }
     } catch (err) {
         console.error("Google Auth Error:", err);
+        return done(err, null);
+    }
+}));
+
+// 2. ALADA POPUP GOOGLE STRATEGY (Product Details Modal Popup er jonno)
+passport.use('google-popup', new GoogleStrategy({
+    clientID: process.env.GOOGLE_USER_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL || (process.env.APP_URL + '/user/auth/google/popup/callback'),
+    proxy: true 
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+        const name = profile.displayName;
+
+        let profile_image = null;
+        if (profile.photos && profile.photos.length > 0) {
+            profile_image = profile.photos[0].value;
+        }
+
+        const [adminCheck] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
+        if (adminCheck.length > 0) {
+            return done(null, false, { message: 'Admin email cannot register as User!' });
+        }
+
+        const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+
+        if (existingUser.length > 0) {
+            if (!existingUser[0].profile_image && profile_image) {
+                await db.query("UPDATE users SET profile_image = ? WHERE id = ?", [profile_image, existingUser[0].id]);
+                existingUser[0].profile_image = profile_image;
+            }
+            existingUser[0].user_type = 'user';
+            return done(null, existingUser[0]);
+        } else {
+            const [result] = await db.query(
+                `INSERT INTO users (name, email, profile_image, is_verified, created_at) VALUES (?, ?, ?, 1, NOW())`,
+                [name, email, profile_image]
+            );
+            const [newUser] = await db.query("SELECT * FROM users WHERE id = ?", [result.insertId]);
+            newUser[0].user_type = 'user';
+            return done(null, newUser[0]);
+        }
+    } catch (err) {
+        console.error("Google Popup Auth Error:", err);
         return done(err, null);
     }
 }));
@@ -812,30 +858,61 @@ router.get('/get-unread-sms-count', async (req, res) => {
     }
 });
 
-// ==================== [ GOOGLE AUTH ROUTES ] ====================
+// ==================== [ NORMAL GOOGLE AUTH ROUTES (cslogin Page) ] ====================
 
-// ১. Normal Google Login Route (cslogin পেজের জন্য)
 router.get('/auth/google', passport.authenticate('google-user', { scope: ['profile', 'email'] }));
 
-// ২. Pop-up Google Login Route (Product Details মডালের জন্য)
-router.get('/auth/google/popup', (req, res, next) => {
-    passport.authenticate('google-user', { 
-        scope: ['profile', 'email'],
-        state: 'popup'
-    })(req, res, next);
-});
-
-// ৩. Single Google OAuth Callback Route (উভয় ধরনের গুগল লগইন হ্যান্ডেল করবে)
 router.get('/auth/google/callback', 
-    passport.authenticate('google-user', { failureRedirect: '/user/auth/google/popup-failure' }),
+    passport.authenticate('google-user', { failureRedirect: '/user/cslogin?error=admin_email' }),
     (req, res) => {
-        req.session.user = { id: req.user.id, user_type: 'user' };
-        req.session.userId = req.user.id;
+        req.logIn(req.user, (err) => {
+            if (err) {
+                console.error("Google Login Session Error:", err);
+                return res.redirect('/user/cslogin');
+            }
 
-        // চেক করা হচ্ছে লগইনটি পপ-আপ থেকে এসেছে কি না
-        const isPopup = req.query.state === 'popup';
+            if (req.user) {
+                req.session.user = { id: req.user.id, user_type: 'user' };
+                req.session.userId = req.user.id;
+            }
+            
+            const targetUrl = req.session.redirectTo || '/user/dashboard';
+            delete req.session.redirectTo;
+            res.redirect(targetUrl);
+        });
+    }
+);
 
-        if (isPopup) {
+// ==================== [ ALADA POPUP GOOGLE AUTH ROUTES (Product Modal) ] ====================
+
+// 1. Popup Google Login Initiate Route
+router.get('/auth/google/popup', passport.authenticate('google-popup', { scope: ['profile', 'email'] }));
+
+// 2. Popup Google OAuth Callback Route
+router.get('/auth/google/popup/callback', 
+    passport.authenticate('google-popup', { failureRedirect: '/user/auth/google/popup-failure' }),
+    (req, res) => {
+        req.logIn(req.user, (err) => {
+            if (err) {
+                console.error("Google Popup Session Error:", err);
+                return res.send(`
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                            window.close();
+                        } else {
+                            window.location.href = '/user/cslogin';
+                        }
+                    </script>
+                `);
+            }
+
+            if (req.user) {
+                req.session.user = { id: req.user.id, user_type: 'user' };
+                req.session.userId = req.user.id;
+            }
+
+            // Success response message sent to parent popup window
             return res.send(`
                 <script>
                     if (window.opener) {
@@ -846,32 +923,22 @@ router.get('/auth/google/callback',
                     }
                 </script>
             `);
-        }
-
-        // সাধারণ লগইনের ক্ষেত্রে
-        const targetUrl = req.session.redirectTo || '/user/dashboard';
-        delete req.session.redirectTo;
-        res.redirect(targetUrl);
+        });
     }
 );
 
-// ৪. Failure Route
+// 3. Popup Failure Route
 router.get('/auth/google/popup-failure', (req, res) => {
-    const isPopup = req.query.state === 'popup';
-
-    if (isPopup) {
-        return res.send(`
-            <script>
-                if (window.opener) {
-                    window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
-                    window.close();
-                } else {
-                    window.location.href = '/user/cslogin';
-                }
-            </script>
-        `);
-    }
-    res.redirect('/user/cslogin?error=admin_email');
+    res.send(`
+        <script>
+            if (window.opener) {
+                window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                window.close();
+            } else {
+                window.location.href = '/user/product-details';
+            }
+        </script>
+    `);
 });
 
 // ==================== [ POPUP EMAIL/PASSWORD LOGIN ROUTE ] ====================
@@ -2042,7 +2109,7 @@ router.get('/get-products-by-category', async (req, res) => {
     }
 });
 
-// ফ্রন্টএন্ডে ট্র্যাকিং আইডি পাঠানোর জন্য API রাউট
+// Tracking Config API
 router.get('/api/config', (req, res) => {
     res.json({
         gaId: process.env.GA4_MEASUREMENT_ID,
