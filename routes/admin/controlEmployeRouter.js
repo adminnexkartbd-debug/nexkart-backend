@@ -1,6 +1,50 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
+const { google } = require('googleapis');
+
+// Google OAuth2 Client Setup
+const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID || '',
+    process.env.GOOGLE_CLIENT_SECRET || '',
+    process.env.GOOGLE_REDIRECT_URI || 'https://developers.google.com/oauthplayground'
+);
+
+// Set Refresh Token from Environment Variable
+oauth2Client.setCredentials({
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN || ''
+});
+
+const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+// Helper Function: MIME Email Create & Encode (HTTP API Format)
+function createRawEmail({ to, from, subject, message, html }) {
+    const str = [
+        `From: ${from}`,
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: multipart/alternative; boundary="boundary123"`,
+        ``,
+        `--boundary123`,
+        `Content-Type: text/plain; charset=utf-8`,
+        ``,
+        message,
+        ``,
+        `--boundary123`,
+        `Content-Type: text/html; charset=utf-8`,
+        ``,
+        html,
+        ``,
+        `--boundary123--`
+    ].join('\r\n');
+
+    return Buffer.from(str)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
 
 // Verify PIN
 router.post('/verify-pin', async (req, res) => {
@@ -107,15 +151,10 @@ router.post('/update-seller-status', async (req, res) => {
     }
 });
 
-// ==================== NEW FEATURES ====================
-
-// Get Pending Seller Requests (status = 'pending')
+// Get Pending Seller Requests
 router.get('/get-pending-requests', async (req, res) => {
     try {
-        const query = `
-            SELECT * FROM admins 
-            WHERE status = 'pending'
-        `;
+        const query = `SELECT * FROM admins WHERE status = 'pending'`;
         const [results] = await db.query(query);
         res.status(200).json({ success: true, requests: results });
     } catch (error) {
@@ -124,18 +163,110 @@ router.get('/get-pending-requests', async (req, res) => {
     }
 });
 
-// Delete Seller Request from admins table
+// Delete Seller Request
 router.post('/delete-request', async (req, res) => {
     try {
         const { id } = req.body;
         if (!id) {
             return res.status(400).json({ success: false, message: 'Seller ID is required.' });
         }
-
         await db.query(`DELETE FROM admins WHERE id = ?`, [id]);
         res.status(200).json({ success: true, message: 'Seller request deleted successfully.' });
     } catch (error) {
         console.error('Error deleting seller request:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Get All Admins Data
+router.get('/get-all-admins', async (req, res) => {
+    try {
+        const [results] = await db.query(`SELECT * FROM admins`);
+        res.status(200).json({ success: true, admins: results });
+    } catch (error) {
+        console.error('Error fetching all admins:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Permanent Suspension & Product Deletion with Google API Email Notification
+router.post('/suspend-and-delete-admin', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) {
+            return res.status(400).json({ success: false, message: 'Admin ID is required.' });
+        }
+
+        // 1. Fetch current admin details
+        const [adminRows] = await db.query(`SELECT * FROM admins WHERE id = ?`, [id]);
+        if (!adminRows || adminRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Admin record not found.' });
+        }
+
+        const seller = adminRows[0];
+        const sellerEmail = seller.email;
+
+        // 2. Delete products where admin_id matches
+        await db.query(`DELETE FROM products WHERE admin_id = ?`, [id]);
+
+        // 3. Clear fields in admins table
+        const resetQuery = `
+            UPDATE admins 
+            SET 
+                name = NULL, email = NULL, password = NULL, picture = NULL,
+                role = NULL, parent_admin_id = NULL, shop_name = NULL, phone = NULL,
+                address = NULL, facebook_link = NULL, slogan = NULL, shop_about = NULL,
+                payment_type = 'none', mobile_number = NULL, bank_acc_name = NULL,
+                bank_acc_number = NULL, bank_name = NULL, bank_branch = NULL,
+                routing_number = NULL, status = 'rejected', is_verified = 0,
+                super_admin = 'pending', verification_code = NULL, temp_data = NULL,
+                verification_doc = NULL, total_sales = 0.00, total_withdraw = 0.00,
+                delete_requested_at = NULL, is_deletion_pending = 0,
+                deletion_requested_at = NULL, action = 'suspended'
+            WHERE id = ?
+        `;
+        await db.query(resetQuery, [id]);
+
+        // 4. Send Email via Google REST API
+        if (sellerEmail) {
+            try {
+                const rawEmail = createRawEmail({
+                    to: sellerEmail,
+                    from: process.env.GMAIL_USER || 'admin.nexkartbd@gmail.com',
+                    subject: 'Account Permanently Suspended - Policy Violation',
+                    message: `Dear User,\n\nYour account has been permanently suspended due to policy violations.`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                            <h2 style="color: #dc2626;">Account Permanent Suspension Notice</h2>
+                            <p>Dear User,</p>
+                            <p>Your seller account has been <strong>permanently suspended and cleared</strong> due to policy/violence violations.</p>
+                            <p>All products linked to your account have been deleted from our system.</p>
+                            <br/>
+                            <p>Regards,<br/><strong>NexKart Support Team</strong></p>
+                        </div>
+                    `
+                });
+
+                const response = await gmail.users.messages.send({
+                    userId: 'me',
+                    requestBody: {
+                        raw: rawEmail
+                    }
+                });
+
+                console.log('Google API Email sent successfully:', response.data.id);
+            } catch (mailErr) {
+                console.error('Error sending Google API mail:', mailErr.message);
+            }
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Seller account suspended, fields cleared, products deleted, and email notification sent via Google API.' 
+        });
+
+    } catch (error) {
+        console.error('Error in suspend-and-delete-admin:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
