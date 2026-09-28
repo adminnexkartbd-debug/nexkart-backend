@@ -230,11 +230,11 @@ router.get('/dashboard', async (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'dashboard.html'));
 });
 
-router.get('/message-center.html', (req, res) => {
+router.get('/message-center', (req, res) => {
     const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
     if (!userId) {
-        req.session.redirectTo = '/user/message-center.html';
+        req.session.redirectTo = '/user/message-center';
         return res.redirect('/user/cslogin');
     }
 
@@ -1952,6 +1952,22 @@ router.get('/get-products-by-category', async (req, res) => {
     } catch (error) {
         console.error("Get Category Products Error:", error);
         return res.status(500).json({ success: false, message: "Server Error" });
+    }
+});
+
+// Example: Slug diye product Details Fetch
+router.get('/product/:slug', async (req, res) => {
+    try {
+        const productSlug = req.params.slug;
+        const product = await Product.findOne({ slug: productSlug }); // ba SQL query
+
+        if (!product) {
+            return res.status(404).render('404', { message: 'Product not found' });
+        }
+
+        res.render('product-details', { product });
+    } catch (error) {
+        res.status(500).send('Server Error');
     }
 });
 
