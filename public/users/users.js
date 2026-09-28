@@ -9,6 +9,8 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const crypto = require('crypto');
 const multer = require('multer');
 const axios = require('axios');
+const formData = require('form-data');
+const Mailjet = require('node-mailjet');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -20,11 +22,59 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// ==================== [ TRACKING HELPERS (GA4 & FB CAPI) ] ====================
+const TRACKING_CONFIG = {
+    FB_PIXEL_ID: process.env.FACEBOOK_PIXEL_ID,
+    FB_ACCESS_TOKEN: process.env.FACEBOOK_ACCESS_TOKEN,
+    GA4_MEASUREMENT_ID: process.env.GA4_MEASUREMENT_ID,
+    GA4_API_SECRET: process.env.GA4_API_SECRET
+};
+
+async function sendFacebookCAPI(eventName, userData, customData) {
+    if (!TRACKING_CONFIG.FB_PIXEL_ID || !TRACKING_CONFIG.FB_ACCESS_TOKEN) return;
+    try {
+        await axios.post(`https://graph.facebook.com/v18.0/${TRACKING_CONFIG.FB_PIXEL_ID}/events`, {
+            data: [{
+                event_name: eventName,
+                event_time: Math.floor(Date.now() / 1000),
+                action_source: 'website',
+                user_data: {
+                    em: userData.email ? crypto.createHash('sha256').update(userData.email.trim().toLowerCase()).digest('hex') : undefined,
+                    ph: userData.phone ? crypto.createHash('sha256').update(userData.phone.trim()).digest('hex') : undefined,
+                    fn: userData.name ? crypto.createHash('sha256').update(userData.name.trim().toLowerCase()).digest('hex') : undefined,
+                    client_ip_address: userData.client_ip_address,
+                    client_user_agent: userData.client_user_agent
+                },
+                custom_data: customData
+            }],
+            access_token: TRACKING_CONFIG.FB_ACCESS_TOKEN
+        });
+    } catch (err) {
+        console.error("Facebook CAPI Error:", err.response?.data || err.message);
+    }
+}
+
+async function sendGA4Measurement(eventName, clientId, payloadData) {
+    if (!TRACKING_CONFIG.GA4_MEASUREMENT_ID || !TRACKING_CONFIG.GA4_API_SECRET) return;
+    try {
+        await axios.post(`https://www.google-analytics.com/mp/collect?measurement_id=${TRACKING_CONFIG.GA4_MEASUREMENT_ID}&api_secret=${TRACKING_CONFIG.GA4_API_SECRET}`, {
+            client_id: clientId || 'anonymous',
+            events: [{
+                name: eventName,
+                params: payloadData
+            }]
+        });
+    } catch (err) {
+        console.error("GA4 Measurement Protocol Error:", err.response?.data || err.message);
+    }
+}
+
+// 1. NORMAL GOOGLE STRATEGY (cslogin er jonno)
 passport.use('google-user', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_USER_CALLBACK_URL,
-    proxy: true // ক্লাউড বা রিভার্স প্রক্সির জন্য যুক্ত করা হলো
+    proxy: true 
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
@@ -64,6 +114,51 @@ passport.use('google-user', new GoogleStrategy({
     }
 }));
 
+// 2. ALADA POPUP GOOGLE STRATEGY (Product Details Modal Popup er jonno)
+passport.use('google-popup', new GoogleStrategy({
+    clientID: process.env.GOOGLE_USER_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL || 'https://www.nexkartbd.com/user/auth/google/popup/callback',
+    proxy: true 
+}, async (accessToken, refreshToken, profile, done) => {
+    try {
+        const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+        const name = profile.displayName;
+
+        let profile_image = null;
+        if (profile.photos && profile.photos.length > 0) {
+            profile_image = profile.photos[0].value;
+        }
+
+        const [adminCheck] = await db.query("SELECT * FROM admins WHERE email = ?", [email]);
+        if (adminCheck.length > 0) {
+            return done(null, false, { message: 'Admin email cannot register as User!' });
+        }
+
+        const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+
+        if (existingUser.length > 0) {
+            if (!existingUser[0].profile_image && profile_image) {
+                await db.query("UPDATE users SET profile_image = ? WHERE id = ?", [profile_image, existingUser[0].id]);
+                existingUser[0].profile_image = profile_image;
+            }
+            existingUser[0].user_type = 'user';
+            return done(null, existingUser[0]);
+        } else {
+            const [result] = await db.query(
+                `INSERT INTO users (name, email, profile_image, is_verified, created_at) VALUES (?, ?, ?, 1, NOW())`,
+                [name, email, profile_image]
+            );
+            const [newUser] = await db.query("SELECT * FROM users WHERE id = ?", [result.insertId]);
+            newUser[0].user_type = 'user';
+            return done(null, newUser[0]);
+        }
+    } catch (err) {
+        console.error("Google Popup Auth Error:", err);
+        return done(err, null);
+    }
+}));
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -94,7 +189,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Payment Method:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd; text-transform: uppercase;">${orderData.payment_method} ${orderData.selected_gateway ? '(' + orderData.selected_gateway + ')' : ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-transform: uppercase;">${orderData.payment_method}${orderData.selected_gateway ? '(' + orderData.selected_gateway + ')' : ''}</td>
                     </tr>
                     <tr style="background-color: #f8f9fa;">
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Payment Status:</strong></td>
@@ -114,8 +209,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
                     <tbody>
                         <tr>
                             <td style="padding: 8px; border: 1px solid #ddd;">
-                                ${productTitle}
-                                ${orderData.variant ? `<br><small style="color: #777;">Variant: ${orderData.variant}</small>` : ''}
+                                ${productTitle}${orderData.variant ? `<br><small style="color: #777;">Variant: ${orderData.variant}</small>` : ''}
                             </td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${orderData.quantity}</td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">৳${orderData.subtotal_price}</td>
@@ -147,7 +241,7 @@ async function sendInvoiceEmail(orderData, productTitle) {
 
     try {
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
+            from: process.env.EMAIL_USER || 'admin.nexkartbd@gmail.com',
             to: orderData.customer_email,
             subject: `NexKart Invoice - Order #${orderData.order_id}`,
             html: emailTemplate
@@ -162,6 +256,9 @@ let temporaryUserData = {};
 router.get('/cssignup', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cssignup.html'));
 });
+router.get('/userAbout', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'userAbout.html'));
+});
 router.get('/psrst', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'psrst.html'));
 });
@@ -175,47 +272,27 @@ router.get('/cslogin', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cslogin.html'));
 });
 
-// ড্যাশবোর্ড রাউট
 router.get('/dashboard', async (req, res) => {
-    try {
-        if (!req.session.visitorId) {
-            req.session.visitorId = 'visitor_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-        }
-        const visitorId = req.session.visitorId;
-
-        const [existingVisit] = await db.query('SELECT * FROM site_visits WHERE visitor_identifier = ?', [visitorId]);
-
-        if (existingVisit.length > 0) {
-            await db.query(
-                'UPDATE site_visits SET visit_count = visit_count + 1, last_visited_at = NOW() WHERE visitor_identifier = ?',
-                [visitorId]
-            );
-        } else {
-            await db.query(
-                'INSERT INTO site_visits (visitor_identifier, visit_count, last_visited_at) VALUES (?, 1, NOW())',
-                [visitorId]
-            );
-        }
-    } catch (trackError) {
-        console.error("Visit Tracking Error:", trackError);
-    }
-
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'dashboard.html'));
 });
 
-router.get('/message-center.html', (req, res) => {
+router.get('/message-center', (req, res) => {
     const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
     if (!userId) {
-        req.session.redirectTo = '/user/message-center.html';
+        req.session.redirectTo = '/user/message-center';
         return res.redirect('/user/cslogin');
     }
 
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'message-center.html'));
 });
 
-router.get('/My-Coupons.html', (req, res) => {
+router.get('/My-Coupons', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'My-Coupons.html'));
+});
+
+router.get('/my_coin', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html'));
 });
 
 router.get(['/penalties', '/penalties.html'], (req, res) => {
@@ -225,11 +302,9 @@ router.get(['/penalties', '/penalties.html'], (req, res) => {
 router.get(['/return-policy', '/return-policy.html'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'return-policy.html'));
 });
-
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
-router.get('/settings.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
+
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
-router.get('/profile.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
 router.get('/product-details', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
 router.get('/product-details.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
@@ -289,7 +364,7 @@ router.post('/api/ai-chat', async (req, res) => {
             const [products] = await db.query('SELECT title, description, sale_price, regular_price, category FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
             if (products.length > 0) {
                 const p = products[0];
-                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description: ${p.description}. `;
+                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description:${p.description}. `;
             }
         }
 
@@ -301,7 +376,7 @@ router.post('/api/ai-chat', async (req, res) => {
             });
         }
 
-        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question: ${message}`;
+        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question:${message}`;
         
         const response = await axios.post(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
@@ -324,8 +399,6 @@ router.post('/api/ai-chat', async (req, res) => {
 });
 
 // ==================== [ CART ROUTES ] ====================
-
-// ১. কার্টে পণ্য যোগ করা
 router.post('/add-to-cart', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -339,7 +412,7 @@ router.post('/add-to-cart', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID is required!' });
         }
 
-        const [products] = await db.query('SELECT id FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
+        const [products] = await db.query('SELECT * FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
         
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'Product not found in database!' });
@@ -365,6 +438,33 @@ router.post('/add-to-cart', async (req, res) => {
             );
         }
 
+        // ==================== TRACKING EVENT: ADD TO CART ====================
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        await sendFacebookCAPI('AddToCart', {
+            client_ip_address: clientIp,
+            client_user_agent: userAgent
+        }, {
+            currency: 'BDT',
+            value: products[0].sale_price * qtyToAdd,
+            contents: [{
+                id: products[0].product_id || products[0].id,
+                quantity: qtyToAdd
+            }]
+        });
+
+        await sendGA4Measurement('add_to_cart', userId.toString(), {
+            currency: 'BDT',
+            value: products[0].sale_price * qtyToAdd,
+            items: [{
+                item_id: products[0].product_id || products[0].id,
+                item_name: products[0].title,
+                price: products[0].sale_price,
+                quantity: qtyToAdd
+            }]
+        });
+
         return res.json({ success: true, message: 'Product added to cart successfully!' });
     } catch (error) {
         console.error("Add to Cart Error:", error);
@@ -372,7 +472,6 @@ router.post('/add-to-cart', async (req, res) => {
     }
 });
 
-// ২. ইউজার অনুযায়ী কার্ট কাউন্ট (সংখ্যার হিসাব) ফেরত দেওয়া
 router.get('/get-cart-count', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -395,7 +494,6 @@ router.get('/get-cart-count', async (req, res) => {
     }
 });
 
-// ৩. কার্টের সব পণ্য ডাটাবেজ থেকে নিয়ে আসা
 router.get('/get-cart-items', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -423,7 +521,6 @@ router.get('/get-cart-items', async (req, res) => {
     }
 });
 
-// ৪. কার্ট থেকে পণ্য রিমুভ করা
 router.post('/remove-from-cart', async (req, res) => {
     try {
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
@@ -440,7 +537,6 @@ router.post('/remove-from-cart', async (req, res) => {
     }
 });
 
-// ==================== [ GET PRODUCT REVIEWS ROUTE ] ====================
 router.get('/reviews/:productId', async (req, res) => {
     try {
         const productId = req.params.productId;
@@ -580,11 +676,18 @@ router.post('/apply-coupon', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
+
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) {
-            return res.status(404).json({ message: 'This email is not registered with us!' });
+            return res.status(404).json({ message: 'Ei email-ti amader system-e registered nei!' });
         }
+
         const user = users[0];
+
+        if (!user.password) {
+            return res.status(400).json({ message: 'Ei account-ti Google diye toiri kora hoyeche. Onugra kore Google diye login korun!' });
+        }
+
         const resetToken = crypto.randomBytes(32).toString('hex');
         const tokenExpires = new Date(Date.now() + 15 * 60 * 1000); 
 
@@ -596,22 +699,98 @@ router.post('/forgot-password', async (req, res) => {
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         const resetUrl = `${baseUrl}/user/reset-password/${resetToken}`;
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
-            to: email,
-            subject: 'NexKart - Password Reset Request',
-            html: `
-                <h3>Password Reset Request</h3>
-                <p>You requested a password reset for your NexKart account.</p>
-                <p>Click the link below to set a new password (valid for 15 minutes):</p>
-                <a href="${resetUrl}" style="padding: 10px 15px; background-color: #ff4b6e; color: #fff; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
+        const emailTemplate = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Reset Password - NexKart</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #f4f6f9; padding: 40px 0;">
+                <tr>
+                    <td align="center">
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 550px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                            <tr>
+                                <td align="center" style="background: linear-gradient(135deg, #ff4b6e, #ff758c); padding: 30px 20px;">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px;">NexKart</h1>
+                                    <p style="color: #ffe6eb; margin: 5px 0 0 0; font-size: 13px;">Your trusted shopping partner</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 35px 30px; text-align: center;">
+                                    <h2 style="color: #333333; margin: 0 0 10px 0; font-size: 20px; font-weight: 600;">Forgot Your Password?</h2>
+                                    <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
+                                        Hello <strong>${user.name || 'Valued Customer'}</strong>,<br>
+                                        We received a request to reset the password for your NexKart account. Click the button below to set a new password.
+                                    </p>
+                                    <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                                        <tr>
+                                            <td align="center" style="border-radius: 8px;" bgcolor="#ff4b6e">
+                                                <a href="${resetUrl}" target="_blank" style="font-size: 15px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 12px 30px; border: 1px solid #ff4b6e; display: inline-block; font-weight: bold;">
+                                                    Reset My Password
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <p style="color: #888888; font-size: 12px; margin-top: 25px;">
+                                        This reset link is valid for <strong>15 minutes</strong>.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        `;
+
+        const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
+            params: {
+                client_id: process.env.GOOGLE_USER_CLIENT_ID,
+                client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+                grant_type: 'refresh_token'
+            }
         });
-        return res.status(200).json({ message: 'A reset link has been sent to your email!' });
+
+        const accessToken = tokenResponse.data.access_token;
+
+        const subject = "🔒 Reset Your NexKart Password";
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+        const messageParts = [
+            `To: ${email}`,
+            `Subject: ${utf8Subject}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/html; charset=utf-8`,
+            ``,
+            emailTemplate
+        ];
+        const message = messageParts.join('\r\n');
+        const encodedMessage = Buffer.from(message)
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        await axios.post(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
+            { raw: encodedMessage },
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        return res.status(200).json({ message: 'A reset link has been sent to your email! Please check your spam folder as well.' });
+
     } catch (err) {
-        console.error('Forgot Password Error:', err);
-        return res.status(500).json({ message: 'Server error! Failed to send reset link.' });
+        console.error('Google API Email Send Error:', err.response?.data || err.message);
+        return res.status(500).json({ message: 'There was a problem sending the email! Please check your configuration.' });
     }
 });
 
@@ -679,7 +858,8 @@ router.get('/get-unread-sms-count', async (req, res) => {
     }
 });
 
-// Google Auth
+// ==================== [ NORMAL GOOGLE AUTH ROUTES (cslogin Page) ] ====================
+
 router.get('/auth/google', passport.authenticate('google-user', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback', 
@@ -702,6 +882,119 @@ router.get('/auth/google/callback',
         });
     }
 );
+
+// ==================== [ ALADA POPUP GOOGLE AUTH ROUTES (Product Modal) ] ====================
+
+// 1. Popup Google Login Initiate Route
+router.get('/auth/google/popup', passport.authenticate('google-popup', { scope: ['profile', 'email'] }));
+
+router.get('/auth/google/popup/callback', 
+    passport.authenticate('google-popup', { failureRedirect: '/user/auth/google/popup-failure' }),
+    (req, res) => {
+        req.logIn(req.user, (err) => {
+            if (err) {
+                console.error("Google Popup Session Error:", err);
+                return res.send(`
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                            window.close();
+                        } else {
+                            window.location.href = '/user/cslogin';
+                        }
+                    </script>
+                `);
+            }
+
+            if (req.user) {
+                req.session.user = { id: req.user.id, user_type: 'user' };
+                req.session.userId = req.user.id;
+            }
+
+            // Session explicitly save to guarantee cookie persistence
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error("Session Save Error:", saveErr);
+                }
+                return res.send(`
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
+                            window.close();
+                        } else {
+                            window.location.href = '/user/dashboard';
+                        }
+                    </script>
+                `);
+            });
+        });
+    }
+);
+
+// 3. Popup Failure Route
+router.get('/auth/google/popup-failure', (req, res) => {
+    res.send(`
+        <script>
+            if (window.opener) {
+                window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                window.close();
+            } else {
+                window.location.href = '/user/product-details';
+            }
+        </script>
+    `);
+});
+
+// ==================== [ POPUP EMAIL/PASSWORD LOGIN ROUTE ] ====================
+
+router.post('/pop-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.json({ success: false, message: "Email ebong Password pradan korun!" });
+    }
+
+    try {
+        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        if (adminCheck.length > 0) {
+            return res.json({ success: false, message: "Admin email diye user login sombhov noy!" });
+        }
+
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        const user = users[0];
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.json({ success: false, message: "Ei account-ti Google diye toiri kora. Google button ti use korun!" });
+        }
+
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        if (!isMatch) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        user.user_type = 'user';
+
+        req.login(user, (err) => {
+            if (err) {
+                console.error("Passport Pop Login Error:", err);
+                return res.json({ success: false, message: "Session Error!" });
+            }
+            
+            req.session.user = { id: user.id, user_type: 'user' }; 
+            req.session.userId = user.id; 
+
+            return res.json({ success: true, message: "Login Successful!" });
+        });
+
+    } catch (err) {
+        console.error("Pop Login Error:", err);
+        return res.json({ success: false, message: "Server Error!" });
+    }
+});
 
 router.post('/signup', async (req, res) => {
     const { name, email, password, confirm_password } = req.body;
@@ -871,169 +1164,612 @@ router.post('/update-profile', upload.single('profile_image'), async (req, res) 
     }
 });
 
-// ==================== [PLACE ORDER ROUTE WITH STOCK VALIDATION & UPDATE] ====================
+// ==================== PLACE ORDER ====================
 router.post('/place-order', async (req, res) => {
+
     try {
-        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
-        
+
+        // ================= USER ID =================
+        const userId = req.user
+            ? req.user.id
+            : (
+                req.session && req.session.user
+                    ? req.session.user.id
+                    : (
+                        req.session && req.session.userId
+                            ? req.session.userId
+                            : null
+                    )
+            );
+
         if (!userId) {
-            return res.status(401).json({ success: false, message: 'Unauthorized: Please login first!' });
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized: Please login first!'
+            });
         }
 
-        const { 
-            product_id, quantity, variant, payment_method, selected_gateway, 
-            name, email, phone, division, district, upazilla, union_area, post_code, block_house, 
-            discount_amount 
+
+        // ================= REQUEST DATA =================
+        const {
+            product_id,
+            quantity,
+            variant,
+            payment_method,
+            selected_gateway,
+            name,
+            email,
+            phone,
+            division,
+            district,
+            upazilla,
+            union_area,
+            post_code,
+            block_house,
+            discount_amount
         } = req.body;
 
-        if (!product_id || !quantity || !name || !phone || !district || !block_house) {
-            return res.status(400).json({ success: false, message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!' });
+
+        console.log("========== PLACE ORDER REQUEST ==========");
+        console.log("User ID:", userId);
+        console.log("Product ID:", product_id);
+        console.log("Quantity:", quantity);
+        console.log("Payment:", payment_method);
+        console.log("Gateway:", selected_gateway);
+        console.log("Customer:", name);
+        console.log("Phone:", phone);
+        console.log("=========================================");
+
+
+        // ================= VALIDATION =================
+        if (
+            !product_id ||
+            !quantity ||
+            !name ||
+            !phone ||
+            !district ||
+            !block_house
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!'
+            });
         }
 
-        const orderQty = parseInt(quantity, 10) || 1;
 
-        const [products] = await db.query('SELECT * FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
-        
+        const orderQty = parseInt(quantity, 10);
+
+        if (!orderQty || orderQty <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid quantity!'
+            });
+        }
+
+
+        // ================= GET PRODUCT =================
+        const [products] = await db.query(
+            `
+            SELECT *
+            FROM products
+            WHERE id = ? OR product_id = ?
+            LIMIT 1
+            `,
+            [product_id, product_id]
+        );
+
+
         if (!products || products.length === 0) {
-            return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found!'
+            });
         }
+
 
         const product = products[0];
-        const currentStock = parseInt(product.stock_quantity, 10) || 0;
+
+        console.log("Product Found:", product.id);
+        console.log("Product Title:", product.title);
+        console.log("Product Admin ID:", product.admin_id);
+        console.log("Product Stock:", product.stock_quantity);
+
+
+        // ================= STOCK =================
+        const currentStock =
+            parseInt(product.stock_quantity, 10) || 0;
+
 
         if (currentStock <= 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট (Out of Stock) হয়ে গেছে!' 
+            return res.status(400).json({
+                success: false,
+                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট!'
             });
         }
+
 
         if (currentStock < orderQty) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `দুঃখিত, পর্যাপ্ত স্টক নেই! বর্তমানে মাত্র ${currentStock} টি স্টক আছে।` 
+            return res.status(400).json({
+                success: false,
+                message:
+                    `পর্যাপ্ত stock নেই! বর্তমানে ${currentStock} টি আছে।`
             });
         }
 
-        const seller_id = product.admin_id || 0;
-        const salePrice = parseFloat(product.sale_price || 0);
-        let baseDeliveryCharge = Number(product.delivery_charge) || 60;
-        const deliveryLimit = Number(product.delivery_limit) || 1;
+
+        // ================= SELLER ID =================
+        const seller_id = product.admin_id;
+
+
+        if (!seller_id) {
+
+            console.error(
+                "❌ PRODUCT ADMIN ID MISSING"
+            );
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    'এই product-এর seller/admin ID পাওয়া যায়নি!'
+            });
+        }
+
+
+        // ================= VERIFY SELLER =================
+        const [sellerRows] = await db.query(
+            `SELECT id FROM admins WHERE id = ? LIMIT 1`,
+            [seller_id]
+        );
+
+
+        if (!sellerRows || sellerRows.length === 0) {
+
+            console.error(
+                "❌ SELLER NOT FOUND:",
+                seller_id
+            );
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    `Seller/Admin ID ${seller_id} পাওয়া যায়নি!`
+            });
+        }
+
+
+        // ================= PRICE =================
+        const salePrice =
+            parseFloat(product.sale_price) || 0;
+
+
+        // ================= DELIVERY =================
+        let baseDeliveryCharge =
+            Number(product.delivery_charge) || 60;
+
+
+        const deliveryLimit =
+            Number(product.delivery_limit) || 1;
+
 
         if (Number(product.free_shipping) === 1) {
             baseDeliveryCharge = 0;
         }
 
-        let deliveryCharge = baseDeliveryCharge;
-        if (deliveryLimit > 0 && baseDeliveryCharge > 0) {
-            const multiplier = Math.ceil(orderQty / deliveryLimit);
-            deliveryCharge = baseDeliveryCharge * multiplier;
+
+        let deliveryCharge =
+            baseDeliveryCharge;
+
+
+        if (
+            deliveryLimit > 0 &&
+            baseDeliveryCharge > 0
+        ) {
+
+            const multiplier =
+                Math.ceil(
+                    orderQty / deliveryLimit
+                );
+
+            deliveryCharge =
+                baseDeliveryCharge * multiplier;
         }
 
-        const subtotal = salePrice * orderQty;
-        const appliedDiscount = parseFloat(discount_amount || 0);
-        const totalAmount = Math.max(0, subtotal - appliedDiscount) + deliveryCharge;
-        
-        const fullShippingAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
-        const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
-        const gatewayUsed = payment_method === 'online' ? (selected_gateway || 'bkash') : null;
-        const paymentStatus = payment_method === 'online' ? 'Pending Payment' : 'Pending';
 
+        // ================= TOTAL =================
+        const subtotal =
+            salePrice * orderQty;
+
+
+        const appliedDiscount =
+            parseFloat(discount_amount) || 0;
+
+
+        const totalAmount =
+            Math.max(
+                0,
+                subtotal - appliedDiscount
+            ) + deliveryCharge;
+
+
+        // ================= ADDRESS =================
+        const fullShippingAddress = [
+            block_house,
+            union_area,
+            upazilla,
+            district,
+            division,
+            post_code
+                ? `Post Code: ${post_code}`
+                : ''
+        ]
+            .filter(Boolean)
+            .join(', ');
+
+
+        // ================= ORDER ID =================
+        const orderId =
+            'NXK-' +
+            Date.now().toString().slice(-8) +
+            Math.floor(
+                100 + Math.random() * 900
+            );
+
+
+        // ================= PAYMENT =================
+        const gatewayUsed =
+            payment_method === 'online'
+                ? (selected_gateway || 'bkash')
+                : null;
+
+
+        const paymentStatus =
+            payment_method === 'online'
+                ? 'Pending Payment'
+                : 'Pending';
+
+
+        console.log("========== ORDER CALCULATION ==========");
+        console.log("Order ID:", orderId);
+        console.log("Seller ID:", seller_id);
+        console.log("Sale Price:", salePrice);
+        console.log("Quantity:", orderQty);
+        console.log("Subtotal:", subtotal);
+        console.log("Delivery:", deliveryCharge);
+        console.log("Discount:", appliedDiscount);
+        console.log("Total:", totalAmount);
+        console.log("Payment Status:", paymentStatus);
+        console.log("========================================");
+
+
+        // ================= INSERT ORDER =================
         const insertQuery = `
             INSERT INTO orders (
-                order_id, user_id, product_id, seller_id, quantity, variant, 
-                subtotal_price, delivery_charge, total_amount, payment_method, 
-                selected_gateway, payment_status, customer_name, customer_email, 
-                customer_phone, shipping_address, created_at
+                order_id,
+                user_id,
+                product_id,
+                seller_id,
+                quantity,
+                variant,
+                subtotal_price,
+                delivery_charge,
+                discount_amount,
+                total_amount,
+                payment_method,
+                selected_gateway,
+                payment_status,
+                customer_name,
+                customer_email,
+                customer_phone,
+                shipping_address,
+                vat_cm,
+                qtyCalculate,
+                sendMail,
+                created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                0, 0, 0, NOW()
+            )
         `;
 
-        await db.query(insertQuery, [
-            orderId, userId, product.id, seller_id, orderQty, variant || null,
-            subtotal, deliveryCharge, totalAmount, payment_method, gatewayUsed,
-            paymentStatus, name, email, phone, fullShippingAddress
-        ]);
 
-        const currentSoldQty = parseInt(product.sold_qty, 10) || 0;
-        const newStock = Math.max(0, currentStock - orderQty);
-        const newSoldQty = currentSoldQty + orderQty;
-        const newStockStatus = newStock === 0 ? 'out_of_stock' : 'in_stock';
+        try {
 
-        await db.query(
-            `UPDATE products SET stock_quantity = ?, sold_qty = ?, stock_status = ? WHERE id = ?`,
-            [newStock, newSoldQty, newStockStatus, product.id]
-        );
+            const [result] =
+                await db.query(
+                    insertQuery,
+                    [
+                        orderId,
+                        userId,
+                        product.id,
+                        seller_id,
+                        orderQty,
+                        variant || null,
 
-        const orderData = {
-            order_id: orderId,
-            customer_name: name,
-            customer_email: email,
-            customer_phone: phone,
-            shipping_address: fullShippingAddress,
-            payment_method: payment_method,
-            selected_gateway: gatewayUsed,
-            payment_status: paymentStatus,
-            quantity: orderQty,
-            variant: variant,
-            subtotal_price: subtotal,
-            delivery_charge: deliveryCharge,
-            total_amount: totalAmount
-        };
-        sendInvoiceEmail(orderData, product.title);
+                        subtotal,
+                        deliveryCharge,
+                        appliedDiscount,
+                        totalAmount,
 
-        if (payment_method === 'online') {
-            const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-            const callbackUrl = `${baseUrl}/user/bdgate/callback?order_id=${orderId}`;
+                        payment_method || 'cod',
+                        gatewayUsed,
+                        paymentStatus,
 
-            const bdgatePayload = {
-                amount: totalAmount.toFixed(2),
-                order_id: orderId,
-                redirect_url: callbackUrl,
-                success_url: callbackUrl,
-                callback_url: callbackUrl,
-                cancel_url: `${baseUrl}/user/checkout?status=cancel`,
-                fail_url: `${baseUrl}/user/checkout?status=fail`,
-                customer_name: name,
-                customer_email: email || 'customer@example.com',
-                customer_phone: phone,
-                description: `Order #${orderId} on NexKart`,
-                currency: "BDT"
-            };
+                        name,
+                        email || null,
+                        phone,
+                        fullShippingAddress
+                    ]
+                );
 
-            try {
-                const response = await axios.post('https://api.bdgate.net/api/v1/checkout', bdgatePayload, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': process.env.BDGATE_API_KEY || 'bd_live_40d9307632248d56aabb35758971e9b9'
-                    }
-                });
 
-                if (response.data && response.data.checkout_url) {
-                    return res.json({
-                        success: true,
-                        order_id: orderId,
-                        selected_gateway: gatewayUsed ? gatewayUsed.toUpperCase() : 'ONLINE',
-                        payment_url: response.data.checkout_url
-                    });
-                }
-            } catch (apiError) {
-                console.error("BDGate Error:", apiError.message);
-            }
+            console.log(
+                "✅ ORDER INSERTED:",
+                result.insertId
+            );
+
+
+        } catch (dbError) {
+
+            console.error(
+                "========================================"
+            );
+
+            console.error(
+                "❌ MYSQL ORDER INSERT ERROR"
+            );
+
+            console.error(
+                "CODE:",
+                dbError.code
+            );
+
+            console.error(
+                "MESSAGE:",
+                dbError.message
+            );
+
+            console.error(
+                "SQL STATE:",
+                dbError.sqlState
+            );
+
+            console.error(
+                "SQL:",
+                dbError.sql
+            );
+
+            console.error(
+                "========================================"
+            );
+
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    'Database Error: ' +
+                    dbError.message
+            });
         }
 
-        return res.json({ success: true, order_id: orderId, message: 'Order placed successfully!' });
+
+        // ================= UPDATE STOCK =================
+        try {
+
+            const currentSoldQty =
+                parseInt(product.sold_qty, 10) || 0;
+
+
+            const newStock =
+                Math.max(
+                    0,
+                    currentStock - orderQty
+                );
+
+
+            const newSoldQty =
+                currentSoldQty + orderQty;
+
+
+            const newStockStatus =
+                newStock === 0
+                    ? 'out_of_stock'
+                    : 'in_stock';
+
+
+            await db.query(
+                `
+                UPDATE products
+                SET
+                    stock_quantity = ?,
+                    sold_qty = ?,
+                    stock_status = ?
+                WHERE id = ?
+                `,
+                [
+                    newStock,
+                    newSoldQty,
+                    newStockStatus,
+                    product.id
+                ]
+            );
+
+
+            console.log(
+                "✅ STOCK UPDATED"
+            );
+
+
+        } catch (stockError) {
+
+            console.error(
+                "❌ STOCK UPDATE ERROR:",
+                stockError
+            );
+        }
+
+
+        // ================= EMAIL =================
+        try {
+
+            const orderData = {
+                order_id: orderId,
+                customer_name: name,
+                customer_email: email,
+                customer_phone: phone,
+                shipping_address: fullShippingAddress,
+                payment_method: payment_method,
+                selected_gateway: gatewayUsed,
+                payment_status: paymentStatus,
+                quantity: orderQty,
+                variant: variant,
+                subtotal_price: subtotal,
+                delivery_charge: deliveryCharge,
+                total_amount: totalAmount
+            };
+
+
+            await sendInvoiceEmail(
+                orderData,
+                product.title
+            );
+
+
+            console.log(
+                "✅ INVOICE EMAIL SENT"
+            );
+
+
+        } catch (emailError) {
+
+            console.error(
+                "⚠️ EMAIL ERROR:",
+                emailError.message
+            );
+        }
+
+        // ==================== TRACKING EVENT: PURCHASE ====================
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        await sendFacebookCAPI('Purchase', {
+            email: email,
+            phone: phone,
+            name: name,
+            client_ip_address: clientIp,
+            client_user_agent: userAgent
+        }, {
+            currency: 'BDT',
+            value: totalAmount,
+            order_id: orderId,
+            contents: [{
+                id: product.product_id || product.id,
+                quantity: orderQty,
+                item_price: salePrice
+            }]
+        });
+
+        await sendGA4Measurement('purchase', userId.toString(), {
+            transaction_id: orderId,
+            value: totalAmount,
+            currency: 'BDT',
+            tax: 0,
+            shipping: deliveryCharge,
+            items: [{
+                item_id: product.product_id || product.id,
+                item_name: product.title,
+                price: salePrice,
+                quantity: orderQty
+            }]
+        });
+
+
+        // ================= BKASH =================
+        if (
+            payment_method === 'online' &&
+            gatewayUsed === 'bkash'
+        ) {
+
+            const baseUrl =
+                process.env.APP_URL ||
+                `${req.protocol}://${req.get('host')}`;
+
+
+            return res.json({
+                success: true,
+                order_id: orderId,
+                selected_gateway: 'BKASH',
+                payment_url:
+                    `${baseUrl}/user/bkash-success?order_id=${orderId}`
+            });
+        }
+
+
+        // ================= SUCCESS =================
+        return res.json({
+            success: true,
+            order_id: orderId,
+            message:
+                'Order placed successfully!'
+        });
+
 
     } catch (error) {
-        console.error("Place Order Error:", error);
-        return res.status(500).json({ success: false, message: 'Server Error during order placement!' });
+
+        console.error(
+            "========================================"
+        );
+
+        console.error(
+            "❌ PLACE ORDER ERROR"
+        );
+
+        console.error(
+            "CODE:",
+            error.code
+        );
+
+        console.error(
+            "MESSAGE:",
+            error.message
+        );
+
+        console.error(
+            "SQL STATE:",
+            error.sqlState
+        );
+
+        console.error(
+            "SQL:",
+            error.sql
+        );
+
+        console.error(
+            "FULL ERROR:",
+            error
+        );
+
+        console.error(
+            "========================================"
+        );
+
+
+        return res.status(500).json({
+            success: false,
+            message:
+                'Order Error: ' +
+                (error.message ||
+                    'Unknown server error')
+        });
     }
 });
 
-// ONLINE PAYMENT CALLBACK
-router.get('/bdgate/callback', async (req, res) => {
+// BKASH PAYMENT CALLBACK & SUCCESS ROUTE
+router.get('/bkash/callback', async (req, res) => {
     try {
-        const { order_id } = req.query;
+        const { order_id, paymentID, status } = req.query;
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         
         if (order_id) {
@@ -1044,41 +1780,34 @@ router.get('/bdgate/callback', async (req, res) => {
                 
                 if (order.payment_status !== 'complete') {
                     await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
-                    
-                    const soldQuantity = parseInt(order.quantity, 10) || 1;
-
-                    const [products] = await db.query('SELECT stock_quantity, sold_qty FROM products WHERE id = ?', [order.product_id]);
-                    
-                    if (products && products.length > 0) {
-                        const prod = products[0];
-                        const currentStock = parseInt(prod.stock_quantity, 10) || 0;
-                        const currentSold = parseInt(prod.sold_qty, 10) || 0;
-
-                        const newStock = Math.max(0, currentStock - soldQuantity);
-                        const newSold = currentSold + soldQuantity;
-
-                        await db.query(
-                            `UPDATE products SET stock_quantity = ?, sold_qty = ? WHERE id = ?`,
-                            [newStock, newSold, order.product_id]
-                        );
-                    }
                 }
             }
         }
 
-        return res.redirect(`${baseUrl}/user/dashboard`);
+        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
     } catch (error) {
-        console.error("Callback Error:", error);
+        console.error("bKash Callback Error:", error);
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
         return res.redirect(`${baseUrl}/user/dashboard`);
     }
 });
 
-router.get('/bdgate-success', async (req, res) => {
-    res.redirect('/user/dashboard');
+router.get('/bkash-success', async (req, res) => {
+    try {
+        const { order_id } = req.query;
+        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+        
+        if (order_id) {
+            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
+        }
+
+        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
+    } catch (err) {
+        console.error("bKash Success Route Error:", err);
+        res.redirect('/user/dashboard');
+    }
 });
 
-// Inquiry Routes
 router.post('/inquiry', async (req, res) => {
     try {
         const { product_id, question, user_name } = req.body;
@@ -1086,12 +1815,14 @@ router.post('/inquiry', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID and Question are required!' });
         }
 
-        const [products] = await db.query('SELECT id FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
+        const [products] = await db.query('SELECT p.*, a.email AS seller_email, a.shop_name FROM products p LEFT JOIN admins a ON p.admin_id = a.id WHERE p.id = ? OR p.product_id = ?', [product_id, product_id]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'Product not found!' });
         }
         
-        const actualProductId = products[0].id;
+        const product = products[0];
+        const sellerEmail = product.seller_email;
+        const actualProductId = product.id;
         const userNameToSave = user_name || (req.user ? req.user.name : 'Valued Customer');
 
         await db.query(
@@ -1099,9 +1830,57 @@ router.post('/inquiry', async (req, res) => {
             [actualProductId, question, userNameToSave]
         );
 
-        return res.json({ success: true, message: 'Inquiry submitted successfully!' });
+        if (sellerEmail) {
+            const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
+                params: {
+                    client_id: process.env.GOOGLE_USER_CLIENT_ID,
+                    client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
+                    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+                    grant_type: 'refresh_token'
+                }
+            });
+
+            const accessToken = tokenResponse.data.access_token;
+
+            const emailTemplate = `
+                <h3>New Product Inquiry</h3>
+                <p><strong>Product:</strong> ${product.title}</p>
+                <p><strong>Customer Name:</strong> ${userNameToSave}</p>
+                <p><strong>Question:</strong> ${question}</p>
+            `;
+
+            const subject = `❓ New Inquiry for Product: ${product.title}`;
+            const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+            const messageParts = [
+                `To: ${sellerEmail}`,
+                `Subject: ${utf8Subject}`,
+                `MIME-Version: 1.0`,
+                `Content-Type: text/html; charset=utf-8`,
+                ``,
+                emailTemplate
+            ];
+            const message = messageParts.join('\r\n');
+            const encodedMessage = Buffer.from(message)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+            await axios.post(
+                `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
+                { raw: encodedMessage },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+        }
+
+        return res.json({ success: true, message: 'Inquiry submitted and email sent to seller successfully!' });
     } catch (error) {
-        console.error("Inquiry Submit Error:", error);
+        console.error("Inquiry Submit & Email Error:", error.response?.data || error.message);
         return res.status(500).json({ success: false, message: 'Server error while submitting inquiry!' });
     }
 });
@@ -1126,8 +1905,11 @@ router.get('/inquiries/:productId', async (req, res) => {
 router.get('/product/:id', async (req, res) => {
     try {
         const productId = req.params.id;
+        
+        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
+
         const productQuery = `
-            SELECT p.*, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
+            SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
             FROM products p LEFT JOIN admins a ON p.admin_id = a.id
             WHERE p.product_id = ? OR p.id = ?
@@ -1138,6 +1920,15 @@ router.get('/product/:id', async (req, res) => {
         }
         const product = products[0];
         const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
+
+        let userTotalCoins = 0;
+        if (userId) {
+            const [coinRows] = await db.query(
+                `SELECT SUM(coin_balance) AS total_coin FROM my_coins WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
+                [userId]
+            );
+            userTotalCoins = coinRows[0].total_coin || 0;
+        }
 
         const [sellerProducts] = await db.query(`
             SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
@@ -1168,7 +1959,9 @@ router.get('/product/:id', async (req, res) => {
             product: product,
             gallery_images: images.map(img => img.image_path),
             seller_products: sellerProducts,
-            suggested_products: suggestedProducts
+            suggested_products: suggestedProducts,
+            user_coins: userTotalCoins,           
+            coin_value_in_bdt: 0.30               
         });
     } catch (error) {
         console.error("Product Details Fetch Error:", error);
@@ -1207,12 +2000,10 @@ router.get('/logout', (req, res, next) => {
     });
 });
 
-// HTML পেজ সার্ভ করার জন্য রাউট
 router.get('/category.html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'category.html'));
 });
 
-// ==================== [ DASHBOARD PRODUCTS API WITH SAFE RANDOM OFFSET ] ====================
 router.get('/dashProduct', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -1251,76 +2042,59 @@ router.get('/dashProduct', async (req, res) => {
     }
 });
 
-// ==================== [ CATEGORY PRODUCTS API WITH PAGINATION & SEARCH ] ====================
+// Example Category Query Logic inside users.js
 router.get('/get-products-by-category', async (req, res) => {
     try {
-        const { cat, type, promo, search } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 8;
+        const { cat, type, promo, search, page = 1, limit = 8 } = req.query;
         const offset = (page - 1) * limit;
 
-        let whereClause = "WHERE 1=1";
+        let query = "SELECT * FROM products WHERE 1=1";
         let queryParams = [];
 
-        if (search && search.trim() !== "") {
-            whereClause += " AND (p.title LIKE ? OR p.category LIKE ?)";
-            queryParams.push(`%${search.trim()}%`, `%${search.trim()}%`);
-        } else if (cat && cat !== 'all') {
-            whereClause += " AND p.category = ?";
+        // Check if coin zone/offer filter is applied
+        if (promo === 'coin_products') {
+            query += " AND LOWER(coin_offer) = 'yes'";
+        } else if (cat) {
+            query += " AND category = ?";
             queryParams.push(cat);
         } else if (type && type !== 'all') {
-            whereClause += " AND p.category = ?";
+            query += " AND type = ?";
             queryParams.push(type);
         }
 
-        if (promo) {
-            if (promo === 'super_deal') {
-                whereClause += " AND (p.promo_badge = 'super_deal' OR p.promo_badge = 'super_deals')";
-            } else if (promo === 'new_arrival') {
-                whereClause += " AND p.promo_badge = 'new_arrival'";
-            } else if (promo === 'hot') {
-                whereClause += " AND p.promo_badge = 'hot'";
-            } else if (promo === 'best_seller') {
-                whereClause += " AND p.promo_badge = 'best_seller'";
-            } else if (promo === 'free_shipping') {
-                whereClause += " AND (p.free_shipping = 1 OR p.promo_badge = 'free_shipping')";
-            } else if (promo === 'clearance') {
-                whereClause += " AND p.promo_badge = 'clearance'";
-            } else if (promo === 'trending') {
-                whereClause += " AND p.promo_badge = 'trending'";
-            }
+        if (search) {
+            query += " AND (title LIKE ? OR description LIKE ?)";
+            queryParams.push(`%${search}%`, `%${search}%`);
         }
 
-        const countQuery = `SELECT COUNT(DISTINCT p.id) AS total FROM products p ${whereClause}`;
-        const [totalRows] = await db.query(countQuery, queryParams);
-        const totalItems = totalRows[0].total;
+        query += " ORDER BY id DESC LIMIT ? OFFSET ?";
+        queryParams.push(parseInt(limit), parseInt(offset));
 
-        const mainQuery = `
-            SELECT p.*, 
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            ${whereClause}
-            GROUP BY p.id
-            ORDER BY p.id DESC
-            LIMIT ? OFFSET ?
-        `;
+        const [products] = await db.query(query, queryParams);
+        
+        // Count total for pagination
+        let countQuery = "SELECT COUNT(*) as total FROM products WHERE 1=1";
+        let countParams = [];
+        if (promo === 'coin_products') {
+            countQuery += " AND LOWER(coin_offer) = 'yes'";
+        }
+        
+        const [countResult] = await db.query(countQuery, countParams);
+        const hasMore = (offset + products.length) < countResult[0].total;
 
-        const [products] = await db.query(mainQuery, [...queryParams, limit, offset]);
-        const hasMore = (offset + products.length) < totalItems;
-
-        return res.json({
-            success: true,
-            products: products,
-            hasMore: hasMore
-        });
-
-    } catch (error) {
-        console.error("Get Category Products Error:", error);
-        return res.status(500).json({ success: false, message: "Server Error" });
+        res.json({ success: true, products, hasMore });
+    } catch (err) {
+        console.error("Error fetching category products:", err);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
+});
+
+// Tracking Config API
+router.get('/api/config', (req, res) => {
+    res.json({
+        gaId: process.env.GA4_MEASUREMENT_ID,
+        pixelId: process.env.FACEBOOK_PIXEL_ID
+    });
 });
 
 module.exports = router;
