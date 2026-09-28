@@ -1964,22 +1964,20 @@ router.get('/api/config', (req, res) => {
 });
 // ==================== [ POPUP GOOGLE AUTH ROUTES ] ====================
 
-// 1. Google Popup Login Initiate Route
+// ১. Pop-up Initiate Route
 router.get('/auth/google/popup', (req, res, next) => {
     req.session.isPopupLogin = true;
     passport.authenticate('google-user', { scope: ['profile', 'email'] })(req, res, next);
 });
 
-// 2. Google OAuth Callback Route Update
+// ২. Google OAuth Callback Route
 router.get('/auth/google/callback', 
-    passport.authenticate('google-user', { 
-        failureRedirect: '/user/auth/google/popup-failure' 
-    }),
+    passport.authenticate('google-user', { failureRedirect: '/user/auth/google/popup-failure' }),
     (req, res) => {
         req.session.user = { id: req.user.id, user_type: 'user' };
         req.session.userId = req.user.id;
 
-        // Jodi Pop-up er maddhome login hoy
+        // পপ-আপের মাধ্যমে লগইন হয়ে থাকলে
         if (req.session.isPopupLogin) {
             delete req.session.isPopupLogin;
             return res.send(`
@@ -2000,7 +1998,7 @@ router.get('/auth/google/callback',
     }
 );
 
-// 3. Google Popup Failure Handler (taate cslogin e na jaye)
+// ৩. Failure Handler (cslogin এ না পাঠিয়ে পপ-আপ বন্ধ করবে)
 router.get('/auth/google/popup-failure', (req, res) => {
     res.send(`
         <script>
@@ -2008,7 +2006,7 @@ router.get('/auth/google/popup-failure', (req, res) => {
                 window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
                 window.close();
             } else {
-                window.location.href = '/user/cslogin';
+                window.location.href = '/user/product-details';
             }
         </script>
     `);
