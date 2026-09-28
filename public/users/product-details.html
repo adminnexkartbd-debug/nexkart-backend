@@ -520,24 +520,19 @@
      }
    });
 
-   // 2. Open Google Login Window Popup
-   function openGooglePopup() {
-     const width = 500;
-     const height = 600;
-     const left = (window.innerWidth - width) / 2;
-     const top = (window.innerHeight - height) / 2;
-
-     const popup = window.open(
-       '/user/auth/google/popup',
-       'GoogleLoginPopup',
-       `width=${width},height=${height},top=${top},left=${left}`
-     );
-
-     if (!popup) {
-       alert("Popup Blocked! Please allow popups for this site.");
-     }
-   }
-
+  // Popup Google Login button handler
+function openGooglePopup() {
+    const width = 500;
+    const height = 600;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    window.open(
+        '/user/auth/google/popup', 
+        'GoogleLoginPopup', 
+        `width=${width},height=${height},top=${top},left=${left}`
+    );
+}
    // 3. Email & Password Form Modal Handler (pop-login endpoint-e Hit korbe)
    async function handleModalLogin(event) {
       event.preventDefault(); 
