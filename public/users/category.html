@@ -120,22 +120,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             cursor: pointer;
         }
 
-        /* ---------------- PRODUCTS SECTION ---------------- */
-        .products-section {
-            padding: 30px 40px 50px 40px;
-        }
-
-        .section-title {
+        /* ---------------- CATEGORY HEADER & IMAGE STYLE ---------------- */
+        .category-header-banner {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 25px;
             border-bottom: 2px solid #ffccd5;
-            padding-bottom: 10px;
+            padding-bottom: 12px;
         }
 
-        .section-title h1 {
+        .category-header-banner img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #ff4b6e;
+            box-shadow: 0 2px 8px rgba(255, 75, 110, 0.2);
+        }
+
+        .category-header-banner h1 {
             font-size: 22px;
             color: #333;
             font-weight: 600;
             text-transform: capitalize;
+            margin: 0;
+        }
+
+        /* ---------------- PRODUCTS SECTION ---------------- */
+        .products-section {
+            padding: 30px 40px 50px 40px;
         }
 
         .product-grid {
@@ -311,16 +325,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                 padding: 15px 15px 30px 15px;
             }
 
-            .section-title {
+            .category-header-banner {
                 margin-bottom: 15px;
+                gap: 10px;
             }
 
-            .section-title h1 {
+            .category-header-banner img {
+                width: 40px;
+                height: 40px;
+            }
+
+            .category-header-banner h1 {
                 font-size: 18px;
             }
 
             .product-grid {
-                grid-template-columns: repeat(2, 1fr); /* মোবাইলে ২ কলাম */
+                grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
             }
 
@@ -368,7 +388,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         @media (max-width: 400px) {
             .home-btn span {
-                display: none; /* খুব ছোট স্ক্রিনে টেক্সট হাইড হয়ে শুধু আইকন দেখাবে */
+                display: none;
             }
             .home-btn {
                 padding: 8px 10px;
@@ -381,6 +401,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
+
    <!-- ১. সাধারণ হেডার (Semantic HTML) -->
    <header class="top-header">
         <a href="/user/dashboard" class="home-btn" title="Go to Dashboard Home">
@@ -395,7 +416,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- ২. প্রোডাক্ট ক্যাটাগরি সেকশন (Semantic HTML Main Container) -->
     <main class="products-section">
-        <div class="section-title">
+        <div class="category-header-banner">
+            <img id="categoryHeaderImg" src="" alt="Category Image" class="d-none">
             <h1 id="categoryNameHeading">Category Products</h1>
         </div>
 
@@ -455,12 +477,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (seoDesc) seoDesc.setAttribute('content', pageDesc);
         if (ogDesc) ogDesc.setAttribute('content', pageDesc);
         
-        // Ensure clean canonical without pagination parameters to prevent duplicate issues
         const cleanCanonicalUrl = window.location.origin + window.location.pathname + (cat ? `?cat=${cat}` : type ? `?type=${type}` : promo ? `?promo=${promo}` : '');
         if (seoCanonical) seoCanonical.setAttribute('href', cleanCanonicalUrl);
         if (ogUrl) ogUrl.setAttribute('content', window.location.href);
 
-        // If search results page, set robots to noindex to prevent low-value index bloat
         if (search && seoRobots) {
             seoRobots.setAttribute('content', 'noindex, follow');
         }
@@ -478,7 +498,6 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
     try {
         let queryUrl = `/user/get-products-by-category?page=${page}&limit=${limit}`;
 
-        // URL Parameters setup
         if (promo) {
             queryUrl += `&promo=${encodeURIComponent(promo)}`;
         } else {
@@ -489,6 +508,42 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
 
         const response = await fetch(queryUrl);
         const data = await response.json();
+
+        // ---------------- DYNAMIC CATEGORY IMAGE HANDLER ----------------
+        if (!isLoadMore) {
+            const headerImgElem = document.getElementById('categoryHeaderImg');
+            if (headerImgElem) {
+                let catImgSrc = '';
+                if (data.category_image) {
+                    let rawCatImg = data.category_image.trim();
+                    if (rawCatImg.startsWith('http://') || rawCatImg.startsWith('https://')) {
+                        catImgSrc = rawCatImg;
+                    } else if (rawCatImg.includes('cloudinary.com')) {
+                        catImgSrc = rawCatImg.startsWith('http') ? rawCatImg : 'https://' + rawCatImg.replace(/^\/+/, '');
+                    } else {
+                        let cleanPath = rawCatImg.replace(/^(\/?uploads\/)+/, '');
+                        catImgSrc = '/uploads/' + cleanPath;
+                    }
+                } else if (data.products && data.products.length > 0 && data.products[0].primary_image) {
+                    let rawImg = data.products[0].primary_image.trim();
+                    if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+                        catImgSrc = rawImg;
+                    } else if (rawImg.includes('cloudinary.com')) {
+                        catImgSrc = rawImg.startsWith('http') ? rawImg : 'https://' + rawImg.replace(/^\/+/, '');
+                    } else {
+                        let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
+                        catImgSrc = '/uploads/' + cleanPath;
+                    }
+                }
+
+                if (catImgSrc) {
+                    headerImgElem.src = catImgSrc;
+                    headerImgElem.classList.remove('d-none');
+                } else {
+                    headerImgElem.classList.add('d-none');
+                }
+            }
+        }
 
         if (data.success && data.products.length > 0) {
             const productsHTML = data.products.map((product) => {
@@ -516,17 +571,18 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
                 }
 
                 let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+
                 if (product.primary_image) {
                     let rawImg = product.primary_image.trim();
-                    if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
-                        let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
-                        imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
+                    if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+                        imageSrc = rawImg;
+                    } else if (rawImg.includes('cloudinary.com')) {
+                        imageSrc = rawImg.startsWith('http') ? rawImg : 'https://' + rawImg.replace(/^\/+/, '');
                     } else {
                         let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
                         imageSrc = '/uploads/' + cleanPath;
                     }
                 }
-
                 const targetId = product.product_id || product.id;
                 const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
 
@@ -614,7 +670,6 @@ function loadMoreCategoryProducts() {
         }
     }
 
-    // Dynamic Schema Injection for SEO Rich Snippets
     function injectItemListSchema(products) {
         const schemaObj = {
             "@context": "https://schema.org",
