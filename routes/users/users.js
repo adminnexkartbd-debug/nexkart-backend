@@ -1962,5 +1962,107 @@ router.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
+// ==================== [ POPUP GOOGLE AUTH ROUTES ] ====================
 
+// 1. Google Popup Login Initiate Route
+router.get('/auth/google/popup', (req, res, next) => {
+    req.session.isPopupLogin = true;
+    passport.authenticate('google-user', { scope: ['profile', 'email'] })(req, res, next);
+});
+
+// 2. Google OAuth Callback Route Update
+router.get('/auth/google/callback', 
+    passport.authenticate('google-user', { 
+        failureRedirect: '/user/auth/google/popup-failure' 
+    }),
+    (req, res) => {
+        req.session.user = { id: req.user.id, user_type: 'user' };
+        req.session.userId = req.user.id;
+
+        // Jodi Pop-up er maddhome login hoy
+        if (req.session.isPopupLogin) {
+            delete req.session.isPopupLogin;
+            return res.send(`
+                <script>
+                    if (window.opener) {
+                        window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
+                        window.close();
+                    } else {
+                        window.location.href = '/user/dashboard';
+                    }
+                </script>
+            `);
+        }
+
+        const targetUrl = req.session.redirectTo || '/user/dashboard';
+        delete req.session.redirectTo;
+        res.redirect(targetUrl);
+    }
+);
+
+// 3. Google Popup Failure Handler (taate cslogin e na jaye)
+router.get('/auth/google/popup-failure', (req, res) => {
+    res.send(`
+        <script>
+            if (window.opener) {
+                window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                window.close();
+            } else {
+                window.location.href = '/user/cslogin';
+            }
+        </script>
+    `);
+});
+
+
+// ==================== [ POPUP EMAIL/PASSWORD LOGIN ROUTE ] ====================
+
+router.post('/pop-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.json({ success: false, message: "Email ebong Password pradan korun!" });
+    }
+
+    try {
+        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        if (adminCheck.length > 0) {
+            return res.json({ success: false, message: "Admin email diye user login sombhov noy!" });
+        }
+
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        const user = users[0];
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.json({ success: false, message: "Ei account-ti Google diye toiri kora. Google button ti use korun!" });
+        }
+
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        if (!isMatch) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        user.user_type = 'user';
+
+        req.login(user, (err) => {
+            if (err) {
+                console.error("Passport Pop Login Error:", err);
+                return res.json({ success: false, message: "Session Error!" });
+            }
+            
+            req.session.user = { id: user.id, user_type: 'user' }; 
+            req.session.userId = user.id; 
+
+            return res.json({ success: true, message: "Login Successful!" });
+        });
+
+    } catch (err) {
+        console.error("Pop Login Error:", err);
+        return res.json({ success: false, message: "Server Error!" });
+    }
+});
 module.exports = router;
