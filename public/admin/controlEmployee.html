@@ -121,7 +121,7 @@
                     </div>
 
                     <!-- Top Metric Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5">
                         <div onclick="openCardModal('commission')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-indigo-600 transition-colors">Avg Seller Commission</p>
@@ -140,7 +140,6 @@
                             <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
                         </div>
 
-                        <!-- UPDATED CARD: New Seller Request Control -->
                         <div onclick="openPendingRequestModal()" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors">New Seller Request Control</p>
@@ -157,6 +156,16 @@
                                 <span class="text-[11px] text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-store mr-1"></i> Vendors Online</span>
                             </div>
                             <div class="w-10 h-10 md:w-12 md:h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-shop"></i></div>
+                        </div>
+
+                        <!-- NEW CARD: Seller Account Control -->
+                        <div onclick="openSellerAccountControlModal()" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-red-400 hover:shadow-md transition-all group">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-red-600 transition-colors">Seller Account Control</p>
+                                <h3 id="allAdminsCountDisplay" class="text-xl md:text-2xl font-bold text-red-600 mt-1">Manage</h3>
+                                <span class="text-[11px] text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-user-slash mr-1"></i> Full System Table</span>
+                            </div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-user-gear"></i></div>
                         </div>
                     </div>
                 </div>
@@ -210,7 +219,7 @@
         </div>
     </div>
 
-    <!-- NEW MODAL: Pending Seller Request Modal -->
+    <!-- Pending Seller Request Modal -->
     <div id="pendingRequestModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col hidden opacity-0 transition-opacity duration-300">
         <div class="bg-slate-900 text-white px-4 md:px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
             <h3 class="font-bold text-base md:text-lg flex items-center"><i class="fa-solid fa-user-clock text-amber-400 mr-2"></i>New Seller Request Control</h3>
@@ -266,6 +275,34 @@
                             </tr>
                         </thead>
                         <tbody id="sellerTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW FULL SCREEN MODAL: Seller Account Control Modal -->
+    <div id="sellerAccountControlModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 text-white px-4 md:px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+            <h3 class="font-bold text-base md:text-lg flex items-center"><i class="fa-solid fa-user-shield text-red-500 mr-2"></i>Seller Account Control (Full Admins Database)</h3>
+            <button onclick="closeSellerAccountControlModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="flex-1 bg-slate-100 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[1200px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-4 px-4">ID</th>
+                                <th class="py-4 px-4">Google ID</th>
+                                <th class="py-4 px-4">Name & Shop</th>
+                                <th class="py-4 px-4">Email</th>
+                                <th class="py-4 px-4">Role</th>
+                                <th class="py-4 px-4">Action Status</th>
+                                <th class="py-4 px-6 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allAdminsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -500,6 +537,98 @@
             } catch (error) {
                 console.error('Error deleting seller request:', error);
                 showToast('Server error while deleting request', 'error');
+            }
+        }
+
+        // ==================== NEW SELLER ACCOUNT CONTROL SCRIPT ====================
+
+        function openSellerAccountControlModal() {
+            fetchAllAdmins();
+            const modal = document.getElementById('sellerAccountControlModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function closeSellerAccountControlModal() {
+            const modal = document.getElementById('sellerAccountControlModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        async function fetchAllAdmins() {
+            try {
+                const response = await fetch('/api/control-employee/get-all-admins');
+                const data = await response.json();
+                if (data.success) {
+                    renderAllAdminsTable(data.admins);
+                }
+            } catch (error) {
+                console.error('Error fetching all admins:', error);
+                showToast('Failed to load admins table', 'error');
+            }
+        }
+
+        function renderAllAdminsTable(adminsList) {
+            const tbody = document.getElementById('allAdminsTableBody');
+            tbody.innerHTML = '';
+
+            if (!adminsList || adminsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-slate-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>No records found in admins table</td></tr>`;
+                return;
+            }
+
+            adminsList.forEach(admin => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-mono text-xs font-semibold">${admin.id}</td>
+                    <td class="py-4 px-4 font-mono text-xs text-slate-500">${admin.google_id || 'N/A'}</td>
+                    <td class="py-4 px-4">
+                        <p class="font-semibold text-slate-800">${admin.name || '<span class="text-slate-400 italic">BLANK</span>'}</p>
+                        <p class="text-xs text-indigo-600 font-medium"><i class="fa-solid fa-store mr-1"></i>${admin.shop_name || 'N/A'}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs text-slate-600">${admin.email || '<span class="text-slate-400 italic">BLANK</span>'}</td>
+                    <td class="py-4 px-4 text-xs uppercase font-medium">${admin.role || 'N/A'}</td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase inline-flex items-center ${admin.action === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800'}">
+                            ${admin.action || 'active'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="confirmAndSuspendAdmin(${admin.id}, '${admin.email || 'this seller'}')" class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm">
+                            <i class="fa-solid fa-ban mr-1"></i>Delete Account
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function confirmAndSuspendAdmin(id, sellerEmail) {
+            const confirmDelete = confirm(`Are you sure you want to delete and permanently suspend account ID #${id}? \n\nThis will: \n1. Delete all products with admin_id = ${id} \n2. Clear seller profile fields (keeping Google ID) \n3. Set action to "suspended" \n4. Send permanent ban email notification.`);
+            if (!confirmDelete) return;
+
+            try {
+                const response = await fetch('/api/control-employee/suspend-and-delete-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Account suspended, products deleted & mail sent!', 'success');
+                    fetchAllAdmins();
+                } else {
+                    showToast(data.message || 'Failed to process suspension', 'error');
+                }
+            } catch (error) {
+                console.error('Error suspending admin:', error);
+                showToast('Server error during operation', 'error');
             }
         }
 
