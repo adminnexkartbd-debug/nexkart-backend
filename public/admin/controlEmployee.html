@@ -140,13 +140,14 @@
                             <div class="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
                         </div>
 
-                        <div onclick="openCardModal('approvals')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
+                        <!-- UPDATED CARD: New Seller Request Control -->
+                        <div onclick="openPendingRequestModal()" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group">
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors">Pending Approvals</p>
-                                <h3 class="text-xl md:text-2xl font-bold text-amber-600 mt-1">2 Pending</h3>
-                                <span class="text-[11px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-clock mr-1"></i> Action needed</span>
+                                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition-colors">New Seller Request Control</p>
+                                <h3 id="pendingCountDisplay" class="text-xl md:text-2xl font-bold text-amber-600 mt-1">Loading...</h3>
+                                <span class="text-[11px] text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md mt-1 inline-block"><i class="fa-solid fa-clock mr-1"></i> Status Check & Manage</span>
                             </div>
-                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="w-10 h-10 md:w-12 md:h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-user-clock"></i></div>
                         </div>
 
                         <div onclick="openCardModal('sellers')" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
@@ -205,6 +206,32 @@
             <div id="modalBody" class="p-6 text-sm text-slate-600 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar"></div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
                 <button onclick="closeCardModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-xl text-sm transition-colors shadow-sm">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW MODAL: Pending Seller Request Modal -->
+    <div id="pendingRequestModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 text-white px-4 md:px-6 py-4 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+            <h3 class="font-bold text-base md:text-lg flex items-center"><i class="fa-solid fa-user-clock text-amber-400 mr-2"></i>New Seller Request Control</h3>
+            <button onclick="closePendingRequestModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="flex-1 bg-slate-100 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                                <th class="py-4 px-6">Seller Details</th>
+                                <th class="py-4 px-4">Contact Info</th>
+                                <th class="py-4 px-4">Bank Details</th>
+                                <th class="py-4 px-4">Status Check</th>
+                                <th class="py-4 px-6 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -325,6 +352,7 @@
                         showToast('Pin verified successfully!', 'success');
                         fetchCommissionRate();
                         fetchSellersCount();
+                        fetchPendingRequestsCount();
                     } else {
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalBtnText;
@@ -342,7 +370,7 @@
         }
 
         let users = [];
-        let revealedPasswords = {};
+        let pendingRequests = [];
 
         async function fetchUsers() {
             try {
@@ -362,6 +390,116 @@
             } catch (error) {
                 console.error('Error fetching users:', error);
                 showToast('Failed to load users from database', 'error');
+            }
+        }
+
+        async function fetchPendingRequestsCount() {
+            try {
+                const response = await fetch('/api/control-employee/get-pending-requests');
+                const data = await response.json();
+                if (data.success) {
+                    pendingRequests = data.requests;
+                    document.getElementById('pendingCountDisplay').innerText = data.requests.length + ' Requests';
+                }
+            } catch (error) {
+                console.error('Error fetching pending requests count:', error);
+            }
+        }
+
+        function openPendingRequestModal() {
+            fetchPendingRequests();
+            const modal = document.getElementById('pendingRequestModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+        }
+
+        function closePendingRequestModal() {
+            const modal = document.getElementById('pendingRequestModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        async function fetchPendingRequests() {
+            try {
+                const response = await fetch('/api/control-employee/get-pending-requests');
+                const data = await response.json();
+                if (data.success) {
+                    pendingRequests = data.requests;
+                    renderPendingTable(pendingRequests);
+                    document.getElementById('pendingCountDisplay').innerText = pendingRequests.length + ' Requests';
+                }
+            } catch (error) {
+                console.error('Error fetching pending requests:', error);
+                showToast('Failed to load pending requests', 'error');
+            }
+        }
+
+        function renderPendingTable(data) {
+            const tbody = document.getElementById('pendingTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-400 font-medium"><i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>No pending seller requests found</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <p class="font-semibold text-slate-800">${item.name || 'N/A'}</p>
+                        <p class="text-xs text-indigo-600 font-medium"><i class="fa-solid fa-store mr-1"></i>${item.shop_name || 'No Shop Name'}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <p class="text-slate-700 font-medium"><i class="fa-solid fa-envelope mr-1 text-slate-400"></i>${item.email || 'N/A'}</p>
+                        <p class="text-slate-500 font-mono mt-1"><i class="fa-solid fa-phone mr-1 text-slate-400"></i>${item.phone || item.mobile_number || 'N/A'}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs font-mono text-slate-600">
+                        <p><span class="font-semibold">Bank:</span> ${item.bank_name || 'N/A'}</p>
+                        <p><span class="font-semibold">Acc:</span> ${item.bank_acc_number || 'N/A'}</p>
+                        <p><span class="font-semibold">Branch:</span> ${item.bank_branch || 'N/A'}</p>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold uppercase inline-flex items-center">
+                            <i class="fa-solid fa-spinner animate-spin mr-1"></i>${item.status}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="deleteSellerRequest(${item.id}, '${item.name || 'User'}')" class="px-3.5 py-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-xs font-semibold transition-all shadow-sm border border-red-200">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Delete Request
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteSellerRequest(id, name) {
+            const confirmed = confirm(`Are you sure you want to delete all data for "${name}" from admins database?`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/control-employee/delete-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Seller request deleted successfully!', 'success');
+                    fetchPendingRequests();
+                } else {
+                    showToast(data.message || 'Failed to delete seller request', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting seller request:', error);
+                showToast('Server error while deleting request', 'error');
             }
         }
 
@@ -495,6 +633,7 @@
             fetchUsers();
             fetchCommissionRate();
             fetchSellersCount();
+            fetchPendingRequestsCount();
             initAutoScroll();
             
             const sidebar = document.getElementById('sidebar');
@@ -581,9 +720,6 @@
             } else if (cardType === 'admin') {
                 titleHTML = '<i class="fa-solid fa-shield-halved text-emerald-600 mr-2"></i>System Security Status';
                 contentHTML = `<div class="space-y-3"><div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-center justify-between"><div><p class="text-xs font-semibold uppercase text-emerald-600">System Security Level</p><h4 class="text-xl font-bold text-emerald-700">Pin Protection Active</h4></div><span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-medium">Verified</span></div></div>`;
-            } else if (cardType === 'approvals') {
-                titleHTML = '<i class="fa-solid fa-hourglass-half text-amber-600 mr-2"></i>Pending Staff & Vendor Approvals';
-                contentHTML = `<div class="space-y-3"><p class="text-xs text-slate-500">The following requests are awaiting verification.</p></div>`;
             }
 
             titleEl.innerHTML = titleHTML;
