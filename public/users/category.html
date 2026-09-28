@@ -692,7 +692,7 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
             injectItemListSchema(data.products);
         } else {
             if (!isLoadMore) {
-                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">E-mubuhurti ai promo ba category-te kono product pawa jayni!</div>`;
+                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">We couldn't find any products in this category or promo right now. Please check back later!</div>`;
                 if (loadMoreContainer) loadMoreContainer.style.display = 'none';
             }
         }
