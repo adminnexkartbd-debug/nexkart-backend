@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
    <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -79,7 +79,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-family: 'Poppins', 'Hind Siliguri', sans-serif;
       scroll-behavior: smooth;
     }
-
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
     body { 
       background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
       min-height: 100vh;
@@ -1462,74 +1465,40 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    // Updated fetchProductData Function
 async function fetchProductData() {
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // URL standard param 'slug' athoba 'slug_name' check
-  const rawSlug = urlParams.get('slug') || urlParams.get('slug_name');
-  const productId = urlParams.get('id');
-
-  let requestUrl = '';
-  
-  if (rawSlug) {
-    // Slug clean and decode
-    currentIdentifier = decodeURIComponent(rawSlug.trim());
-    currentIdentifierType = 'slug';
-    requestUrl = `/user/product/slug/${encodeURIComponent(currentIdentifier)}`;
-  } else if (productId) {
-    currentIdentifier = productId.trim();
-    currentIdentifierType = 'id';
-    requestUrl = `/user/product/${currentIdentifier}`;
-  } else {
-    console.error("No product slug or ID provided in URL.");
-    return;
-  }
-
-  try {
-    // 1. Fetch Product Data from Backend
-    const response = await fetch(requestUrl);
-    if (!response.ok) {
-      throw new Error(`Server returned status: ${response.status}`);
-    }
-    const data = await response.json();
-
-    // 2. Fetch User Coin Balance
-    let userCoins = 0;
     try {
-      const coinResponse = await fetch('/user/my-coin-balance');
-      const coinData = await coinResponse.json();
-      if (coinData.success) {
-        userCoins = coinData.total_coins || 0;
-      }
-    } catch (coinErr) {
-      console.warn("Could not load user coins:", coinErr);
-    }
+        const urlParams = new URLSearchParams(window.location.search);
+        // slug অথবা id উভয় কুয়েরি প্যারামিটার চেক করা হচ্ছে
+        const productIdentifier = urlParams.get('slug') || urlParams.get('id');
 
-    // 3. Render Product Details
-    if (data.success && data.product) {
-      const serverSlug = data.product.slug || data.product.slug_name;
-      if (serverSlug) {
-        currentIdentifier = serverSlug;
-        currentIdentifierType = 'slug';
-      }
+        if (!productIdentifier) {
+            console.error("No product ID or Slug provided in URL");
+            return;
+        }
 
-      renderProductDetails(
-        data.product,
-        data.gallery_images,
-        data.seller_products,
-        data.suggested_products,
-        userCoins
-      );
-    } else {
-      console.error("Product data not found in response:", data);
-      alert("Product-er details pawa jayni!");
+        // ব্যাকএন্ডের সঠিক API এনপয়েন্টে slug বা id পাঠানো হচ্ছে
+        const response = await fetch(`/user/product/${encodeURIComponent(productIdentifier)}`);
+        
+        if (!response.ok) {
+            throw new Error(`Server returned status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.product) {
+            renderProductDetails(data);
+        } else {
+            console.error("Product data empty or invalid:", data.message);
+        }
+    } catch (error) {
+        console.error("Error fetching product data:", error);
     }
-  } catch (error) {
-    console.error("Error fetching product data:", error);
-  }
 }
-    async function loadProductReviews(targetProductId) {
+
+// পেজ লোড হওয়ার সাথে সাথে কল হবে
+document.addEventListener('DOMContentLoaded', fetchProductData);   
+
+async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
