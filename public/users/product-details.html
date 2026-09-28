@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
    <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -79,10 +79,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       font-family: 'Poppins', 'Hind Siliguri', sans-serif;
       scroll-behavior: smooth;
     }
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
+
     body { 
       background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
       min-height: 100vh;
@@ -1465,40 +1462,65 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-async function fetchProductData() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        // slug অথবা id উভয় কুয়েরি প্যারামিটার চেক করা হচ্ছে
-        const productIdentifier = urlParams.get('slug') || urlParams.get('id');
+    // Dynamic API fetch based on Slug or ID (Prioritizes Slug for SEO Routing)
+    async function fetchProductData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productSlug = urlParams.get('slug') || urlParams.get('slug_name');
+      const productId = urlParams.get('id');
 
-        if (!productIdentifier) {
-            console.error("No product ID or Slug provided in URL");
-            return;
-        }
+      let requestUrl = '';
+      if (productSlug) {
+        currentIdentifier = productSlug;
+        currentIdentifierType = 'slug';
+        requestUrl = `/user/product/slug/${encodeURIComponent(productSlug)}`;
+      } else if (productId) {
+        currentIdentifier = productId;
+        currentIdentifierType = 'id';
+        requestUrl = `/user/product/${productId}`;
+      } else {
+        return;
+      }
 
-        // ব্যাকএন্ডের সঠিক API এনপয়েন্টে slug বা id পাঠানো হচ্ছে
-        const response = await fetch(`/user/product/${encodeURIComponent(productIdentifier)}`);
-        
-        if (!response.ok) {
-            throw new Error(`Server returned status: ${response.status}`);
-        }
-
+      try {
+        // 1. Fetch Product Data
+        const response = await fetch(requestUrl);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
         const data = await response.json();
 
-        if (data.success && data.product) {
-            renderProductDetails(data);
-        } else {
-            console.error("Product data empty or invalid:", data.message);
+        // 2. Fetch User Coin Balance
+        let userCoins = 0;
+        try {
+          const coinResponse = await fetch('/user/my-coin-balance');
+          const coinData = await coinResponse.json();
+          if (coinData.success) {
+            userCoins = coinData.total_coins || 0;
+          }
+        } catch (coinErr) {
+          console.warn("Could not load user coins:", coinErr);
         }
-    } catch (error) {
+
+        // 3. Render Details
+        if (data.success && data.product) {
+          const serverSlug = data.product.slug || data.product.slug_name;
+          if (serverSlug) {
+            currentIdentifier = serverSlug;
+            currentIdentifierType = 'slug';
+          }
+
+          renderProductDetails(
+            data.product,
+            data.gallery_images,
+            data.seller_products,
+            data.suggested_products,
+            userCoins
+          );
+        }
+      } catch (error) {
         console.error("Error fetching product data:", error);
+      }
     }
-}
 
-// পেজ লোড হওয়ার সাথে সাথে কল হবে
-document.addEventListener('DOMContentLoaded', fetchProductData);   
-
-async function loadProductReviews(targetProductId) {
+    async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
