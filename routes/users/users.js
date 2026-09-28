@@ -258,9 +258,6 @@ router.get(['/return-policy', '/return-policy.html'], (req, res) => {
 });
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 
-router.get('/my_coin', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'my_coin.html')));
-router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
-router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
 router.get('/product-details', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
 router.get('/product-details.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
@@ -815,28 +812,118 @@ router.get('/get-unread-sms-count', async (req, res) => {
     }
 });
 
+// ==================== [ GOOGLE AUTH ROUTES ] ====================
+
+// ১. Normal Google Login Route (cslogin পেজের জন্য)
 router.get('/auth/google', passport.authenticate('google-user', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', 
-    passport.authenticate('google-user', { failureRedirect: '/user/cslogin?error=admin_email' }),
-    (req, res) => {
-        req.logIn(req.user, (err) => {
-            if (err) {
-                console.error("Google Login Session Error:", err);
-                return res.redirect('/user/cslogin');
-            }
+// ২. Pop-up Google Login Route (Product Details মডালের জন্য)
+router.get('/auth/google/popup', (req, res, next) => {
+    passport.authenticate('google-user', { 
+        scope: ['profile', 'email'],
+        state: 'popup'
+    })(req, res, next);
+});
 
-            if (req.user) {
-                req.session.user = { id: req.user.id, user_type: 'user' };
-                req.session.userId = req.user.id;
-            }
-            
-            const targetUrl = req.session.redirectTo || '/user/dashboard';
-            delete req.session.redirectTo;
-            res.redirect(targetUrl);
-        });
+// ৩. Single Google OAuth Callback Route (উভয় ধরনের গুগল লগইন হ্যান্ডেল করবে)
+router.get('/auth/google/callback', 
+    passport.authenticate('google-user', { failureRedirect: '/user/auth/google/popup-failure' }),
+    (req, res) => {
+        req.session.user = { id: req.user.id, user_type: 'user' };
+        req.session.userId = req.user.id;
+
+        // চেক করা হচ্ছে লগইনটি পপ-আপ থেকে এসেছে কি না
+        const isPopup = req.query.state === 'popup';
+
+        if (isPopup) {
+            return res.send(`
+                <script>
+                    if (window.opener) {
+                        window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
+                        window.close();
+                    } else {
+                        window.location.href = '/user/dashboard';
+                    }
+                </script>
+            `);
+        }
+
+        // সাধারণ লগইনের ক্ষেত্রে
+        const targetUrl = req.session.redirectTo || '/user/dashboard';
+        delete req.session.redirectTo;
+        res.redirect(targetUrl);
     }
 );
+
+// ৪. Failure Route
+router.get('/auth/google/popup-failure', (req, res) => {
+    const isPopup = req.query.state === 'popup';
+
+    if (isPopup) {
+        return res.send(`
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
+                    window.close();
+                } else {
+                    window.location.href = '/user/cslogin';
+                }
+            </script>
+        `);
+    }
+    res.redirect('/user/cslogin?error=admin_email');
+});
+
+// ==================== [ POPUP EMAIL/PASSWORD LOGIN ROUTE ] ====================
+
+router.post('/pop-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.json({ success: false, message: "Email ebong Password pradan korun!" });
+    }
+
+    try {
+        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        if (adminCheck.length > 0) {
+            return res.json({ success: false, message: "Admin email diye user login sombhov noy!" });
+        }
+
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        const user = users[0];
+
+        if (!user.password || typeof user.password !== 'string') {
+            return res.json({ success: false, message: "Ei account-ti Google diye toiri kora. Google button ti use korun!" });
+        }
+
+        const isMatch = await bcrypt.compare(String(password), String(user.password));
+        if (!isMatch) {
+            return res.json({ success: false, message: "Email ba Password vul!" });
+        }
+
+        user.user_type = 'user';
+
+        req.login(user, (err) => {
+            if (err) {
+                console.error("Passport Pop Login Error:", err);
+                return res.json({ success: false, message: "Session Error!" });
+            }
+            
+            req.session.user = { id: user.id, user_type: 'user' }; 
+            req.session.userId = user.id; 
+
+            return res.json({ success: true, message: "Login Successful!" });
+        });
+
+    } catch (err) {
+        console.error("Pop Login Error:", err);
+        return res.json({ success: false, message: "Server Error!" });
+    }
+});
 
 router.post('/signup', async (req, res) => {
     const { name, email, password, confirm_password } = req.body;
@@ -1962,105 +2049,5 @@ router.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
-// ==================== [ POPUP GOOGLE AUTH ROUTES ] ====================
 
-// ১. Pop-up Initiate Route
-router.get('/auth/google/popup', (req, res, next) => {
-    req.session.isPopupLogin = true;
-    passport.authenticate('google-user', { scope: ['profile', 'email'] })(req, res, next);
-});
-
-// ২. Google OAuth Callback Route
-router.get('/auth/google/callback', 
-    passport.authenticate('google-user', { failureRedirect: '/user/auth/google/popup-failure' }),
-    (req, res) => {
-        req.session.user = { id: req.user.id, user_type: 'user' };
-        req.session.userId = req.user.id;
-
-        // পপ-আপের মাধ্যমে লগইন হয়ে থাকলে
-        if (req.session.isPopupLogin) {
-            delete req.session.isPopupLogin;
-            return res.send(`
-                <script>
-                    if (window.opener) {
-                        window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
-                        window.close();
-                    } else {
-                        window.location.href = '/user/dashboard';
-                    }
-                </script>
-            `);
-        }
-
-        const targetUrl = req.session.redirectTo || '/user/dashboard';
-        delete req.session.redirectTo;
-        res.redirect(targetUrl);
-    }
-);
-
-// ৩. Failure Handler (cslogin এ না পাঠিয়ে পপ-আপ বন্ধ করবে)
-router.get('/auth/google/popup-failure', (req, res) => {
-    res.send(`
-        <script>
-            if (window.opener) {
-                window.opener.postMessage({ status: 'error', message: 'login_failed' }, '*');
-                window.close();
-            } else {
-                window.location.href = '/user/product-details';
-            }
-        </script>
-    `);
-});
-
-
-// ==================== [ POPUP EMAIL/PASSWORD LOGIN ROUTE ] ====================
-
-router.post('/pop-login', async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.json({ success: false, message: "Email ebong Password pradan korun!" });
-    }
-
-    try {
-        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
-        if (adminCheck.length > 0) {
-            return res.json({ success: false, message: "Admin email diye user login sombhov noy!" });
-        }
-
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) {
-            return res.json({ success: false, message: "Email ba Password vul!" });
-        }
-
-        const user = users[0];
-
-        if (!user.password || typeof user.password !== 'string') {
-            return res.json({ success: false, message: "Ei account-ti Google diye toiri kora. Google button ti use korun!" });
-        }
-
-        const isMatch = await bcrypt.compare(String(password), String(user.password));
-        if (!isMatch) {
-            return res.json({ success: false, message: "Email ba Password vul!" });
-        }
-
-        user.user_type = 'user';
-
-        req.login(user, (err) => {
-            if (err) {
-                console.error("Passport Pop Login Error:", err);
-                return res.json({ success: false, message: "Session Error!" });
-            }
-            
-            req.session.user = { id: user.id, user_type: 'user' }; 
-            req.session.userId = user.id; 
-
-            return res.json({ success: true, message: "Login Successful!" });
-        });
-
-    } catch (err) {
-        console.error("Pop Login Error:", err);
-        return res.json({ success: false, message: "Server Error!" });
-    }
-});
 module.exports = router;
