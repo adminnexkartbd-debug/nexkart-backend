@@ -36,9 +36,11 @@ app.use(
         "wss://*", 
         "ws://*",
         "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
         "https://stats.g.doubleclick.net",
         "https://www.facebook.com",
-        "https://connect.facebook.net"
+        "https://connect.facebook.net",
+        "https://*.facebook.com"
       ], 
       scriptSrc: [
         "'self'", 
@@ -50,22 +52,36 @@ app.use(
         "https://www.googletagmanager.com", 
         "https://unpkg.com",
         "https://www.google-analytics.com",
-        "https://connect.facebook.net"
+        "https://*.google-analytics.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.com"
       ],
-      // script-src-elem আলাদাভাবে যুক্ত করা হলো যাতে ব্রাউজার সরাসরি এলিমেন্ট স্ক্রিপ্ট ব্লক না করে
+      // scriptSrcElem-এ 'unsafe-eval' যোগ করা হয়েছে যাতে GTM/GTAG কোনো কোড ইভালুয়েট করলে ব্লক না হয়
       scriptSrcElem: [
         "'self'", 
         "'unsafe-inline'", 
+        "'unsafe-eval'",
         "https://cdnjs.cloudflare.com", 
         "https://cdn.jsdelivr.net", 
         "https://cdn.tailwindcss.com",
         "https://www.googletagmanager.com", 
         "https://unpkg.com",
         "https://www.google-analytics.com",
-        "https://connect.facebook.net"
+        "https://*.google-analytics.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.com"
       ],
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "https://cdnjs.cloudflare.com", 
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net", 
+        "https://unpkg.com",
+        "https://www.googletagmanager.com"
+      ],
+      styleSrcElem: [
         "'self'", 
         "'unsafe-inline'", 
         "https://cdnjs.cloudflare.com", 
@@ -92,8 +108,11 @@ app.use(
         "https://www.google.com.bd",
         "https://www.google.com",
         "https://www.googletagmanager.com",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
         "https://fonts.gstatic.com", 
         "https://www.facebook.com",
+        "https://connect.facebook.net",
         "https://cx.atdmt.com"
       ],
       mediaSrc: [
@@ -105,6 +124,7 @@ app.use(
       ],
       fontSrc: [
         "'self'", 
+        "data:",
         "https://cdnjs.cloudflare.com", 
         "https://fonts.gstatic.com"
       ],
@@ -114,7 +134,9 @@ app.use(
         "https://www.facebook.com",
         "https://tagassistant.google.com",
         "https://*.facebook.com"
-      ], 
+      ],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"]
     },
   })
 );
