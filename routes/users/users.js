@@ -1746,23 +1746,20 @@ router.get('/inquiries/:productId', async (req, res) => {
 
 router.get('/product/:id', async (req, res) => {
     try {
-        const productIdentifier = req.params.id;
+        const productId = req.params.id;
         
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
-        // slug, product_id, অথবা id যেকোনো একটির সাথে ম্যাচ করানো হচ্ছে
         const productQuery = `
             SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
             FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.slug = ? OR p.product_id = ? OR p.id = ?
+            WHERE p.product_id = ? OR p.id = ?
         `;
-        const [products] = await db.query(productQuery, [productIdentifier, productIdentifier, productIdentifier]);
-        
+        const [products] = await db.query(productQuery, [productId, productId]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
         }
-        
         const product = products[0];
         const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
 
@@ -1776,7 +1773,7 @@ router.get('/product/:id', async (req, res) => {
         }
 
         const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
@@ -1788,7 +1785,7 @@ router.get('/product/:id', async (req, res) => {
         `, [product.admin_id, product.id]);
 
         const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
@@ -1813,6 +1810,7 @@ router.get('/product/:id', async (req, res) => {
         return res.status(500).json({ success: false, message: "Server Error" });
     }
 });
+
 router.get('/current_user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
         return res.json(req.user);
@@ -1954,22 +1952,6 @@ router.get('/get-products-by-category', async (req, res) => {
     } catch (error) {
         console.error("Get Category Products Error:", error);
         return res.status(500).json({ success: false, message: "Server Error" });
-    }
-});
-
-// Example: Slug diye product Details Fetch
-router.get('/product/:slug', async (req, res) => {
-    try {
-        const productSlug = req.params.slug;
-        const product = await Product.findOne({ slug: productSlug }); // ba SQL query
-
-        if (!product) {
-            return res.status(404).render('404', { message: 'Product not found' });
-        }
-
-        res.render('product-details', { product });
-    } catch (error) {
-        res.status(500).send('Server Error');
     }
 });
 
