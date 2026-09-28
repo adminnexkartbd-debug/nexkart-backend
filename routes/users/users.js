@@ -118,7 +118,7 @@ passport.use('google-user', new GoogleStrategy({
 passport.use('google-popup', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
-    callbackURL: 'https://www.nexkartbd.com/user/auth/google/popup/callback',
+    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL || 'https://www.nexkartbd.com/user/auth/google/popup/callback',
     proxy: true 
 }, async (accessToken, refreshToken, profile, done) => {
     try {
@@ -888,7 +888,6 @@ router.get('/auth/google/callback',
 // 1. Popup Google Login Initiate Route
 router.get('/auth/google/popup', passport.authenticate('google-popup', { scope: ['profile', 'email'] }));
 
-// 2. Popup Google OAuth Callback Route
 router.get('/auth/google/popup/callback', 
     passport.authenticate('google-popup', { failureRedirect: '/user/auth/google/popup-failure' }),
     (req, res) => {
@@ -912,17 +911,22 @@ router.get('/auth/google/popup/callback',
                 req.session.userId = req.user.id;
             }
 
-            // Success response message sent to parent popup window
-            return res.send(`
-                <script>
-                    if (window.opener) {
-                        window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
-                        window.close();
-                    } else {
-                        window.location.href = '/user/dashboard';
-                    }
-                </script>
-            `);
+            // Session explicitly save to guarantee cookie persistence
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error("Session Save Error:", saveErr);
+                }
+                return res.send(`
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ status: 'success', message: 'login_completed' }, '*');
+                            window.close();
+                        } else {
+                            window.location.href = '/user/dashboard';
+                        }
+                    </script>
+                `);
+            });
         });
     }
 );
