@@ -1462,64 +1462,73 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
 
-    // Dynamic API fetch based on Slug or ID (Prioritizes Slug for SEO Routing)
-    async function fetchProductData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const productSlug = urlParams.get('slug') || urlParams.get('slug_name');
-      const productId = urlParams.get('id');
+    // Updated fetchProductData Function
+async function fetchProductData() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // URL standard param 'slug' athoba 'slug_name' check
+  const rawSlug = urlParams.get('slug') || urlParams.get('slug_name');
+  const productId = urlParams.get('id');
 
-      let requestUrl = '';
-      if (productSlug) {
-        currentIdentifier = productSlug;
-        currentIdentifierType = 'slug';
-        requestUrl = `/user/product/slug/${encodeURIComponent(productSlug)}`;
-      } else if (productId) {
-        currentIdentifier = productId;
-        currentIdentifierType = 'id';
-        requestUrl = `/user/product/${productId}`;
-      } else {
-        return;
+  let requestUrl = '';
+  
+  if (rawSlug) {
+    // Slug clean and decode
+    currentIdentifier = decodeURIComponent(rawSlug.trim());
+    currentIdentifierType = 'slug';
+    requestUrl = `/user/product/slug/${encodeURIComponent(currentIdentifier)}`;
+  } else if (productId) {
+    currentIdentifier = productId.trim();
+    currentIdentifierType = 'id';
+    requestUrl = `/user/product/${currentIdentifier}`;
+  } else {
+    console.error("No product slug or ID provided in URL.");
+    return;
+  }
+
+  try {
+    // 1. Fetch Product Data from Backend
+    const response = await fetch(requestUrl);
+    if (!response.ok) {
+      throw new Error(`Server returned status: ${response.status}`);
+    }
+    const data = await response.json();
+
+    // 2. Fetch User Coin Balance
+    let userCoins = 0;
+    try {
+      const coinResponse = await fetch('/user/my-coin-balance');
+      const coinData = await coinResponse.json();
+      if (coinData.success) {
+        userCoins = coinData.total_coins || 0;
       }
-
-      try {
-        // 1. Fetch Product Data
-        const response = await fetch(requestUrl);
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
-        const data = await response.json();
-
-        // 2. Fetch User Coin Balance
-        let userCoins = 0;
-        try {
-          const coinResponse = await fetch('/user/my-coin-balance');
-          const coinData = await coinResponse.json();
-          if (coinData.success) {
-            userCoins = coinData.total_coins || 0;
-          }
-        } catch (coinErr) {
-          console.warn("Could not load user coins:", coinErr);
-        }
-
-        // 3. Render Details
-        if (data.success && data.product) {
-          const serverSlug = data.product.slug || data.product.slug_name;
-          if (serverSlug) {
-            currentIdentifier = serverSlug;
-            currentIdentifierType = 'slug';
-          }
-
-          renderProductDetails(
-            data.product,
-            data.gallery_images,
-            data.seller_products,
-            data.suggested_products,
-            userCoins
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching product data:", error);
-      }
+    } catch (coinErr) {
+      console.warn("Could not load user coins:", coinErr);
     }
 
+    // 3. Render Product Details
+    if (data.success && data.product) {
+      const serverSlug = data.product.slug || data.product.slug_name;
+      if (serverSlug) {
+        currentIdentifier = serverSlug;
+        currentIdentifierType = 'slug';
+      }
+
+      renderProductDetails(
+        data.product,
+        data.gallery_images,
+        data.seller_products,
+        data.suggested_products,
+        userCoins
+      );
+    } else {
+      console.error("Product data not found in response:", data);
+      alert("Product-er details pawa jayni!");
+    }
+  } catch (error) {
+    console.error("Error fetching product data:", error);
+  }
+}
     async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
