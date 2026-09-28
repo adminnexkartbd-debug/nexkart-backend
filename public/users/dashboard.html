@@ -431,20 +431,68 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             font-size: 14px;
         }
 
+        /* ---------------- NAV LINKS WRAPPER & SCROLL BUTTONS ---------------- */
+        .nav-links-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            overflow: hidden;
+            padding: 0 5px;
+        }
+
+        .scroll-btn {
+            background: var(--white);
+            color: var(--primary-color);
+            border: 1px solid var(--accent-pink);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: var(--transition);
+            z-index: 5;
+            flex-shrink: 0;
+        }
+
+        .scroll-btn:hover {
+            background: var(--primary-gradient);
+            color: var(--white);
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+
+        .scroll-btn.left-btn {
+            margin-right: 8px;
+        }
+
+        .scroll-btn.right-btn {
+            margin-left: 8px;
+        }
+
         .nav-links-list {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 30px;
+            gap: 25px;
             list-style: none;
             overflow-x: auto;
             white-space: nowrap;
             flex: 1;
             padding: 5px 0;
+            scroll-behavior: smooth;
         }
 
         .nav-links-list::-webkit-scrollbar {
             display: none;
+        }
+
+        .nav-links-list {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .nav-links-list li a {
@@ -1374,16 +1422,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </ul>
         </div>
 
-        <ul class="nav-links-list">
-            <li><a href="/user/category.html?type=all" class="super-deal"><i class="fa-solid fa-store"></i> <span data-i18n="all_products">All Products</span></a></li>
-            <li><a href="/user/category.html?promo=super_deal" class="super-deal"><i class="fa-solid fa-bolt"></i> <span data-i18n="super_deals">Super Deals</span></a></li>
-            <li><a href="/user/category.html?promo=hot"><i class="fa-solid fa-fire text-danger"></i> <span data-i18n="hot_items">Hot Items</span></a></li>
-            <li><a href="/user/category.html?promo=best_seller"><i class="fa-solid fa-trophy"></i> <span data-i18n="best_sellers">Best Sellers</span></a></li>
-            <li><a href="/user/category.html?promo=new_arrival"><i class="fa-solid fa-sparkles"></i> <span data-i18n="new_arrivals">New Arrivals</span></a></li>
-            <li><a href="/user/category.html?promo=free_shipping"><i class="fa-solid fa-truck-fast"></i> <span data-i18n="free_shipping">Free Shipping</span></a></li>
-            <li><a href="/user/category.html?promo=clearance"><i class="fa-solid fa-tags"></i> <span data-i18n="clearance_sale">Clearance Sale</span></a></li>
-            <li><a href="/user/category.html?promo=trending"><i class="fa-solid fa-chart-line"></i> <span data-i18n="trending_now">Trending Now</span></a></li>
-        </ul>
+        <!-- HORIZONTAL SCROLL NAV CONTAINER -->
+        <div class="nav-links-wrapper">
+            <button class="scroll-btn left-btn" id="scrollLeftBtn" onclick="scrollNav(-200)" aria-label="Previous categories">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <ul class="nav-links-list" id="navLinksList">
+                <li><a href="/user/category.html?type=all" class="super-deal"><i class="fa-solid fa-store"></i> <span data-i18n="all_products">All Products</span></a></li>
+                <li><a href="/user/category.html?promo=hot"><i class="fa-solid fa-fire text-danger"></i> <span data-i18n="hot_items">🔥 HOT Selling (হট সেলিং)</span></a></li>
+                <li><a href="/user/category.html?promo=super_deal" class="super-deal"><i class="fa-solid fa-bolt"></i> <span data-i18n="super_deals">⚡ Super Deals / Flash Sale (সুপার ডিল)</span></a></li>
+                <li><a href="/user/category.html?promo=best_seller"><i class="fa-solid fa-trophy"></i> <span data-i18n="best_sellers">🏆 Best Seller (বেস্টসেলার)</span></a></li>
+                <li><a href="/user/category.html?promo=new_arrival"><i class="fa-solid fa-sparkles"></i> <span data-i18n="new_arrivals">✨ New Arrival (নতুন রিলিজ)</span></a></li>
+                <li><a href="/user/category.html?promo=limited_edition"><i class="fa-solid fa-hourglass-half"></i> <span data-i18n="limited_edition">⏳ Limited Edition (লিমিটেড এডিশন)</span></a></li>
+                <li><a href="/user/category.html?promo=trending"><i class="fa-solid fa-chart-line"></i> <span data-i18n="trending_now">📈 Trending Now (ট্রেন্ডিং)</span></a></li>
+                <li><a href="/user/category.html?promo=exclusive"><i class="fa-solid fa-gem"></i> <span data-i18n="exclusive">💎 NexKart Exclusive (এক্সক্লুসিভ)</span></a></li>
+                <li><a href="/user/category.html?promo=free_shipping"><i class="fa-solid fa-truck-fast"></i> <span data-i18n="free_shipping">🚚 Free Shipping Item (ফ্রি শিপিং)</span></a></li>
+                <li><a href="/user/category.html?promo=clearance"><i class="fa-solid fa-tags"></i> <span data-i18n="clearance_sale">🏷️ Clearance Sale (ক্লিয়ারেন্স সেল)</span></a></li>
+            </ul>
+
+            <button class="scroll-btn right-btn" id="scrollRightBtn" onclick="scrollNav(200)" aria-label="Next categories">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
 
     <!-- ৩. ডায়নামিক স্লাইডিং ব্যানার সেকশন -->
@@ -1406,7 +1467,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <i class="fa-solid fa-truck-fast"></i>
                 <div class="feature-info">
                     <h4 data-i18n="feat_fast_shipping">Fast Shipping</h4>
-                    <p data-i18n="feat_fast_shipping_sub">On orders over $50</p>
+                    <p data-i18n="feat_fast_shipping_sub"Delivery all over Bangladesh</p>
                 </div>
             </div>
             <div class="feature-card">
@@ -1465,6 +1526,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
   <script>
+    // ---------------- NAVIGATION HORIZONTAL SCROLL FUNCTION ----------------
+    function scrollNav(amount) {
+        const navList = document.getElementById('navLinksList');
+        if (navList) {
+            navList.scrollBy({
+                left: amount,
+                behavior: 'smooth'
+            });
+        }
+    }
+
     // ---------------- LANGUAGE TRANSLATION DICTIONARY ----------------
     const translations = {
         en: {
@@ -1493,15 +1565,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             cat_baby: "Baby & Toys",
             cat_new_arrival: "New Arrivals",
             all_products: "All Products",
-            super_deals: "Super Deals",
-            hot_items: "Hot Items",
-            best_sellers: "Best Sellers",
-            new_arrivals: "New Arrivals",
-            free_shipping: "Free Shipping",
-            clearance_sale: "Clearance Sale",
-            trending_now: "Trending Now",
+            hot_items: "🔥 HOT Selling",
+            super_deals: "⚡ Super Deals / Flash Sale",
+            best_sellers: "🏆 Best Seller",
+            new_arrivals: "✨ New Arrival",
+            limited_edition: "⏳ Limited Edition",
+            trending_now: "📈 Trending Now",
+            exclusive: "💎 NexKart Exclusive",
+            free_shipping: "🚚 Free Shipping Item",
+            clearance_sale: "🏷️ Clearance Sale",
             feat_fast_shipping: "Fast Shipping",
-            feat_fast_shipping_sub: "On orders over $50",
+            feat_fast_shipping_sub: "Delivery all over Bangladesh",
             feat_authentic: "100% Authentic",
             feat_authentic_sub: "Guaranteed genuine items",
             feat_return: "7 Days Return",
@@ -1539,15 +1613,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             cat_baby: "বেবি ও টয়েজ",
             cat_new_arrival: "নতুন প্রোডাক্ট",
             all_products: "সকল পণ্য",
-            super_deals: "সুপার ডিলস",
-            hot_items: "হট আইটেম",
-            best_sellers: "বেস্ট সেলার",
-            new_arrivals: "নতুন আগমন",
-            free_shipping: "ফ্রি শিপিং",
-            clearance_sale: "ক্লিয়ারেন্স সেল",
-            trending_now: "ট্রেন্ডিং নাউ",
+            hot_items: "🔥 হট সেলিং",
+            super_deals: "⚡ সুপার ডিল",
+            best_sellers: "🏆 বেস্টসেলার",
+            new_arrivals: "✨ নতুন রিলিজ",
+            limited_edition: "⏳ লিমিটেড এডিশন",
+            trending_now: "📈 ট্রেন্ডিং",
+            exclusive: "💎 এক্সক্লুসিভ",
+            free_shipping: "🚚 ফ্রি শিপিং",
+            clearance_sale: "🏷️ ক্লিয়ারেন্স সেল",
             feat_fast_shipping: "দ্রুত শিপিং",
-            feat_fast_shipping_sub: "৫০ ডলারের বেশি অর্ডারে",
+            feat_fast_shipping_sub: "সারা বাংলাদেশে ডেলিভারি",
             feat_authentic: "১০০% খাঁটি",
             feat_authentic_sub: "গ্যারান্টিযুক্ত জেনুইন আইটেম",
             feat_return: "৭ দিনের রিটার্ন",
