@@ -2042,55 +2042,80 @@ router.get('/dashProduct', async (req, res) => {
     }
 });
 
-// users.js
+// Dynamic Category, Promo Badge & Search Product Fetching Endpoint
 router.get('/get-products-by-category', async (req, res) => {
     try {
-        const { cat, type, promo, search, page = 1, limit = 8 } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 8;
+        const offset = (page - 1) * limit;
+
+        const { cat, type, promo, search } = req.query;
 
         let whereClauses = [];
         let queryParams = [];
 
-        // Check specifically for Coin Offer products
-        if (promo && promo === 'coin_products') {
-            whereClauses.push("LOWER(coin_offer) = 'yes'");
-        } else {
-            // Normal category filtering
-            if (cat) {
-                whereClauses.push("category = ?");
-                queryParams.push(cat);
-            }
-            if (type && type !== 'all') {
-                whereClauses.push("type = ?");
-                queryParams.push(type);
+        // 1. Promo Badge Filtering Logic
+        if (promo) {
+            if (promo === 'super_deal') {
+                whereClauses.push("(LOWER(promo_badge) LIKE '%super%' OR LOWER(promo_badge) LIKE '%flash%')");
+            } else if (promo === 'hot') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%hot%'");
+            } else if (promo === 'best_seller') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%best%'");
+            } else if (promo === 'new_arrival') {
+                whereClauses.push("(LOWER(promo_badge) LIKE '%new%' OR LOWER(promo_badge) LIKE '%arrival%')");
+            } else if (promo === 'coin_products') {
+                whereClauses.push("LOWER(coin_offer) = 'yes'");
+            } else if (promo === 'limited_edition') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%limited%'");
+            } else if (promo === 'trending') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%trend%'");
+            } else if (promo === 'exclusive') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%exclusive%'");
+            } else if (promo === 'free_shipping') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%free%'");
+            } else if (promo === 'clearance') {
+                whereClauses.push("LOWER(promo_badge) LIKE '%clearance%'");
+            } else if (promo !== 'all') {
+                whereClauses.push("LOWER(promo_badge) = ?");
+                queryParams.push(promo.toLowerCase());
             }
         }
 
+        // 2. Category & Type Filtering Logic
+        const categoryVal = cat || type;
+        if (categoryVal && categoryVal !== 'all' && !promo) {
+            whereClauses.push("LOWER(category) = ?");
+            queryParams.push(categoryVal.toLowerCase());
+        }
+
+        // 3. Search Query Filtering Logic
         if (search) {
-            whereClauses.push("(title LIKE ? OR description LIKE ?)");
-            queryParams.push(`%${search}%`, `%${search}%`);
+            whereClauses.push("(LOWER(title) LIKE ? OR LOWER(category) LIKE ?)");
+            queryParams.push(`%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`);
         }
 
         let whereSQL = whereClauses.length > 0 ? " WHERE " + whereClauses.join(" AND ") : "";
 
-        // Main Query
-        let query = `SELECT * FROM products ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
-        queryParams.push(parseInt(limit), parseInt(offset));
+        // Fetch products with pagination
+        const sql = `SELECT * FROM products ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
+        const countSql = `SELECT COUNT(*) as total FROM products ${whereSQL}`;
 
-        const [products] = await db.query(query, queryParams);
-
-        // Count Query for Pagination
-        let countParams = queryParams.slice(0, -2); // Limit & Offset er parameters bad
-        let countQuery = `SELECT COUNT(*) as total FROM products ${whereSQL}`;
-        const [countResult] = await db.query(countQuery, countParams);
+        const [products] = await db.query(sql, [...queryParams, limit, offset]);
+        const [countResult] = await db.query(countSql, queryParams);
 
         const totalProducts = countResult[0].total;
         const hasMore = (offset + products.length) < totalProducts;
 
-        res.json({ success: true, products, hasMore, total: totalProducts });
+        res.json({
+            success: true,
+            products,
+            hasMore,
+            totalProducts
+        });
     } catch (err) {
-        console.error("Error fetching category products:", err);
-        res.status(500).json({ success: false, message: 'Server Error' });
+        console.error("Error in /get-products-by-category:", err);
+        res.status(500).json({ success: false, message: "Server error fetching products." });
     }
 });
 
