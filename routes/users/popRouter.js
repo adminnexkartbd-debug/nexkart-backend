@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const db = require('../../db'); // আপনার ডাটাবেস কনফিগারেশন পাথ অনুযায়ী অ্যাডজাস্ট করুন
+const db = require('../../db'); // Apnar database configuration path onujayi adjust korun
 
 // ==================== [ POPUP GOOGLE PASSPORT STRATEGY ] ====================
 passport.use('google-popup', new GoogleStrategy({
-    clientID: '532557505629-04dk1t4k3cmihggqjsaqv00nnsdacqj0.apps.googleusercontent.com',
-    clientSecret: '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',
-    callbackURL: 'https://www.nexkartbd.com/user/auth/google/popup/callback'
+    clientID: process.env.GOOGLE_USER_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -42,19 +42,19 @@ passport.use('google-popup', new GoogleStrategy({
 
 // ==================== [ ROUTES ] ====================
 
-// ১. Google Login Trigger Route
+// 1. Google Login Trigger Route
 router.get('/auth/google/popup', passport.authenticate('google-popup', { 
     scope: ['profile', 'email'],
     prompt: 'select_account' 
 }));
 
-// ২. Google Login Callback Route
+// 2. Google Login Callback Route
 router.get('/auth/google/popup/callback', (req, res, next) => {
   passport.authenticate('google-popup', (err, user, info) => {
     if (err || !user) {
       return res.send(`
         <script>
-          alert("গুগল লগইন ব্যর্থ হয়েছে!");
+          alert("Google login vyartha hoyeche!");
           window.close();
         </script>
       `);
@@ -64,7 +64,7 @@ router.get('/auth/google/popup/callback', (req, res, next) => {
       if (loginErr) {
         return res.send(`
           <script>
-            alert("সেশন আপডেট করতে সমস্যা হয়েছে!");
+            alert("Session update korte samasya hoyeche!");
             window.close();
           </script>
         `);
@@ -73,7 +73,7 @@ router.get('/auth/google/popup/callback', (req, res, next) => {
       req.session.user = { id: user.id, user_type: 'user' };
       req.session.userId = user.id;
 
-      // ড্যাশবোর্ডে রিডাইরেক্ট না করে পপআপ বন্ধ করা এবং মেইন পেজকে জানান দেয়া
+      // Dashboard-e redirect na kore popup bondho kora ebong main page-ke janano
       return res.send(`
         <script>
           if (window.opener) {
