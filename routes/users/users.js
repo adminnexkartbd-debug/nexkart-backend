@@ -2042,7 +2042,7 @@ router.get('/dashProduct', async (req, res) => {
     }
 });
 
-// Dynamic Category, Promo Badge & Search Product Fetching Endpoint
+// Dynamic Category, Promo Badge & Search Product Fetching Endpoint (Dashboard Matched)
 router.get('/get-products-by-category', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -2057,27 +2057,27 @@ router.get('/get-products-by-category', async (req, res) => {
         // 1. Promo Badge Filtering Logic
         if (promo) {
             if (promo === 'super_deal') {
-                whereClauses.push("(LOWER(promo_badge) LIKE '%super%' OR LOWER(promo_badge) LIKE '%flash%')");
+                whereClauses.push("(LOWER(p.promo_badge) LIKE '%super%' OR LOWER(p.promo_badge) LIKE '%flash%')");
             } else if (promo === 'hot') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%hot%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%hot%'");
             } else if (promo === 'best_seller') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%best%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%best%'");
             } else if (promo === 'new_arrival') {
-                whereClauses.push("(LOWER(promo_badge) LIKE '%new%' OR LOWER(promo_badge) LIKE '%arrival%')");
+                whereClauses.push("(LOWER(p.promo_badge) LIKE '%new%' OR LOWER(p.promo_badge) LIKE '%arrival%')");
             } else if (promo === 'coin_products') {
-                whereClauses.push("LOWER(coin_offer) = 'yes'");
+                whereClauses.push("LOWER(p.coin_offer) = 'yes'");
             } else if (promo === 'limited_edition') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%limited%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%limited%'");
             } else if (promo === 'trending') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%trend%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%trend%'");
             } else if (promo === 'exclusive') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%exclusive%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%exclusive%'");
             } else if (promo === 'free_shipping') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%free%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%free%'");
             } else if (promo === 'clearance') {
-                whereClauses.push("LOWER(promo_badge) LIKE '%clearance%'");
+                whereClauses.push("LOWER(p.promo_badge) LIKE '%clearance%'");
             } else if (promo !== 'all') {
-                whereClauses.push("LOWER(promo_badge) = ?");
+                whereClauses.push("LOWER(p.promo_badge) = ?");
                 queryParams.push(promo.toLowerCase());
             }
         }
@@ -2085,21 +2085,33 @@ router.get('/get-products-by-category', async (req, res) => {
         // 2. Category & Type Filtering Logic
         const categoryVal = cat || type;
         if (categoryVal && categoryVal !== 'all' && !promo) {
-            whereClauses.push("LOWER(category) = ?");
+            whereClauses.push("LOWER(p.category) = ?");
             queryParams.push(categoryVal.toLowerCase());
         }
 
         // 3. Search Query Filtering Logic
         if (search) {
-            whereClauses.push("(LOWER(title) LIKE ? OR LOWER(category) LIKE ?)");
+            whereClauses.push("(LOWER(p.title) LIKE ? OR LOWER(p.category) LIKE ?)");
             queryParams.push(`%${search.toLowerCase()}%`, `%${search.toLowerCase()}%`);
         }
 
         let whereSQL = whereClauses.length > 0 ? " WHERE " + whereClauses.join(" AND ") : "";
 
-        // Fetch products with pagination
-        const sql = `SELECT * FROM products ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
-        const countSql = `SELECT COUNT(*) as total FROM products ${whereSQL}`;
+        // Query matched with Dashboard's SQL structure
+        const sql = `
+            SELECT p.*, 
+                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
+                   COALESCE(AVG(r.rating), 0) AS avg_rating,
+                   COUNT(r.id) AS review_count
+            FROM products p
+            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
+            ${whereSQL}
+            GROUP BY p.id
+            ORDER BY p.id DESC 
+            LIMIT ? OFFSET ?
+        `;
+
+        const countSql = `SELECT COUNT(DISTINCT p.id) as total FROM products p ${whereSQL}`;
 
         const [products] = await db.query(sql, [...queryParams, limit, offset]);
         const [countResult] = await db.query(countSql, queryParams);
