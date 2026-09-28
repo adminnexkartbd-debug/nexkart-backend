@@ -118,7 +118,7 @@ passport.use('google-user', new GoogleStrategy({
 passport.use('google-popup', new GoogleStrategy({
     clientID: process.env.GOOGLE_USER_CLIENT_ID,
     clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL || (process.env.APP_URL + '/user/auth/google/popup/callback'),
+    callbackURL: process.env.GOOGLE_USER_POPUP_CALLBACK_URL || '/user/auth/google/popup/callback',
     proxy: true 
 }, async (accessToken, refreshToken, profile, done) => {
     try {
