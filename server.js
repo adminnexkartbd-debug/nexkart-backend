@@ -10,6 +10,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(compression());
+app.set('trust proxy', 1);
 
 app.get('/sitemap.xml', (req, res) => {
     res.setHeader('Content-Type', 'application/xml');
@@ -234,9 +235,7 @@ app.get('/auth/google/callback',
         }
     }
 );
-app.get('/user/product-details/:slug', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/user/product-details.html'));
-});
+
 // ==================== ৪. রাউট মাউন্টিং ====================
 const adminRoutes = require('./routes/admin/admin');
 const userRoutes = require('./routes/users/users');
@@ -382,5 +381,5 @@ app.get('/logout', (req, res) => {
 // ==================== ৬. সার্ভার লিসেন (Server Listen) ====================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 NexKart Server is running on port ${PORT}`);
+    console.log(`🚀 NexKartBD Server is running on port ${PORT}`);
 });
