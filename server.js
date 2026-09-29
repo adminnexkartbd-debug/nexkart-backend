@@ -12,10 +12,10 @@ const app = express();
 app.use(compression());
 app.set('trust proxy', 1);
 
-app.get('/sitemap.xml', (req, res) => {
-    res.setHeader('Content-Type', 'application/xml');
-    res.sendFile(path.join(__dirname, 'sitemap.xml'));
-});
+//app.get('/sitemap.xml', (req, res) => {
+ //   res.setHeader('Content-Type', 'application/xml');
+ //   res.sendFile(path.join(__dirname, 'sitemap.xml'));
+//});
 
 // ১. ট্র্যাকিং আইডিগুলো ফ্রন্টএন্ডে পাঠানোর জন্য একটি API রাউট
 app.get('/api/config', (req, res) => {
@@ -283,7 +283,14 @@ app.get('/auth/google/callback',
     }
 );
 
+// ১. Route ফাইলটি ইম্পোর্ট করুন (পাথ আপনার প্রজেক্ট অনুযায়ী মিলিয়ে নিন)
+const sitemapRouter = require('./routes/sitemapRouter');
+
+// ২. Root URL-এ রাউটটি রেজিস্টার করুন
+app.use('/', sitemapRouter);
+
 // ==================== ৪. রাউট মাউন্টিং ====================
+
 const adminRoutes = require('./routes/admin/admin');
 const userRoutes = require('./routes/users/users');
 const inquiryRouter = require('./routes/users/inquiries');
