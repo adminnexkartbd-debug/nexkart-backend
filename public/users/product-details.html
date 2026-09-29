@@ -1415,46 +1415,57 @@ function openGooglePopup() {
       }
     }
 
-    async function fetchProductData() {
-      const pathArray = window.location.pathname.split('/');
-      const productIdentifier = pathArray[pathArray.length - 1] || new URLSearchParams(window.location.search).get('id');
+   async function fetchProductData() {
+  // Extract identifier either from URL Path (/user/product-details/my-slug) or Query Param (?id=NK-PROD-2431)
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  const lastPathSegment = pathSegments[pathSegments.length - 1];
 
-      if (!productIdentifier) return;
+  let productIdentifier = null;
 
-      currentProductId = productIdentifier;
-      const requestUrl = `/user/product/${encodeURIComponent(productIdentifier)}`;
+  // Check if URL ends with a slug (not "product-details")
+  if (lastPathSegment && lastPathSegment !== 'product-details') {
+    productIdentifier = lastPathSegment;
+  } else {
+    // Fallback to query parameter id
+    productIdentifier = new URLSearchParams(window.location.search).get('id');
+  }
 
-      try {
-        const response = await fetch(requestUrl);
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
-        const data = await response.json();
+  if (!productIdentifier) return;
 
-        let userCoins = 0;
-        try {
-          const coinResponse = await fetch('/user/my-coin-balance');
-          const coinData = await coinResponse.json();
-          if (coinData.success) {
-            userCoins = coinData.total_coins || 0;
-          }
-        } catch (coinErr) {
-          console.warn("Could not load user coins:", coinErr);
-        }
+  currentProductId = productIdentifier;
+  const requestUrl = `/user/product/${encodeURIComponent(productIdentifier)}`;
 
-        if (data.success && data.product) {
-          renderProductDetails(
-            data.product,
-            data.gallery_images,
-            data.seller_products,
-            data.suggested_products,
-            userCoins
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching product data:", error);
+  try {
+    const response = await fetch(requestUrl);
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    const data = await response.json();
+
+    let userCoins = 0;
+    try {
+      const coinResponse = await fetch('/user/my-coin-balance');
+      const coinData = await coinResponse.json();
+      if (coinData.success) {
+        userCoins = coinData.total_coins || 0;
       }
+    } catch (coinErr) {
+      console.warn("Could not load user coins:", coinErr);
     }
 
-    async function loadProductReviews(targetProductId) {
+    if (data.success && data.product) {
+      renderProductDetails(
+        data.product,
+        data.gallery_images,
+        data.seller_products,
+        data.suggested_products,
+        userCoins
+      );
+    }
+  } catch (error) {
+    console.error("Error fetching product data:", error);
+  }
+}
+  
+async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
