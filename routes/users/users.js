@@ -1902,78 +1902,7 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
-// Existing router.get('/product/:id') block-e shudhu SQL Query biroti change korben:
-router.get('/product/:id', async (req, res) => {
-    try {
-        const productId = req.params.id; // Ai id ta ID othoba Slug dutoiy hote pare
-        
-        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
-        // 1. SELECT query-te 'p.slug = ?' sothikbhabe jog kora hoyeche
-        const productQuery = `
-            SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
-                   a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
-            FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.slug = ? OR p.product_id = ? OR p.id = ?
-        `;
-        // Query parameter-e productId 3 bar pass hobe
-        const [products] = await db.query(productQuery, [productId, productId, productId]);
-        
-        if (products.length === 0) {
-            return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
-        }
-        const product = products[0];
-        
-        // Oboshisto code ager motoiy thakbe...
-        const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
-
-        let userTotalCoins = 0;
-        if (userId) {
-            const [coinRows] = await db.query(
-                `SELECT SUM(coin_balance) AS total_coin FROM my_coins WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
-                [userId]
-            );
-            userTotalCoins = coinRows[0].total_coin || 0;
-        }
-
-        const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.admin_id = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY p.id DESC LIMIT 6
-        `, [product.admin_id, product.id]);
-
-        const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.category = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY RAND() LIMIT 6
-        `, [product.category, product.id]);
-
-        return res.json({
-            success: true,
-            product: product,
-            gallery_images: images.map(img => img.image_path),
-            seller_products: sellerProducts,
-            suggested_products: suggestedProducts,
-            user_coins: userTotalCoins,           
-            coin_value_in_bdt: 0.30               
-        });
-    } catch (error) {
-        console.error("Product Details Fetch Error:", error);
-        return res.status(500).json({ success: false, message: "Server Error" });
-    }
-});
 
 router.get('/current_user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
@@ -2144,5 +2073,70 @@ router.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
+
+
+// Fetch product details by ID or Slug
+router.get('/product/:identifier', async (req, res) => {
+  try {
+    const { identifier } = req.params;
+
+    // Check if identifier is numeric (ID) or string (Slug)
+    const isNumeric = /^\d+$/.test(identifier);
+    const queryField = isNumeric ? 'p.product_id' : 'p.slug';
+
+    const sql = `
+      SELECT p.*, s.shop_name AS seller_shop_name, s.slogan AS seller_slogan, 
+             s.picture AS seller_picture, s.is_verified AS seller_is_verified
+      FROM products p
+      LEFT JOIN sellers s ON p.admin_id = s.id
+      WHERE ${queryField} = ? LIMIT 1
+    `;
+
+    const [rows] = await db.execute(sql, [identifier]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const product = rows[0];
+
+    // Fetch Gallery Images
+    const [images] = await db.execute(
+      'SELECT image_path FROM product_gallery WHERE product_id = ?', 
+      [product.product_id]
+    );
+    const gallery_images = images.map(img => img.image_path);
+
+    // Fetch Seller Products
+    const [seller_products] = await db.execute(
+      'SELECT * FROM products WHERE admin_id = ? AND product_id != ? LIMIT 4',
+      [product.admin_id, product.product_id]
+    );
+
+    // Fetch Suggested Products
+    const [suggested_products] = await db.execute(
+      'SELECT * FROM products WHERE category = ? AND product_id != ? LIMIT 4',
+      [product.category, product.product_id]
+    );
+
+    return res.json({
+      success: true,
+      product,
+      gallery_images,
+      seller_products,
+      suggested_products
+    });
+
+  } catch (error) {
+    console.error('Fetch product data error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Render Page via Slug Routing: /user/product-details/:slug
+router.get('/product-details/:slug?', (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/product-details.html'));
+});
+
 
 module.exports = router;
