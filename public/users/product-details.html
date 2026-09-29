@@ -1415,18 +1415,17 @@ function openGooglePopup() {
       }
     }
 
-   async function fetchProductData() {
-  // Extract identifier either from URL Path (/user/product-details/my-slug) or Query Param (?id=NK-PROD-2431)
+  async function fetchProductData() {
   const pathSegments = window.location.pathname.split('/').filter(Boolean);
   const lastPathSegment = pathSegments[pathSegments.length - 1];
 
   let productIdentifier = null;
 
-  // Check if URL ends with a slug (not "product-details")
-  if (lastPathSegment && lastPathSegment !== 'product-details') {
-    productIdentifier = lastPathSegment;
+  // Extract slug from path (e.g. /user/product-details/my-product-slug)
+  if (lastPathSegment && lastPathSegment !== 'product-details' && lastPathSegment !== 'product-details.html') {
+    productIdentifier = decodeURIComponent(lastPathSegment);
   } else {
-    // Fallback to query parameter id
+    // Fallback to query parameter ?id=NK-PROD-7789
     productIdentifier = new URLSearchParams(window.location.search).get('id');
   }
 
@@ -1464,7 +1463,6 @@ function openGooglePopup() {
     console.error("Error fetching product data:", error);
   }
 }
-  
 async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
