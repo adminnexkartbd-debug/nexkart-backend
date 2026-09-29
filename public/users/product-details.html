@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -489,6 +489,26 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
   </div>
 
   <script>
+    // Get id/slug from path or query parameter
+    const pathSegments = window.location.pathname.split('/');
+    let idParam = pathSegments[pathSegments.length - 1];
+
+    // Fallback to query parameter ?id=...
+    if (!idParam || idParam === 'product-details' || idParam === 'product-details.html') {
+        const urlParams = new URLSearchParams(window.location.search);
+        idParam = urlParams.get('id');
+    }
+
+    // Fetch API with :id
+    fetch(`/user/product/${idParam}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                console.log(data.product);
+                // Render Product UI
+            }
+        });
+
     let availableUserCoins = 0;
     let coinPercentageValue = 0;
     let coinDiscountValue = 0;
