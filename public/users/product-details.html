@@ -17,13 +17,13 @@
   <meta id="seo-description" name="description" content="NexKartBD theke sera dame bong akorshoniy offere ponno kinun.">
   <meta id="seo-keywords" name="keywords" content="NexKartBD, Ecommerce, Buy Online, Shopping Bangladesh, Product Details">
   <meta name="robots" content="index, follow">
-  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/user/product-details">
+  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/user/product">
 
   <meta property="og:type" content="product">
   <meta id="og-title" property="og:title" content="NexKartBD - Product Details">
   <meta id="og-description" property="og:description" content="NexKartBD theke sera dame ponno kinun.">
   <meta id="og-image" property="og:image" content="">
-  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product-details">
+  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product">
   <meta property="og:site_name" content="NexKartBD">
 
   <meta name="twitter:card" content="summary_large_image">
@@ -999,10 +999,10 @@ function openGooglePopup() {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const targetParam = `id=${product.product_id || product.id}`;
+      const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
 
       return `
-        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="if ('${targetSlug}') window.location.href='/user/product/${targetSlug}';" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1041,7 +1041,10 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const canonicalUrl = `${window.location.origin}/user/product-details?id=${product.product_id || product.id}`;
+      const productSlug = product.slug || '';
+      const canonicalUrl = productSlug
+        ? `${window.location.origin}/user/product/${encodeURIComponent(productSlug)}`
+        : `${window.location.origin}/user/product-details`;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1414,57 +1417,52 @@ function openGooglePopup() {
     }
 
     async function fetchProductData() {
-  const urlParams = new URLSearchParams(window.location.search);
-  let productSlug = urlParams.get('slug');
+      // Product page URL format:
+      // /user/product/mayjam-aromatic-essential-oil
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const productIndex = pathParts.indexOf('product');
+      const productSlug = productIndex !== -1 ? pathParts[productIndex + 1] : null;
 
-  // URL path (/user/product/iphone-15-pro) theke slug neya
-  if (!productSlug) {
-    const pathSegments = window.location.pathname.split('/').filter(p => p);
-    const lastSegment = pathSegments[pathSegments.length - 1];
-    
-    if (lastSegment && lastSegment !== 'product-details' && lastSegment !== 'product') {
-      productSlug = lastSegment;
-    }
-  }
-
-  if (!productSlug) return;
-
-  // API Request using Slug
-  const requestUrl = `/user/api/product/${encodeURIComponent(productSlug)}`;
-
-  try {
-    const response = await fetch(requestUrl);
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    const data = await response.json();
-
-    let userCoins = 0;
-    try {
-      const coinResponse = await fetch('/user/my-coin-balance');
-      const coinData = await coinResponse.json();
-      if (coinData.success) {
-        userCoins = coinData.total_coins || 0;
+      if (!productSlug) {
+        console.error('Product slug not found in URL:', window.location.pathname);
+        return;
       }
-    } catch (coinErr) {
-      console.warn("Could not load user coins:", coinErr);
+
+      const decodedSlug = decodeURIComponent(productSlug);
+      currentProductId = decodedSlug;
+      const requestUrl = `/user/product-data/${encodeURIComponent(decodedSlug)}`;
+
+      try {
+        const response = await fetch(requestUrl);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
+
+        let userCoins = 0;
+        try {
+          const coinResponse = await fetch('/user/my-coin-balance');
+          const coinData = await coinResponse.json();
+          if (coinData.success) {
+            userCoins = coinData.total_coins || 0;
+          }
+        } catch (coinErr) {
+          console.warn("Could not load user coins:", coinErr);
+        }
+
+        if (data.success && data.product) {
+          renderProductDetails(
+            data.product,
+            data.gallery_images,
+            data.seller_products,
+            data.suggested_products,
+            userCoins
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+      }
     }
 
-    if (data.success && data.product) {
-      currentProductId = data.product.id; // Cart/Order submit-er jonno backend ID set thakbe
-
-      renderProductDetails(
-        data.product,
-        data.gallery_images,
-        data.seller_products,
-        data.suggested_products,
-        userCoins
-      );
-    }
-  } catch (error) {
-    console.error("Error fetching product data:", error);
-  }
-}
-   
-async function loadProductReviews(targetProductId) {
+    async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 

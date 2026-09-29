@@ -1723,13 +1723,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                     const isActive = index === 0 ? 'active' : '';
                     const targetId = product.product_id || product.id;
+                    const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
 
                     return `
                         <div class="slide ${isActive}" style="background-image: url('${imageSrc}');">
                             <div class="slide-content">
                                 <h2>${product.title}</h2>
                                 <p>Special Price: ৳ ${product.sale_price}</p>
-                                <a href="#" onclick="checkLoginAndRedirect('${targetId}')" class="slide-btn">Shop Now</a>
+                                <a href="#" onclick="checkLoginAndRedirect('${targetSlug}')" class="slide-btn">Shop Now</a>
                             </div>
                             ${badgeHTML}
                         </div>
@@ -1880,11 +1881,12 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                 }
                 
                 const targetId = product.product_id || product.id;
+                const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
                 const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
                 const starsHTML = renderStars(parseFloat(avgRating));
 
                 return `
-                    <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetId}')">
+                    <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
                         <div class="product-badges-container">
                             ${discountBadge ? `<span class="product-badge">${discountBadge}</span>` : '<span></span>'}
                             ${discountPercentTag}
@@ -1933,8 +1935,12 @@ function loadMoreDashboardProducts() {
     loadDashboardProducts(currentDashPage, true);
 }
 
-function checkLoginAndRedirect(productId) {
-    window.location.href = `/user/product-details?id=${productId}&t=${new Date().getTime()}`;
+function checkLoginAndRedirect(productSlug) {
+    if (!productSlug) {
+        console.error('Product slug is missing.');
+        return;
+    }
+    window.location.href = `/user/product/${productSlug}`;
 }
 
 async function addToCart(productId) {
