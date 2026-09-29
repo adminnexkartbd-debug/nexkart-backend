@@ -1902,8 +1902,6 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
-
-
 router.get('/current_user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
         return res.json(req.user);
@@ -2074,64 +2072,7 @@ router.get('/api/config', (req, res) => {
     });
 });
 
-
 // Fetch product details by ID or Slug
-router.get('/product/:identifier', async (req, res) => {
-  try {
-    const { identifier } = req.params;
-
-    // Check if identifier is numeric (ID) or string (Slug)
-    const isNumeric = /^\d+$/.test(identifier);
-    const queryField = isNumeric ? 'p.product_id' : 'p.slug';
-
-    const sql = `
-      SELECT p.*, s.shop_name AS seller_shop_name, s.slogan AS seller_slogan, 
-             s.picture AS seller_picture, s.is_verified AS seller_is_verified
-      FROM products p
-      LEFT JOIN sellers s ON p.admin_id = s.id
-      WHERE ${queryField} = ? LIMIT 1
-    `;
-
-    const [rows] = await db.execute(sql, [identifier]);
-
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    const product = rows[0];
-
-    // Fetch Gallery Images
-    const [images] = await db.execute(
-      'SELECT image_path FROM product_gallery WHERE product_id = ?', 
-      [product.product_id]
-    );
-    const gallery_images = images.map(img => img.image_path);
-
-    // Fetch Seller Products
-    const [seller_products] = await db.execute(
-      'SELECT * FROM products WHERE admin_id = ? AND product_id != ? LIMIT 4',
-      [product.admin_id, product.product_id]
-    );
-
-    // Fetch Suggested Products
-    const [suggested_products] = await db.execute(
-      'SELECT * FROM products WHERE category = ? AND product_id != ? LIMIT 4',
-      [product.category, product.product_id]
-    );
-
-    return res.json({
-      success: true,
-      product,
-      gallery_images,
-      seller_products,
-      suggested_products
-    });
-
-  } catch (error) {
-    console.error('Fetch product data error:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
 router.get('/product/:identifier', async (req, res) => {
     try {
         const identifier = req.params.identifier;
@@ -2196,6 +2137,7 @@ router.get('/product/:identifier', async (req, res) => {
         return res.status(500).json({ success: false, message: "Server error occurred" });
     }
 });
+
 // Serve product details page for both query param and slug URLs
 router.get(['/product-details', '/product-details/:slug', '/product-details.html'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
