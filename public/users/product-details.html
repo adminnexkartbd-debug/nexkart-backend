@@ -999,10 +999,11 @@ function openGooglePopup() {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const targetParam = `id=${product.product_id || product.id}`;
+      const slugOrId = product.slug || product.product_id || product.id;
+      const targetUrl = product.slug ? `/user/product-details/${product.slug}` : `/user/product-details?id=${slugOrId}`;
 
       return `
-        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='${targetUrl}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1672,7 +1673,6 @@ function openGooglePopup() {
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
           </div>
         `;
-        setupImageFullscreen();
       }
     }
 
@@ -1681,100 +1681,85 @@ function openGooglePopup() {
       if (!container) return;
       container.innerHTML = '';
 
-      if (!mediaList || mediaList.length <= 1) {
-        container.style.display = 'none';
-        return;
-      }
-      container.style.display = 'flex';
+      if (!mediaList || mediaList.length <= 1) return;
 
-      mediaList.forEach((media, index) => {
-        const isSelected = index === activeMediaIndex;
-        const thumbBtn = document.createElement('div');
-        thumbBtn.className = `thumb-slide-item w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 flex items-center justify-center relative bg-white ${
-          isSelected ? 'border-[#ff4b6e] shadow-md scale-105' : 'border-pink-100 hover:border-pink-300 opacity-70 hover:opacity-100'
+      mediaList.forEach((item, index) => {
+        const thumb = document.createElement('div');
+        thumb.className = `thumb-slide-item w-16 h-16 rounded-xl border-2 cursor-pointer overflow-hidden relative transition-all flex items-center justify-center bg-white ${
+          index === activeMediaIndex ? 'border-[#ff4b6e] shadow-md scale-105' : 'border-pink-100 opacity-70 hover:opacity-100'
         }`;
 
-        if (media.type === 'video') {
-          thumbBtn.innerHTML = `
-            <div class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-white relative">
-              <i class="fa-solid fa-circle-play text-xl text-red-500"></i>
-              <span class="text-[9px] font-bold mt-0.5">Video</span>
+        if (item.type === 'video') {
+          thumb.innerHTML = `
+            <div class="w-full h-full bg-gray-900 flex items-center justify-center text-white">
+              <i class="fa-solid fa-play text-xs"></i>
             </div>
+            <span class="absolute bottom-1 bg-red-600 text-[8px] text-white font-bold px-1 rounded">VIDEO</span>
           `;
         } else {
-          thumbBtn.innerHTML = `
-            <img src="${media.url}" alt="Thumbnail ${index + 1}" class="w-full h-full object-contain p-1">
-          `;
+          thumb.innerHTML = `<img src="${item.url}" class="w-full h-full object-cover" alt="Thumb">`;
         }
 
-        thumbBtn.onclick = () => {
+        thumb.onclick = () => {
           activeMediaIndex = index;
           renderMainMediaViewer(mediaList);
           renderThumbnails(mediaList);
         };
 
-        container.appendChild(thumbBtn);
+        container.appendChild(thumb);
       });
     }
 
     function renderSpecificationImages(images) {
-      const specGallery = document.getElementById('specification-images-gallery');
+      specImagesList = images || [];
+      const galleryBox = document.getElementById('specification-images-gallery');
       const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
 
-      if (!specGallery) return;
-      specGallery.innerHTML = '';
+      if (!galleryBox) return;
+      galleryBox.innerHTML = '';
 
-      specImagesList = images || [];
-
-      if (!specImagesList || specImagesList.length === 0) {
+      if (specImagesList.length === 0) {
         if (toggleBtnContainer) toggleBtnContainer.classList.add('hidden');
         return;
       }
 
       visibleSpecImgCount = 1;
       displaySpecImages();
+
+      if (specImagesList.length > 1 && toggleBtnContainer) {
+        toggleBtnContainer.classList.remove('hidden');
+      } else if (toggleBtnContainer) {
+        toggleBtnContainer.classList.add('hidden');
+      }
     }
 
     function displaySpecImages() {
-      const specGallery = document.getElementById('specification-images-gallery');
-      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+      const galleryBox = document.getElementById('specification-images-gallery');
+      if (!galleryBox) return;
 
-      if (!specGallery) return;
-      specGallery.innerHTML = '';
+      galleryBox.innerHTML = '';
+      const itemsToRender = specImagesList.slice(0, visibleSpecImgCount);
 
-      const imagesToShow = specImagesList.slice(0, visibleSpecImgCount);
-
-      imagesToShow.forEach((imgUrl, idx) => {
-        let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
-        if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-          formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
-        }
-
-        const imgCard = document.createElement('div');
-        imgCard.className = 'w-full rounded-2xl overflow-hidden border border-pink-200 bg-white/90 shadow-sm p-2 transition-all duration-300';
-        imgCard.innerHTML = `
-          <img src="${formattedUrl}" alt="Specification Image ${idx + 1}" loading="lazy" class="w-full h-auto object-contain rounded-xl max-h-[800px] mx-auto">
+      itemsToRender.forEach(url => {
+        galleryBox.innerHTML += `
+          <div class="rounded-2xl overflow-hidden border border-pink-100 bg-white p-2 shadow-sm">
+            <img src="${url}" loading="lazy" class="w-full object-contain max-h-[600px] rounded-xl" alt="Spec Detail Image">
+          </div>
         `;
-        specGallery.appendChild(imgCard);
       });
 
-      if (toggleBtnContainer) {
-        if (visibleSpecImgCount < specImagesList.length) {
-          toggleBtnContainer.classList.remove('hidden');
-        } else {
-          toggleBtnContainer.classList.add('hidden');
-        }
+      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
+      if (visibleSpecImgCount >= specImagesList.length && toggleBtnContainer) {
+        toggleBtnContainer.classList.add('hidden');
       }
     }
 
     function loadMoreSpecImages() {
-      visibleSpecImgCount += 2;
+      visibleSpecImgCount = specImagesList.length;
       displaySpecImages();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchProductData();
-    });
+    document.addEventListener('DOMContentLoaded', fetchProductData);
   </script>
 </body>
 </html>
