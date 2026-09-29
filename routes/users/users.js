@@ -305,8 +305,10 @@ router.get(['/return-policy', '/return-policy.html'], (req, res) => {
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
-router.get('/product-details', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
-router.get('/product-details.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
+// Product Details HTML Route
+router.get(['/product-details', '/product-details.html', '/product/:id'], (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
+});
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
 router.get('/seller-profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'seller-profile.html')));
 router.get('/cart-html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html')));
@@ -1904,20 +1906,23 @@ router.get('/inquiries/:productId', async (req, res) => {
 
 router.get('/product/:id', async (req, res) => {
     try {
-        const productId = req.params.id;
+        const productIdOrSlug = req.params.id; // slug, product_id, or numeric id
         
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
+        // Search product by slug, product_id, or id
         const productQuery = `
             SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
             FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.product_id = ? OR p.id = ?
+            WHERE p.slug = ? OR p.product_id = ? OR p.id = ?
         `;
-        const [products] = await db.query(productQuery, [productId, productId]);
+        const [products] = await db.query(productQuery, [productIdOrSlug, productIdOrSlug, productIdOrSlug]);
+        
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
         }
+        
         const product = products[0];
         const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
 
@@ -1931,7 +1936,7 @@ router.get('/product/:id', async (req, res) => {
         }
 
         const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
@@ -1943,7 +1948,7 @@ router.get('/product/:id', async (req, res) => {
         `, [product.admin_id, product.id]);
 
         const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
@@ -1968,7 +1973,6 @@ router.get('/product/:id', async (req, res) => {
         return res.status(500).json({ success: false, message: "Server Error" });
     }
 });
-
 router.get('/current_user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
         return res.json(req.user);
@@ -2138,5 +2142,6 @@ router.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
+
 
 module.exports = router;
