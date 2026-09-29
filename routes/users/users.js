@@ -2133,10 +2133,9 @@ router.get('/product/:identifier', async (req, res) => {
   }
 });
 
-// Render Page via Slug Routing: /user/product-details/:slug
-router.get('/product-details/:slug?', (req, res) => {
-  res.sendFile(path.join(__dirname, '../views/product-details.html'));
+// ১. ডাইনামিক স্ল্যাগ রাউট: /user/product-details/my-product-slug
+router.get('/product-details/:slug', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
 });
-
 
 module.exports = router;
