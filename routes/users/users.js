@@ -2132,9 +2132,72 @@ router.get('/product/:identifier', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+router.get('/product/:identifier', async (req, res) => {
+    try {
+        const identifier = req.params.identifier;
 
-// ১. ডাইনামিক স্ল্যাগ রাউট: /user/product-details/my-product-slug
-router.get('/product-details/:slug', (req, res) => {
+        // Query product by slug, product_id, or numeric id
+        const query = `
+            SELECT p.*, 
+                   a.shop_name AS seller_shop_name, 
+                   a.slogan AS seller_slogan, 
+                   a.profile_picture AS seller_picture, 
+                   a.is_verified AS seller_is_verified
+            FROM products p 
+            LEFT JOIN admins a ON p.admin_id = a.id 
+            WHERE p.slug = ? OR p.product_id = ? OR p.id = ?
+            LIMIT 1
+        `;
+
+        const [products] = await db.query(query, [identifier, identifier, identifier]);
+
+        if (products.length === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const product = products[0];
+
+        // Fetch gallery images
+        const [galleryImages] = await db.query(
+            "SELECT image_path FROM product_images WHERE product_id = ?",
+            [product.id]
+        );
+
+        const formattedGallery = galleryImages.map(img => {
+            let path = img.image_path;
+            if (!path.startsWith('http') && !path.startsWith('/uploads/')) {
+                path = '/uploads/' + path;
+            }
+            return path;
+        });
+
+        // Fetch seller products
+        const [sellerProducts] = await db.query(
+            "SELECT * FROM products WHERE admin_id = ? AND id != ? LIMIT 4",
+            [product.admin_id, product.id]
+        );
+
+        // Fetch suggested products
+        const [suggestedProducts] = await db.query(
+            "SELECT * FROM products WHERE category = ? AND id != ? LIMIT 4",
+            [product.category, product.id]
+        );
+
+        return res.json({
+            success: true,
+            product: product,
+            gallery_images: formattedGallery.length > 0 ? formattedGallery : [product.primary_image],
+            seller_products: sellerProducts,
+            suggested_products: suggestedProducts
+        });
+
+    } catch (error) {
+        console.error("Fetch Product Details Error:", error);
+        return res.status(500).json({ success: false, message: "Server error occurred" });
+    }
+});
+// Serve product details page for both query param and slug URLs
+router.get(['/product-details', '/product-details/:slug', '/product-details.html'], (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
 });
 
