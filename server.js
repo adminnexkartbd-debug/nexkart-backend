@@ -13,7 +13,7 @@ app.use(compression());
 app.set('trust proxy', 1);
 
 // Directly /product/:slug diye HTML file serve korar jonno:
-router.get('/product-details/:slug', (req, res) => {
+app.get('/product-details/:slug', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
 });
 //app.get('/sitemap.xml', (req, res) => {
