@@ -7,7 +7,7 @@ router.get('/sitemap.xml', async (req, res) => {
     try {
         const baseUrl = 'https://www.nexkartbd.com';
 
-        // Static & Public HTML Pages (Including dashboard and My-Coupons)
+        // Static & Public Pages
         const staticPages = [
             '/',
             '/user/index',
@@ -23,8 +23,8 @@ router.get('/sitemap.xml', async (req, res) => {
             '/user/cssignup'
         ];
 
-        // Fetch Dynamic Products for product-details URLs
-        const [products] = await db.query(`SELECT id, updated_at FROM products`);
+        // 1. SELECT me `slug` field fetch karein (aur fallback ke liye `id` bhi)
+        const [products] = await db.query(`SELECT id, slug, updated_at FROM products`);
 
         // Create XML Document
         const root = create({ version: '1.0', encoding: 'UTF-8' })
@@ -38,10 +38,15 @@ router.get('/sitemap.xml', async (req, res) => {
                 .ele('priority').txt(route === '/' ? '1.0' : '0.8').up();
         });
 
-        // Add Dynamic Product Details Pages
+        // 2. Dynamic Product Pages me Slug URL build karein
         products.forEach(product => {
+            // Agar product ka slug exist karta hai to Slug URL use karein, warna fallback id URL
+            const productPath = product.slug 
+                ? `/product/${product.slug}`  // Apne Frontend route URL pattern ke according change kar sakte hain (e.g. /product/slug ya /user/product-details/slug)
+                : `/user/product-details?id=${product.id}`;
+
             root.ele('url')
-                .ele('loc').txt(`${baseUrl}/user/product-details?id=${product.id}`).up()
+                .ele('loc').txt(`${baseUrl}${productPath}`).up()
                 .ele('lastmod').txt(product.updated_at ? new Date(product.updated_at).toISOString() : new Date().toISOString()).up()
                 .ele('changefreq').txt('weekly').up()
                 .ele('priority').txt('0.9').up();
