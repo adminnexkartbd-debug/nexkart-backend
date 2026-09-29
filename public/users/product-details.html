@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -489,26 +489,6 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
   </div>
 
   <script>
-    // Get id/slug from path or query parameter
-    const pathSegments = window.location.pathname.split('/');
-    let idParam = pathSegments[pathSegments.length - 1];
-
-    // Fallback to query parameter ?id=...
-    if (!idParam || idParam === 'product-details' || idParam === 'product-details.html') {
-        const urlParams = new URLSearchParams(window.location.search);
-        idParam = urlParams.get('id');
-    }
-
-    // Fetch API with :id
-    fetch(`/user/product/${idParam}`)
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                console.log(data.product);
-                // Render Product UI
-            }
-        });
-
     let availableUserCoins = 0;
     let coinPercentageValue = 0;
     let coinDiscountValue = 0;
@@ -518,6 +498,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     let activeMediaIndex = 0;
     
     let currentProductId = null;
+    let currentProductSlug = null;
 
     let currentStockPrice = 0;
     let productQuantity = 1;
@@ -774,9 +755,9 @@ function openGooglePopup() {
     function selectVariant(element, variantName) {
       document.querySelectorAll('.variant-btn').forEach(btn => {
         btn.classList.remove('bg-[#ff4b6e]', 'text-white', 'border-[#ff4b6e]', 'shadow-md');
-        btn.classList.add('bg-white', 'text-gray-700', 'border-pink-200');
+        btn.classList.add('bg-white', 'text-[#gray-700]', 'border-pink-200');
       });
-      element.classList.remove('bg-white', 'text-gray-700', 'border-pink-200');
+      element.classList.remove('bg-white', 'text-[#gray-700]', 'border-pink-200');
       element.classList.add('bg-[#ff4b6e]', 'text-[#ffffff]', 'border-[#ff4b6e]', 'shadow-md');
       selectedVariant = variantName;
     }
@@ -1019,10 +1000,10 @@ function openGooglePopup() {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const targetParam = `id=${product.product_id || product.id}`;
+      const productTarget = product.slug ? product.slug : (product.product_id || product.id);
 
       return `
-        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='/user/product/${productTarget}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1061,7 +1042,8 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const canonicalUrl = `${window.location.origin}/user/product-details?id=${product.product_id || product.id}`;
+      const productPath = product.slug ? product.slug : (product.product_id || product.id);
+      const canonicalUrl = `${window.location.origin}/user/product/${productPath}`;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1435,12 +1417,19 @@ function openGooglePopup() {
 
     async function fetchProductData() {
       const urlParams = new URLSearchParams(window.location.search);
-      const productId = urlParams.get('id');
+      let queryParam = urlParams.get('id') || urlParams.get('slug');
 
-      if (!productId) return;
+      if (!queryParam) {
+        const pathSegments = window.location.pathname.split('/').filter(p => p);
+        if (pathSegments.length > 0) {
+          queryParam = pathSegments[pathSegments.length - 1];
+        }
+      }
 
-      currentProductId = productId;
-      const requestUrl = `/user/product/${encodeURIComponent(productId)}`;
+      if (!queryParam || queryParam === 'product-details' || queryParam === 'product') return;
+
+      currentProductId = queryParam;
+      const requestUrl = `/user/product/${encodeURIComponent(queryParam)}`;
 
       try {
         const response = await fetch(requestUrl);
