@@ -1041,7 +1041,8 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const canonicalUrl = `${window.location.origin}/user/product-details?id=${product.product_id || product.id}`;
+      const currentSlug = product.slug || product.product_id || product.id;
+      const canonicalUrl = `https://www.nexkartbd.com/user/product-details/${currentSlug}`;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1414,13 +1415,13 @@ function openGooglePopup() {
     }
 
     async function fetchProductData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const productId = urlParams.get('id');
+      const pathArray = window.location.pathname.split('/');
+      const productIdentifier = pathArray[pathArray.length - 1] || new URLSearchParams(window.location.search).get('id');
 
-      if (!productId) return;
+      if (!productIdentifier) return;
 
-      currentProductId = productId;
-      const requestUrl = `/user/product/${encodeURIComponent(productId)}`;
+      currentProductId = productIdentifier;
+      const requestUrl = `/user/product/${encodeURIComponent(productIdentifier)}`;
 
       try {
         const response = await fetch(requestUrl);
