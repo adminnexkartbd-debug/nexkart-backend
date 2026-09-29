@@ -46,30 +46,50 @@ const parseCheckboxValue = (val) => {
 };
 
 // ==========================================
-// 🛠️ HELPER: SEO Friendly Unique Slug Generator
+// 🛠️ HELPER: Short & SEO Friendly Unique Slug Generator
 // ==========================================
 async function generateUniqueSlug(title, currentProductId = null) {
   if (!title) return '';
 
-  // ১. টাইটেলকে ক্লিন করে URL Friendly ফরম্যাটে রূপান্তর (বাংলা ও ইংরেজি সাপোর্ট সহ)
-  let baseSlug = title
+  // 1. Common Stop Words (জোগুলো SEO-এর জন্য জরুরি নয়) বাদ দেওয়ার জন্য List
+  const stopWords = new Set([
+    'a', 'an', 'the', 'and', 'or', 'but', 'is', 'if', 'then', 'else', 'when',
+    'at', 'from', 'by', 'for', 'with', 'about', 'against', 'between', 'into',
+    'through', 'during', 'before', 'after', 'above', 'below', 'to', 'of', 'up', 'in', 'out', 'on', 'off'
+  ]);
+
+  // 2. Clean and Tokenize Title
+  let words = title
     .toString()
     .trim()
     .toLowerCase()
-    .replace(/[\s\_]+/g, '-')       // স্পেস বা আন্ডারস্কোরকে হাইফেন (-) করা
-    .replace(/[^\w\u0980-\u09FF\-]+/g, '') // বাংলা ও ইংরেজি অক্ষর/সংখ্যা ছাড়া বাকি সব চিহ্ন বাদ দেওয়া
-    .replace(/\-\-+/g, '-')        // পর পর একাধিক হাইফেন থাকলে ১টি করা
-    .replace(/^-+/, '')             // শুরুর হাইফেন ট্রিম করা
-    .replace(/-+$/, '');            // শেষের হাইফেন ট্রিম করা
+    .replace(/[^\w\u0980-\u09FF\s\-]+/g, '') // Special symbols remove
+    .split(/[\s\_]+/);                      // Words clean split
+
+  // 3. Filter Stop Words & Select Top 4 Short Words
+  let filteredWords = words.filter(word => word.length > 0 && !stopWords.has(word));
+
+  // Agar stop words remove karne ke baad words kam bachen, toh original split words use karein
+  if (filteredWords.length === 0) {
+    filteredWords = words;
+  }
+
+  // Pure title ke bajaye Max Top 4 Words lein
+  let shortTitle = filteredWords.slice(0, 4).join('-');
+
+  let baseSlug = shortTitle
+    .replace(/\-\-+/g, '-')   // Double hyphen cleanup
+    .replace(/^-+/, '')        // Start hyphen trim
+    .replace(/-+$/, '');       // End hyphen trim
 
   if (!baseSlug) {
-    baseSlug = 'product-' + Date.now();
+    baseSlug = 'prod-' + Date.now().toString().slice(-6);
   }
 
   let uniqueSlug = baseSlug;
   let counter = 1;
 
-  // ২. ডাটাবেসে আগের কোনো ইউনিক স্ল্যাগ আছে কিনা চেক করে Unique Slug বানানো
+  // 4. Database Check for Uniqueness
   while (true) {
     let query = 'SELECT id FROM products WHERE slug = ?';
     let params = [uniqueSlug];
@@ -81,7 +101,7 @@ async function generateUniqueSlug(title, currentProductId = null) {
 
     const [rows] = await db.query(query, params);
     if (rows.length === 0) {
-      break; // ইউনিক পাওয়া গেছে
+      break; // Unique slug found
     }
 
     uniqueSlug = `${baseSlug}-${counter}`;
