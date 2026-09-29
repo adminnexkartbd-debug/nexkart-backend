@@ -305,10 +305,6 @@ router.get(['/return-policy', '/return-policy.html'], (req, res) => {
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
-// Product Details HTML Route
-router.get(['/product-details', '/product-details.html', '/product/:id'], (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
-});
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
 router.get('/seller-profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'seller-profile.html')));
 router.get('/cart-html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html')));
@@ -350,6 +346,95 @@ router.get('/get-coupons', async (req, res) => {
     } catch (err) {
         console.error("Get Coupons Error:", err);
         return res.status(500).json({ success: false, message: "Server Error" });
+    }
+});
+
+// ==================== [ DYNAMIC PRODUCT ROUTE (ID & SLUG SUPPORT) ] ====================
+
+// HTML Route
+router.get('/product/:identifier', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/user/product-details.html'));
+});
+
+// Backward compatibility route for query parameter ?id=... or ?slug=...
+router.get('/product-details', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/user/product-details.html'));
+});
+
+// API Endpoint for Product Fetching by ID or Slug
+router.get('/product/:identifier', async (req, res) => {
+    const identifier = req.params.identifier;
+
+    try {
+        let query = "SELECT * FROM products WHERE ";
+        let queryParams = [];
+
+        if (!isNaN(identifier) && Number.isInteger(Number(identifier))) {
+            query += "product_id = ? OR id = ? OR slug = ?";
+            queryParams = [identifier, identifier, identifier];
+        } else {
+            query += "slug = ?";
+            queryParams = [identifier];
+        }
+
+        const [productRows] = await db.query(query, queryParams);
+
+        if (productRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const product = productRows[0];
+        const actualProductId = product.product_id || product.id;
+
+        // Fetch Gallery Images
+        let galleryImages = [];
+        if (product.gallery_images) {
+            if (typeof product.gallery_images === 'string') {
+                try {
+                    galleryImages = JSON.parse(product.gallery_images);
+                } catch (e) {
+                    galleryImages = product.gallery_images.split(',').map(img => img.trim());
+                }
+            } else if (Array.isArray(product.gallery_images)) {
+                galleryImages = product.gallery_images;
+            }
+        }
+
+        if (product.primary_image && !galleryImages.includes(product.primary_image)) {
+            galleryImages.unshift(product.primary_image);
+        }
+
+        // Fetch Seller Products
+        let sellerProducts = [];
+        const sellerId = product.admin_id || product.seller_id;
+        if (sellerId) {
+            const [sProducts] = await db.query(
+                "SELECT * FROM products WHERE (admin_id = ? OR seller_id = ?) AND (product_id != ? AND id != ?) LIMIT 4",
+                [sellerId, sellerId, actualProductId, actualProductId]
+            );
+            sellerProducts = sProducts;
+        }
+
+        // Fetch Suggested Products
+        let suggestedProducts = [];
+        if (product.category) {
+            const [suggProducts] = await db.query(
+                "SELECT * FROM products WHERE category = ? AND (product_id != ? AND id != ?) LIMIT 8",
+                [product.category, actualProductId, actualProductId]
+            );
+            suggestedProducts = suggProducts;
+        }
+
+        res.json({
+            success: true,
+            product,
+            galleryImages,
+            sellerProducts,
+            suggestedProducts
+        });
+    } catch (err) {
+        console.error("Error fetching product details:", err);
+        res.status(500).json({ success: false, message: 'Server error fetching product' });
     }
 });
 
@@ -1904,75 +1989,7 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
-router.get('/product/:id', async (req, res) => {
-    try {
-        const productIdOrSlug = req.params.id; // slug, product_id, or numeric id
-        
-        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
-        // Search product by slug, product_id, or id
-        const productQuery = `
-            SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
-                   a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
-            FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.slug = ? OR p.product_id = ? OR p.id = ?
-        `;
-        const [products] = await db.query(productQuery, [productIdOrSlug, productIdOrSlug, productIdOrSlug]);
-        
-        if (products.length === 0) {
-            return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
-        }
-        
-        const product = products[0];
-        const [images] = await db.query(`SELECT image_path FROM product_images WHERE product_id = ?`, [product.id]);
-
-        let userTotalCoins = 0;
-        if (userId) {
-            const [coinRows] = await db.query(
-                `SELECT SUM(coin_balance) AS total_coin FROM my_coins WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
-                [userId]
-            );
-            userTotalCoins = coinRows[0].total_coin || 0;
-        }
-
-        const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.admin_id = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY p.id DESC LIMIT 6
-        `, [product.admin_id, product.id]);
-
-        const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
-                   CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
-                   COALESCE(AVG(r.rating), 0) AS avg_rating,
-                   COUNT(r.id) AS review_count
-            FROM products p 
-            LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
-            WHERE p.category = ? AND p.id != ? 
-            GROUP BY p.id
-            ORDER BY RAND() LIMIT 6
-        `, [product.category, product.id]);
-
-        return res.json({
-            success: true,
-            product: product,
-            gallery_images: images.map(img => img.image_path),
-            seller_products: sellerProducts,
-            suggested_products: suggestedProducts,
-            user_coins: userTotalCoins,           
-            coin_value_in_bdt: 0.30               
-        });
-    } catch (error) {
-        console.error("Product Details Fetch Error:", error);
-        return res.status(500).json({ success: false, message: "Server Error" });
-    }
-});
 router.get('/current_user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
         return res.json(req.user);
@@ -2142,6 +2159,5 @@ router.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
-
 
 module.exports = router;
