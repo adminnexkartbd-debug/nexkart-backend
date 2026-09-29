@@ -305,8 +305,66 @@ router.get(['/return-policy', '/return-policy.html'], (req, res) => {
 router.get('/settings', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'settings.html')));
 
 router.get('/profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'profile.html')));
-//router.get('/product-details', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
-//router.get('/product-details.html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html')));
+
+// ============================================================
+// PRODUCT PAGE ROUTES
+// New SEO URL: /user/product/:slug
+// Old URL: /user/product-details?id=PRODUCT_ID
+// Old URLs are kept working and redirected permanently to the slug URL.
+// ============================================================
+router.get('/product/:slug', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
+});
+
+router.get('/product-details', async (req, res) => {
+    try {
+        const productId = req.query.id;
+
+        // If someone opens /user/product-details without an ID,
+        // simply serve the product page as before.
+        if (!productId) {
+            return res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
+        }
+
+        const [products] = await db.query(
+            `SELECT slug FROM products WHERE product_id = ? OR id = ? LIMIT 1`,
+            [productId, productId]
+        );
+
+        if (products.length > 0 && products[0].slug) {
+            return res.redirect(301, `/user/product/${encodeURIComponent(products[0].slug)}`);
+        }
+
+        return res.status(404).send('Product not found');
+    } catch (error) {
+        console.error('Legacy Product URL Redirect Error:', error);
+        return res.status(500).send('Server Error');
+    }
+});
+
+router.get('/product-details.html', async (req, res) => {
+    try {
+        const productId = req.query.id;
+
+        if (!productId) {
+            return res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
+        }
+
+        const [products] = await db.query(
+            `SELECT slug FROM products WHERE product_id = ? OR id = ? LIMIT 1`,
+            [productId, productId]
+        );
+
+        if (products.length > 0 && products[0].slug) {
+            return res.redirect(301, `/user/product/${encodeURIComponent(products[0].slug)}`);
+        }
+
+        return res.status(404).send('Product not found');
+    } catch (error) {
+        console.error('Legacy Product HTML URL Redirect Error:', error);
+        return res.status(500).send('Server Error');
+    }
+});
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
 router.get('/seller-profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'seller-profile.html')));
 router.get('/cart-html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html')));
@@ -1902,9 +1960,13 @@ router.get('/inquiries/:productId', async (req, res) => {
     }
 });
 
-router.get('/product/:id', async (req, res) => {
+router.get('/product-data/:slug', async (req, res) => {
     try {
-        const productId = req.params.id;
+        const productSlug = decodeURIComponent(req.params.slug || '').trim();
+
+        if (!productSlug) {
+            return res.status(400).json({ success: false, message: 'Invalid product URL!' });
+        }
         
         const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
 
@@ -1912,9 +1974,10 @@ router.get('/product/:id', async (req, res) => {
             SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
             FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.product_id = ? OR p.id = ?
+            WHERE p.slug = ?
+            LIMIT 1
         `;
-        const [products] = await db.query(productQuery, [productId, productId]);
+        const [products] = await db.query(productQuery, [productSlug]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
         }
@@ -1931,7 +1994,7 @@ router.get('/product/:id', async (req, res) => {
         }
 
         const [sellerProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
@@ -1943,7 +2006,7 @@ router.get('/product/:id', async (req, res) => {
         `, [product.admin_id, product.id]);
 
         const [suggestedProducts] = await db.query(`
-            SELECT p.id, p.product_id, p.title, p.sale_price, p.regular_price, p.category,
+            SELECT p.id, p.product_id, p.slug, p.title, p.sale_price, p.regular_price, p.category,
                    CONCAT('/uploads/', (SELECT image_path FROM product_images WHERE product_id = p.id LIMIT 1)) AS primary_image,
                    COALESCE(AVG(r.rating), 0) AS avg_rating,
                    COUNT(r.id) AS review_count
