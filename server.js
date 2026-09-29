@@ -12,10 +12,7 @@ const app = express();
 app.use(compression());
 app.set('trust proxy', 1);
 
-// Directly /product/:slug diye HTML file serve korar jonno:
-app.get('/product-details/:slug', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'public', 'users', 'product-details.html'));
-});
+
 //app.get('/sitemap.xml', (req, res) => {
  //   res.setHeader('Content-Type', 'application/xml');
  //   res.sendFile(path.join(__dirname, 'sitemap.xml'));
