@@ -999,11 +999,10 @@ function openGooglePopup() {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const slugOrId = product.slug || product.product_id || product.id;
-      const targetUrl = product.slug ? `/user/product-details/${product.slug}` : `/user/product-details?id=${slugOrId}`;
+      const targetParam = `id=${product.product_id || product.id}`;
 
       return `
-        <div onclick="window.location.href='${targetUrl}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1042,8 +1041,7 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const currentSlug = product.slug || product.product_id || product.id;
-      const canonicalUrl = `https://www.nexkartbd.com/user/product-details/${currentSlug}`;
+      const canonicalUrl = `${window.location.origin}/user/product-details?id=${product.product_id || product.id}`;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1415,55 +1413,46 @@ function openGooglePopup() {
       }
     }
 
-  async function fetchProductData() {
-  const pathSegments = window.location.pathname.split('/').filter(Boolean);
-  const lastPathSegment = pathSegments[pathSegments.length - 1];
+    async function fetchProductData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get('id');
 
-  let productIdentifier = null;
+      if (!productId) return;
 
-  // Extract slug from path (e.g. /user/product-details/my-product-slug)
-  if (lastPathSegment && lastPathSegment !== 'product-details' && lastPathSegment !== 'product-details.html') {
-    productIdentifier = decodeURIComponent(lastPathSegment);
-  } else {
-    // Fallback to query parameter ?id=NK-PROD-7789
-    productIdentifier = new URLSearchParams(window.location.search).get('id');
-  }
+      currentProductId = productId;
+      const requestUrl = `/user/product/${encodeURIComponent(productId)}`;
 
-  if (!productIdentifier) return;
+      try {
+        const response = await fetch(requestUrl);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
 
-  currentProductId = productIdentifier;
-  const requestUrl = `/user/product/${encodeURIComponent(productIdentifier)}`;
+        let userCoins = 0;
+        try {
+          const coinResponse = await fetch('/user/my-coin-balance');
+          const coinData = await coinResponse.json();
+          if (coinData.success) {
+            userCoins = coinData.total_coins || 0;
+          }
+        } catch (coinErr) {
+          console.warn("Could not load user coins:", coinErr);
+        }
 
-  try {
-    const response = await fetch(requestUrl);
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    const data = await response.json();
-
-    let userCoins = 0;
-    try {
-      const coinResponse = await fetch('/user/my-coin-balance');
-      const coinData = await coinResponse.json();
-      if (coinData.success) {
-        userCoins = coinData.total_coins || 0;
+        if (data.success && data.product) {
+          renderProductDetails(
+            data.product,
+            data.gallery_images,
+            data.seller_products,
+            data.suggested_products,
+            userCoins
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching product data:", error);
       }
-    } catch (coinErr) {
-      console.warn("Could not load user coins:", coinErr);
     }
 
-    if (data.success && data.product) {
-      renderProductDetails(
-        data.product,
-        data.gallery_images,
-        data.seller_products,
-        data.suggested_products,
-        userCoins
-      );
-    }
-  } catch (error) {
-    console.error("Error fetching product data:", error);
-  }
-}
-async function loadProductReviews(targetProductId) {
+    async function loadProductReviews(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
 
@@ -1682,6 +1671,7 @@ async function loadProductReviews(targetProductId) {
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
           </div>
         `;
+        setupImageFullscreen();
       }
     }
 
@@ -1690,85 +1680,100 @@ async function loadProductReviews(targetProductId) {
       if (!container) return;
       container.innerHTML = '';
 
-      if (!mediaList || mediaList.length <= 1) return;
+      if (!mediaList || mediaList.length <= 1) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'flex';
 
-      mediaList.forEach((item, index) => {
-        const thumb = document.createElement('div');
-        thumb.className = `thumb-slide-item w-16 h-16 rounded-xl border-2 cursor-pointer overflow-hidden relative transition-all flex items-center justify-center bg-white ${
-          index === activeMediaIndex ? 'border-[#ff4b6e] shadow-md scale-105' : 'border-pink-100 opacity-70 hover:opacity-100'
+      mediaList.forEach((media, index) => {
+        const isSelected = index === activeMediaIndex;
+        const thumbBtn = document.createElement('div');
+        thumbBtn.className = `thumb-slide-item w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 flex items-center justify-center relative bg-white ${
+          isSelected ? 'border-[#ff4b6e] shadow-md scale-105' : 'border-pink-100 hover:border-pink-300 opacity-70 hover:opacity-100'
         }`;
 
-        if (item.type === 'video') {
-          thumb.innerHTML = `
-            <div class="w-full h-full bg-gray-900 flex items-center justify-center text-white">
-              <i class="fa-solid fa-play text-xs"></i>
+        if (media.type === 'video') {
+          thumbBtn.innerHTML = `
+            <div class="w-full h-full bg-slate-900 flex flex-col items-center justify-center text-white relative">
+              <i class="fa-solid fa-circle-play text-xl text-red-500"></i>
+              <span class="text-[9px] font-bold mt-0.5">Video</span>
             </div>
-            <span class="absolute bottom-1 bg-red-600 text-[8px] text-white font-bold px-1 rounded">VIDEO</span>
           `;
         } else {
-          thumb.innerHTML = `<img src="${item.url}" class="w-full h-full object-cover" alt="Thumb">`;
+          thumbBtn.innerHTML = `
+            <img src="${media.url}" alt="Thumbnail ${index + 1}" class="w-full h-full object-contain p-1">
+          `;
         }
 
-        thumb.onclick = () => {
+        thumbBtn.onclick = () => {
           activeMediaIndex = index;
           renderMainMediaViewer(mediaList);
           renderThumbnails(mediaList);
         };
 
-        container.appendChild(thumb);
+        container.appendChild(thumbBtn);
       });
     }
 
     function renderSpecificationImages(images) {
-      specImagesList = images || [];
-      const galleryBox = document.getElementById('specification-images-gallery');
+      const specGallery = document.getElementById('specification-images-gallery');
       const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
 
-      if (!galleryBox) return;
-      galleryBox.innerHTML = '';
+      if (!specGallery) return;
+      specGallery.innerHTML = '';
 
-      if (specImagesList.length === 0) {
+      specImagesList = images || [];
+
+      if (!specImagesList || specImagesList.length === 0) {
         if (toggleBtnContainer) toggleBtnContainer.classList.add('hidden');
         return;
       }
 
       visibleSpecImgCount = 1;
       displaySpecImages();
-
-      if (specImagesList.length > 1 && toggleBtnContainer) {
-        toggleBtnContainer.classList.remove('hidden');
-      } else if (toggleBtnContainer) {
-        toggleBtnContainer.classList.add('hidden');
-      }
     }
 
     function displaySpecImages() {
-      const galleryBox = document.getElementById('specification-images-gallery');
-      if (!galleryBox) return;
+      const specGallery = document.getElementById('specification-images-gallery');
+      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
 
-      galleryBox.innerHTML = '';
-      const itemsToRender = specImagesList.slice(0, visibleSpecImgCount);
+      if (!specGallery) return;
+      specGallery.innerHTML = '';
 
-      itemsToRender.forEach(url => {
-        galleryBox.innerHTML += `
-          <div class="rounded-2xl overflow-hidden border border-pink-100 bg-white p-2 shadow-sm">
-            <img src="${url}" loading="lazy" class="w-full object-contain max-h-[600px] rounded-xl" alt="Spec Detail Image">
-          </div>
+      const imagesToShow = specImagesList.slice(0, visibleSpecImgCount);
+
+      imagesToShow.forEach((imgUrl, idx) => {
+        let formattedUrl = imgUrl ? String(imgUrl).trim() : '';
+        if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+          formattedUrl = formattedUrl.startsWith('/') ? formattedUrl : '/' + formattedUrl;
+        }
+
+        const imgCard = document.createElement('div');
+        imgCard.className = 'w-full rounded-2xl overflow-hidden border border-pink-200 bg-white/90 shadow-sm p-2 transition-all duration-300';
+        imgCard.innerHTML = `
+          <img src="${formattedUrl}" alt="Specification Image ${idx + 1}" loading="lazy" class="w-full h-auto object-contain rounded-xl max-h-[800px] mx-auto">
         `;
+        specGallery.appendChild(imgCard);
       });
 
-      const toggleBtnContainer = document.getElementById('spec-img-toggle-btn-container');
-      if (visibleSpecImgCount >= specImagesList.length && toggleBtnContainer) {
-        toggleBtnContainer.classList.add('hidden');
+      if (toggleBtnContainer) {
+        if (visibleSpecImgCount < specImagesList.length) {
+          toggleBtnContainer.classList.remove('hidden');
+        } else {
+          toggleBtnContainer.classList.add('hidden');
+        }
       }
     }
 
     function loadMoreSpecImages() {
-      visibleSpecImgCount = specImagesList.length;
+      visibleSpecImgCount += 2;
       displaySpecImages();
     }
 
-    document.addEventListener('DOMContentLoaded', fetchProductData);
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProductData();
+    });
   </script>
 </body>
 </html>
