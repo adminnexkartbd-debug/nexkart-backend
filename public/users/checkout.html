@@ -182,7 +182,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div id="bkash-gateways-grid" class="grid grid-cols-2 gap-2">
               <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
                 <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cb/BKash-Bangla-Logo-01.png" alt="bKash" class="h-8 w-auto object-contain" loading="lazy">
+                <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[#e2136e] text-white font-extrabold tracking-tight text-base leading-none shadow-sm" aria-label="bKash">bKash</span>
                 <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
               </label>
             </div>
@@ -486,18 +486,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
 
           // Show non-sensitive product information used for checkout.
-          document.getElementById('checkout-category').innerText = product.category || 'General';
-          document.getElementById('checkout-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
-          document.getElementById('checkout-sale-price').innerText = product.sale_price ? `৳ ${Number(product.sale_price).toLocaleString()}` : '—';
-          document.getElementById('checkout-shipping-from').innerText = product.shipping_from || 'Main Warehouse';
-          document.getElementById('checkout-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
-          document.getElementById('checkout-seller').innerText = product.seller_shop_name || 'NexKartBD Official';
+          const categoryEl = document.getElementById('checkout-category');
+          if (categoryEl) categoryEl.innerText = product.category || 'General';
+          const skuEl = document.getElementById('checkout-sku');
+          if (skuEl) skuEl.innerText = product.sku || product.product_id || product.id || 'N/A';
+          const shippingFromEl = document.getElementById('checkout-shipping-from');
+          if (shippingFromEl) shippingFromEl.innerText = product.shipping_from || 'Main Warehouse';
+          const deliveryTimeEl = document.getElementById('checkout-delivery-time');
+          if (deliveryTimeEl) deliveryTimeEl.innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+          const sellerEl = document.getElementById('checkout-seller');
+          if (sellerEl) sellerEl.innerText = product.seller_shop_name || 'NexKartBD Official';
 
-          if (data.gallery_images && data.gallery_images.length > 0) {
-            let imgUrl = data.gallery_images[0];
-            if (!imgUrl.startsWith('http')) imgUrl = '/' + imgUrl.replace(/^\/+/, '');
-            document.getElementById('summary-img').src = imgUrl;
-            document.getElementById('checkout-product-hero').src = imgUrl;
+          // Use the exact same image source returned to product-details.html:
+          // /user/product-data/:slug -> gallery_images[].
+          // Cloudinary/other absolute URLs are kept unchanged; local paths get a leading /.
+          const normalizeProductImageUrl = (raw) => {
+            let url = raw ? String(raw).trim() : '';
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url;
+            return url.startsWith('/') ? url : '/' + url;
+          };
+
+          const firstGalleryImage = Array.isArray(data.gallery_images) && data.gallery_images.length
+            ? data.gallery_images[0]
+            : null;
+          const fallbackImage = product.primary_image || product.image || product.image_url || '';
+          const imgUrl = normalizeProductImageUrl(firstGalleryImage || fallbackImage);
+
+          const summaryImg = document.getElementById('summary-img');
+          const heroImg = document.getElementById('checkout-product-hero');
+          if (imgUrl) {
+            if (summaryImg) {
+              summaryImg.src = imgUrl;
+              summaryImg.style.display = '';
+            }
+            if (heroImg) {
+              heroImg.src = imgUrl;
+              heroImg.style.display = '';
+            }
           }
 
           updateTotals();
