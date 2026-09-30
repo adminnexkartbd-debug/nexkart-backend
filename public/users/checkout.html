@@ -86,6 +86,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
       
       <div class="md:col-span-7 theme-glass-card rounded-3xl p-6 md:p-8 space-y-5">
+        <div class="summary-highlight rounded-2xl p-3.5 mb-4 flex items-center gap-4">
+          <div class="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white border border-pink-100 shadow-sm overflow-hidden shrink-0">
+            <img id="checkout-product-hero" src="" alt="Product" class="w-full h-full object-contain p-2" onerror="this.style.display='none';">
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
+            <h3 id="checkout-product-hero-title" class="text-sm md:text-base font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h3>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span id="checkout-product-hero-variant" class="hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-pink-50 text-[#d63384] border border-pink-100"></span>
+              <span class="text-[10px] text-gray-500">Quantity: <strong id="checkout-product-hero-qty" class="text-gray-800">1</strong></span>
+            </div>
+          </div>
+        </div>
+
         <div class="flex items-center justify-between pb-3 border-b border-pink-100 flex-wrap gap-2">
           <div>
             <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
@@ -168,7 +182,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <div id="bkash-gateways-grid" class="grid grid-cols-2 gap-2">
               <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
                 <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid fa-mobile-screen text-pink-600 text-lg"></i>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cb/BKash-Bangla-Logo-01.png" alt="bKash" class="h-8 w-auto object-contain" loading="lazy">
                 <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
               </label>
             </div>
@@ -213,28 +227,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
-        <!-- Full Product Details -->
         <div id="checkout-product-details" class="space-y-3 pt-3 border-t border-pink-100">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-circle-info text-[#ff4b6e]"></i>
-            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Product Details</h3>
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Product Information</h3>
           </div>
           <div class="bg-white/70 rounded-2xl border border-pink-100 p-3 space-y-2 text-[11px]">
             <div class="grid grid-cols-2 gap-2">
               <div><span class="text-gray-400 block">Category</span><strong id="checkout-category" class="text-gray-800">—</strong></div>
               <div><span class="text-gray-400 block">SKU</span><strong id="checkout-sku" class="text-gray-800 font-mono">—</strong></div>
-              <div><span class="text-gray-400 block">Regular Price</span><strong id="checkout-regular-price" class="text-gray-800">—</strong></div>
-              <div><span class="text-gray-400 block">Sale Price</span><strong id="checkout-sale-price" class="text-[#ff4b6e]">—</strong></div>
               <div><span class="text-gray-400 block">Ships From</span><strong id="checkout-shipping-from" class="text-gray-800">—</strong></div>
               <div><span class="text-gray-400 block">Delivery</span><strong id="checkout-delivery-time" class="text-gray-800">—</strong></div>
             </div>
             <div class="pt-2 border-t border-pink-100">
               <span class="text-gray-400 block mb-1">Seller</span>
               <strong id="checkout-seller" class="text-gray-800">NexKartBD</strong>
-            </div>
-            <div class="pt-2 border-t border-pink-100">
-              <span class="text-gray-400 block mb-1">Description</span>
-              <div id="checkout-description" class="text-gray-600 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto">—</div>
             </div>
           </div>
         </div>
@@ -468,22 +475,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
           document.getElementById('summary-title').innerText = product.title || 'Product';
           document.getElementById('summary-qty').innerText = quantity;
+          document.getElementById('checkout-product-hero-title').innerText = product.title || 'Product';
+          document.getElementById('checkout-product-hero-qty').innerText = quantity;
+          const heroVariant = document.getElementById('checkout-product-hero-variant');
+          if (selectedVariant) {
+            heroVariant.innerText = selectedVariant;
+            heroVariant.classList.remove('hidden');
+          } else {
+            heroVariant.classList.add('hidden');
+          }
 
-          // Show the same core product information used on the product details page.
+          // Show non-sensitive product information used for checkout.
           document.getElementById('checkout-category').innerText = product.category || 'General';
           document.getElementById('checkout-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
-          document.getElementById('checkout-regular-price').innerText = product.regular_price ? `৳ ${Number(product.regular_price).toLocaleString()}` : '—';
           document.getElementById('checkout-sale-price').innerText = product.sale_price ? `৳ ${Number(product.sale_price).toLocaleString()}` : '—';
           document.getElementById('checkout-shipping-from').innerText = product.shipping_from || 'Main Warehouse';
           document.getElementById('checkout-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
           document.getElementById('checkout-seller').innerText = product.seller_shop_name || 'NexKartBD Official';
-          const rawDescription = product.description || 'No product description available.';
-          document.getElementById('checkout-description').textContent = rawDescription.replace(/<[^>]*>/g, '').trim();
 
           if (data.gallery_images && data.gallery_images.length > 0) {
             let imgUrl = data.gallery_images[0];
             if (!imgUrl.startsWith('http')) imgUrl = '/' + imgUrl.replace(/^\/+/, '');
             document.getElementById('summary-img').src = imgUrl;
+            document.getElementById('checkout-product-hero').src = imgUrl;
           }
 
           updateTotals();
