@@ -501,7 +501,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script>
     let currentPage = 1;
-    const limit = 8; 
+    let limit = 8;
+
+    // Fill roughly three product rows (or more on taller screens), based on
+    // the actual responsive grid columns. This keeps the existing UI intact.
+    function getResponsiveProductLimit(gridElement) {
+        if (!gridElement) return 8;
+
+        const styles = window.getComputedStyle(gridElement);
+        const columns = Math.max(1, styles.gridTemplateColumns.split(' ').filter(Boolean).length);
+        const minRows = 3;
+        const estimatedCardHeight = window.innerWidth <= 768 ? 310 : 360;
+        const rows = Math.max(minRows, Math.ceil(window.innerHeight / estimatedCardHeight));
+
+        return Math.max(3, columns * rows);
+    }
+
+    function updateResponsiveProductLimit() {
+        const grid = document.getElementById('categoryProductGrid');
+        limit = getResponsiveProductLimit(grid);
+        return limit;
+    }
 
     document.addEventListener("DOMContentLoaded", async function() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -551,6 +571,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             seoRobots.setAttribute('content', 'noindex, follow');
         }
 
+        updateResponsiveProductLimit();
         fetchCategoryProducts(cat, type, promo, search, currentPage, false);
     });
 
@@ -703,6 +724,10 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
         if (btnSpinner) btnSpinner.classList.add('d-none');
     }
 }
+window.addEventListener('resize', () => {
+        updateResponsiveProductLimit();
+    });
+
 function loadMoreCategoryProducts() {
         currentPage++;
         const urlParams = new URLSearchParams(window.location.search);
