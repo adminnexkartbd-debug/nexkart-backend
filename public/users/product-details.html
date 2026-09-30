@@ -400,23 +400,8 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
         <div class="bg-white/80 p-4 rounded-2xl border border-pink-200 space-y-3">
           <label for="user-inquiry-input" class="block text-xs font-bold text-gray-700">Have a question about this product?</label>
           <textarea id="user-inquiry-input" rows="2" class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="Write your question here..."></textarea>
-
-          <div class="rounded-xl border border-pink-100 bg-pink-50/40 p-3">
-            <label for="inquiry-attachment" class="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer w-fit">
-              <i class="fa-solid fa-paperclip text-[#ff4b6e]"></i> Attach File / Image
-            </label>
-            <input
-              id="inquiry-attachment"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.doc,.docx"
-              class="mt-2 block w-full text-xs text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[#ff4b6e] file:text-white file:font-semibold file:cursor-pointer hover:file:opacity-90"
-            >
-            <p class="text-[10px] text-gray-500 mt-1">JPG, PNG, WEBP, GIF, PDF, DOC/DOCX • Maximum 5 MB</p>
-            <p id="inquiry-upload-status" class="text-[11px] font-semibold mt-1 hidden"></p>
-          </div>
-
           <div class="flex justify-end">
-            <button id="submit-inquiry-btn" onclick="submitInquiry()" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md hover:opacity-95 transition-all">
+            <button onclick="submitInquiry()" class="bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md hover:opacity-95 transition-all">
               <i class="fa-solid fa-paper-plane"></i> Submit Inquiry
             </button>
           </div>
@@ -846,117 +831,37 @@ function openGooglePopup() {
 
     async function submitInquiry() {
       const input = document.getElementById('user-inquiry-input');
-      const fileInput = document.getElementById('inquiry-attachment');
-      const statusEl = document.getElementById('inquiry-upload-status');
-      const submitBtn = document.getElementById('submit-inquiry-btn');
       const questionText = input.value.trim();
       const activeProductId = window.currentLoadedProductId;
-      const selectedFile = fileInput?.files?.[0] || null;
 
       if (!questionText) {
         alert('Please write your question!');
         return;
       }
 
-      if (!activeProductId) {
-        alert('Product information is not ready. Please refresh the page and try again.');
-        return;
-      }
-
-      if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
-        alert('Attachment is too large. Maximum file size is 5 MB.');
-        fileInput.value = '';
-        return;
-      }
-
       try {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
-        if (statusEl) {
-          statusEl.textContent = selectedFile ? `Uploading: ${selectedFile.name}` : '';
-          statusEl.classList.toggle('hidden', !selectedFile);
-          statusEl.classList.remove('text-red-600', 'text-green-600');
-          if (selectedFile) statusEl.classList.add('text-gray-600');
-        }
-
-        const formData = new FormData();
-        formData.append('product_id', activeProductId);
-        formData.append('question', questionText);
-        formData.append('user_name', 'Valued Customer');
-
-        if (selectedFile) {
-          formData.append('attachment', selectedFile);
-        }
-
         const response = await fetch('/user/inquiry', {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: activeProductId,
+            question: questionText,
+            user_name: 'Valued Customer'
+          })
         });
 
-        let data;
-        try {
-          data = await response.json();
-        } catch (jsonError) {
-          throw new Error(`Server returned an invalid response (${response.status}).`);
+        const data = await response.json();
+        if (data.success) {
+          alert('Inquiry submitted successfully!');
+          input.value = '';
+          loadInquiries(activeProductId);
+        } else {
+          alert('Error: ' + data.message);
         }
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Inquiry could not be submitted.');
-        }
-
-        alert(data.message || 'Inquiry submitted successfully!');
-        input.value = '';
-        if (fileInput) fileInput.value = '';
-        if (statusEl) {
-          statusEl.textContent = 'Inquiry submitted successfully.';
-          statusEl.classList.remove('hidden', 'text-gray-600', 'text-red-600');
-          statusEl.classList.add('text-green-600');
-        }
-        loadInquiries(activeProductId);
       } catch (error) {
         console.error('Error submitting inquiry:', error);
-        alert(error.message || 'Server error while submitting inquiry!');
-        if (statusEl) {
-          statusEl.textContent = error.message || 'Upload failed.';
-          statusEl.classList.remove('hidden', 'text-gray-600', 'text-green-600');
-          statusEl.classList.add('text-red-600');
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
-        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Inquiry';
       }
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const fileInput = document.getElementById('inquiry-attachment');
-      const statusEl = document.getElementById('inquiry-upload-status');
-
-      if (fileInput) {
-        fileInput.addEventListener('change', () => {
-          const file = fileInput.files?.[0];
-          if (!file) {
-            statusEl?.classList.add('hidden');
-            return;
-          }
-
-          if (file.size > 5 * 1024 * 1024) {
-            alert('Attachment is too large. Maximum file size is 5 MB.');
-            fileInput.value = '';
-            statusEl?.classList.add('hidden');
-            return;
-          }
-
-          if (statusEl) {
-            statusEl.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            statusEl.classList.remove('hidden', 'text-red-600');
-            statusEl.classList.add('text-gray-600');
-          }
-        });
-      }
-    });
 
     async function loadInquiries(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
@@ -1012,11 +917,6 @@ function openGooglePopup() {
             <p class="text-xs font-medium text-gray-800 bg-pink-50/60 p-2.5 rounded-xl border border-pink-100">
               <strong>Q:</strong> ${item.question}
             </p>
-            ${item.attachment_path ? `
-              <a href="${item.attachment_path}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-[11px] font-bold text-[#ff4b6e] hover:underline">
-                <i class="fa-solid fa-paperclip"></i> ${item.attachment_name || 'View attachment'}
-              </a>
-            ` : ''}
             ${answerSection}
           </div>
         `;
