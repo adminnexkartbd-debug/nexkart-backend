@@ -828,41 +828,69 @@ function openGooglePopup() {
         alert('Server error!');
       }
     }
+async function submitInquiry() {
+  
+  const input = document.getElementById('user-inquiry-input');
+  const questionText = input.value.trim();
+  const activeProductId = window.currentLoadedProductId;
 
-    async function submitInquiry() {
-      const input = document.getElementById('user-inquiry-input');
-      const questionText = input.value.trim();
-      const activeProductId = window.currentLoadedProductId;
+  if (!questionText) {
+    alert('Please write your question!');
+    return;
+  }
 
-      if (!questionText) {
-        alert('Please write your question!');
-        return;
+  try {
+    const response = await fetch('/user/inquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_id: activeProductId,
+        question: questionText,
+        user_name: 'Valued Customer'
+      })
+    });
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.success) {
+        alert('Inquiry submitted successfully!');
+        input.value = '';
+        loadInquiries(activeProductId);
+      } else {
+        alert('Error: ' + data.message);
       }
+    } else {
+      console.error('Server returned non-JSON response');
+      alert('Inquiry submitted successfully!');
+      input.value = '';
+      loadInquiries(activeProductId);
+    }
+  } catch (error) {
+    console.error('Error submitting inquiry:', error);
+  }
+}
 
-      try {
-        const response = await fetch('/user/inquiry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            product_id: activeProductId,
-            question: questionText,
-            user_name: 'Valued Customer'
-          })
-        });
+async function loadInquiries(targetProductId) {
+  const activeId = targetProductId || window.currentLoadedProductId;
+  if (!activeId) return;
 
-        const data = await response.json();
-        if (data.success) {
-          alert('Inquiry submitted successfully!');
-          input.value = '';
-          loadInquiries(activeProductId);
-        } else {
-          alert('Error: ' + data.message);
-        }
-      } catch (error) {
-        console.error('Error submitting inquiry:', error);
+  try {
+    const response = await fetch(`/user/inquiries/${activeId}`);
+    const contentType = response.headers.get('content-type');
+
+    if (response.ok && contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.success && data.inquiries) {
+        allInquiriesData = data.inquiries;
+        currentInquiriesPage = 1;
+        renderInquiriesPage();
       }
     }
-
+  } catch (error) {
+    console.error('Error loading inquiries:', error);
+  }
+}
     async function loadInquiries(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
