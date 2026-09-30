@@ -23,7 +23,7 @@ router.get('/sitemap.xml', async (req, res) => {
             '/user/cssignup'
         ];
 
-        // 1. SELECT me `slug` field fetch karein (aur fallback ke liye `id` bhi)
+        // 1. SELECT product data
         const [products] = await db.query(`SELECT id, slug, updated_at FROM products`);
 
         // Create XML Document
@@ -38,11 +38,10 @@ router.get('/sitemap.xml', async (req, res) => {
                 .ele('priority').txt(route === '/' ? '1.0' : '0.8').up();
         });
 
-        // 2. Dynamic Product Pages me Slug URL build karein
+        // 2. Dynamic Product Pages with correct URL structure: /user/product/slug
         products.forEach(product => {
-            // Agar product ka slug exist karta hai to Slug URL use karein, warna fallback id URL
             const productPath = product.slug 
-                ? `/product/${product.slug}`  // Apne Frontend route URL pattern ke according change kar sakte hain (e.g. /product/slug ya /user/product-details/slug)
+                ? `/user/product/${product.slug}`
                 : `/user/product-details?id=${product.id}`;
 
             root.ele('url')
