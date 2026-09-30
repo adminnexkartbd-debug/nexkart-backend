@@ -2018,8 +2018,11 @@ router.get('/dashProduct', async (req, res) => {
         const totalProducts = totalCountResult[0].total;
 
         const maxOffset = Math.max(0, totalProducts - limit);
-        const randomOffset = page === 1 ? Math.floor(Math.random() * (maxOffset + 1)) : (parseInt(req.query.offset) || 0);
-        const offset = Math.min(randomOffset, maxOffset);
+        const requestedOffset = parseInt(req.query.offset);
+        const randomOffset = page === 1
+            ? Math.floor(Math.random() * (maxOffset + 1))
+            : (Number.isFinite(requestedOffset) ? requestedOffset : 0);
+        const offset = Math.min(Math.max(0, randomOffset), maxOffset);
 
         const query = `
             SELECT p.*, 
@@ -2033,13 +2036,16 @@ router.get('/dashProduct', async (req, res) => {
         `;
 
         const [products] = await db.query(query, [limit, offset]);
-        const hasMore = (offset + products.length) < totalProducts;
+        const nextOffset = offset + products.length;
+        const hasMore = nextOffset < totalProducts;
 
         return res.json({ 
             success: true, 
             count: products.length, 
             products: products,
-            hasMore: hasMore
+            hasMore: hasMore,
+            offset: offset,
+            nextOffset: nextOffset
         });
     } catch (error) {
         console.error("Dashboard Product Load Error:", error);
@@ -2122,7 +2128,8 @@ router.get('/get-products-by-category', async (req, res) => {
         const [countResult] = await db.query(countSql, queryParams);
 
         const totalProducts = countResult[0].total;
-        const hasMore = (offset + products.length) < totalProducts;
+        const nextOffset = offset + products.length;
+        const hasMore = nextOffset < totalProducts;
 
         res.json({
             success: true,
