@@ -17,13 +17,13 @@
   <meta id="seo-description" name="description" content="NexKartBD theke sera dame bong akorshoniy offere ponno kinun.">
   <meta id="seo-keywords" name="keywords" content="NexKartBD, Ecommerce, Buy Online, Shopping Bangladesh, Product Details">
   <meta name="robots" content="index, follow">
-  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/user/product">
+  <link id="seo-canonical" rel="canonical" href="https://www.nexkartbd.com/user/product-details">
 
   <meta property="og:type" content="product">
   <meta id="og-title" property="og:title" content="NexKartBD - Product Details">
   <meta id="og-description" property="og:description" content="NexKartBD theke sera dame ponno kinun.">
   <meta id="og-image" property="og:image" content="">
-  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product">
+  <meta id="og-url" property="og:url" content="https://www.nexkartbd.com/user/product-details">
   <meta property="og:site_name" content="NexKartBD">
 
   <meta name="twitter:card" content="summary_large_image">
@@ -502,6 +502,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     let currentStockPrice = 0;
     let productQuantity = 1;
     let selectedVariant = null;
+    let currentProductSlug = null;
     let pendingAction = null;
 
     let fullDescriptionText = '';
@@ -773,9 +774,10 @@ function openGooglePopup() {
 
     function executeOrderRedirect() {
       const activeIdentifier = window.currentLoadedProductId || currentProductId;
-      if (!activeIdentifier) return;
+      const activeSlug = currentProductSlug || window.currentLoadedProductSlug;
+      if (!activeIdentifier || !activeSlug) return;
       
-      let orderUrl = `/user/checkout?id=${encodeURIComponent(activeIdentifier)}&qty=${productQuantity}`;
+      let orderUrl = `/user/checkout/${encodeURIComponent(activeSlug)}?qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -828,69 +830,41 @@ function openGooglePopup() {
         alert('Server error!');
       }
     }
-async function submitInquiry() {
-  
-  const input = document.getElementById('user-inquiry-input');
-  const questionText = input.value.trim();
-  const activeProductId = window.currentLoadedProductId;
 
-  if (!questionText) {
-    alert('Please write your question!');
-    return;
-  }
+    async function submitInquiry() {
+      const input = document.getElementById('user-inquiry-input');
+      const questionText = input.value.trim();
+      const activeProductId = window.currentLoadedProductId;
 
-  try {
-    const response = await fetch('/user/inquiry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        product_id: activeProductId,
-        question: questionText,
-        user_name: 'Valued Customer'
-      })
-    });
-
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      if (data.success) {
-        alert('Inquiry submitted successfully!');
-        input.value = '';
-        loadInquiries(activeProductId);
-      } else {
-        alert('Error: ' + data.message);
+      if (!questionText) {
+        alert('Please write your question!');
+        return;
       }
-    } else {
-      console.error('Server returned non-JSON response');
-      alert('Inquiry submitted successfully!');
-      input.value = '';
-      loadInquiries(activeProductId);
-    }
-  } catch (error) {
-    console.error('Error submitting inquiry:', error);
-  }
-}
 
-async function loadInquiries(targetProductId) {
-  const activeId = targetProductId || window.currentLoadedProductId;
-  if (!activeId) return;
+      try {
+        const response = await fetch('/user/inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: activeProductId,
+            question: questionText,
+            user_name: 'Valued Customer'
+          })
+        });
 
-  try {
-    const response = await fetch(`/user/inquiries/${activeId}`);
-    const contentType = response.headers.get('content-type');
-
-    if (response.ok && contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      if (data.success && data.inquiries) {
-        allInquiriesData = data.inquiries;
-        currentInquiriesPage = 1;
-        renderInquiriesPage();
+        const data = await response.json();
+        if (data.success) {
+          alert('Inquiry submitted successfully!');
+          input.value = '';
+          loadInquiries(activeProductId);
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error submitting inquiry:', error);
       }
     }
-  } catch (error) {
-    console.error('Error loading inquiries:', error);
-  }
-}
+
     async function loadInquiries(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
@@ -1027,10 +1001,10 @@ async function loadInquiries(targetProductId) {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
+      const targetSlug = product.slug || product.product_id || product.id;
 
       return `
-        <div onclick="if ('${targetSlug}') window.location.href='/user/product/${targetSlug}';" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div onclick="window.location.href='/user/product/${encodeURIComponent(targetSlug)}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1069,10 +1043,7 @@ async function loadInquiries(targetProductId) {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const productSlug = product.slug || '';
-      const canonicalUrl = productSlug
-        ? `${window.location.origin}/user/product/${encodeURIComponent(productSlug)}`
-        : `${window.location.origin}/user/product-details`;
+      const canonicalUrl = `${window.location.origin}/user/product/${encodeURIComponent(product.slug || '')}`;
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1136,6 +1107,8 @@ async function loadInquiries(targetProductId) {
 
     function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts, userCoins) {
       window.currentLoadedProductId = product.product_id || product.id;
+      currentProductSlug = product.slug || currentProductSlug || null;
+      window.currentLoadedProductSlug = currentProductSlug;
 
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
       document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
@@ -1445,20 +1418,21 @@ async function loadInquiries(targetProductId) {
     }
 
     async function fetchProductData() {
-      // Product page URL format:
-      // /user/product/mayjam-aromatic-essential-oil
       const pathParts = window.location.pathname.split('/').filter(Boolean);
-      const productIndex = pathParts.indexOf('product');
-      const productSlug = productIndex !== -1 ? pathParts[productIndex + 1] : null;
+      const slugFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 2] === 'product'
+        ? decodeURIComponent(pathParts[pathParts.length - 1])
+        : null;
+      const urlParams = new URLSearchParams(window.location.search);
+      const legacyProductId = urlParams.get('id');
+      const productSlug = slugFromPath || urlParams.get('slug');
 
-      if (!productSlug) {
-        console.error('Product slug not found in URL:', window.location.pathname);
-        return;
-      }
+      if (!productSlug && !legacyProductId) return;
 
-      const decodedSlug = decodeURIComponent(productSlug);
-      currentProductId = decodedSlug;
-      const requestUrl = `/user/product-data/${encodeURIComponent(decodedSlug)}`;
+      currentProductSlug = productSlug || null;
+      currentProductId = legacyProductId || null;
+      const requestUrl = productSlug
+        ? `/user/product-data/${encodeURIComponent(productSlug)}`
+        : `/user/product-data/${encodeURIComponent(legacyProductId)}`;
 
       try {
         const response = await fetch(requestUrl);

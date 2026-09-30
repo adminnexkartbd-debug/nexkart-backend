@@ -202,6 +202,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
+        <!-- Full Product Details -->
+        <div id="checkout-product-details" class="space-y-3 pt-3 border-t border-pink-100">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-[#ff4b6e]"></i>
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Product Details</h3>
+          </div>
+          <div class="bg-white/70 rounded-2xl border border-pink-100 p-3 space-y-2 text-[11px]">
+            <div class="grid grid-cols-2 gap-2">
+              <div><span class="text-gray-400 block">Category</span><strong id="checkout-category" class="text-gray-800">—</strong></div>
+              <div><span class="text-gray-400 block">SKU</span><strong id="checkout-sku" class="text-gray-800 font-mono">—</strong></div>
+              <div><span class="text-gray-400 block">Regular Price</span><strong id="checkout-regular-price" class="text-gray-800">—</strong></div>
+              <div><span class="text-gray-400 block">Sale Price</span><strong id="checkout-sale-price" class="text-[#ff4b6e]">—</strong></div>
+              <div><span class="text-gray-400 block">Ships From</span><strong id="checkout-shipping-from" class="text-gray-800">—</strong></div>
+              <div><span class="text-gray-400 block">Delivery</span><strong id="checkout-delivery-time" class="text-gray-800">—</strong></div>
+            </div>
+            <div class="pt-2 border-t border-pink-100">
+              <span class="text-gray-400 block mb-1">Seller</span>
+              <strong id="checkout-seller" class="text-gray-800">NexKartBD</strong>
+            </div>
+            <div class="pt-2 border-t border-pink-100">
+              <span class="text-gray-400 block mb-1">Description</span>
+              <div id="checkout-description" class="text-gray-600 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto">—</div>
+            </div>
+          </div>
+        </div>
+
         <div class="space-y-2 pt-2 border-t border-pink-100">
           <label class="block text-xs font-bold text-gray-700">Have a Coupon?</label>
           <div class="flex gap-2">
@@ -262,8 +288,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-    const selectedVariant = urlParams.get('variant');
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const checkoutSlug = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 2] === 'checkout'
+      ? decodeURIComponent(pathParts[pathParts.length - 1])
+      : (urlParams.get('slug') || null);
+    const legacyProductId = urlParams.get('id');
+    let productId = legacyProductId;
+    let selectedVariant = urlParams.get('variant');
     let quantity = parseInt(urlParams.get('qty')) || 1;
 
     let productPrice = 0;
@@ -279,7 +310,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let isCoinApplied = false;
 
     document.addEventListener("DOMContentLoaded", () => {
-      if (productId) {
+      if (checkoutSlug || productId) {
         fetchCheckoutProduct();
       }
       loadUserProfileData();
@@ -312,10 +343,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     async function fetchCheckoutProduct() {
       try {
-        const response = await fetch(`/user/product/${productId}`);
+        const lookupKey = checkoutSlug || productId;
+        const response = await fetch(`/user/product-data/${encodeURIComponent(lookupKey)}`);
         const data = await response.json();
         if (data.success && data.product) {
           const product = data.product;
+          // Keep the numeric product ID for cart/coupon/order APIs, but use slug for the URL.
+          productId = product.product_id || product.id;
+          if (!checkoutSlug && product.slug) {
+            const cleanPath = `/user/checkout/${encodeURIComponent(product.slug)}`;
+            const newQuery = new URLSearchParams();
+            newQuery.set('qty', quantity);
+            if (selectedVariant) newQuery.set('variant', selectedVariant);
+            window.history.replaceState({}, '', `${cleanPath}?${newQuery.toString()}`);
+          }
           productPrice = parseFloat(product.sale_price || 0);
           baseDeliveryCharge = Number(product.delivery_charge) || 60;
           deliveryLimit = Number(product.delivery_limit) || 1;
@@ -376,8 +417,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             codNotice.classList.add('hidden');
           }
 
-          document.getElementById('summary-title').innerText = product.title;
+          document.getElementById('summary-title').innerText = product.title || 'Product';
           document.getElementById('summary-qty').innerText = quantity;
+
+          // Show the same core product information used on the product details page.
+          document.getElementById('checkout-category').innerText = product.category || 'General';
+          document.getElementById('checkout-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
+          document.getElementById('checkout-regular-price').innerText = product.regular_price ? `৳ ${Number(product.regular_price).toLocaleString()}` : '—';
+          document.getElementById('checkout-sale-price').innerText = product.sale_price ? `৳ ${Number(product.sale_price).toLocaleString()}` : '—';
+          document.getElementById('checkout-shipping-from').innerText = product.shipping_from || 'Main Warehouse';
+          document.getElementById('checkout-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+          document.getElementById('checkout-seller').innerText = product.seller_shop_name || 'NexKartBD Official';
+          const rawDescription = product.description || 'No product description available.';
+          document.getElementById('checkout-description').textContent = rawDescription.replace(/<[^>]*>/g, '').trim();
 
           if (data.gallery_images && data.gallery_images.length > 0) {
             let imgUrl = data.gallery_images[0];
