@@ -365,6 +365,9 @@ router.get('/product-details.html', async (req, res) => {
         return res.status(500).send('Server Error');
     }
 });
+// SEO-friendly checkout URL: /user/checkout/:slug?qty=1&variant=50ml
+router.get('/checkout/:slug', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
+// Legacy checkout URL remains supported: /user/checkout?id=PRODUCT_ID&qty=1&variant=50ml
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
 router.get('/seller-profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'seller-profile.html')));
 router.get('/cart-html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html')));
