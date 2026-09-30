@@ -1267,7 +1267,8 @@ router.post('/place-order', async (req, res) => {
             union_area,
             post_code,
             block_house,
-            discount_amount
+            discount_amount,
+            use_coins
         } = req.body;
 
 
@@ -1441,14 +1442,38 @@ router.post('/place-order', async (req, res) => {
             salePrice * orderQty;
 
 
-        const appliedDiscount =
-            parseFloat(discount_amount) || 0;
+        // ================= COIN OFFER VALIDATION =================
+        // Never trust the browser for coin discount. The product decides whether
+        // coins are allowed and the DB value decides the maximum percentage.
+        let coinDiscountAmount = 0;
+        let availableCoinsForOrder = 0;
 
+        if (use_coins === true || use_coins === 'true' || use_coins === 1 || use_coins === '1') {
+            const coinOfferEnabled = String(product.coin_offer || '').toLowerCase() === 'yes';
+            const maxCoinPercent = Math.max(0, parseFloat(product.coin_percentage_value) || 0);
+
+            if (coinOfferEnabled && maxCoinPercent > 0) {
+                const [coinRows] = await db.query(
+                    `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
+                     FROM my_coins
+                     WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
+                    [userId]
+                );
+
+                availableCoinsForOrder = Math.max(0, Number(coinRows[0]?.total_coin || 0));
+                const coinValue = 0.30;
+                const maxDiscountByPercent = (subtotal * maxCoinPercent) / 100;
+                coinDiscountAmount = Math.min(availableCoinsForOrder * coinValue, maxDiscountByPercent);
+            }
+        }
+
+        // Coupon/other discounts remain as supplied by the existing coupon flow.
+        const appliedDiscount = Math.max(0, parseFloat(discount_amount) || 0);
 
         const totalAmount =
             Math.max(
                 0,
-                subtotal - appliedDiscount
+                subtotal - appliedDiscount - coinDiscountAmount
             ) + deliveryCharge;
 
 
@@ -1496,7 +1521,9 @@ router.post('/place-order', async (req, res) => {
         console.log("Quantity:", orderQty);
         console.log("Subtotal:", subtotal);
         console.log("Delivery:", deliveryCharge);
-        console.log("Discount:", appliedDiscount);
+        console.log("Coupon/Other Discount:", appliedDiscount);
+        console.log("Coin Discount:", coinDiscountAmount);
+        console.log("Available Coins:", availableCoinsForOrder);
         console.log("Total:", totalAmount);
         console.log("Payment Status:", paymentStatus);
         console.log("========================================");
@@ -1551,7 +1578,7 @@ router.post('/place-order', async (req, res) => {
 
                         subtotal,
                         deliveryCharge,
-                        appliedDiscount,
+                        appliedDiscount + coinDiscountAmount,
                         totalAmount,
 
                         payment_method || 'cod',
