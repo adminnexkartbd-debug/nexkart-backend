@@ -45,6 +45,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .gateway-card { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; cursor: pointer; }
     .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
     .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
+    .checkout-header { background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,245,248,.92)); border: 1px solid rgba(255,255,255,.85); box-shadow: 0 18px 45px rgba(190, 35, 80, .18); }
+    .summary-highlight { background: linear-gradient(135deg, #fff0f4, #fff8fa); border: 1px solid #ffd3dc; }
+    .coin-card { background: linear-gradient(135deg, #fff9e8, #fff4cf); border: 1px solid #f5d78a; box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+    .coin-card.disabled { filter: grayscale(.25); opacity: .68; background: #f8f8f8; border-color: #e5e7eb; }
+    .coin-badge { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; box-shadow: 0 7px 18px rgba(245,158,11,.24); }
+    .secure-strip { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.85); }
   </style>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
@@ -64,12 +70,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
     
-    <div class="flex items-center justify-between py-2">
-      <a href="javascript:history.back()" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+    <div class="checkout-header rounded-3xl px-4 md:px-6 py-4 flex items-center justify-between gap-3">
+      <a href="javascript:history.back()" class="bg-white hover:bg-pink-50 text-[#d63384] font-semibold px-4 py-2.5 rounded-2xl transition-all flex items-center gap-2 shadow-sm text-xs md:text-sm border border-pink-100">
         <i class="fa-solid fa-arrow-left text-[#ff4b6e]"></i> Back
       </a>
-      <h1 class="text-lg md:text-xl font-extrabold text-white drop-shadow-sm">Checkout & Order</h1>
-      <div class="w-16"></div>
+      <div class="text-center">
+        <p class="text-[10px] md:text-xs uppercase tracking-[.2em] text-[#d63384] font-bold">NexKartBD</p>
+        <h1 class="text-lg md:text-2xl font-extrabold text-gray-900">Secure Checkout</h1>
+      </div>
+      <div class="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-100 rounded-2xl px-3 py-2 text-[10px] md:text-xs font-bold">
+        <i class="fa-solid fa-shield-heart"></i><span class="hidden sm:inline">Safe Order</span>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -174,7 +185,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </h2>
         </div>
 
-        <div class="flex items-center gap-4 bg-white/70 p-3 rounded-2xl border border-pink-100">
+        <div class="summary-highlight flex items-center gap-4 p-3.5 rounded-2xl">
           <img id="summary-img" src="" alt="Product" class="w-16 h-16 object-cover rounded-xl border border-pink-200" onerror="this.style.display='none';">
           <div class="flex-1 overflow-hidden">
             <h4 id="summary-title" class="text-xs font-bold text-gray-900 truncate">Loading product...</h4>
@@ -237,21 +248,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
         </div>
 
-        <div id="checkout-coin-section" class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-coins text-amber-500 text-base"></i>
-              <div>
-                <h4 class="text-[11px] font-bold text-gray-800">Use Coins (1 Coin = ৳0.30, Max 4% Off)</h4>
-                <p class="text-[10px] text-gray-500">Balance: <strong id="checkout-user-coins">0</strong> Coins</p>
+        <div id="checkout-coin-section" class="coin-card rounded-2xl p-3.5 space-y-3 hidden">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="coin-badge w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-coins text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <h4 class="text-xs font-extrabold text-gray-900">Use Your NexKart Coins</h4>
+                <p id="coin-offer-help" class="text-[10px] text-gray-600 mt-0.5">Max discount: <strong id="coin-max-percent">0</strong>%</p>
               </div>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer" id="coin-toggle-label">
+            <label class="relative inline-flex items-center cursor-pointer shrink-0" id="coin-toggle-label" title="Apply coin discount">
               <input type="checkbox" id="apply-coins-checkbox" onchange="toggleCoinDiscount()" class="sr-only peer" disabled>
-              <div id="coin-toggle-bg" class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:width-4 after:transition-all peer-checked:bg-[#ff4b6e]"></div>
+              <div id="coin-toggle-bg" class="w-10 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f59e0b]"></div>
             </label>
           </div>
-          <p id="coin-status-msg" class="text-[10px] text-red-500 font-semibold mt-1 hidden">আপনার পর্যাপ্ত কয়েন নেই!</p>
+          <div class="flex items-center justify-between bg-white/60 border border-white/80 rounded-xl px-3 py-2 text-[10px]">
+            <span class="text-gray-600">Available balance</span>
+            <span class="font-extrabold text-amber-700"><span id="checkout-user-coins">0</span> Coins</span>
+          </div>
+          <p id="coin-status-msg" class="text-[10px] text-red-500 font-semibold hidden"></p>
         </div>
 
         <div class="space-y-2.5 text-xs text-gray-600 pt-2 border-t border-pink-100">
@@ -275,6 +292,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span>Total Amount:</span>
             <span id="summary-total" class="text-[#ff4b6e] text-lg">৳ 0</span>
           </div>
+        </div>
+
+        <div class="secure-strip rounded-2xl px-3 py-2.5 flex items-center gap-2 text-[10px] text-gray-600">
+          <i class="fa-solid fa-lock text-green-600"></i>
+          <span>Your coin offer, discount limit and final amount are verified again on the server.</span>
         </div>
 
         <button onclick="submitOrder()" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
@@ -308,6 +330,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let userAvailableCoins = 0;
     let coinDiscountAmount = 0;
     let isCoinApplied = false;
+    let coinOfferEnabled = false;
+    let coinPercentageValue = 0;
+    const COIN_VALUE_BDT = 0.30;
 
     document.addEventListener("DOMContentLoaded", () => {
       if (checkoutSlug || productId) {
@@ -362,22 +387,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           deliveryLimit = Number(product.delivery_limit) || 1;
           availableStock = parseInt(product.stock_quantity) || 0;
           
-          userAvailableCoins = data.user_coins || 0;
-          document.getElementById('checkout-user-coins').innerText = userAvailableCoins;
+          userAvailableCoins = Number(data.user_coins || 0);
+          coinOfferEnabled = String(product.coin_offer || '').toLowerCase() === 'yes';
+          coinPercentageValue = Math.max(0, Number(product.coin_percentage_value || 0));
 
+          const coinSection = document.getElementById('checkout-coin-section');
           const coinCheckbox = document.getElementById('apply-coins-checkbox');
           const coinToggleLabel = document.getElementById('coin-toggle-label');
           const coinStatusMsg = document.getElementById('coin-status-msg');
+          const coinMaxPercent = document.getElementById('coin-max-percent');
+          const coinHelp = document.getElementById('coin-offer-help');
 
-          if (userAvailableCoins > 0) {
-            coinCheckbox.disabled = false;
-            coinToggleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
-            coinStatusMsg.classList.add('hidden');
+          document.getElementById('checkout-user-coins').innerText = userAvailableCoins.toLocaleString();
+          coinMaxPercent.innerText = coinPercentageValue;
+          coinHelp.innerHTML = `Max discount: <strong>${coinPercentageValue}%</strong> · 1 Coin = ৳${COIN_VALUE_BDT.toFixed(2)}`;
+
+          // IMPORTANT: coin controls are available only when THIS product has coin_offer=yes.
+          if (coinOfferEnabled && coinPercentageValue > 0) {
+            coinSection.classList.remove('hidden');
+            coinSection.classList.remove('disabled');
+
+            if (userAvailableCoins > 0) {
+              coinCheckbox.disabled = false;
+              coinToggleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+              coinStatusMsg.classList.add('hidden');
+            } else {
+              coinCheckbox.disabled = true;
+              coinCheckbox.checked = false;
+              isCoinApplied = false;
+              coinToggleLabel.classList.add('opacity-50', 'cursor-not-allowed');
+              coinStatusMsg.innerText = 'আপনার কোনো ব্যবহারযোগ্য Coin নেই।';
+              coinStatusMsg.classList.remove('hidden');
+            }
           } else {
-            coinCheckbox.disabled = true;
+            coinOfferEnabled = false;
+            coinPercentageValue = 0;
+            isCoinApplied = false;
+            coinDiscountAmount = 0;
             coinCheckbox.checked = false;
-            coinToggleLabel.classList.add('opacity-50', 'cursor-not-allowed');
-            coinStatusMsg.classList.remove('hidden');
+            coinCheckbox.disabled = true;
+            coinSection.classList.add('hidden');
           }
 
           const stockBadge = document.getElementById('stock-status-badge');
@@ -445,16 +494,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     function calculateCoinDiscount() {
+      if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) return 0;
       const subtotal = productPrice * quantity;
-      let rawCoinDiscount = userAvailableCoins * 0.30;
-      let maxAllowedDiscount = (subtotal * 4) / 100;
+      const rawCoinDiscount = userAvailableCoins * COIN_VALUE_BDT;
+      const maxAllowedDiscount = (subtotal * coinPercentageValue) / 100;
       return Math.min(rawCoinDiscount, maxAllowedDiscount);
     }
 
     function toggleCoinDiscount() {
       const checkbox = document.getElementById('apply-coins-checkbox');
-      if (userAvailableCoins <= 0) {
+      if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) {
         checkbox.checked = false;
+        isCoinApplied = false;
+        coinDiscountAmount = 0;
+        document.getElementById('coin-discount-row').classList.add('hidden');
+        updateTotals();
         return;
       }
       isCoinApplied = checkbox.checked;
@@ -582,12 +636,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       deliveryCharge = calculatedDeliveryCharge;
       
+      const safeCoinDiscount = isCoinApplied ? calculateCoinDiscount() : 0;
       if (isCoinApplied) {
-        coinDiscountAmount = calculateCoinDiscount();
-        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('summary-coin-discount').innerText = safeCoinDiscount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       }
-
-      const totalDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
+      coinDiscountAmount = safeCoinDiscount;
+      const totalDiscount = appliedDiscount + safeCoinDiscount;
       const finalSubtotal = Math.max(0, subtotal - totalDiscount);
       const total = finalSubtotal + deliveryCharge;
 
@@ -646,7 +700,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         union_area: union_area,
         post_code: post_code,
         block_house: block_house,
-        discount_amount: totalCalculatedDiscount
+        discount_amount: appliedDiscount,
+        use_coins: Boolean(isCoinApplied)
       };
 
       try {
