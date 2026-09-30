@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const fs = require('fs');
 const db = require('../../db'); 
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
@@ -22,47 +21,6 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
-
-// ==================== [ INQUIRY FILE UPLOAD ] ====================
-// Inquiry attachments are stored separately from profile/product uploads.
-const inquiryUploadDir = path.join(process.cwd(), 'public', 'uploads', 'inquiries');
-fs.mkdirSync(inquiryUploadDir, { recursive: true });
-
-const inquiryStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, inquiryUploadDir);
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname || '').toLowerCase();
-        const safeName = `inquiry-${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
-        cb(null, safeName);
-    }
-});
-
-const inquiryUpload = multer({
-    storage: inquiryStorage,
-    limits: {
-        fileSize: 5 * 1024 * 1024,
-        files: 1
-    },
-    fileFilter: (req, file, cb) => {
-        const allowedMimeTypes = [
-            'image/jpeg',
-            'image/png',
-            'image/webp',
-            'image/gif',
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-
-        if (allowedMimeTypes.includes(file.mimetype)) {
-            return cb(null, true);
-        }
-
-        return cb(new Error('Only JPG, PNG, WEBP, GIF, PDF, DOC and DOCX files are allowed.'));
-    }
-});
 
 // ==================== [ TRACKING HELPERS (GA4 & FB CAPI) ] ====================
 const TRACKING_CONFIG = {
@@ -1908,228 +1866,81 @@ router.get('/bkash-success', async (req, res) => {
     }
 });
 
-router.post('/inquiry', (req, res) => {
-    inquiryUpload.single('attachment')(req, res, async (uploadError) => {
-        let uploadedFilePath = req.file?.path || null;
-
-        try {
-            if (uploadError) {
-                if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-                    fs.unlinkSync(uploadedFilePath);
-                }
-
-                if (uploadError.code === 'LIMIT_FILE_SIZE') {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Attachment is too large. Maximum file size is 5 MB.'
-                    });
-                }
-
-                return res.status(400).json({
-                    success: false,
-                    message: uploadError.message || 'Invalid attachment file.'
-                });
-            }
-
-            const { product_id, question, user_name } = req.body;
-            if (!product_id || !question || !String(question).trim()) {
-                if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-                    fs.unlinkSync(uploadedFilePath);
-                }
-                return res.status(400).json({
-                    success: false,
-                    message: 'Product ID and Question are required!'
-                });
-            }
-
-            const [products] = await db.query(
-                'SELECT p.*, a.email AS seller_email, a.shop_name FROM products p LEFT JOIN admins a ON p.admin_id = a.id WHERE p.id = ? OR p.product_id = ? LIMIT 1',
-                [product_id, product_id]
-            );
-
-            if (products.length === 0) {
-                if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-                    fs.unlinkSync(uploadedFilePath);
-                }
-                return res.status(404).json({ success: false, message: 'Product not found!' });
-            }
-
-            const product = products[0];
-            const sellerEmail = product.seller_email;
-            const actualProductId = product.id;
-            const userNameToSave = user_name || (req.user ? req.user.name : 'Valued Customer');
-            const questionText = String(question).trim();
-
-            let attachmentUrl = null;
-            let attachmentOriginalName = null;
-
-            if (req.file) {
-                attachmentUrl = `/uploads/inquiries/${req.file.filename}`;
-                attachmentOriginalName = path.basename(req.file.originalname || req.file.filename);
-            }
-
-            // Newer databases can store the attachment details.
-            // If the columns are not present yet, fall back to the old schema
-            // so inquiry submission itself still works.
-            try {
-                await db.query(
-                    `INSERT INTO product_inquiries
-                    (product_id, question, user_name, attachment_path, attachment_name, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())`,
-                    [actualProductId, questionText, userNameToSave, attachmentUrl, attachmentOriginalName]
-                );
-            } catch (dbInsertError) {
-                if (dbInsertError.code === 'ER_BAD_FIELD_ERROR' && /attachment_(path|name)/i.test(dbInsertError.message || '')) {
-                    console.warn('product_inquiries attachment columns are missing. Using legacy inquiry insert.');
-                    await db.query(
-                        'INSERT INTO product_inquiries (product_id, question, user_name, created_at) VALUES (?, ?, ?, NOW())',
-                        [actualProductId, questionText, userNameToSave]
-                    );
-                } else {
-                    throw dbInsertError;
-                }
-            }
-
-            if (sellerEmail) {
-                const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
-                    params: {
-                        client_id: process.env.GOOGLE_USER_CLIENT_ID,
-                        client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
-                        refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-                        grant_type: 'refresh_token'
-                    }
-                });
-
-                const accessToken = tokenResponse.data.access_token;
-                const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-
-                const escapeHtml = (value) => String(value ?? '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#039;');
-
-                let attachmentHtml = '';
-                if (req.file && attachmentUrl) {
-                    attachmentHtml = `
-                        <p><strong>Attachment:</strong>
-                            <a href="${baseUrl}${attachmentUrl}" target="_blank" rel="noopener">
-                                ${escapeHtml(attachmentOriginalName)}
-                            </a>
-                        </p>`;
-                }
-
-                const emailTemplate = `
-                    <h3>New Product Inquiry</h3>
-                    <p><strong>Product:</strong> ${escapeHtml(product.title)}</p>
-                    <p><strong>Customer Name:</strong> ${escapeHtml(userNameToSave)}</p>
-                    <p><strong>Question:</strong><br>${escapeHtml(questionText).replace(/\n/g, '<br>')}</p>
-                    ${attachmentHtml}
-                `;
-
-                const subject = `❓ New Inquiry for Product: ${product.title}`;
-                const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-
-                // Use multipart/mixed when an attachment exists. Gmail API accepts
-                // the complete MIME message as the base64url-encoded raw payload.
-                if (req.file) {
-                    const boundary = `----NexKartInquiryBoundary${Date.now()}${crypto.randomBytes(6).toString('hex')}`;
-                    const attachmentBuffer = fs.readFileSync(req.file.path);
-                    const attachmentBase64 = attachmentBuffer.toString('base64').match(/.{1,76}/g)?.join('\r\n') || '';
-                    const safeAttachmentName = attachmentOriginalName.replace(/[^a-zA-Z0-9._-]/g, '_');
-
-                    const messageParts = [
-                        `To: ${sellerEmail}`,
-                        `Subject: ${utf8Subject}`,
-                        `MIME-Version: 1.0`,
-                        `Content-Type: multipart/mixed; boundary="${boundary}"`,
-                        ``,
-                        `--${boundary}`,
-                        `Content-Type: text/html; charset="UTF-8"`,
-                        `Content-Transfer-Encoding: 8bit`,
-                        ``,
-                        emailTemplate,
-                        ``,
-                        `--${boundary}`,
-                        `Content-Type: ${req.file.mimetype}; name="${safeAttachmentName}"`,
-                        `Content-Disposition: attachment; filename="${safeAttachmentName}"`,
-                        `Content-Transfer-Encoding: base64`,
-                        ``,
-                        attachmentBase64,
-                        `--${boundary}--`
-                    ];
-
-                    const message = messageParts.join('\r\n');
-                    const encodedMessage = Buffer.from(message)
-                        .toString('base64')
-                        .replace(/\+/g, '-')
-                        .replace(/\//g, '_')
-                        .replace(/=+$/, '');
-
-                    await axios.post(
-                        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-                        { raw: encodedMessage },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${accessToken}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
-                } else {
-                    const messageParts = [
-                        `To: ${sellerEmail}`,
-                        `Subject: ${utf8Subject}`,
-                        `MIME-Version: 1.0`,
-                        `Content-Type: text/html; charset=utf-8`,
-                        ``,
-                        emailTemplate
-                    ];
-                    const message = messageParts.join('\r\n');
-                    const encodedMessage = Buffer.from(message)
-                        .toString('base64')
-                        .replace(/\+/g, '-')
-                        .replace(/\//g, '_')
-                        .replace(/=+$/, '');
-
-                    await axios.post(
-                        'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
-                        { raw: encodedMessage },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${accessToken}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
-                }
-            }
-
-            return res.json({
-                success: true,
-                message: req.file
-                    ? 'Inquiry submitted successfully with attachment!'
-                    : 'Inquiry submitted successfully!'
-            });
-        } catch (error) {
-            console.error('Inquiry Submit & Email Error:', error.response?.data || error.message);
-
-            // If the request failed after the file was saved, remove the orphan file.
-            if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
-                try {
-                    fs.unlinkSync(uploadedFilePath);
-                } catch (unlinkError) {
-                    console.error('Could not remove failed inquiry attachment:', unlinkError.message);
-                }
-            }
-
-            return res.status(500).json({
-                success: false,
-                message: 'Server error while submitting inquiry!'
-            });
+router.post('/inquiry', async (req, res) => {
+    try {
+        const { product_id, question, user_name } = req.body;
+        if (!product_id || !question) {
+            return res.status(400).json({ success: false, message: 'Product ID and Question are required!' });
         }
-    });
+
+        const [products] = await db.query('SELECT p.*, a.email AS seller_email, a.shop_name FROM products p LEFT JOIN admins a ON p.admin_id = a.id WHERE p.id = ? OR p.product_id = ?', [product_id, product_id]);
+        if (products.length === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found!' });
+        }
+        
+        const product = products[0];
+        const sellerEmail = product.seller_email;
+        const actualProductId = product.id;
+        const userNameToSave = user_name || (req.user ? req.user.name : 'Valued Customer');
+
+        await db.query(
+            'INSERT INTO product_inquiries (product_id, question, user_name, created_at) VALUES (?, ?, ?, NOW())',
+            [actualProductId, question, userNameToSave]
+        );
+
+        if (sellerEmail) {
+            const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', null, {
+                params: {
+                    client_id: process.env.GOOGLE_USER_CLIENT_ID,
+                    client_secret: process.env.GOOGLE_USER_CLIENT_SECRET,
+                    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+                    grant_type: 'refresh_token'
+                }
+            });
+
+            const accessToken = tokenResponse.data.access_token;
+
+            const emailTemplate = `
+                <h3>New Product Inquiry</h3>
+                <p><strong>Product:</strong> ${product.title}</p>
+                <p><strong>Customer Name:</strong> ${userNameToSave}</p>
+                <p><strong>Question:</strong> ${question}</p>
+            `;
+
+            const subject = `❓ New Inquiry for Product: ${product.title}`;
+            const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+            const messageParts = [
+                `To: ${sellerEmail}`,
+                `Subject: ${utf8Subject}`,
+                `MIME-Version: 1.0`,
+                `Content-Type: text/html; charset=utf-8`,
+                ``,
+                emailTemplate
+            ];
+            const message = messageParts.join('\r\n');
+            const encodedMessage = Buffer.from(message)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+            await axios.post(
+                `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`,
+                { raw: encodedMessage },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+        }
+
+        return res.json({ success: true, message: 'Inquiry submitted and email sent to seller successfully!' });
+    } catch (error) {
+        console.error("Inquiry Submit & Email Error:", error.response?.data || error.message);
+        return res.status(500).json({ success: false, message: 'Server error while submitting inquiry!' });
+    }
 });
 
 router.get('/inquiries/:productId', async (req, res) => {
