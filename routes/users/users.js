@@ -456,13 +456,24 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         paymentType
     });
 
-    await db.query(
-        `UPDATE orders
-         SET payment_status = ?, bkash_payment_id = COALESCE(?, bkash_payment_id),
-             bkash_trx_id = COALESCE(?, bkash_trx_id), payment_completed_at = NOW()
-         WHERE order_id = ?`,
-        [paymentType === 'paid' ? 'complete' : 'Pending', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
-    );
+    // COD should not depend on bKash-specific columns. Only successful online
+    // payments need the bKash payment/trx fields updated.
+    if (paymentType === 'paid') {
+        await db.query(
+            `UPDATE orders
+             SET payment_status = ?,
+                 bkash_payment_id = COALESCE(?, bkash_payment_id),
+                 bkash_trx_id = COALESCE(?, bkash_trx_id),
+                 payment_completed_at = NOW()
+             WHERE order_id = ?`,
+            ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
+        );
+    } else {
+        await db.query(
+            'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+            ['Pending', order.order_id]
+        );
+    }
 
     return commission;
 }
