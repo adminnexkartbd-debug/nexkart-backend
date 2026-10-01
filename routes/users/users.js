@@ -385,6 +385,16 @@ async function queryBkashPayment(paymentID) {
     return response.data;
 }
 
+async function hasTableColumn(tableName, columnName) {
+    const [rows] = await db.query(
+        `SELECT COUNT(*) AS cnt
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+        [tableName, columnName]
+    );
+    return Number(rows[0]?.cnt || 0) > 0;
+}
+
 async function getCommissionRate() {
     const [rows] = await db.query(
         'SELECT commission_rate FROM commission ORDER BY id DESC LIMIT 1'
@@ -395,7 +405,9 @@ async function getCommissionRate() {
 
 async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
     const commissionRate = await getCommissionRate();
+    // Commission is calculated ONLY from product subtotal. Delivery is excluded.
     const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
+    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
 
     const [existing] = await db.query(
         'SELECT id FROM commission_table WHERE order_number = ? LIMIT 1',
@@ -403,21 +415,84 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
     );
 
     if (existing.length > 0) {
-        await db.query(
-            'UPDATE commission_table SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ? WHERE order_number = ?',
-            [commissionRate, commissionAmount, sellerId, paymentType, orderId]
-        );
+        if (hasPaymentType) {
+            await db.query(
+                `UPDATE commission_table
+                 SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ?
+                 WHERE order_number = ?`,
+                [commissionRate, commissionAmount, sellerId, paymentType, orderId]
+            );
+        } else {
+            // Old commission_table schema: do not reference payment_type until migration is run.
+            await db.query(
+                `UPDATE commission_table
+                 SET commission_rate = ?, commission_amount = ?, seller_id = ?
+                 WHERE order_number = ?`,
+                [commissionRate, commissionAmount, sellerId, orderId]
+            );
+        }
         return { commissionRate, commissionAmount };
     }
 
-    await db.query(
-        `INSERT INTO commission_table
-            (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
-         VALUES (?, ?, ?, ?, ?, NOW())`,
-        [orderId, commissionRate, commissionAmount, sellerId, paymentType]
-    );
+    if (hasPaymentType) {
+        await db.query(
+            `INSERT INTO commission_table
+                (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
+             VALUES (?, ?, ?, ?, ?, NOW())`,
+            [orderId, commissionRate, commissionAmount, sellerId, paymentType]
+        );
+    } else {
+        await db.query(
+            `INSERT INTO commission_table
+                (order_number, commission_rate, commission_amount, seller_id, date)
+             VALUES (?, ?, ?, ?, NOW())`,
+            [orderId, commissionRate, commissionAmount, sellerId]
+        );
+    }
 
     return { commissionRate, commissionAmount };
+}
+
+// Coin usage is recorded as a separate negative ledger row in my_coins.
+// Example: using 20 coins creates coin_balance = -20.
+async function recordCoinUsage({ userId, orderId, coinDiscount }) {
+    const discount = Number(coinDiscount || 0);
+    if (!userId || discount <= 0) return 0;
+
+    const coinValue = 0.30;
+    const coinsUsed = Math.max(0, Math.round(discount / coinValue));
+    if (!coinsUsed) return 0;
+
+    const source = `order:${orderId}`;
+
+    const [existing] = await db.query(
+        `SELECT id FROM my_coins
+         WHERE user_id = ? AND coin_source = ? AND coin_balance < 0
+         LIMIT 1`,
+        [userId, source]
+    );
+
+    if (existing.length) return coinsUsed;
+
+    const [coinRows] = await db.query(
+        `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
+         FROM my_coins
+         WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
+        [userId]
+    );
+    const availableCoins = Math.max(0, Number(coinRows[0]?.total_coin || 0));
+
+    if (availableCoins < coinsUsed) {
+        throw new Error(`Not enough coins to complete order. Required: ${coinsUsed}, available: ${availableCoins}.`);
+    }
+
+    await db.query(
+        `INSERT INTO my_coins (user_id, coin_balance, coin_expire, coin_source)
+         VALUES (?, ?, NULL, ?)`,
+        [userId, -coinsUsed, source]
+    );
+
+    return coinsUsed;
 }
 
 async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
@@ -456,18 +531,37 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         paymentType
     });
 
+    // Coins are consumed only after the order is finalized.
+    // For COD this happens immediately; for bKash it happens only after successful payment.
+    await recordCoinUsage({
+        userId: order.user_id,
+        orderId: order.order_id,
+        coinDiscount: order.coin_discount
+    });
+
     // COD should not depend on bKash-specific columns. Only successful online
     // payments need the bKash payment/trx fields updated.
     if (paymentType === 'paid') {
-        await db.query(
-            `UPDATE orders
-             SET payment_status = ?,
-                 bkash_payment_id = COALESCE(?, bkash_payment_id),
-                 bkash_trx_id = COALESCE(?, bkash_trx_id),
-                 payment_completed_at = NOW()
-             WHERE order_id = ?`,
-            ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
-        );
+        const hasBkashPaymentId = await hasTableColumn('orders', 'bkash_payment_id');
+        const hasBkashTrxId = await hasTableColumn('orders', 'bkash_trx_id');
+        const hasPaymentCompletedAt = await hasTableColumn('orders', 'payment_completed_at');
+
+        if (hasBkashPaymentId && hasBkashTrxId && hasPaymentCompletedAt) {
+            await db.query(
+                `UPDATE orders
+                 SET payment_status = ?,
+                     bkash_payment_id = COALESCE(?, bkash_payment_id),
+                     bkash_trx_id = COALESCE(?, bkash_trx_id),
+                     payment_completed_at = NOW()
+                 WHERE order_id = ?`,
+                ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
+            );
+        } else {
+            await db.query(
+                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+                ['complete', order.order_id]
+            );
+        }
     } else {
         await db.query(
             'UPDATE orders SET payment_status = ? WHERE order_id = ?',
@@ -1466,8 +1560,29 @@ router.post('/place-order', async (req, res) => {
             post_code, block_house, discount_amount, coupon_code, use_coins
         } = req.body;
 
-        if (!product_id || !quantity || !name || !phone || !district || !block_house) {
-            return res.status(400).json({ success: false, message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!' });
+        // Shipping/contact data is authoritative from the logged-in user's profile.
+        // Browser values are only a fallback for older accounts/routes.
+        const [profileRows] = await db.query(
+            `SELECT name, email, phone_number, division, district, upazilla,
+                    union_area, post_code, block_house
+             FROM users WHERE id = ? LIMIT 1`,
+            [userId]
+        );
+        const profile = profileRows[0] || {};
+        // Name + phone are intentionally editable on checkout. The location/address
+        // fields remain profile-controlled so no administrative code is exposed.
+        const orderName = String(name || profile.name || '').trim();
+        const orderEmail = String(profile.email || email || '').trim();
+        const orderPhone = String(phone || profile.phone_number || '').trim();
+        const orderDivision = String(profile.division || division || '').trim();
+        const orderDistrict = String(profile.district || district || '').trim();
+        const orderUpazilla = String(profile.upazilla || upazilla || '').trim();
+        const orderUnion = String(profile.union_area || union_area || '').trim();
+        const orderPostCode = String(profile.post_code || post_code || '').trim();
+        const orderBlockHouse = String(profile.block_house || block_house || '').trim();
+
+        if (!product_id || !quantity || !orderName || !orderPhone || !orderDistrict || !orderBlockHouse) {
+            return res.status(400).json({ success: false, message: 'প্রোফাইলে প্রয়োজনীয় shipping/contact তথ্য পাওয়া যায়নি। Profile থেকে address ঠিক করে আবার চেষ্টা করুন।' });
         }
 
         const orderQty = parseInt(quantity, 10);
@@ -1552,7 +1667,9 @@ router.post('/place-order', async (req, res) => {
                 );
                 availableCoinsForOrder = Math.max(0, Number(coinRows[0]?.total_coin || 0));
                 const maxDiscountByPercent = (subtotal * maxCoinPercent) / 100;
-                coinDiscountAmount = Math.min(availableCoinsForOrder * 0.30, maxDiscountByPercent);
+                const maxCoinsAllowed = Math.max(0, Math.floor(maxDiscountByPercent / 0.30));
+                const coinsUsedForOrder = Math.min(Math.floor(availableCoinsForOrder), maxCoinsAllowed);
+                coinDiscountAmount = coinsUsedForOrder * 0.30;
             }
         }
 
@@ -1569,61 +1686,134 @@ router.post('/place-order', async (req, res) => {
             return res.status(400).json({ success: false, message: 'বর্তমানে শুধু bKash online payment available.' });
         }
 
-        const fullShippingAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
+        // Existing user profiles may contain Bangladesh administrative codes.
+        // Resolve the known codes to readable names for the order/shipping address.
+        const resolveLocationName = (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+
+            const maps = {
+                division: { '6': 'Dhaka' },
+                district: { '43': 'Narayanganj' },
+                upazilla: { '331': 'Rupganj' }
+            };
+
+            return maps[type]?.[raw] || raw;
+        };
+
+        const shippingDivision = resolveLocationName(orderDivision, 'division');
+        const shippingDistrict = resolveLocationName(orderDistrict, 'district');
+        const shippingUpazilla = resolveLocationName(orderUpazilla, 'upazilla');
+        const shippingUnion = orderUnion;
+        const shippingBlockHouse = orderBlockHouse;
+
+        const fullShippingAddress = [
+            shippingBlockHouse,
+            shippingUnion,
+            shippingUpazilla,
+            shippingDistrict,
+            shippingDivision
+        ].filter(Boolean).join(', ') + (orderPostCode ? `, Post Code: ${orderPostCode}` : '');
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
-        const insertQuery = `
-            INSERT INTO orders (
-                order_id, user_id, product_id, seller_id, quantity, variant,
-                subtotal_price, delivery_charge, discount_amount, total_amount,
-                payment_method, selected_gateway, payment_status,
-                customer_name, customer_email, customer_phone, shipping_address,
-                vat_cm, qtyCalculate, sendMail, created_at,
-                coupon_discount, coin_discount
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, NOW(), ?, ?
-            )
-        `;
+        // Build the INSERT from columns that actually exist. This keeps COD working
+        // even if the optional migration has not been run yet.
+        const hasCouponDiscount = await hasTableColumn('orders', 'coupon_discount');
+        const hasCoinDiscount = await hasTableColumn('orders', 'coin_discount');
 
-        await db.query(insertQuery, [
+        const orderColumns = [
+            'order_id', 'user_id', 'product_id', 'seller_id', 'quantity', 'variant',
+            'subtotal_price', 'delivery_charge', 'discount_amount', 'total_amount',
+            'payment_method', 'selected_gateway', 'payment_status',
+            'customer_name', 'customer_email', 'customer_phone', 'shipping_address',
+            'vat_cm', 'qtyCalculate', 'sendMail', 'created_at'
+        ];
+        const orderValues = [
             orderId, userId, product.id, seller_id, orderQty, variant || null,
             subtotal, deliveryCharge, appliedDiscount + coinDiscountAmount, totalAmount,
             effectivePaymentMethod, gatewayUsed, paymentStatus,
-            name, email || null, phone, fullShippingAddress,
-            appliedDiscount, coinDiscountAmount
-        ]);
+            orderName, orderEmail || null, orderPhone, fullShippingAddress,
+            0, 0, 0, new Date()
+        ];
+
+        if (hasCouponDiscount) {
+            orderColumns.push('coupon_discount');
+            orderValues.push(appliedDiscount);
+        }
+        if (hasCoinDiscount) {
+            orderColumns.push('coin_discount');
+            orderValues.push(coinDiscountAmount);
+        }
+
+        const placeholders = orderColumns.map(() => '?').join(', ');
+        await db.query(
+            `INSERT INTO orders (${orderColumns.join(', ')}) VALUES (${placeholders})`,
+            orderValues
+        );
 
         // COD: order is immediately payable/unpaid, stock is deducted, commission is recorded excluding delivery.
         if (effectivePaymentMethod === 'cod') {
             const [orderRows] = await db.query('SELECT * FROM orders WHERE order_id = ? LIMIT 1', [orderId]);
-            await finalizeSuccessfulOrder(orderRows[0], 'unpaid');
+            if (!orderRows.length) {
+                return res.status(500).json({ success: false, message: 'Order তৈরি হয়েছে কিন্তু database থেকে পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।' });
+            }
+
+            // Stock/commission/coin work is the actual order finalization. If this
+            // fails, return the real server-side reason instead of hiding it behind
+            // a generic 500. Email/analytics below are deliberately non-blocking.
+            try {
+                await finalizeSuccessfulOrder(orderRows[0], 'unpaid');
+            } catch (finalizeError) {
+                console.error('COD FINALIZE ERROR:', finalizeError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'COD order finalization failed: ' + (finalizeError.message || 'Unknown error')
+                });
+            }
 
             const orderData = {
-                order_id: orderId, customer_name: name, customer_email: email,
-                customer_phone: phone, shipping_address: fullShippingAddress,
+                order_id: orderId, customer_name: orderName, customer_email: orderEmail,
+                customer_phone: orderPhone, shipping_address: fullShippingAddress,
                 payment_method: effectivePaymentMethod, selected_gateway: null,
                 payment_status: 'Pending', quantity: orderQty, variant,
                 subtotal_price: subtotal, delivery_charge: deliveryCharge, total_amount: totalAmount
             };
-            await sendInvoiceEmail(orderData, product.title);
 
-            // Preserve the existing GA4 + Facebook purchase tracking for COD orders.
-            const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-            const userAgent = req.headers['user-agent'];
-            await sendFacebookCAPI('Purchase', {
-                email, phone, name, client_ip_address: clientIp, client_user_agent: userAgent
-            }, {
-                currency: 'BDT', value: totalAmount, order_id: orderId,
-                contents: [{ id: product.product_id || product.id, quantity: orderQty, item_price: salePrice }]
-            });
-            await sendGA4Measurement('purchase', String(userId), {
-                transaction_id: orderId, value: totalAmount, currency: 'BDT',
-                tax: 0, shipping: deliveryCharge,
-                items: [{ item_id: product.product_id || product.id, item_name: product.title, price: salePrice, quantity: orderQty }]
-            });
+            try {
+                await sendInvoiceEmail(orderData, product.title);
+            } catch (emailError) {
+                // Email failure must never turn a successfully created COD order into HTTP 500.
+                console.error('COD INVOICE EMAIL ERROR:', emailError?.message || emailError);
+            }
 
-            return res.json({ success: true, order_id: orderId, payment_type: 'unpaid', message: 'Order placed successfully!' });
+            // Analytics are also non-blocking. The helpers already catch their own
+            // network errors, but keep this isolated so the order response is safe.
+            try {
+                const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                const userAgent = req.headers['user-agent'];
+                await sendFacebookCAPI('Purchase', {
+                    email: orderEmail, phone: orderPhone, name: orderName,
+                    client_ip_address: clientIp, client_user_agent: userAgent
+                }, {
+                    currency: 'BDT', value: totalAmount, order_id: orderId,
+                    contents: [{ id: product.product_id || product.id, quantity: orderQty, item_price: salePrice }]
+                });
+                await sendGA4Measurement('purchase', String(userId), {
+                    transaction_id: orderId, value: totalAmount, currency: 'BDT',
+                    tax: 0, shipping: deliveryCharge,
+                    items: [{ item_id: product.product_id || product.id, item_name: product.title, price: salePrice, quantity: orderQty }]
+                });
+            } catch (trackingError) {
+                console.error('COD TRACKING ERROR:', trackingError?.message || trackingError);
+            }
+
+            return res.json({
+                success: true,
+                order_id: orderId,
+                payment_type: 'unpaid',
+                message: 'Order placed successfully!'
+            });
         }
 
         // Online bKash: create the payment first. Stock/commission are finalized only after bKash confirms payment.
@@ -1631,13 +1821,15 @@ router.post('/place-order', async (req, res) => {
             const bkashPayment = await createBkashPayment({
                 orderId,
                 amount: totalAmount,
-                payerReference: email || phone || orderId
+                payerReference: orderEmail || orderPhone || orderId
             });
 
-            await db.query(
-                'UPDATE orders SET bkash_payment_id = ? WHERE order_id = ?',
-                [bkashPayment.paymentID, orderId]
-            );
+            if (await hasTableColumn('orders', 'bkash_payment_id')) {
+                await db.query(
+                    'UPDATE orders SET bkash_payment_id = ? WHERE order_id = ?',
+                    [bkashPayment.paymentID, orderId]
+                );
+            }
 
             return res.json({
                 success: true,
