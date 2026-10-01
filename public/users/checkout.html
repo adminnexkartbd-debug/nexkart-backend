@@ -745,6 +745,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const totalCalculatedDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
 
+      if (paymentMethod === 'online' && selectedGateway !== 'bkash') {
+        alert('bKash payment gateway select করুন।');
+        return;
+      }
+
       const orderData = {
         product_id: productId,
         quantity: quantity,
@@ -802,7 +807,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         alert(result.message || `Order failed (HTTP ${response.status}). Please try again.`);
       } catch (err) {
         console.error('Order Submit Error:', err);
-        alert('Server error! Please try again.');
+        alert(err?.message || 'Server error! Please try again.');
       } finally {
         if (placeOrderBtn) {
           placeOrderBtn.disabled = false;
