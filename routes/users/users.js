@@ -251,6 +251,222 @@ async function sendInvoiceEmail(orderData, productTitle) {
     }
 }
 
+
+// ==================== [ BKASH + COMMISSION HELPERS ] ====================
+const BKASH_CONFIG = {
+    APP_KEY: process.env.BKASH_APP_KEY,
+    APP_SECRET: process.env.BKASH_APP_SECRET,
+    USERNAME: process.env.BKASH_USERNAME,
+    PASSWORD: process.env.BKASH_PASSWORD,
+    BASE_URL: process.env.BKASH_BASE_URL,
+    CALLBACK_URL: process.env.BKASH_CALLBACK_URL,
+    RETURN_URL: process.env.BKASH_RETURN_URL
+};
+
+let bkashTokenCache = {
+    token: null,
+    expiresAt: 0
+};
+
+function getBkashBaseUrl() {
+    return String(BKASH_CONFIG.BASE_URL || '').trim().replace(/\/$/, '');
+}
+
+async function getBkashToken() {
+    if (!BKASH_CONFIG.APP_KEY || !BKASH_CONFIG.APP_SECRET || !BKASH_CONFIG.USERNAME || !BKASH_CONFIG.PASSWORD || !getBkashBaseUrl()) {
+        throw new Error('bKash environment variables are not configured correctly.');
+    }
+
+    if (bkashTokenCache.token && Date.now() < bkashTokenCache.expiresAt) {
+        return bkashTokenCache.token;
+    }
+
+    const response = await axios.post(
+        `${getBkashBaseUrl()}/checkout/token/grant`,
+        {
+            app_key: BKASH_CONFIG.APP_KEY,
+            app_secret: BKASH_CONFIG.APP_SECRET
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                username: BKASH_CONFIG.USERNAME,
+                password: BKASH_CONFIG.PASSWORD
+            },
+            timeout: 30000
+        }
+    );
+
+    const token = response.data?.id_token;
+    if (!token) {
+        throw new Error(`bKash token error: ${response.data?.statusMessage || 'No id_token returned'}`);
+    }
+
+    const expiresIn = Number(response.data?.expires_in || 3600);
+    bkashTokenCache = {
+        token,
+        expiresAt: Date.now() + Math.max(60, expiresIn - 60) * 1000
+    };
+
+    return token;
+}
+
+async function createBkashPayment({ orderId, amount, payerReference }) {
+    const token = await getBkashToken();
+    const callbackURL = BKASH_CONFIG.CALLBACK_URL || `${process.env.APP_URL || 'http://localhost:3000'}/user/bkash/callback`;
+
+    const response = await axios.post(
+        `${getBkashBaseUrl()}/checkout/payment/create`,
+        {
+            mode: '0011',
+            payerReference: String(payerReference || orderId),
+            callbackURL,
+            amount: Number(amount).toFixed(2),
+            currency: 'BDT',
+            intent: 'sale',
+            merchantInvoiceNumber: String(orderId)
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                Authorization: `Bearer ${token}`,
+                'X-App-Key': BKASH_CONFIG.APP_KEY
+            },
+            timeout: 30000
+        }
+    );
+
+    if (!response.data?.paymentID || !response.data?.bkashURL) {
+        throw new Error(`bKash create payment failed: ${response.data?.statusMessage || 'Invalid create-payment response'}`);
+    }
+
+    return response.data;
+}
+
+async function executeBkashPayment(paymentID) {
+    const token = await getBkashToken();
+
+    const response = await axios.post(
+        `${getBkashBaseUrl()}/checkout/payment/execute`,
+        { paymentID },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                Authorization: `Bearer ${token}`,
+                'X-App-Key': BKASH_CONFIG.APP_KEY
+            },
+            timeout: 30000
+        }
+    );
+
+    return response.data;
+}
+
+async function queryBkashPayment(paymentID) {
+    const token = await getBkashToken();
+
+    const response = await axios.post(
+        `${getBkashBaseUrl()}/checkout/payment/status`,
+        { paymentID },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                Authorization: `Bearer ${token}`,
+                'X-App-Key': BKASH_CONFIG.APP_KEY
+            },
+            timeout: 30000
+        }
+    );
+
+    return response.data;
+}
+
+async function getCommissionRate() {
+    const [rows] = await db.query(
+        'SELECT commission_rate FROM commission ORDER BY id DESC LIMIT 1'
+    );
+    const rate = Number(rows[0]?.commission_rate || 0);
+    return Math.max(0, rate);
+}
+
+async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
+    const commissionRate = await getCommissionRate();
+    const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
+
+    const [existing] = await db.query(
+        'SELECT id FROM commission_table WHERE order_number = ? LIMIT 1',
+        [orderId]
+    );
+
+    if (existing.length > 0) {
+        await db.query(
+            'UPDATE commission_table SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ? WHERE order_number = ?',
+            [commissionRate, commissionAmount, sellerId, paymentType, orderId]
+        );
+        return { commissionRate, commissionAmount };
+    }
+
+    await db.query(
+        `INSERT INTO commission_table
+            (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
+         VALUES (?, ?, ?, ?, ?, NOW())`,
+        [orderId, commissionRate, commissionAmount, sellerId, paymentType]
+    );
+
+    return { commissionRate, commissionAmount };
+}
+
+async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
+    const [freshProducts] = await db.query(
+        'SELECT * FROM products WHERE id = ? LIMIT 1',
+        [order.product_id]
+    );
+
+    if (!freshProducts.length) {
+        throw new Error('Product not found while finalizing order.');
+    }
+
+    const product = freshProducts[0];
+    const currentStock = parseInt(product.stock_quantity, 10) || 0;
+    const orderQty = parseInt(order.quantity, 10) || 0;
+
+    if (currentStock < orderQty) {
+        throw new Error(`Insufficient stock while finalizing order ${order.order_id}.`);
+    }
+
+    const newStock = currentStock - orderQty;
+    const newSoldQty = (parseInt(product.sold_qty, 10) || 0) + orderQty;
+    const newStockStatus = newStock === 0 ? 'out_of_stock' : 'in_stock';
+
+    await db.query(
+        `UPDATE products
+         SET stock_quantity = ?, sold_qty = ?, stock_status = ?
+         WHERE id = ?`,
+        [newStock, newSoldQty, newStockStatus, order.product_id]
+    );
+
+    const commission = await recordOrderCommission({
+        orderId: order.order_id,
+        sellerId: order.seller_id,
+        subtotal: order.subtotal_price,
+        paymentType
+    });
+
+    await db.query(
+        `UPDATE orders
+         SET payment_status = ?, bkash_payment_id = COALESCE(?, bkash_payment_id),
+             bkash_trx_id = COALESCE(?, bkash_trx_id), payment_completed_at = NOW()
+         WHERE order_id = ?`,
+        [paymentType === 'paid' ? 'complete' : 'Pending', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
+    );
+
+    return commission;
+}
+
 let temporaryUserData = {};
 
 router.get('/cssignup', (req, res) => {
@@ -1227,231 +1443,95 @@ router.post('/update-profile', upload.single('profile_image'), async (req, res) 
 
 // ==================== PLACE ORDER ====================
 router.post('/place-order', async (req, res) => {
-
     try {
-
-        // ================= USER ID =================
-        const userId = req.user
-            ? req.user.id
-            : (
-                req.session && req.session.user
-                    ? req.session.user.id
-                    : (
-                        req.session && req.session.userId
-                            ? req.session.userId
-                            : null
-                    )
-            );
-
+        const userId = req.user ? req.user.id : (req.session && req.session.user ? req.session.user.id : (req.session && req.session.userId ? req.session.userId : null));
         if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized: Please login first!'
-            });
+            return res.status(401).json({ success: false, message: 'Unauthorized: Please login first!' });
         }
 
-
-        // ================= REQUEST DATA =================
         const {
-            product_id,
-            quantity,
-            variant,
-            payment_method,
-            selected_gateway,
-            name,
-            email,
-            phone,
-            division,
-            district,
-            upazilla,
-            union_area,
-            post_code,
-            block_house,
-            discount_amount,
-            use_coins
+            product_id, quantity, variant, payment_method, selected_gateway,
+            name, email, phone, division, district, upazilla, union_area,
+            post_code, block_house, discount_amount, coupon_code, use_coins
         } = req.body;
 
-
-        console.log("========== PLACE ORDER REQUEST ==========");
-        console.log("User ID:", userId);
-        console.log("Product ID:", product_id);
-        console.log("Quantity:", quantity);
-        console.log("Payment:", payment_method);
-        console.log("Gateway:", selected_gateway);
-        console.log("Customer:", name);
-        console.log("Phone:", phone);
-        console.log("=========================================");
-
-
-        // ================= VALIDATION =================
-        if (
-            !product_id ||
-            !quantity ||
-            !name ||
-            !phone ||
-            !district ||
-            !block_house
-        ) {
-            return res.status(400).json({
-                success: false,
-                message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!'
-            });
+        if (!product_id || !quantity || !name || !phone || !district || !block_house) {
+            return res.status(400).json({ success: false, message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!' });
         }
-
 
         const orderQty = parseInt(quantity, 10);
-
         if (!orderQty || orderQty <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid quantity!'
-            });
+            return res.status(400).json({ success: false, message: 'Invalid quantity!' });
         }
 
-
-        // ================= GET PRODUCT =================
         const [products] = await db.query(
-            `
-            SELECT *
-            FROM products
-            WHERE id = ? OR product_id = ?
-            LIMIT 1
-            `,
+            'SELECT * FROM products WHERE id = ? OR product_id = ? LIMIT 1',
             [product_id, product_id]
         );
-
-
-        if (!products || products.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found!'
-            });
+        if (!products.length) {
+            return res.status(404).json({ success: false, message: 'Product not found!' });
         }
-
 
         const product = products[0];
-
-        console.log("Product Found:", product.id);
-        console.log("Product Title:", product.title);
-        console.log("Product Admin ID:", product.admin_id);
-        console.log("Product Stock:", product.stock_quantity);
-
-
-        // ================= STOCK =================
-        const currentStock =
-            parseInt(product.stock_quantity, 10) || 0;
-
-
+        const currentStock = parseInt(product.stock_quantity, 10) || 0;
         if (currentStock <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট!'
-            });
+            return res.status(400).json({ success: false, message: 'দুঃখিত, প্রোডাক্টটি স্টক আউট!' });
         }
-
-
         if (currentStock < orderQty) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    `পর্যাপ্ত stock নেই! বর্তমানে ${currentStock} টি আছে।`
-            });
+            return res.status(400).json({ success: false, message: `পর্যাপ্ত stock নেই! বর্তমানে ${currentStock} টি আছে।` });
         }
 
-
-        // ================= SELLER ID =================
         const seller_id = product.admin_id;
-
-
         if (!seller_id) {
-
-            console.error(
-                "❌ PRODUCT ADMIN ID MISSING"
-            );
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    'এই product-এর seller/admin ID পাওয়া যায়নি!'
-            });
+            return res.status(400).json({ success: false, message: 'এই product-এর seller/admin ID পাওয়া যায়নি!' });
         }
 
-
-        // ================= VERIFY SELLER =================
-        const [sellerRows] = await db.query(
-            `SELECT id FROM admins WHERE id = ? LIMIT 1`,
-            [seller_id]
-        );
-
-
-        if (!sellerRows || sellerRows.length === 0) {
-
-            console.error(
-                "❌ SELLER NOT FOUND:",
-                seller_id
-            );
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    `Seller/Admin ID ${seller_id} পাওয়া যায়নি!`
-            });
+        const [sellerRows] = await db.query('SELECT id FROM admins WHERE id = ? LIMIT 1', [seller_id]);
+        if (!sellerRows.length) {
+            return res.status(400).json({ success: false, message: `Seller/Admin ID ${seller_id} পাওয়া যায়নি!` });
         }
 
+        const salePrice = parseFloat(product.sale_price) || 0;
+        let baseDeliveryCharge = Number(product.delivery_charge) || 60;
+        const deliveryLimit = Number(product.delivery_limit) || 1;
+        if (Number(product.free_shipping) === 1) baseDeliveryCharge = 0;
 
-        // ================= PRICE =================
-        const salePrice =
-            parseFloat(product.sale_price) || 0;
-
-
-        // ================= DELIVERY =================
-        let baseDeliveryCharge =
-            Number(product.delivery_charge) || 60;
-
-
-        const deliveryLimit =
-            Number(product.delivery_limit) || 1;
-
-
-        if (Number(product.free_shipping) === 1) {
-            baseDeliveryCharge = 0;
+        let deliveryCharge = baseDeliveryCharge;
+        if (deliveryLimit > 0 && baseDeliveryCharge > 0) {
+            deliveryCharge = baseDeliveryCharge * Math.ceil(orderQty / deliveryLimit);
         }
 
+        const subtotal = salePrice * orderQty;
 
-        let deliveryCharge =
-            baseDeliveryCharge;
-
-
-        if (
-            deliveryLimit > 0 &&
-            baseDeliveryCharge > 0
-        ) {
-
-            const multiplier =
-                Math.ceil(
-                    orderQty / deliveryLimit
-                );
-
-            deliveryCharge =
-                baseDeliveryCharge * multiplier;
+        // Server-side coupon verification: do not trust discount_amount from browser.
+        let appliedDiscount = 0;
+        let appliedCouponName = '';
+        if (coupon_code) {
+            const [coupons] = await db.query('SELECT * FROM coupons WHERE coupon_name = ? LIMIT 1', [String(coupon_code).trim()]);
+            if (coupons.length) {
+                const coupon = coupons[0];
+                const couponProductId = coupon.product_id;
+                const isGlobalCoupon = !couponProductId || couponProductId === '' || couponProductId == 0;
+                const isMatched = couponProductId == product.id || couponProductId === product.product_id;
+                const notExpired = !coupon.expiry_date || new Date(coupon.expiry_date) >= new Date();
+                if ((isGlobalCoupon || isMatched) && notExpired) {
+                    appliedDiscount = Math.max(0, Number(coupon.discount_amount) || 0);
+                    appliedCouponName = coupon.coupon_name || String(coupon_code).trim();
+                }
+            }
+        } else {
+            // Backward compatibility: allow the existing client payload while still clamping it.
+            appliedDiscount = Math.max(0, Number(discount_amount) || 0);
         }
+        appliedDiscount = Math.min(appliedDiscount, subtotal);
 
-
-        // ================= TOTAL =================
-        const subtotal =
-            salePrice * orderQty;
-
-
-        // ================= COIN OFFER VALIDATION =================
-        // Never trust the browser for coin discount. The product decides whether
-        // coins are allowed and the DB value decides the maximum percentage.
+        // Server-side coin validation.
         let coinDiscountAmount = 0;
         let availableCoinsForOrder = 0;
-
-        if (use_coins === true || use_coins === 'true' || use_coins === 1 || use_coins === '1') {
+        const wantsCoins = use_coins === true || use_coins === 'true' || use_coins === 1 || use_coins === '1';
+        if (wantsCoins) {
             const coinOfferEnabled = String(product.coin_offer || '').toLowerCase() === 'yes';
             const maxCoinPercent = Math.max(0, parseFloat(product.coin_percentage_value) || 0);
-
             if (coinOfferEnabled && maxCoinPercent > 0) {
                 const [coinRows] = await db.query(
                     `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
@@ -1459,441 +1539,208 @@ router.post('/place-order', async (req, res) => {
                      WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
                     [userId]
                 );
-
                 availableCoinsForOrder = Math.max(0, Number(coinRows[0]?.total_coin || 0));
-                const coinValue = 0.30;
                 const maxDiscountByPercent = (subtotal * maxCoinPercent) / 100;
-                coinDiscountAmount = Math.min(availableCoinsForOrder * coinValue, maxDiscountByPercent);
+                coinDiscountAmount = Math.min(availableCoinsForOrder * 0.30, maxDiscountByPercent);
             }
         }
 
-        // Coupon/other discounts remain as supplied by the existing coupon flow.
-        const appliedDiscount = Math.max(0, parseFloat(discount_amount) || 0);
+        const totalAmount = Math.max(0, subtotal - appliedDiscount - coinDiscountAmount) + deliveryCharge;
 
-        const totalAmount =
-            Math.max(
-                0,
-                subtotal - appliedDiscount - coinDiscountAmount
-            ) + deliveryCharge;
+        // If COD is disabled for the product, server-side force bKash online payment.
+        let effectivePaymentMethod = String(payment_method || 'cod').toLowerCase();
+        if (effectivePaymentMethod === 'cod' && Number(product.cod_available) === 0) {
+            effectivePaymentMethod = 'online';
+        }
+        const gatewayUsed = effectivePaymentMethod === 'online' ? (String(selected_gateway || 'bkash').toLowerCase()) : null;
 
+        if (effectivePaymentMethod === 'online' && gatewayUsed !== 'bkash') {
+            return res.status(400).json({ success: false, message: 'বর্তমানে শুধু bKash online payment available.' });
+        }
 
-        // ================= ADDRESS =================
-        const fullShippingAddress = [
-            block_house,
-            union_area,
-            upazilla,
-            district,
-            division,
-            post_code
-                ? `Post Code: ${post_code}`
-                : ''
-        ]
-            .filter(Boolean)
-            .join(', ');
+        const fullShippingAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
+        const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
+        const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
-
-        // ================= ORDER ID =================
-        const orderId =
-            'NXK-' +
-            Date.now().toString().slice(-8) +
-            Math.floor(
-                100 + Math.random() * 900
-            );
-
-
-        // ================= PAYMENT =================
-        const gatewayUsed =
-            payment_method === 'online'
-                ? (selected_gateway || 'bkash')
-                : null;
-
-
-        const paymentStatus =
-            payment_method === 'online'
-                ? 'Pending Payment'
-                : 'Pending';
-
-
-        console.log("========== ORDER CALCULATION ==========");
-        console.log("Order ID:", orderId);
-        console.log("Seller ID:", seller_id);
-        console.log("Sale Price:", salePrice);
-        console.log("Quantity:", orderQty);
-        console.log("Subtotal:", subtotal);
-        console.log("Delivery:", deliveryCharge);
-        console.log("Coupon/Other Discount:", appliedDiscount);
-        console.log("Coin Discount:", coinDiscountAmount);
-        console.log("Available Coins:", availableCoinsForOrder);
-        console.log("Total:", totalAmount);
-        console.log("Payment Status:", paymentStatus);
-        console.log("========================================");
-
-
-        // ================= INSERT ORDER =================
         const insertQuery = `
             INSERT INTO orders (
-                order_id,
-                user_id,
-                product_id,
-                seller_id,
-                quantity,
-                variant,
-                subtotal_price,
-                delivery_charge,
-                discount_amount,
-                total_amount,
-                payment_method,
-                selected_gateway,
-                payment_status,
-                customer_name,
-                customer_email,
-                customer_phone,
-                shipping_address,
-                vat_cm,
-                qtyCalculate,
-                sendMail,
-                created_at
-            )
-            VALUES (
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                0, 0, 0, NOW()
+                order_id, user_id, product_id, seller_id, quantity, variant,
+                subtotal_price, delivery_charge, discount_amount, total_amount,
+                payment_method, selected_gateway, payment_status,
+                customer_name, customer_email, customer_phone, shipping_address,
+                vat_cm, qtyCalculate, sendMail, created_at,
+                coupon_discount, coin_discount
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, NOW(), ?, ?
             )
         `;
 
+        await db.query(insertQuery, [
+            orderId, userId, product.id, seller_id, orderQty, variant || null,
+            subtotal, deliveryCharge, appliedDiscount + coinDiscountAmount, totalAmount,
+            effectivePaymentMethod, gatewayUsed, paymentStatus,
+            name, email || null, phone, fullShippingAddress,
+            appliedDiscount, coinDiscountAmount
+        ]);
 
-        try {
-
-            const [result] =
-                await db.query(
-                    insertQuery,
-                    [
-                        orderId,
-                        userId,
-                        product.id,
-                        seller_id,
-                        orderQty,
-                        variant || null,
-
-                        subtotal,
-                        deliveryCharge,
-                        appliedDiscount + coinDiscountAmount,
-                        totalAmount,
-
-                        payment_method || 'cod',
-                        gatewayUsed,
-                        paymentStatus,
-
-                        name,
-                        email || null,
-                        phone,
-                        fullShippingAddress
-                    ]
-                );
-
-
-            console.log(
-                "✅ ORDER INSERTED:",
-                result.insertId
-            );
-
-
-        } catch (dbError) {
-
-            console.error(
-                "========================================"
-            );
-
-            console.error(
-                "❌ MYSQL ORDER INSERT ERROR"
-            );
-
-            console.error(
-                "CODE:",
-                dbError.code
-            );
-
-            console.error(
-                "MESSAGE:",
-                dbError.message
-            );
-
-            console.error(
-                "SQL STATE:",
-                dbError.sqlState
-            );
-
-            console.error(
-                "SQL:",
-                dbError.sql
-            );
-
-            console.error(
-                "========================================"
-            );
-
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    'Database Error: ' +
-                    dbError.message
-            });
-        }
-
-
-        // ================= UPDATE STOCK =================
-        try {
-
-            const currentSoldQty =
-                parseInt(product.sold_qty, 10) || 0;
-
-
-            const newStock =
-                Math.max(
-                    0,
-                    currentStock - orderQty
-                );
-
-
-            const newSoldQty =
-                currentSoldQty + orderQty;
-
-
-            const newStockStatus =
-                newStock === 0
-                    ? 'out_of_stock'
-                    : 'in_stock';
-
-
-            await db.query(
-                `
-                UPDATE products
-                SET
-                    stock_quantity = ?,
-                    sold_qty = ?,
-                    stock_status = ?
-                WHERE id = ?
-                `,
-                [
-                    newStock,
-                    newSoldQty,
-                    newStockStatus,
-                    product.id
-                ]
-            );
-
-
-            console.log(
-                "✅ STOCK UPDATED"
-            );
-
-
-        } catch (stockError) {
-
-            console.error(
-                "❌ STOCK UPDATE ERROR:",
-                stockError
-            );
-        }
-
-
-        // ================= EMAIL =================
-        try {
+        // COD: order is immediately payable/unpaid, stock is deducted, commission is recorded excluding delivery.
+        if (effectivePaymentMethod === 'cod') {
+            const [orderRows] = await db.query('SELECT * FROM orders WHERE order_id = ? LIMIT 1', [orderId]);
+            await finalizeSuccessfulOrder(orderRows[0], 'unpaid');
 
             const orderData = {
-                order_id: orderId,
-                customer_name: name,
-                customer_email: email,
-                customer_phone: phone,
-                shipping_address: fullShippingAddress,
-                payment_method: payment_method,
-                selected_gateway: gatewayUsed,
-                payment_status: paymentStatus,
-                quantity: orderQty,
-                variant: variant,
-                subtotal_price: subtotal,
-                delivery_charge: deliveryCharge,
-                total_amount: totalAmount
+                order_id: orderId, customer_name: name, customer_email: email,
+                customer_phone: phone, shipping_address: fullShippingAddress,
+                payment_method: effectivePaymentMethod, selected_gateway: null,
+                payment_status: 'Pending', quantity: orderQty, variant,
+                subtotal_price: subtotal, delivery_charge: deliveryCharge, total_amount: totalAmount
             };
+            await sendInvoiceEmail(orderData, product.title);
 
+            // Preserve the existing GA4 + Facebook purchase tracking for COD orders.
+            const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            const userAgent = req.headers['user-agent'];
+            await sendFacebookCAPI('Purchase', {
+                email, phone, name, client_ip_address: clientIp, client_user_agent: userAgent
+            }, {
+                currency: 'BDT', value: totalAmount, order_id: orderId,
+                contents: [{ id: product.product_id || product.id, quantity: orderQty, item_price: salePrice }]
+            });
+            await sendGA4Measurement('purchase', String(userId), {
+                transaction_id: orderId, value: totalAmount, currency: 'BDT',
+                tax: 0, shipping: deliveryCharge,
+                items: [{ item_id: product.product_id || product.id, item_name: product.title, price: salePrice, quantity: orderQty }]
+            });
 
-            await sendInvoiceEmail(
-                orderData,
-                product.title
-            );
-
-
-            console.log(
-                "✅ INVOICE EMAIL SENT"
-            );
-
-
-        } catch (emailError) {
-
-            console.error(
-                "⚠️ EMAIL ERROR:",
-                emailError.message
-            );
+            return res.json({ success: true, order_id: orderId, payment_type: 'unpaid', message: 'Order placed successfully!' });
         }
 
-        // ==================== TRACKING EVENT: PURCHASE ====================
-        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        const userAgent = req.headers['user-agent'];
+        // Online bKash: create the payment first. Stock/commission are finalized only after bKash confirms payment.
+        try {
+            const bkashPayment = await createBkashPayment({
+                orderId,
+                amount: totalAmount,
+                payerReference: email || phone || orderId
+            });
 
-        await sendFacebookCAPI('Purchase', {
-            email: email,
-            phone: phone,
-            name: name,
-            client_ip_address: clientIp,
-            client_user_agent: userAgent
-        }, {
-            currency: 'BDT',
-            value: totalAmount,
-            order_id: orderId,
-            contents: [{
-                id: product.product_id || product.id,
-                quantity: orderQty,
-                item_price: salePrice
-            }]
-        });
-
-        await sendGA4Measurement('purchase', userId.toString(), {
-            transaction_id: orderId,
-            value: totalAmount,
-            currency: 'BDT',
-            tax: 0,
-            shipping: deliveryCharge,
-            items: [{
-                item_id: product.product_id || product.id,
-                item_name: product.title,
-                price: salePrice,
-                quantity: orderQty
-            }]
-        });
-
-
-        // ================= BKASH =================
-        if (
-            payment_method === 'online' &&
-            gatewayUsed === 'bkash'
-        ) {
-
-            const baseUrl =
-                process.env.APP_URL ||
-                `${req.protocol}://${req.get('host')}`;
-
+            await db.query(
+                'UPDATE orders SET bkash_payment_id = ? WHERE order_id = ?',
+                [bkashPayment.paymentID, orderId]
+            );
 
             return res.json({
                 success: true,
                 order_id: orderId,
                 selected_gateway: 'BKASH',
-                payment_url:
-                    `${baseUrl}/user/bkash-success?order_id=${orderId}`
+                payment_url: bkashPayment.bkashURL,
+                payment_id: bkashPayment.paymentID
             });
+        } catch (bkashError) {
+            console.error('bKash Create Payment Error:', bkashError.response?.data || bkashError.message);
+            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
+            return res.status(502).json({ success: false, message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' });
         }
 
-
-        // ================= SUCCESS =================
-        return res.json({
-            success: true,
-            order_id: orderId,
-            message:
-                'Order placed successfully!'
-        });
-
-
     } catch (error) {
-
-        console.error(
-            "========================================"
-        );
-
-        console.error(
-            "❌ PLACE ORDER ERROR"
-        );
-
-        console.error(
-            "CODE:",
-            error.code
-        );
-
-        console.error(
-            "MESSAGE:",
-            error.message
-        );
-
-        console.error(
-            "SQL STATE:",
-            error.sqlState
-        );
-
-        console.error(
-            "SQL:",
-            error.sql
-        );
-
-        console.error(
-            "FULL ERROR:",
-            error
-        );
-
-        console.error(
-            "========================================"
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                'Order Error: ' +
-                (error.message ||
-                    'Unknown server error')
-        });
+        console.error('PLACE ORDER ERROR:', error);
+        return res.status(500).json({ success: false, message: 'Order Error: ' + (error.message || 'Unknown server error') });
     }
 });
 
-// BKASH PAYMENT CALLBACK & SUCCESS ROUTE
+// ==================== [ BKASH PAYMENT CALLBACK & SUCCESS ROUTE ] ====================
 router.get('/bkash/callback', async (req, res) => {
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
     try {
         const { order_id, paymentID, status } = req.query;
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        
-        if (order_id) {
-            const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ?', [order_id]);
-            
-            if (orders && orders.length > 0) {
-                const order = orders[0];
-                
-                if (order.payment_status !== 'complete') {
-                    await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
-                }
-            }
+        if (!order_id) return res.redirect(`${baseUrl}/user/dashboard?payment=failed`);
+
+        const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ? LIMIT 1', [order_id]);
+        if (!orders.length) return res.redirect(`${baseUrl}/user/dashboard?payment=failed&order_id=${encodeURIComponent(order_id)}`);
+        const order = orders[0];
+
+        if (order.payment_status === 'complete') {
+            const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+            return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=success&order_id=${encodeURIComponent(order_id)}`);
         }
 
-        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
+        if (String(status || '').toLowerCase() !== 'success' || !paymentID) {
+            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', order_id]);
+            const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+            return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=failed&order_id=${encodeURIComponent(order_id)}`);
+        }
+
+        const executeResult = await executeBkashPayment(paymentID);
+        const transactionStatus = String(executeResult?.transactionStatus || '').toLowerCase();
+        const executedAmount = Number(executeResult?.amount || 0);
+        const expectedAmount = Number(order.total_amount || 0);
+
+        let finalPayment = executeResult;
+        if (transactionStatus !== 'completed' && transactionStatus !== 'success') {
+            finalPayment = await queryBkashPayment(paymentID);
+        }
+
+        const finalStatus = String(finalPayment?.transactionStatus || '').toLowerCase();
+        const finalAmount = Number(finalPayment?.amount || executedAmount || 0);
+        const trxID = finalPayment?.trxID || executeResult?.trxID || null;
+
+        if ((finalStatus === 'completed' || finalStatus === 'success') && Math.abs(finalAmount - expectedAmount) < 0.01) {
+            await finalizeSuccessfulOrder(order, 'paid', { paymentID, trxID });
+
+            const orderData = {
+                order_id: order.order_id,
+                customer_name: order.customer_name,
+                customer_email: order.customer_email,
+                customer_phone: order.customer_phone,
+                shipping_address: order.shipping_address,
+                payment_method: order.payment_method,
+                selected_gateway: order.selected_gateway,
+                payment_status: 'complete',
+                quantity: order.quantity,
+                variant: order.variant,
+                subtotal_price: order.subtotal_price,
+                delivery_charge: order.delivery_charge,
+                total_amount: order.total_amount
+            };
+            await sendInvoiceEmail(orderData, `Order #${order.order_id}`);
+
+            const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            const userAgent = req.headers['user-agent'];
+            await sendFacebookCAPI('Purchase', {
+                email: order.customer_email,
+                phone: order.customer_phone,
+                name: order.customer_name,
+                client_ip_address: clientIp,
+                client_user_agent: userAgent
+            }, {
+                currency: 'BDT', value: Number(order.total_amount), order_id: order.order_id,
+                contents: [{ id: order.product_id, quantity: order.quantity, item_price: Number(order.subtotal_price) / Math.max(1, Number(order.quantity)) }]
+            });
+            await sendGA4Measurement('purchase', String(order.user_id), {
+                transaction_id: order.order_id, value: Number(order.total_amount), currency: 'BDT',
+                tax: 0, shipping: Number(order.delivery_charge || 0),
+                items: [{ item_id: order.product_id, item_name: `Order #${order.order_id}`, price: Number(order.subtotal_price) / Math.max(1, Number(order.quantity)), quantity: Number(order.quantity) }]
+            });
+
+            const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+            return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=success&order_id=${encodeURIComponent(order_id)}&trxID=${encodeURIComponent(trxID || '')}`);
+        }
+
+        await db.query('UPDATE orders SET payment_status = ?, bkash_payment_id = ? WHERE order_id = ?', ['Failed', paymentID, order_id]);
+        const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+        return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=failed&order_id=${encodeURIComponent(order_id)}`);
     } catch (error) {
-        console.error("bKash Callback Error:", error);
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        return res.redirect(`${baseUrl}/user/dashboard`);
+        console.error('bKash Callback Error:', error.response?.data || error.message);
+        const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+        return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=failed&order_id=${encodeURIComponent(req.query.order_id || '')}`);
     }
 });
 
+// Kept for backward compatibility. It no longer marks an order paid without bKash verification.
 router.get('/bkash-success', async (req, res) => {
-    try {
-        const { order_id } = req.query;
-        const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        
-        if (order_id) {
-            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order_id]);
-        }
-
-        return res.redirect(`${baseUrl}/user/dashboard?payment=success&order_id=${order_id}`);
-    } catch (err) {
-        console.error("bKash Success Route Error:", err);
-        res.redirect('/user/dashboard');
-    }
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const orderId = req.query.order_id || '';
+    const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
+    return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=pending&order_id=${encodeURIComponent(orderId)}`);
 });
 
 // Backend POST Route Example
