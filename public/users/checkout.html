@@ -355,7 +355,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (data.success && data.product) {
           const product = data.product;
           // Keep the numeric product ID for cart/coupon/order APIs, but use slug for the URL.
-          productId = product.product_id || product.id;
+          productId = product.id || product.product_id;
           if (!checkoutSlug && product.slug) {
             const cleanPath = `/user/checkout/${encodeURIComponent(product.slug)}`;
             const newQuery = new URLSearchParams();
@@ -745,11 +745,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       const totalCalculatedDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
 
-      if (paymentMethod === 'online' && selectedGateway !== 'bkash') {
-        alert('bKash payment gateway select করুন।');
-        return;
-      }
-
       const orderData = {
         product_id: productId,
         quantity: quantity,
@@ -807,7 +802,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         alert(result.message || `Order failed (HTTP ${response.status}). Please try again.`);
       } catch (err) {
         console.error('Order Submit Error:', err);
-        alert(err?.message || 'Server error! Please try again.');
+        alert('Server error! Please try again.');
       } finally {
         if (placeOrderBtn) {
           placeOrderBtn.disabled = false;
