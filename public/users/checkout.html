@@ -83,134 +83,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-      
-      <div class="md:col-span-7 theme-glass-card rounded-3xl p-6 md:p-8 space-y-5">
-        <div class="summary-highlight rounded-2xl p-3.5 mb-4 flex items-center gap-4">
-          <div class="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white border border-pink-100 shadow-sm overflow-hidden shrink-0">
-            <img id="checkout-product-hero" src="" alt="Product" class="w-full h-full object-contain p-2" onerror="this.style.display='none';">
-          </div>
-          <div class="min-w-0">
-            <p class="text-[10px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
-            <h3 id="checkout-product-hero-title" class="text-sm md:text-base font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h3>
-            <div class="flex flex-wrap items-center gap-2 mt-2">
-              <span id="checkout-product-hero-variant" class="hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-pink-50 text-[#d63384] border border-pink-100"></span>
-              <span class="text-[10px] text-gray-500">Quantity: <strong id="checkout-product-hero-qty" class="text-gray-800">1</strong></span>
-            </div>
-          </div>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        <div class="flex items-center justify-between pb-3 border-b border-pink-100 flex-wrap gap-2">
+      <!-- LEFT: Order Summary -->
+      <div class="lg:col-span-7 theme-glass-card rounded-3xl p-5 md:p-7 space-y-5 lg:sticky lg:top-6">
+        <div class="flex items-center justify-between gap-3 pb-3 border-b border-pink-100">
           <div>
-            <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-truck-fast text-[#ff4b6e]"></i> Shipping & Contact Info
+            <h2 class="text-base md:text-lg font-extrabold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-bag-shopping text-[#ff4b6e]"></i> Order Summary
             </h2>
-            <p class="text-xs text-gray-500 mt-0.5">প্রোফাইল থেকে তথ্য স্বয়ংক্রিয়ভাবে লোড করা হয়েছে</p>
+            <p class="text-[11px] text-gray-500 mt-1">আপনার অর্ডারের পণ্য, ডিসকাউন্ট ও মোট টাকা</p>
           </div>
-          <a href="/user/profile.html" class="bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-xs font-bold px-3 py-1.5 rounded-xl border border-pink-200 transition-all flex items-center gap-1.5 shadow-sm">
-            <i class="fa-solid fa-pen-to-square"></i> Edit Profile
-          </a>
+          <span class="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">Secure</span>
         </div>
 
-        <form id="checkout-form" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Full Name</label>
-              <input type="text" id="cust-name" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="আপনার নাম">
-            </div>
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Email Address</label>
-              <input type="email" id="cust-email" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="example@domain.com">
-            </div>
+        <div class="summary-highlight rounded-2xl p-4 flex items-center gap-4">
+          <div class="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white border border-pink-100 shadow-sm overflow-hidden shrink-0">
+            <img id="summary-img" src="" alt="Product" class="w-full h-full object-contain p-2" onerror="this.style.display='none';">
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Phone Number</label>
-              <input type="tel" id="cust-phone" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="০১৭xxxxxxxx">
-            </div>
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Division</label>
-              <input type="text" id="cust-division" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="যেমন: ঢাকা">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">District</label>
-              <input type="text" id="cust-district" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="জেলা">
-            </div>
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Upazilla</label>
-              <input type="text" id="cust-upazilla" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="উপজেলা">
-            </div>
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Post Code</label>
-              <input type="text" id="cust-postcode" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="পোস্ট কোড">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Union / Area</label>
-              <input type="text" id="cust-union" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="এলাকা">
-            </div>
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-gray-700">Block / House / Road</label>
-              <input type="text" id="cust-blockhouse" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="বাসা ও রোড নং">
-            </div>
-          </div>
-
-          <div class="pt-2">
-            <label class="block text-xs font-bold text-gray-700 mb-2">Payment Method</label>
-            <div class="grid grid-cols-2 gap-2">
-              <label id="cod-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-[#ff4b6e] bg-white transition-all">
-                <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">COD</span>
-              </label>
-              
-              <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
-                <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">bKash Payment</span>
-              </label>
-            </div>
-            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">Cash on Delivery (COD) is disabled for this product, please select bKash online payment.</p>
-          </div>
-
-          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
-            <label class="block text-xs font-bold text-gray-800">Select Payment Gateway:</label>
-            <div id="bkash-gateways-grid" class="grid grid-cols-2 gap-2">
-              <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
-                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
-                <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[#e2136e] text-white font-extrabold tracking-tight text-base leading-none shadow-sm" aria-label="bKash">bKash</span>
-                <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
-              </label>
-            </div>
-            <p class="text-[10px] text-gray-500 italic">* Payment will be processed securely via bKash gateway.</p>
-          </div>
-
-        </form>
-      </div>
-
-      <div class="md:col-span-5 theme-glass-card rounded-3xl p-6 md:p-8 space-y-6 md:sticky md:top-6">
-        <div>
-          <h2 class="text-base font-bold text-gray-900 tracking-wide pb-3 border-b border-pink-100 flex items-center gap-2">
-            <i class="fa-solid fa-bag-shopping text-[#ff4b6e]"></i> Order Summary
-          </h2>
-        </div>
-
-        <div class="summary-highlight flex items-center gap-4 p-3.5 rounded-2xl">
-          <img id="summary-img" src="" alt="Product" class="w-16 h-16 object-cover rounded-xl border border-pink-200" onerror="this.style.display='none';">
-          <div class="flex-1 overflow-hidden">
-            <h4 id="summary-title" class="text-xs font-bold text-gray-900 truncate">Loading product...</h4>
+          <div class="flex-1 min-w-0">
+            <p class="text-[9px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
+            <h4 id="summary-title" class="text-sm md:text-base font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h4>
             <div id="stock-status-badge" class="mt-1"></div>
-            
-            <div class="flex items-center gap-2 mt-1.5">
+            <div class="flex flex-wrap items-center gap-3 mt-2">
               <span class="text-[11px] text-gray-500">Qty:</span>
               <div class="flex items-center border border-pink-300 rounded-lg bg-white overflow-hidden shadow-sm">
-                <button type="button" onclick="decreaseQuantity()" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">-</button>
-                <span id="summary-qty" class="px-2.5 text-xs font-bold text-[#ff4b6e]">1</span>
-                <button type="button" onclick="increaseQuantity()" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">+</button>
+                <button type="button" onclick="decreaseQuantity()" class="px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">−</button>
+                <span id="summary-qty" class="px-3 text-xs font-bold text-[#ff4b6e]">1</span>
+                <button type="button" onclick="increaseQuantity()" class="px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">+</button>
               </div>
             </div>
             <p id="stock-error-msg" class="text-[11px] text-red-500 mt-1 hidden"></p>
@@ -246,7 +146,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
 
-        <div class="space-y-2 pt-2 border-t border-pink-100">
+        <div class="space-y-2 pt-3 border-t border-pink-100">
           <label class="block text-xs font-bold text-gray-700">Have a Coupon?</label>
           <div class="flex gap-2">
             <input type="text" id="coupon-code-input" placeholder="Enter coupon code" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e] uppercase">
@@ -258,9 +158,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div id="checkout-coin-section" class="coin-card rounded-2xl p-3.5 space-y-3 hidden">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 min-w-0">
-              <div class="coin-badge w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-coins text-sm"></i>
-              </div>
+              <div class="coin-badge w-9 h-9 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-coins text-sm"></i></div>
               <div class="min-w-0">
                 <h4 class="text-xs font-extrabold text-gray-900">Use Your NexKart Coins</h4>
                 <p id="coin-offer-help" class="text-[10px] text-gray-600 mt-0.5">Max discount: <strong id="coin-max-percent">0</strong>%</p>
@@ -278,41 +176,117 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <p id="coin-status-msg" class="text-[10px] text-red-500 font-semibold hidden"></p>
         </div>
 
-        <div class="space-y-2.5 text-xs text-gray-600 pt-2 border-t border-pink-100">
-          <div class="flex justify-between">
-            <span>Subtotal Price:</span>
-            <span id="summary-subtotal" class="font-bold text-gray-900">৳ 0</span>
-          </div>
-          <div id="discount-row" class="flex justify-between text-green-600 hidden">
-            <span>Discount (<span id="coupon-name-display"></span>):</span>
-            <span class="font-bold">- ৳ <span id="summary-discount">0</span></span>
-          </div>
-          <div id="coin-discount-row" class="flex justify-between text-amber-700 hidden">
-            <span>Coin Discount:</span>
-            <span class="font-bold">- ৳ <span id="summary-coin-discount">0</span></span>
-          </div>
-          <div class="flex justify-between">
-            <span>Delivery Charge:</span>
-            <span id="summary-delivery" class="font-bold text-gray-900">৳ 60</span>
-          </div>
-          <div class="flex justify-between text-sm pt-3 border-t border-pink-100 font-extrabold text-gray-900">
-            <span>Total Amount:</span>
-            <span id="summary-total" class="text-[#ff4b6e] text-lg">৳ 0</span>
-          </div>
+        <div class="space-y-2.5 text-xs text-gray-600 pt-3 border-t border-pink-100">
+          <div class="flex justify-between"><span>Subtotal Price:</span><span id="summary-subtotal" class="font-bold text-gray-900">৳ 0</span></div>
+          <div id="discount-row" class="flex justify-between text-green-600 hidden"><span>Discount (<span id="coupon-name-display"></span>):</span><span class="font-bold">- ৳ <span id="summary-discount">0</span></span></div>
+          <div id="coin-discount-row" class="flex justify-between text-amber-700 hidden"><span>Coin Discount:</span><span class="font-bold">- ৳ <span id="summary-coin-discount">0</span></span></div>
+          <div class="flex justify-between"><span>Delivery Charge:</span><span id="summary-delivery" class="font-bold text-gray-900">৳ 60</span></div>
+          <div class="flex justify-between text-sm pt-3 border-t border-pink-100 font-extrabold text-gray-900"><span>Total Amount:</span><span id="summary-total" class="text-[#ff4b6e] text-lg">৳ 0</span></div>
         </div>
 
         <div class="secure-strip rounded-2xl px-3 py-2.5 flex items-center gap-2 text-[10px] text-gray-600">
           <i class="fa-solid fa-lock text-green-600"></i>
-          <span>Your coin offer, discount limit and final amount are verified again on the server.</span>
+          <span>আপনার অর্ডারের তথ্য সার্ভারে আবার যাচাই করে তারপর অর্ডার তৈরি হবে।</span>
         </div>
 
-        <button onclick="submitOrder()" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
-          <i class="fa-solid fa-check-to-slot"></i> Confirm Order
+        <button id="place-order-btn" type="button" onclick="submitOrder()" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
+          <i class="fa-solid fa-check-to-slot"></i> Place Order
         </button>
       </div>
 
-    </div>
+      <!-- RIGHT: Product image + shipping/contact -->
+      <div class="lg:col-span-5 theme-glass-card rounded-3xl p-5 md:p-7 space-y-5">
+        <div class="rounded-3xl bg-white border border-pink-100 shadow-sm overflow-hidden">
+          <div class="relative h-72 md:h-[390px] flex items-center justify-center bg-gradient-to-br from-white via-pink-50/40 to-white">
+            <img id="checkout-product-hero" src="" alt="Product" class="w-full h-full object-contain p-5 md:p-8" onerror="this.style.display='none';">
+            <span class="absolute top-4 left-4 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-full bg-white/90 text-[#d63384] border border-pink-100 shadow-sm">Product Preview</span>
+          </div>
+          <div class="p-4 border-t border-pink-100">
+            <p class="text-[9px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
+            <h3 id="checkout-product-hero-title" class="text-base md:text-lg font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h3>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span id="checkout-product-hero-variant" class="hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-pink-50 text-[#d63384] border border-pink-100"></span>
+              <span class="text-[10px] text-gray-500">Quantity: <strong id="checkout-product-hero-qty" class="text-gray-800">1</strong></span>
+            </div>
+          </div>
+        </div>
 
+        <div class="flex items-center justify-between pb-3 border-b border-pink-100 gap-3">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-truck-fast text-[#ff4b6e]"></i> Shipping & Contact Info
+            </h2>
+            <p class="text-[11px] text-gray-500 mt-0.5">প্রোফাইল থেকে তথ্য স্বয়ংক্রিয়ভাবে লোড করা হয়েছে</p>
+          </div>
+          <a href="/user/profile.html" class="shrink-0 bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-[11px] font-bold px-3 py-1.5 rounded-xl border border-pink-200 transition-all flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+          </a>
+        </div>
+
+        <!-- Only name and phone are editable here. Location/code fields stay hidden. -->
+        <form id="checkout-form" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3">
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Full Name</label>
+              <input type="text" id="cust-name" required class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="আপনার নাম">
+            </div>
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Phone Number</label>
+              <input type="tel" id="cust-phone" required class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="০১৭xxxxxxxx">
+            </div>
+          </div>
+
+          <!-- Hidden profile fields used for the authoritative order payload. -->
+          <input type="hidden" id="cust-email">
+          <input type="hidden" id="cust-division">
+          <input type="hidden" id="cust-district">
+          <input type="hidden" id="cust-upazilla">
+          <input type="hidden" id="cust-union">
+          <input type="hidden" id="cust-postcode">
+          <input type="hidden" id="cust-blockhouse">
+
+          <div id="active-shipping-address-card" class="summary-highlight rounded-2xl p-4 border border-pink-200 bg-white/80 shadow-sm">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-location-dot text-[#ff4b6e]"></i>
+                <h3 class="text-xs md:text-sm font-extrabold text-gray-900">Shipping Address</h3>
+              </div>
+              <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">Selected</span>
+            </div>
+            <p id="active-shipping-address" class="text-xs md:text-sm font-semibold text-gray-800 leading-6">Address loading...</p>
+            <p id="active-shipping-postcode" class="text-[11px] md:text-xs text-gray-500 mt-1">Post Code: —</p>
+            <p id="active-shipping-address-status" class="text-[10px] text-gray-400 mt-2">Profile database থেকে address নেওয়া হয়েছে</p>
+          </div>
+
+          <div class="pt-1">
+            <label class="block text-xs font-bold text-gray-700 mb-2">Payment Method</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label id="cod-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-[#ff4b6e] bg-white transition-all">
+                <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                <span class="text-xs font-bold text-gray-800">COD</span>
+              </label>
+              <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
+                <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                <span class="text-xs font-bold text-gray-800">bKash Payment</span>
+              </label>
+            </div>
+            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">এই পণ্যে COD নেই, তাই bKash online payment নির্বাচন করুন।</p>
+          </div>
+
+          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+            <label class="block text-xs font-bold text-gray-800">Select Payment Gateway:</label>
+            <div id="bkash-gateways-grid" class="grid grid-cols-1 gap-2">
+              <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
+                <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[#e2136e] text-white font-extrabold tracking-tight text-base leading-none shadow-sm" aria-label="bKash">bKash</span>
+                <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
+              </label>
+            </div>
+            <p class="text-[10px] text-gray-500 italic">* Payment will be processed securely via bKash gateway.</p>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -536,9 +510,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function calculateCoinDiscount() {
       if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) return 0;
       const subtotal = productPrice * quantity;
-      const rawCoinDiscount = userAvailableCoins * COIN_VALUE_BDT;
       const maxAllowedDiscount = (subtotal * coinPercentageValue) / 100;
-      return Math.min(rawCoinDiscount, maxAllowedDiscount);
+      const maxCoinsAllowed = Math.max(0, Math.floor(maxAllowedDiscount / COIN_VALUE_BDT));
+      const coinsUsed = Math.min(Math.floor(userAvailableCoins), maxCoinsAllowed);
+      return coinsUsed * COIN_VALUE_BDT;
     }
 
     function toggleCoinDiscount() {
@@ -609,6 +584,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (user.union_area) document.getElementById('cust-union').value = user.union_area;
           if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
           if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
+
+          // Some existing profiles store Bangladesh location codes instead of names.
+          // Convert those codes for display without changing the values saved in the profile.
+          const resolveLocationName = (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+
+            const maps = {
+              division: {
+                '6': 'Dhaka'
+              },
+              district: {
+                '43': 'Narayanganj'
+              },
+              upazilla: {
+                '331': 'Rupganj'
+              }
+            };
+
+            return maps[type]?.[raw] || raw;
+          };
+
+          const displayDivision = resolveLocationName(user.division, 'division');
+          const displayDistrict = resolveLocationName(user.district, 'district');
+          const displayUpazilla = resolveLocationName(user.upazilla, 'upazilla');
+          const displayUnion = String(user.union_area || '').trim();
+          const displayBlockHouse = String(user.block_house || '').trim();
+
+          const addressParts = [displayBlockHouse, displayUnion, displayUpazilla, displayDistrict, displayDivision]
+            .filter(Boolean);
+          const addressText = addressParts.join(', ');
+          const addressEl = document.getElementById('active-shipping-address');
+          const postcodeEl = document.getElementById('active-shipping-postcode');
+          const statusEl = document.getElementById('active-shipping-address-status');
+
+          if (addressEl) addressEl.innerText = addressText || 'Shipping address profile-এ সেট করা নেই';
+          if (postcodeEl) postcodeEl.innerText = user.post_code ? `Post Code: ${user.post_code}` : 'Post Code: —';
+          if (statusEl) statusEl.innerText = addressText ? 'Profile database থেকে active address selected' : 'Profile থেকে address সেট করুন';
         }
       } catch (e) {
         console.log("Could not prefill user profile data.");
@@ -691,6 +704,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
 
     async function submitOrder() {
+      const placeOrderBtn = document.getElementById('place-order-btn');
+      if (placeOrderBtn?.disabled) return;
+
       if (quantity > availableStock) {
         alert(`Stock limit exceeded! Only ${availableStock} items available.`);
         return;
@@ -706,20 +722,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const post_code = document.getElementById('cust-postcode').value.trim();
       const block_house = document.getElementById('cust-blockhouse').value.trim();
 
-      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      
+      const paymentRadio = document.querySelector('input[name="payment"]:checked');
+      const paymentMethod = paymentRadio ? paymentRadio.value : 'cod';
+
       let selectedGateway = null;
       if (paymentMethod === 'online') {
         const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
-        if (selectedGatewayRadio) {
-          selectedGateway = selectedGatewayRadio.value;
-        } else {
-          selectedGateway = 'bkash';
-        }
+        selectedGateway = selectedGatewayRadio ? selectedGatewayRadio.value : 'bkash';
       }
 
-      if (!name || !email || !phone || !district || !block_house) {
-        alert('Please fill in name, email, phone, district, and house/road number properly!');
+      if (!name || !phone) {
+        alert('নাম এবং ফোন নম্বর দিন।');
+        return;
+      }
+
+      // The address comes from the logged-in profile. Hidden fields carry the
+      // profile values; no division/district/upazilla code is shown to the user.
+      if (!district || !block_house) {
+        alert('আপনার Profile-এ shipping address সম্পূর্ণ নেই। Edit Profile থেকে address ঠিক করে আবার চেষ্টা করুন।');
         return;
       }
 
@@ -743,32 +763,52 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         discount_amount: appliedDiscount,
         coupon_code: document.getElementById('coupon-code-input').value.trim(),
         use_coins: Boolean(isCoinApplied),
-        // Sent for UI/audit consistency; server recalculates the authoritative values.
         client_coin_discount: isCoinApplied ? Number(coinDiscountAmount || 0) : 0,
         client_delivery_charge: Number(deliveryCharge || 0)
       };
 
       try {
+        if (placeOrderBtn) {
+          placeOrderBtn.disabled = true;
+          placeOrderBtn.classList.add('opacity-60', 'cursor-not-allowed');
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Order...';
+        }
+
         const response = await fetch('/user/place-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
         });
-        const result = await response.json();
 
-        if (result.success) {
+        const rawText = await response.text();
+        let result = {};
+        try {
+          result = rawText ? JSON.parse(rawText) : {};
+        } catch (_) {
+          result = { success: false, message: rawText || `Server returned HTTP ${response.status}` };
+        }
+
+        if (response.ok && result.success) {
           if (paymentMethod === 'online' && result.payment_url) {
             window.location.href = result.payment_url;
-          } else {
-            alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
-            window.location.href = '/user/dashboard';
+            return;
           }
-        } else {
-          alert(result.message || 'Failed to place order!');
+
+          alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
+          window.location.href = '/user/dashboard';
+          return;
         }
+
+        alert(result.message || `Order failed (HTTP ${response.status}). Please try again.`);
       } catch (err) {
-        console.error("Order Submit Error:", err);
+        console.error('Order Submit Error:', err);
         alert('Server error! Please try again.');
+      } finally {
+        if (placeOrderBtn) {
+          placeOrderBtn.disabled = false;
+          placeOrderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-check-to-slot"></i> Place Order';
+        }
       }
     }
   </script>
