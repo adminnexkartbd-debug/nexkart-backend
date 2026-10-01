@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const nodemailer = require('nodemailer');
+const https = require('https');
 const db = require('../db');
 
 /**
@@ -51,24 +51,184 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
 }
 
 /**
- * Gmail OAuth2 transport.
- * Nodemailer obtains/refreshes the Gmail access token from the OAuth2
- * refresh token, so no SMTP password is required.
+ * Gmail API sender (OAuth2 over HTTPS).
+ *
+ * This intentionally does NOT use SMTP/Nodemailer. That avoids Gmail SMTP
+ * connection timeouts on hosting platforms such as Render. The app obtains
+ * an OAuth access token from the refresh token and sends through the Gmail
+ * REST API over HTTPS/443.
  */
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        type: 'OAuth2',
-        user: MAIL_USER,
-        clientId: GOOGLE_CLIENT_ID,
-        clientSecret: GOOGLE_CLIENT_SECRET,
-        refreshToken: GOOGLE_REFRESH_TOKEN
-    },
-    family: 4,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000
-});
+function httpsJsonRequest({ hostname, path, method = 'POST', headers = {}, body = '', timeout = 20000 }) {
+    return new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname,
+            path,
+            method,
+            headers: {
+                ...headers,
+                'Content-Length': Buffer.byteLength(body)
+            },
+            family: 4,
+            timeout
+        }, res => {
+            let data = '';
+            res.setEncoding('utf8');
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                let parsed = null;
+                try { parsed = data ? JSON.parse(data) : {}; } catch (_) {}
+
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve(parsed || {});
+                    return;
+                }
+
+                const detail = parsed?.error?.message || parsed?.error_description || data || `HTTP ${res.statusCode}`;
+                const error = new Error(`Google API ${res.statusCode}: ${detail}`);
+                error.statusCode = res.statusCode;
+                error.response = parsed;
+                reject(error);
+            });
+        });
+
+        req.on('timeout', () => {
+            req.destroy(new Error('Google API connection timeout'));
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+}
+
+let cachedAccessToken = null;
+let cachedAccessTokenExpiresAt = 0;
+
+async function getGoogleAccessToken() {
+    if (cachedAccessToken && Date.now() < cachedAccessTokenExpiresAt - 60000) {
+        return cachedAccessToken;
+    }
+
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+        throw new Error('Google OAuth credentials are missing in environment variables.');
+    }
+
+    const body = new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        refresh_token: GOOGLE_REFRESH_TOKEN,
+        grant_type: 'refresh_token'
+    }).toString();
+
+    const token = await httpsJsonRequest({
+        hostname: 'oauth2.googleapis.com',
+        path: '/token',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json'
+        },
+        body,
+        timeout: 20000
+    });
+
+    if (!token.access_token) {
+        throw new Error('Google OAuth token response did not contain access_token.');
+    }
+
+    cachedAccessToken = token.access_token;
+    cachedAccessTokenExpiresAt = Date.now() + Number(token.expires_in || 3600) * 1000;
+    return cachedAccessToken;
+}
+
+function encodeMimeHeader(value) {
+    return `=?UTF-8?B?${Buffer.from(String(value), 'utf8').toString('base64')}?=`;
+}
+
+function encodeBase64Url(value) {
+    return Buffer.from(value)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+}
+
+function htmlToPlainText(html) {
+    return String(html || '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<br\s*\/?>(\r?\n)?/gi, '\n')
+        .replace(/<\/(p|div|tr|h1|h2|h3|li)>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#039;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+async function sendGmailMessage({ to, subject, html, text }) {
+    const accessToken = await getGoogleAccessToken();
+    const plain = text || htmlToPlainText(html);
+    const boundary = `NexKartBD_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+    const rawMessage = [
+        `From: ${encodeMimeHeader(MAIL_FROM_NAME)} <${MAIL_USER}>`,
+        `To: ${to}`,
+        `Subject: ${encodeMimeHeader(subject)}`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        '',
+        plain,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+        '',
+        html,
+        '',
+        `--${boundary}--`,
+        ''
+    ].join('\r\n');
+
+    try {
+        return await httpsJsonRequest({
+            hostname: 'gmail.googleapis.com',
+            path: '/gmail/v1/users/me/messages/send',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            },
+            body: JSON.stringify({ raw: encodeBase64Url(rawMessage) }),
+            timeout: 20000
+        });
+    } catch (error) {
+        // If an access token expired/revoked between cache checks, refresh once.
+        if (error.statusCode === 401) {
+            cachedAccessToken = null;
+            cachedAccessTokenExpiresAt = 0;
+            const freshToken = await getGoogleAccessToken();
+            return await httpsJsonRequest({
+                hostname: 'gmail.googleapis.com',
+                path: '/gmail/v1/users/me/messages/send',
+                headers: {
+                    Authorization: `Bearer ${freshToken}`,
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json'
+                },
+                body: JSON.stringify({ raw: encodeBase64Url(rawMessage) }),
+                timeout: 20000
+            });
+        }
+        throw error;
+    }
+}
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -292,8 +452,7 @@ function buildCustomerEmail(order) {
 async function sendOneMail({ to, subject, html }) {
     if (!to) return false;
 
-    await transporter.sendMail({
-        from: `"${MAIL_FROM_NAME}" <${MAIL_USER}>`,
+    await sendGmailMessage({
         to,
         subject,
         html,
@@ -395,7 +554,7 @@ const startMailCron = () => {
     });
 
     console.log(
-        '[Mail Cron] Google OAuth2 Gmail mail service is running every 30 seconds.'
+        '[Mail Cron] Google Gmail API OAuth2 mail service is running every 30 seconds.'
     );
 };
 
