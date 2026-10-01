@@ -741,7 +741,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         post_code: post_code,
         block_house: block_house,
         discount_amount: appliedDiscount,
-        use_coins: Boolean(isCoinApplied)
+        coupon_code: document.getElementById('coupon-code-input').value.trim(),
+        use_coins: Boolean(isCoinApplied),
+        // Sent for UI/audit consistency; server recalculates the authoritative values.
+        client_coin_discount: isCoinApplied ? Number(coinDiscountAmount || 0) : 0,
+        client_delivery_charge: Number(deliveryCharge || 0)
       };
 
       try {
