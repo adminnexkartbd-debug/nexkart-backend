@@ -405,7 +405,9 @@ async function getCommissionRate() {
 
 async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
     const commissionRate = await getCommissionRate();
+    // Commission is calculated ONLY from product subtotal. Delivery is excluded.
     const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
+    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
 
     const [existing] = await db.query(
         'SELECT id FROM commission_table WHERE order_number = ? LIMIT 1',
@@ -413,14 +415,24 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
     );
 
     if (existing.length > 0) {
-        await db.query(
-            'UPDATE commission_table SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ? WHERE order_number = ?',
-            [commissionRate, commissionAmount, sellerId, paymentType, orderId]
-        );
+        if (hasPaymentType) {
+            await db.query(
+                `UPDATE commission_table
+                 SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ?
+                 WHERE order_number = ?`,
+                [commissionRate, commissionAmount, sellerId, paymentType, orderId]
+            );
+        } else {
+            // Old commission_table schema: do not reference payment_type until migration is run.
+            await db.query(
+                `UPDATE commission_table
+                 SET commission_rate = ?, commission_amount = ?, seller_id = ?
+                 WHERE order_number = ?`,
+                [commissionRate, commissionAmount, sellerId, orderId]
+            );
+        }
         return { commissionRate, commissionAmount };
     }
-
-    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
 
     if (hasPaymentType) {
         await db.query(
@@ -430,7 +442,6 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
             [orderId, commissionRate, commissionAmount, sellerId, paymentType]
         );
     } else {
-        // Backward compatible with an older commission_table.
         await db.query(
             `INSERT INTO commission_table
                 (order_number, commission_rate, commission_amount, seller_id, date)
@@ -440,6 +451,48 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
     }
 
     return { commissionRate, commissionAmount };
+}
+
+// Coin usage is recorded as a separate negative ledger row in my_coins.
+// Example: using 20 coins creates coin_balance = -20.
+async function recordCoinUsage({ userId, orderId, coinDiscount }) {
+    const discount = Number(coinDiscount || 0);
+    if (!userId || discount <= 0) return 0;
+
+    const coinValue = 0.30;
+    const coinsUsed = Math.max(0, Math.round(discount / coinValue));
+    if (!coinsUsed) return 0;
+
+    const source = `order:${orderId}`;
+
+    const [existing] = await db.query(
+        `SELECT id FROM my_coins
+         WHERE user_id = ? AND coin_source = ? AND coin_balance < 0
+         LIMIT 1`,
+        [userId, source]
+    );
+
+    if (existing.length) return coinsUsed;
+
+    const [coinRows] = await db.query(
+        `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
+         FROM my_coins
+         WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
+        [userId]
+    );
+    const availableCoins = Math.max(0, Number(coinRows[0]?.total_coin || 0));
+
+    if (availableCoins < coinsUsed) {
+        throw new Error(`Not enough coins to complete order. Required: ${coinsUsed}, available: ${availableCoins}.`);
+    }
+
+    await db.query(
+        `INSERT INTO my_coins (user_id, coin_balance, coin_expire, coin_source)
+         VALUES (?, ?, NULL, ?)`,
+        [userId, -coinsUsed, source]
+    );
+
+    return coinsUsed;
 }
 
 async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
@@ -476,6 +529,14 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         sellerId: order.seller_id,
         subtotal: order.subtotal_price,
         paymentType
+    });
+
+    // Coins are consumed only after the order is finalized.
+    // For COD this happens immediately; for bKash it happens only after successful payment.
+    await recordCoinUsage({
+        userId: order.user_id,
+        orderId: order.order_id,
+        coinDiscount: order.coin_discount
     });
 
     // COD should not depend on bKash-specific columns. Only successful online
@@ -1499,8 +1560,27 @@ router.post('/place-order', async (req, res) => {
             post_code, block_house, discount_amount, coupon_code, use_coins
         } = req.body;
 
-        if (!product_id || !quantity || !name || !phone || !district || !block_house) {
-            return res.status(400).json({ success: false, message: 'প্রয়োজনীয় অর্ডারের তথ্য অনুপস্থিত!' });
+        // Shipping/contact data is authoritative from the logged-in user's profile.
+        // Browser values are only a fallback for older accounts/routes.
+        const [profileRows] = await db.query(
+            `SELECT name, email, phone_number, division, district, upazilla,
+                    union_area, post_code, block_house
+             FROM users WHERE id = ? LIMIT 1`,
+            [userId]
+        );
+        const profile = profileRows[0] || {};
+        const orderName = String(profile.name || name || '').trim();
+        const orderEmail = String(profile.email || email || '').trim();
+        const orderPhone = String(profile.phone_number || phone || '').trim();
+        const orderDivision = String(profile.division || division || '').trim();
+        const orderDistrict = String(profile.district || district || '').trim();
+        const orderUpazilla = String(profile.upazilla || upazilla || '').trim();
+        const orderUnion = String(profile.union_area || union_area || '').trim();
+        const orderPostCode = String(profile.post_code || post_code || '').trim();
+        const orderBlockHouse = String(profile.block_house || block_house || '').trim();
+
+        if (!product_id || !quantity || !orderName || !orderPhone || !orderDistrict || !orderBlockHouse) {
+            return res.status(400).json({ success: false, message: 'প্রোফাইলে প্রয়োজনীয় shipping/contact তথ্য পাওয়া যায়নি। Profile থেকে address ঠিক করে আবার চেষ্টা করুন।' });
         }
 
         const orderQty = parseInt(quantity, 10);
@@ -1585,7 +1665,9 @@ router.post('/place-order', async (req, res) => {
                 );
                 availableCoinsForOrder = Math.max(0, Number(coinRows[0]?.total_coin || 0));
                 const maxDiscountByPercent = (subtotal * maxCoinPercent) / 100;
-                coinDiscountAmount = Math.min(availableCoinsForOrder * 0.30, maxDiscountByPercent);
+                const maxCoinsAllowed = Math.max(0, Math.floor(maxDiscountByPercent / 0.30));
+                const coinsUsedForOrder = Math.min(Math.floor(availableCoinsForOrder), maxCoinsAllowed);
+                coinDiscountAmount = coinsUsedForOrder * 0.30;
             }
         }
 
@@ -1602,7 +1684,7 @@ router.post('/place-order', async (req, res) => {
             return res.status(400).json({ success: false, message: 'বর্তমানে শুধু bKash online payment available.' });
         }
 
-        const fullShippingAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
+        const fullShippingAddress = [orderBlockHouse, orderUnion, orderUpazilla, orderDistrict, orderDivision, orderPostCode ? `Post Code: ${orderPostCode}` : ''].filter(Boolean).join(', ');
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
@@ -1622,7 +1704,7 @@ router.post('/place-order', async (req, res) => {
             orderId, userId, product.id, seller_id, orderQty, variant || null,
             subtotal, deliveryCharge, appliedDiscount + coinDiscountAmount, totalAmount,
             effectivePaymentMethod, gatewayUsed, paymentStatus,
-            name, email || null, phone, fullShippingAddress,
+            orderName, orderEmail || null, orderPhone, fullShippingAddress,
             0, 0, 0, new Date()
         ];
 
@@ -1647,8 +1729,8 @@ router.post('/place-order', async (req, res) => {
             await finalizeSuccessfulOrder(orderRows[0], 'unpaid');
 
             const orderData = {
-                order_id: orderId, customer_name: name, customer_email: email,
-                customer_phone: phone, shipping_address: fullShippingAddress,
+                order_id: orderId, customer_name: orderName, customer_email: orderEmail,
+                customer_phone: orderPhone, shipping_address: fullShippingAddress,
                 payment_method: effectivePaymentMethod, selected_gateway: null,
                 payment_status: 'Pending', quantity: orderQty, variant,
                 subtotal_price: subtotal, delivery_charge: deliveryCharge, total_amount: totalAmount
@@ -1659,7 +1741,7 @@ router.post('/place-order', async (req, res) => {
             const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
             const userAgent = req.headers['user-agent'];
             await sendFacebookCAPI('Purchase', {
-                email, phone, name, client_ip_address: clientIp, client_user_agent: userAgent
+                email: orderEmail, phone: orderPhone, name: orderName, client_ip_address: clientIp, client_user_agent: userAgent
             }, {
                 currency: 'BDT', value: totalAmount, order_id: orderId,
                 contents: [{ id: product.product_id || product.id, quantity: orderQty, item_price: salePrice }]
@@ -1678,7 +1760,7 @@ router.post('/place-order', async (req, res) => {
             const bkashPayment = await createBkashPayment({
                 orderId,
                 amount: totalAmount,
-                payerReference: email || phone || orderId
+                payerReference: orderEmail || orderPhone || orderId
             });
 
             await db.query(
