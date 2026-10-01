@@ -112,6 +112,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </a>
         </div>
 
+        <!-- Active shipping address: loaded from the logged-in user's database profile -->
+        <div id="active-shipping-address-card" class="summary-highlight rounded-2xl p-4 border border-pink-200 bg-white/80 shadow-sm">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-[#ff4b6e]"></i>
+              <h3 class="text-xs md:text-sm font-extrabold text-gray-900">Active Shipping Address</h3>
+            </div>
+            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">Selected</span>
+          </div>
+          <p id="active-shipping-address" class="text-xs md:text-sm font-semibold text-gray-800 leading-6">Address loading...</p>
+          <p id="active-shipping-postcode" class="text-[11px] md:text-xs text-gray-500 mt-1">Post Code: —</p>
+          <p id="active-shipping-address-status" class="text-[10px] text-gray-400 mt-2">Profile থেকে address নেওয়া হয়েছে</p>
+        </div>
+
         <form id="checkout-form" class="space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="space-y-1">
@@ -129,35 +143,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <label class="block text-xs font-bold text-gray-700">Phone Number</label>
               <input type="tel" id="cust-phone" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="০১৭xxxxxxxx">
             </div>
-            <div class="space-y-1">
+            <div class="space-y-1 hidden">
               <label class="block text-xs font-bold text-gray-700">Division</label>
-              <input type="text" id="cust-division" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="যেমন: ঢাকা">
+              <input type="text" id="cust-division" class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="যেমন: ঢাকা">
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 hidden">
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">District</label>
-              <input type="text" id="cust-district" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="জেলা">
+              <input type="text" id="cust-district" required class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="জেলা">
             </div>
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">Upazilla</label>
-              <input type="text" id="cust-upazilla" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="উপজেলা">
+              <input type="text" id="cust-upazilla" class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="উপজেলা">
             </div>
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">Post Code</label>
-              <input type="text" id="cust-postcode" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="পোস্ট কোড">
+              <input type="text" id="cust-postcode" class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="পোস্ট কোড">
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 hidden">
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">Union / Area</label>
-              <input type="text" id="cust-union" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="এলাকা">
+              <input type="text" id="cust-union" class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="এলাকা">
             </div>
             <div class="space-y-1">
               <label class="block text-xs font-bold text-gray-700">Block / House / Road</label>
-              <input type="text" id="cust-blockhouse" required class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="বাসা ও রোড নং">
+              <input type="text" id="cust-blockhouse" required class="hidden w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="বাসা ও রোড নং">
             </div>
           </div>
 
@@ -536,9 +550,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     function calculateCoinDiscount() {
       if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) return 0;
       const subtotal = productPrice * quantity;
-      const rawCoinDiscount = userAvailableCoins * COIN_VALUE_BDT;
       const maxAllowedDiscount = (subtotal * coinPercentageValue) / 100;
-      return Math.min(rawCoinDiscount, maxAllowedDiscount);
+      const maxCoinsAllowed = Math.max(0, Math.floor(maxAllowedDiscount / COIN_VALUE_BDT));
+      const coinsUsed = Math.min(Math.floor(userAvailableCoins), maxCoinsAllowed);
+      return coinsUsed * COIN_VALUE_BDT;
     }
 
     function toggleCoinDiscount() {
@@ -609,6 +624,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (user.union_area) document.getElementById('cust-union').value = user.union_area;
           if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
           if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
+
+          const addressParts = [user.block_house, user.union_area, user.upazilla, user.district, user.division]
+            .map(v => String(v || '').trim()).filter(Boolean);
+          const addressText = addressParts.join(', ');
+          const addressEl = document.getElementById('active-shipping-address');
+          const postcodeEl = document.getElementById('active-shipping-postcode');
+          const statusEl = document.getElementById('active-shipping-address-status');
+
+          if (addressEl) addressEl.innerText = addressText || 'Shipping address profile-এ সেট করা নেই';
+          if (postcodeEl) postcodeEl.innerText = user.post_code ? `Post Code: ${user.post_code}` : 'Post Code: —';
+          if (statusEl) statusEl.innerText = addressText ? 'Profile database থেকে active address selected' : 'Profile থেকে address সেট করুন';
         }
       } catch (e) {
         console.log("Could not prefill user profile data.");
