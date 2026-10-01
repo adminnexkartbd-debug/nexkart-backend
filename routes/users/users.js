@@ -385,6 +385,16 @@ async function queryBkashPayment(paymentID) {
     return response.data;
 }
 
+async function hasTableColumn(tableName, columnName) {
+    const [rows] = await db.query(
+        `SELECT COUNT(*) AS cnt
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+        [tableName, columnName]
+    );
+    return Number(rows[0]?.cnt || 0) > 0;
+}
+
 async function getCommissionRate() {
     const [rows] = await db.query(
         'SELECT commission_rate FROM commission ORDER BY id DESC LIMIT 1'
@@ -410,12 +420,24 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
         return { commissionRate, commissionAmount };
     }
 
-    await db.query(
-        `INSERT INTO commission_table
-            (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
-         VALUES (?, ?, ?, ?, ?, NOW())`,
-        [orderId, commissionRate, commissionAmount, sellerId, paymentType]
-    );
+    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
+
+    if (hasPaymentType) {
+        await db.query(
+            `INSERT INTO commission_table
+                (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
+             VALUES (?, ?, ?, ?, ?, NOW())`,
+            [orderId, commissionRate, commissionAmount, sellerId, paymentType]
+        );
+    } else {
+        // Backward compatible with an older commission_table.
+        await db.query(
+            `INSERT INTO commission_table
+                (order_number, commission_rate, commission_amount, seller_id, date)
+             VALUES (?, ?, ?, ?, NOW())`,
+            [orderId, commissionRate, commissionAmount, sellerId]
+        );
+    }
 
     return { commissionRate, commissionAmount };
 }
@@ -459,15 +481,26 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
     // COD should not depend on bKash-specific columns. Only successful online
     // payments need the bKash payment/trx fields updated.
     if (paymentType === 'paid') {
-        await db.query(
-            `UPDATE orders
-             SET payment_status = ?,
-                 bkash_payment_id = COALESCE(?, bkash_payment_id),
-                 bkash_trx_id = COALESCE(?, bkash_trx_id),
-                 payment_completed_at = NOW()
-             WHERE order_id = ?`,
-            ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
-        );
+        const hasBkashPaymentId = await hasTableColumn('orders', 'bkash_payment_id');
+        const hasBkashTrxId = await hasTableColumn('orders', 'bkash_trx_id');
+        const hasPaymentCompletedAt = await hasTableColumn('orders', 'payment_completed_at');
+
+        if (hasBkashPaymentId && hasBkashTrxId && hasPaymentCompletedAt) {
+            await db.query(
+                `UPDATE orders
+                 SET payment_status = ?,
+                     bkash_payment_id = COALESCE(?, bkash_payment_id),
+                     bkash_trx_id = COALESCE(?, bkash_trx_id),
+                     payment_completed_at = NOW()
+                 WHERE order_id = ?`,
+                ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
+            );
+        } else {
+            await db.query(
+                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+                ['complete', order.order_id]
+            );
+        }
     } else {
         await db.query(
             'UPDATE orders SET payment_status = ? WHERE order_id = ?',
@@ -1573,26 +1606,40 @@ router.post('/place-order', async (req, res) => {
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
-        const insertQuery = `
-            INSERT INTO orders (
-                order_id, user_id, product_id, seller_id, quantity, variant,
-                subtotal_price, delivery_charge, discount_amount, total_amount,
-                payment_method, selected_gateway, payment_status,
-                customer_name, customer_email, customer_phone, shipping_address,
-                vat_cm, qtyCalculate, sendMail, created_at,
-                coupon_discount, coin_discount
-            ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, NOW(), ?, ?
-            )
-        `;
+        // Build the INSERT from columns that actually exist. This keeps COD working
+        // even if the optional migration has not been run yet.
+        const hasCouponDiscount = await hasTableColumn('orders', 'coupon_discount');
+        const hasCoinDiscount = await hasTableColumn('orders', 'coin_discount');
 
-        await db.query(insertQuery, [
+        const orderColumns = [
+            'order_id', 'user_id', 'product_id', 'seller_id', 'quantity', 'variant',
+            'subtotal_price', 'delivery_charge', 'discount_amount', 'total_amount',
+            'payment_method', 'selected_gateway', 'payment_status',
+            'customer_name', 'customer_email', 'customer_phone', 'shipping_address',
+            'vat_cm', 'qtyCalculate', 'sendMail', 'created_at'
+        ];
+        const orderValues = [
             orderId, userId, product.id, seller_id, orderQty, variant || null,
             subtotal, deliveryCharge, appliedDiscount + coinDiscountAmount, totalAmount,
             effectivePaymentMethod, gatewayUsed, paymentStatus,
             name, email || null, phone, fullShippingAddress,
-            appliedDiscount, coinDiscountAmount
-        ]);
+            0, 0, 0, new Date()
+        ];
+
+        if (hasCouponDiscount) {
+            orderColumns.push('coupon_discount');
+            orderValues.push(appliedDiscount);
+        }
+        if (hasCoinDiscount) {
+            orderColumns.push('coin_discount');
+            orderValues.push(coinDiscountAmount);
+        }
+
+        const placeholders = orderColumns.map(() => '?').join(', ');
+        await db.query(
+            `INSERT INTO orders (${orderColumns.join(', ')}) VALUES (${placeholders})`,
+            orderValues
+        );
 
         // COD: order is immediately payable/unpaid, stock is deducted, commission is recorded excluding delivery.
         if (effectivePaymentMethod === 'cod') {
