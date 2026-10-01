@@ -272,6 +272,23 @@ function getBkashBaseUrl() {
     return String(BKASH_CONFIG.BASE_URL || '').trim().replace(/\/$/, '');
 }
 
+// Supports both bKash sandbox base styles.
+function bkashUrl(endpoint) {
+    const base = getBkashBaseUrl();
+    if (!base) return '';
+    const normalized = String(endpoint || '').replace(/^\//, '');
+    if (/\/tokenized\/checkout$/i.test(base)) {
+        const map = {
+            'checkout/token/grant': 'token/grant',
+            'checkout/payment/create': 'create',
+            'checkout/payment/execute': 'execute',
+            'checkout/payment/status': 'payment/status'
+        };
+        return `${base}/${map[normalized] || normalized}`;
+    }
+    return `${base}/${normalized}`;
+}
+
 async function getBkashToken() {
     if (!BKASH_CONFIG.APP_KEY || !BKASH_CONFIG.APP_SECRET || !BKASH_CONFIG.USERNAME || !BKASH_CONFIG.PASSWORD || !getBkashBaseUrl()) {
         throw new Error('bKash environment variables are not configured correctly.');
@@ -282,7 +299,7 @@ async function getBkashToken() {
     }
 
     const response = await axios.post(
-        `${getBkashBaseUrl()}/checkout/token/grant`,
+        bkashUrl('checkout/token/grant'),
         {
             app_key: BKASH_CONFIG.APP_KEY,
             app_secret: BKASH_CONFIG.APP_SECRET
@@ -317,7 +334,7 @@ async function createBkashPayment({ orderId, amount, payerReference }) {
     const callbackURL = BKASH_CONFIG.CALLBACK_URL || `${process.env.APP_URL || 'http://localhost:3000'}/user/bkash/callback`;
 
     const response = await axios.post(
-        `${getBkashBaseUrl()}/checkout/payment/create`,
+        bkashUrl('checkout/payment/create'),
         {
             mode: '0011',
             payerReference: String(payerReference || orderId),
@@ -349,7 +366,7 @@ async function executeBkashPayment(paymentID) {
     const token = await getBkashToken();
 
     const response = await axios.post(
-        `${getBkashBaseUrl()}/checkout/payment/execute`,
+        bkashUrl('checkout/payment/execute'),
         { paymentID },
         {
             headers: {
@@ -369,7 +386,7 @@ async function queryBkashPayment(paymentID) {
     const token = await getBkashToken();
 
     const response = await axios.post(
-        `${getBkashBaseUrl()}/checkout/payment/status`,
+        bkashUrl('checkout/payment/status'),
         { paymentID },
         {
             headers: {
@@ -509,38 +526,62 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
     const currentStock = parseInt(product.stock_quantity, 10) || 0;
     const orderQty = parseInt(order.quantity, 10) || 0;
 
+    if (orderQty <= 0) {
+        throw new Error(`Invalid order quantity for ${order.order_id}.`);
+    }
     if (currentStock < orderQty) {
         throw new Error(`Insufficient stock while finalizing order ${order.order_id}.`);
     }
 
     const newStock = currentStock - orderQty;
     const newSoldQty = (parseInt(product.sold_qty, 10) || 0) + orderQty;
-    const newStockStatus = newStock === 0 ? 'out_of_stock' : 'in_stock';
+    const hasSoldQty = await hasTableColumn('products', 'sold_qty');
+    const hasStockStatus = await hasTableColumn('products', 'stock_status');
 
-    await db.query(
-        `UPDATE products
-         SET stock_quantity = ?, sold_qty = ?, stock_status = ?
-         WHERE id = ?`,
-        [newStock, newSoldQty, newStockStatus, order.product_id]
-    );
+    if (hasSoldQty && hasStockStatus) {
+        const newStockStatus = newStock === 0 ? 'out_of_stock' : 'in_stock';
+        await db.query(
+            `UPDATE products
+             SET stock_quantity = ?, sold_qty = ?, stock_status = ?
+             WHERE id = ?`,
+            [newStock, newSoldQty, newStockStatus, order.product_id]
+        );
+    } else if (hasSoldQty) {
+        await db.query(
+            `UPDATE products SET stock_quantity = ?, sold_qty = ? WHERE id = ?`,
+            [newStock, newSoldQty, order.product_id]
+        );
+    } else {
+        await db.query(
+            `UPDATE products SET stock_quantity = ? WHERE id = ?`,
+            [newStock, order.product_id]
+        );
+    }
 
-    const commission = await recordOrderCommission({
-        orderId: order.order_id,
-        sellerId: order.seller_id,
-        subtotal: order.subtotal_price,
-        paymentType
-    });
+    // Commission bookkeeping is attempted, but a commission-table schema problem
+    // must not convert a valid COD order / successful bKash payment into HTTP 500.
+    let commission = { commissionRate: 0, commissionAmount: 0 };
+    try {
+        commission = await recordOrderCommission({
+            orderId: order.order_id,
+            sellerId: order.seller_id,
+            subtotal: order.subtotal_price,
+            paymentType
+        });
+    } catch (commissionError) {
+        console.error('ORDER COMMISSION ERROR:', commissionError?.response?.data || commissionError?.message || commissionError);
+    }
 
-    // Coins are consumed only after the order is finalized.
-    // For COD this happens immediately; for bKash it happens only after successful payment.
-    await recordCoinUsage({
-        userId: order.user_id,
-        orderId: order.order_id,
-        coinDiscount: order.coin_discount
-    });
+    try {
+        await recordCoinUsage({
+            userId: order.user_id,
+            orderId: order.order_id,
+            coinDiscount: order.coin_discount
+        });
+    } catch (coinError) {
+        console.error('ORDER COIN LEDGER ERROR:', coinError?.message || coinError);
+    }
 
-    // COD should not depend on bKash-specific columns. Only successful online
-    // payments need the bKash payment/trx fields updated.
     if (paymentType === 'paid') {
         const hasBkashPaymentId = await hasTableColumn('orders', 'bkash_payment_id');
         const hasBkashTrxId = await hasTableColumn('orders', 'bkash_trx_id');
@@ -571,6 +612,7 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
 
     return commission;
 }
+
 
 let temporaryUserData = {};
 
@@ -1840,13 +1882,25 @@ router.post('/place-order', async (req, res) => {
             });
         } catch (bkashError) {
             console.error('bKash Create Payment Error:', bkashError.response?.data || bkashError.message);
-            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
-            return res.status(502).json({ success: false, message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' });
+            try {
+                await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
+            } catch (statusError) {
+                console.error('bKash failed-status update error:', statusError?.message || statusError);
+            }
+            const bkashMessage = bkashError?.response?.data?.statusMessage
+                || bkashError?.response?.data?.message
+                || bkashError?.message
+                || 'Unknown bKash error';
+            return res.status(502).json({ success: false, message: 'bKash payment শুরু করা যায়নি: ' + bkashMessage });
         }
 
     } catch (error) {
-        console.error('PLACE ORDER ERROR:', error);
-        return res.status(500).json({ success: false, message: 'Order Error: ' + (error.message || 'Unknown server error') });
+        console.error('PLACE ORDER ERROR:', error?.response?.data || error);
+        const message = error?.response?.data?.statusMessage
+            || error?.response?.data?.message
+            || error?.message
+            || 'Unknown server error';
+        return res.status(500).json({ success: false, message: 'Order Error: ' + message });
     }
 });
 
