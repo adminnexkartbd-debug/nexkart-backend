@@ -430,54 +430,76 @@ async function getCommissionRate() {
 }
 
 async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
-    // Rate comes from `commission`; calculated result is stored in `commission_table`.
-    const commissionRate = await getCommissionRate();
-    // Commission is calculated ONLY from product subtotal. Delivery is excluded.
-    const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
-    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
-
+    // IMPORTANT: commission is read ONLY from the database `commission` table.
+    // There is intentionally NO hardcoded commission percentage here.
+    //
+    // Also, once an order has a commission row, that row is immutable. A retry,
+    // bKash callback, or payment-status update must NOT recalculate the same
+    // order using a newer commission rate.
     const [existing] = await db.query(
-        'SELECT id FROM commission_table WHERE order_number = ? LIMIT 1',
+        `SELECT id, commission_rate, commission_amount
+         FROM commission_table
+         WHERE order_number = ?
+         ORDER BY id ASC
+         LIMIT 1`,
         [orderId]
     );
 
     if (existing.length > 0) {
-        if (hasPaymentType) {
-            await db.query(
-                `UPDATE commission_table
-                 SET commission_rate = ?, commission_amount = ?, seller_id = ?, payment_type = ?
-                 WHERE order_number = ?`,
-                [commissionRate, commissionAmount, sellerId, paymentType, orderId]
-            );
-        } else {
-            // Old commission_table schema: do not reference payment_type until migration is run.
-            await db.query(
-                `UPDATE commission_table
-                 SET commission_rate = ?, commission_amount = ?, seller_id = ?
-                 WHERE order_number = ?`,
-                [commissionRate, commissionAmount, sellerId, orderId]
-            );
-        }
-        return { commissionRate, commissionAmount };
+        return {
+            commissionRate: Number(existing[0].commission_rate || 0),
+            commissionAmount: Number(existing[0].commission_amount || 0),
+            alreadyRecorded: true
+        };
     }
 
+    // Read the current rate from the database only when creating the commission
+    // record for this order. Delivery is excluded; subtotal is the commission base.
+    const commissionRate = await getCommissionRate();
+    const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
+    const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
+
+    // `commission_table.order_number` must have a UNIQUE index (see the supplied
+    // migration SQL). This makes the one-commission-per-order rule atomic even
+    // when two callbacks/processes reach this function at the same time.
     if (hasPaymentType) {
         await db.query(
             `INSERT INTO commission_table
                 (order_number, commission_rate, commission_amount, seller_id, payment_type, date)
-             VALUES (?, ?, ?, ?, ?, NOW())`,
+             VALUES (?, ?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE id = id`,
             [orderId, commissionRate, commissionAmount, sellerId, paymentType]
         );
     } else {
         await db.query(
             `INSERT INTO commission_table
                 (order_number, commission_rate, commission_amount, seller_id, date)
-             VALUES (?, ?, ?, ?, NOW())`,
+             VALUES (?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE id = id`,
             [orderId, commissionRate, commissionAmount, sellerId]
         );
     }
 
-    return { commissionRate, commissionAmount };
+    // Return the actual stored row. If another callback won the race, its value is
+    // returned and the commission is still counted exactly once.
+    const [stored] = await db.query(
+        `SELECT commission_rate, commission_amount
+         FROM commission_table
+         WHERE order_number = ?
+         ORDER BY id ASC
+         LIMIT 1`,
+        [orderId]
+    );
+
+    if (!stored.length) {
+        throw new Error(`Commission record was not created for order ${orderId}.`);
+    }
+
+    return {
+        commissionRate: Number(stored[0].commission_rate || 0),
+        commissionAmount: Number(stored[0].commission_amount || 0),
+        alreadyRecorded: false
+    };
 }
 
 // Returns the user's currently available coins from the ledger.
