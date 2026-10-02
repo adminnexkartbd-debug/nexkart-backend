@@ -218,14 +218,6 @@ async function sendInvoiceEmail(orderData, productTitle) {
                             <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Delivery Charge:</strong></td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">৳${orderData.delivery_charge}</td>
                         </tr>
-                        <tr>
-                            <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Coupon Discount:</strong></td>
-                            <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #198754;">- ৳${Number(orderData.coupon_discount || 0).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Coin Discount:</strong></td>
-                            <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #198754;">- ৳${Number(orderData.coin_discount || 0).toFixed(2)}</td>
-                        </tr>
                         <tr style="background-color: #fff0f3;">
                             <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Grand Total:</strong></td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #ff4b6e; font-weight: bold;">৳${orderData.total_amount}</td>
@@ -477,8 +469,33 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
     return { commissionRate, commissionAmount };
 }
 
+// Returns the user's currently available coins from the ledger.
+// Positive coin grants are counted only while their expiry date is still valid.
+// Negative usage rows are always counted so previous spending is not added back.
+async function getAvailableCoins(userId) {
+    if (!userId) return 0;
+
+    const [rows] = await db.query(
+        `SELECT
+            COALESCE(SUM(CASE
+                WHEN coin_balance > 0
+                     AND (coin_expire >= CURDATE() OR coin_expire IS NULL)
+                THEN coin_balance ELSE 0 END), 0) AS valid_earned_coins,
+            COALESCE(SUM(CASE
+                WHEN coin_balance < 0 THEN coin_balance ELSE 0 END), 0) AS used_coins
+         FROM my_coins
+         WHERE user_id = ?`,
+        [userId]
+    );
+
+    const earned = Number(rows[0]?.valid_earned_coins || 0);
+    const used = Number(rows[0]?.used_coins || 0);
+    return Math.max(0, Math.floor(earned + used));
+}
+
 // Coin usage is recorded as a separate negative ledger row in my_coins.
 // Example: using 20 coins creates coin_balance = -20.
+// The source is stored as readable text so the reason for the deduction is clear.
 async function recordCoinUsage({ userId, orderId, coinDiscount }) {
     const discount = Number(coinDiscount || 0);
     if (!userId || discount <= 0) return 0;
@@ -489,27 +506,28 @@ async function recordCoinUsage({ userId, orderId, coinDiscount }) {
 
     const source = `Coin Discount - Order ${orderId}`;
 
+    // Prevent duplicate deduction when a bKash callback/retry runs again.
     const [existing] = await db.query(
         `SELECT id FROM my_coins
-         WHERE user_id = ? AND coin_source = ? AND coin_balance < 0
+         WHERE user_id = ? AND coin_source = ? AND coin_balance = ?
          LIMIT 1`,
-        [userId, source]
+        [userId, source, -coinsUsed]
     );
 
     if (existing.length) return coinsUsed;
 
-    const [coinRows] = await db.query(
-        `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
-         FROM my_coins
-         WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
-        [userId]
-    );
-    const availableCoins = Math.max(0, Number(coinRows[0]?.total_coin || 0));
+    // Only non-expired positive coin grants are available.
+    // Previous negative ledger entries are subtracted from that pool.
+    const availableCoins = await getAvailableCoins(userId);
 
     if (availableCoins < coinsUsed) {
-        throw new Error(`Not enough coins to complete order. Required: ${coinsUsed}, available: ${availableCoins}.`);
+        throw new Error(
+            `Not enough coins to complete order. Required: ${coinsUsed}, available: ${availableCoins}.`
+        );
     }
 
+    // Negative ledger row: coin_expire is NULL because this row represents usage,
+    // not a new coin grant. It remains part of the user's ledger permanently.
     await db.query(
         `INSERT INTO my_coins (user_id, coin_balance, coin_expire, coin_source)
          VALUES (?, ?, NULL, ?)`,
@@ -1683,13 +1701,7 @@ router.post('/place-order', async (req, res) => {
             const coinOfferEnabled = String(product.coin_offer || '').toLowerCase() === 'yes';
             const maxCoinPercent = Math.max(0, parseFloat(product.coin_percentage_value) || 0);
             if (coinOfferEnabled && maxCoinPercent > 0) {
-                const [coinRows] = await db.query(
-                    `SELECT COALESCE(SUM(coin_balance), 0) AS total_coin
-                     FROM my_coins
-                     WHERE user_id = ? AND (coin_expire >= NOW() OR coin_expire IS NULL)`,
-                    [userId]
-                );
-                availableCoinsForOrder = Math.max(0, Number(coinRows[0]?.total_coin || 0));
+                availableCoinsForOrder = await getAvailableCoins(userId);
                 const maxDiscountByPercent = (subtotal * maxCoinPercent) / 100;
                 const maxCoinsAllowed = Math.max(0, Math.floor(maxDiscountByPercent / 0.30));
                 const coinsUsedForOrder = Math.min(Math.floor(availableCoinsForOrder), maxCoinsAllowed);
@@ -1801,9 +1813,7 @@ router.post('/place-order', async (req, res) => {
                 customer_phone: orderPhone, shipping_address: fullShippingAddress,
                 payment_method: effectivePaymentMethod, selected_gateway: null,
                 payment_status: 'Pending', quantity: orderQty, variant,
-                subtotal_price: subtotal, delivery_charge: deliveryCharge,
-                coupon_discount: appliedDiscount, coin_discount: coinDiscountAmount,
-                total_amount: totalAmount
+                subtotal_price: subtotal, delivery_charge: deliveryCharge, total_amount: totalAmount
             };
 
             try {
@@ -1928,8 +1938,6 @@ router.get('/bkash/callback', async (req, res) => {
                 variant: order.variant,
                 subtotal_price: order.subtotal_price,
                 delivery_charge: order.delivery_charge,
-                coupon_discount: order.coupon_discount || 0,
-                coin_discount: order.coin_discount || 0,
                 total_amount: order.total_amount
             };
             await sendInvoiceEmail(orderData, `Order #${order.order_id}`);
