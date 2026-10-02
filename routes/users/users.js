@@ -413,7 +413,7 @@ async function hasTableColumn(tableName, columnName) {
 
 async function getCommissionRate() {
     const [rows] = await db.query(
-        'SELECT commission_rate FROM commission ORDER BY id DESC LIMIT 1'
+        'SELECT commission_rate FROM comission ORDER BY id DESC LIMIT 1'
     );
     const rate = Number(rows[0]?.commission_rate || 0);
     return Math.max(0, rate);
