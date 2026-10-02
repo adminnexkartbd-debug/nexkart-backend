@@ -412,26 +412,26 @@ async function hasTableColumn(tableName, columnName) {
 }
 
 async function getCommissionRate() {
-    // IMPORTANT: the actual configuration table in this database is `comission`.
-    // `commission_table` is only the per-order commission ledger.
+    // IMPORTANT: the configuration table is `comission` (exact spelling).
     const [rows] = await db.query(
         'SELECT commission_rate FROM comission ORDER BY id DESC LIMIT 1'
     );
 
     if (!rows.length) {
-        throw new Error('Commission rate is not configured in comission table.');
+        throw new Error('Commission rate not configured: table `comission` has no rows.');
     }
 
     const rate = Number(rows[0].commission_rate);
     if (!Number.isFinite(rate) || rate < 0) {
-        throw new Error('Invalid commission_rate in comission table.');
+        throw new Error('Invalid commission_rate in table `comission`.');
     }
 
     return rate;
 }
 
-async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType, commissionRate: suppliedRate }) {
-    const commissionRate = suppliedRate == null ? await getCommissionRate() : Number(suppliedRate);
+async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
+    // Rate comes from `comission`; calculated result is stored in `commission_table`.
+    const commissionRate = await getCommissionRate();
     // Commission is calculated ONLY from product subtotal. Delivery is excluded.
     const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
     const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
@@ -1722,16 +1722,15 @@ router.post('/place-order', async (req, res) => {
 
         const totalAmount = Math.max(0, subtotal - appliedDiscount - coinDiscountAmount) + deliveryCharge;
 
-        // Preflight commission configuration BEFORE creating the order.
-        // If the `comission` table/rate cannot be read, no order is inserted.
-        let commissionRateForOrder;
+        // Validate commission configuration BEFORE INSERT INTO orders.
+        // If `comission` is unavailable or invalid, no order row is created.
         try {
-            commissionRateForOrder = await getCommissionRate();
+            await getCommissionRate();
         } catch (commissionConfigError) {
             console.error('COMMISSION CONFIG ERROR:', commissionConfigError);
             return res.status(500).json({
                 success: false,
-                message: 'Commission configuration error: ' + (commissionConfigError.message || 'Unable to read comission table.')
+                message: commissionConfigError.message || 'Commission configuration error.'
             });
         }
 
