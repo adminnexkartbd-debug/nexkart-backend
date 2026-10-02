@@ -1753,6 +1753,27 @@ router.post('/place-order', async (req, res) => {
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
+        // FAIL FAST: the commission rate is mandatory for every order.
+        // Read it before creating the order so a missing/broken commission table
+        // can never leave a new order behind.
+        let commissionRateForOrder;
+        try {
+            commissionRateForOrder = await getCommissionRate();
+        } catch (commissionError) {
+            console.error('COMMISSION RATE ERROR:', commissionError);
+            return res.status(500).json({
+                success: false,
+                message: 'Commission configuration error: ' + (commissionError.message || 'Unable to read comission table')
+            });
+        }
+
+        if (!Number.isFinite(Number(commissionRateForOrder)) || Number(commissionRateForOrder) < 0) {
+            return res.status(500).json({
+                success: false,
+                message: 'Invalid commission rate configuration.'
+            });
+        }
+
         // Build the INSERT from columns that actually exist. This keeps COD working
         // even if the optional migration has not been run yet.
         const hasCouponDiscount = await hasTableColumn('orders', 'coupon_discount');
