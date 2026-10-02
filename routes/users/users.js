@@ -218,6 +218,14 @@ async function sendInvoiceEmail(orderData, productTitle) {
                             <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Delivery Charge:</strong></td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">৳${orderData.delivery_charge}</td>
                         </tr>
+                        <tr>
+                            <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Coupon Discount:</strong></td>
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #198754;">- ৳${Number(orderData.coupon_discount || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Coin Discount:</strong></td>
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #198754;">- ৳${Number(orderData.coin_discount || 0).toFixed(2)}</td>
+                        </tr>
                         <tr style="background-color: #fff0f3;">
                             <td colspan="2" style="padding: 8px; border: 1px solid #ddd; text-align: right;"><strong>Grand Total:</strong></td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #ff4b6e; font-weight: bold;">৳${orderData.total_amount}</td>
@@ -479,7 +487,7 @@ async function recordCoinUsage({ userId, orderId, coinDiscount }) {
     const coinsUsed = Math.max(0, Math.round(discount / coinValue));
     if (!coinsUsed) return 0;
 
-    const source = `order:${orderId}`;
+    const source = `Coin Discount - Order ${orderId}`;
 
     const [existing] = await db.query(
         `SELECT id FROM my_coins
@@ -1793,7 +1801,9 @@ router.post('/place-order', async (req, res) => {
                 customer_phone: orderPhone, shipping_address: fullShippingAddress,
                 payment_method: effectivePaymentMethod, selected_gateway: null,
                 payment_status: 'Pending', quantity: orderQty, variant,
-                subtotal_price: subtotal, delivery_charge: deliveryCharge, total_amount: totalAmount
+                subtotal_price: subtotal, delivery_charge: deliveryCharge,
+                coupon_discount: appliedDiscount, coin_discount: coinDiscountAmount,
+                total_amount: totalAmount
             };
 
             try {
@@ -1918,6 +1928,8 @@ router.get('/bkash/callback', async (req, res) => {
                 variant: order.variant,
                 subtotal_price: order.subtotal_price,
                 delivery_charge: order.delivery_charge,
+                coupon_discount: order.coupon_discount || 0,
+                coin_discount: order.coin_discount || 0,
                 total_amount: order.total_amount
             };
             await sendInvoiceEmail(orderData, `Order #${order.order_id}`);
