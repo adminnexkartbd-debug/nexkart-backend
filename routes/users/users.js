@@ -412,25 +412,25 @@ async function hasTableColumn(tableName, columnName) {
 }
 
 async function getCommissionRate() {
-    // IMPORTANT: the configuration table is `comission` (exact spelling).
+    // Commission rate is NEVER hardcoded. It always comes from the `commission` table.
     const [rows] = await db.query(
-        'SELECT commission_rate FROM comission ORDER BY id DESC LIMIT 1'
+        'SELECT commission_rate FROM commission ORDER BY id DESC LIMIT 1'
     );
 
     if (!rows.length) {
-        throw new Error('Commission rate not configured: table `comission` has no rows.');
+        throw new Error('Commission rate not configured: table `commission` has no rows.');
     }
 
     const rate = Number(rows[0].commission_rate);
     if (!Number.isFinite(rate) || rate < 0) {
-        throw new Error('Invalid commission_rate in table `comission`.');
+        throw new Error('Invalid commission_rate in table `commission`.');
     }
 
     return rate;
 }
 
 async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
-    // Rate comes from `comission`; calculated result is stored in `commission_table`.
+    // Rate comes from `commission`; calculated result is stored in `commission_table`.
     const commissionRate = await getCommissionRate();
     // Commission is calculated ONLY from product subtotal. Delivery is excluded.
     const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
@@ -548,8 +548,54 @@ async function recordCoinUsage({ userId, orderId, coinDiscount }) {
     return coinsUsed;
 }
 
+// Prevent duplicate finalization when bKash sends/retries the callback more than once.
+// The database row check below is the permanent idempotency guard; this Set also
+// blocks two callbacks arriving at the same Node.js process at the same time.
+const orderFinalizationLocks = new Set();
+
 async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
-    const [freshProducts] = await db.query(
+    if (!order || !order.order_id) throw new Error('Invalid order for finalization.');
+
+    const lockKey = String(order.order_id);
+    if (orderFinalizationLocks.has(lockKey)) {
+        throw new Error(`Order ${lockKey} is already being finalized. Please wait for the payment callback to complete.`);
+    }
+    orderFinalizationLocks.add(lockKey);
+
+    try {
+        // Permanent database-level idempotency check: one order gets one commission row.
+        const [alreadyFinalized] = await db.query(
+            'SELECT id, commission_rate, commission_amount FROM commission_table WHERE order_number = ? LIMIT 1',
+            [order.order_id]
+        );
+
+        if (alreadyFinalized.length > 0) {
+            if (paymentType === 'paid') {
+                const hasBkashPaymentId = await hasTableColumn('orders', 'bkash_payment_id');
+                const hasBkashTrxId = await hasTableColumn('orders', 'bkash_trx_id');
+                const hasPaymentCompletedAt = await hasTableColumn('orders', 'payment_completed_at');
+                if (hasBkashPaymentId && hasBkashTrxId && hasPaymentCompletedAt) {
+                    await db.query(
+                        `UPDATE orders
+                         SET payment_status = ?,
+                             bkash_payment_id = COALESCE(?, bkash_payment_id),
+                             bkash_trx_id = COALESCE(?, bkash_trx_id),
+                             payment_completed_at = NOW()
+                         WHERE order_id = ?`,
+                        ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
+                    );
+                } else {
+                    await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order.order_id]);
+                }
+            }
+            return {
+                commissionRate: Number(alreadyFinalized[0].commission_rate || 0),
+                commissionAmount: Number(alreadyFinalized[0].commission_amount || 0),
+                alreadyFinalized: true
+            };
+        }
+
+        const [freshProducts] = await db.query(
         'SELECT * FROM products WHERE id = ? LIMIT 1',
         [order.product_id]
     );
@@ -622,7 +668,10 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         );
     }
 
-    return commission;
+        return commission;
+    } finally {
+        orderFinalizationLocks.delete(lockKey);
+    }
 }
 
 let temporaryUserData = {};
@@ -1723,7 +1772,7 @@ router.post('/place-order', async (req, res) => {
         const totalAmount = Math.max(0, subtotal - appliedDiscount - coinDiscountAmount) + deliveryCharge;
 
         // Validate commission configuration BEFORE INSERT INTO orders.
-        // If `comission` is unavailable or invalid, no order row is created.
+        // If `commission` is unavailable or invalid, no order row is created.
         try {
             await getCommissionRate();
         } catch (commissionConfigError) {
