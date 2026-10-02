@@ -412,15 +412,26 @@ async function hasTableColumn(tableName, columnName) {
 }
 
 async function getCommissionRate() {
+    // IMPORTANT: the actual configuration table in this database is `comission`.
+    // `commission_table` is only the per-order commission ledger.
     const [rows] = await db.query(
         'SELECT commission_rate FROM comission ORDER BY id DESC LIMIT 1'
     );
-    const rate = Number(rows[0]?.commission_rate || 0);
-    return Math.max(0, rate);
+
+    if (!rows.length) {
+        throw new Error('Commission rate is not configured in comission table.');
+    }
+
+    const rate = Number(rows[0].commission_rate);
+    if (!Number.isFinite(rate) || rate < 0) {
+        throw new Error('Invalid commission_rate in comission table.');
+    }
+
+    return rate;
 }
 
-async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
-    const commissionRate = await getCommissionRate();
+async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType, commissionRate: suppliedRate }) {
+    const commissionRate = suppliedRate == null ? await getCommissionRate() : Number(suppliedRate);
     // Commission is calculated ONLY from product subtotal. Delivery is excluded.
     const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
     const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
@@ -1711,6 +1722,19 @@ router.post('/place-order', async (req, res) => {
 
         const totalAmount = Math.max(0, subtotal - appliedDiscount - coinDiscountAmount) + deliveryCharge;
 
+        // Preflight commission configuration BEFORE creating the order.
+        // If the `comission` table/rate cannot be read, no order is inserted.
+        let commissionRateForOrder;
+        try {
+            commissionRateForOrder = await getCommissionRate();
+        } catch (commissionConfigError) {
+            console.error('COMMISSION CONFIG ERROR:', commissionConfigError);
+            return res.status(500).json({
+                success: false,
+                message: 'Commission configuration error: ' + (commissionConfigError.message || 'Unable to read comission table.')
+            });
+        }
+
         // If COD is disabled for the product, server-side force bKash online payment.
         let effectivePaymentMethod = String(payment_method || 'cod').toLowerCase();
         if (effectivePaymentMethod === 'cod' && Number(product.cod_available) === 0) {
@@ -1752,27 +1776,6 @@ router.post('/place-order', async (req, res) => {
         ].filter(Boolean).join(', ') + (orderPostCode ? `, Post Code: ${orderPostCode}` : '');
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
-
-        // FAIL FAST: the commission rate is mandatory for every order.
-        // Read it before creating the order so a missing/broken commission table
-        // can never leave a new order behind.
-        let commissionRateForOrder;
-        try {
-            commissionRateForOrder = await getCommissionRate();
-        } catch (commissionError) {
-            console.error('COMMISSION RATE ERROR:', commissionError);
-            return res.status(500).json({
-                success: false,
-                message: 'Commission configuration error: ' + (commissionError.message || 'Unable to read comission table')
-            });
-        }
-
-        if (!Number.isFinite(Number(commissionRateForOrder)) || Number(commissionRateForOrder) < 0) {
-            return res.status(500).json({
-                success: false,
-                message: 'Invalid commission rate configuration.'
-            });
-        }
 
         // Build the INSERT from columns that actually exist. This keeps COD working
         // even if the optional migration has not been run yet.
