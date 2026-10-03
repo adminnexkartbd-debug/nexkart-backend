@@ -1816,26 +1816,120 @@ router.post('/place-order', async (req, res) => {
             return res.status(400).json({ success: false, message: 'বর্তমানে শুধু bKash online payment available.' });
         }
 
-        // Existing user profiles may contain Bangladesh administrative codes.
-        // Resolve the known codes to readable names for the order/shipping address.
-        const resolveLocationName = (value, type) => {
+        // Resolve Bangladesh administrative IDs before saving the order.
+        // The user profile may contain IDs from the standard Bangladesh GeoCode dataset.
+        // Known IDs are handled locally; unknown numeric IDs are resolved from the
+        // maintained public geo dataset. We NEVER save an unresolved numeric ID.
+        const GEO_DATA_URLS = {
+            division: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/divisions/divisions.json',
+            district: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/districts/districts.json',
+            upazilla: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/upazilas/upazilas.json'
+        };
+        let geoDataCache = null;
+
+        const localGeoMaps = {
+            division: {
+                '1': 'Chattagram',
+                '2': 'Rajshahi',
+                '3': 'Khulna',
+                '4': 'Barisal',
+                '5': 'Sylhet',
+                '6': 'Dhaka',
+                '7': 'Rangpur',
+                '8': 'Mymensingh'
+            },
+            district: {
+                '1': 'Cumilla', '2': 'Feni', '3': 'Brahmanbaria', '4': 'Rangamati',
+                '5': 'Noakhali', '6': 'Chandpur', '7': 'Lakshmipur', '8': 'Chattogram',
+                '9': 'Coxsbazar', '10': 'Khagrachhari', '11': 'Bandarban',
+                '12': 'Sirajganj', '13': 'Pabna', '14': 'Bogura', '15': 'Rajshahi',
+                '16': 'Natore', '17': 'Joypurhat', '18': 'Chapainawabganj', '19': 'Naogaon',
+                '20': 'Jashore', '21': 'Satkhira', '22': 'Meherpur', '23': 'Narail',
+                '24': 'Chuadanga', '25': 'Kushtia', '26': 'Magura', '27': 'Khulna',
+                '28': 'Bagerhat', '29': 'Jhenaidah', '30': 'Jhalakathi', '31': 'Patuakhali',
+                '32': 'Pirojpur', '33': 'Barisal', '34': 'Bhola', '35': 'Barguna',
+                '36': 'Sylhet', '37': 'Moulvibazar', '38': 'Habiganj', '39': 'Sunamganj',
+                '40': 'Narsingdi', '41': 'Gazipur', '42': 'Shariatpur', '43': 'Narayanganj',
+                '44': 'Tangail', '45': 'Kishoreganj', '46': 'Manikganj', '47': 'Dhaka',
+                '48': 'Munshiganj', '49': 'Rajbari', '50': 'Madaripur', '51': 'Gopalganj',
+                '52': 'Faridpur', '53': 'Panchagarh', '54': 'Dinajpur', '55': 'Lalmonirhat',
+                '56': 'Nilphamari', '57': 'Gaibandha', '58': 'Thakurgaon', '59': 'Rangpur',
+                '60': 'Kurigram', '61': 'Sherpur', '62': 'Mymensingh', '63': 'Jamalpur',
+                '64': 'Netrokona'
+            },
+            upazilla: {
+                '331': 'Rupganj',
+                '332': 'Sonargaon'
+            }
+        };
+
+        const isNumericGeoCode = (value) => /^\d+$/.test(String(value ?? '').trim());
+
+        const loadGeoData = async () => {
+            if (geoDataCache) return geoDataCache;
+            try {
+                const entries = await Promise.all(
+                    Object.entries(GEO_DATA_URLS).map(async ([type, url]) => {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`${type} geo data HTTP ${response.status}`);
+                        const json = await response.json();
+                        const table = Array.isArray(json)
+                            ? json.find(item => item.type === 'table')
+                            : null;
+                        return [type, table?.data || []];
+                    })
+                );
+                geoDataCache = Object.fromEntries(entries);
+                return geoDataCache;
+            } catch (geoError) {
+                console.error('Geo data load failed:', geoError);
+                return null;
+            }
+        };
+
+        const resolveLocationName = async (value, type) => {
             const raw = String(value ?? '').trim();
             if (!raw) return '';
 
-            const maps = {
-                division: { '6': 'Dhaka' },
-                district: { '43': 'Narayanganj' },
-                upazilla: { '331': 'Rupganj' }
-            };
+            // Already a readable name.
+            if (!isNumericGeoCode(raw)) return raw;
 
-            return maps[type]?.[raw] || raw;
+            if (localGeoMaps[type]?.[raw]) return localGeoMaps[type][raw];
+
+            const geo = await loadGeoData();
+            if (!geo) return '';
+
+            const wantedId = String(raw);
+
+            const rows = geo[type] || [];
+            const item = rows.find(entry => String(entry.id ?? '') === wantedId);
+            return item?.name || item?.bn_name || '';
+
+            return '';
         };
 
-        const shippingDivision = resolveLocationName(orderDivision, 'division');
-        const shippingDistrict = resolveLocationName(orderDistrict, 'district');
-        const shippingUpazilla = resolveLocationName(orderUpazilla, 'upazilla');
-        const shippingUnion = orderUnion;
+        const shippingDivision = await resolveLocationName(orderDivision, 'division');
+        const shippingDistrict = await resolveLocationName(orderDistrict, 'district');
+        const shippingUpazilla = await resolveLocationName(orderUpazilla, 'upazilla');
+
+        // union_area is normally free-text in this project. Keep real text as-is.
+        // If an old profile contains a numeric-only union code, do not write the raw
+        // number into orders because it creates the unwanted "22,33" style address.
+        const shippingUnion = isNumericGeoCode(orderUnion) ? '' : orderUnion;
         const shippingBlockHouse = orderBlockHouse;
+
+        const unresolvedNumericLocations = [];
+        if (isNumericGeoCode(orderDivision) && !shippingDivision) unresolvedNumericLocations.push(`division=${orderDivision}`);
+        if (isNumericGeoCode(orderDistrict) && !shippingDistrict) unresolvedNumericLocations.push(`district=${orderDistrict}`);
+        if (isNumericGeoCode(orderUpazilla) && !shippingUpazilla) unresolvedNumericLocations.push(`upazilla=${orderUpazilla}`);
+
+        if (unresolvedNumericLocations.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'Shipping location code resolve করা যায়নি: ' + unresolvedNumericLocations.join(', ') +
+                         '. Profile address আবার save করে চেষ্টা করুন।'
+            });
+        }
 
         const fullShippingAddress = [
             shippingBlockHouse,
