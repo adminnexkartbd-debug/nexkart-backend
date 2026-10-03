@@ -355,52 +355,69 @@
         document.getElementById('input-postcode').value = data.post_code || '';
         document.getElementById('input-blockhouse').value = data.block_house || '';
 
-        // Address Builder for Summary Card
-        // DB keeps geo IDs, but the UI always shows the readable option names.
+        // Address Builder for Summary Card.
+        // Existing rows may contain old numeric IDs; convert them to the
+        // readable option text while loading the profile.
         const fullAddrParts = [];
         if (data.block_house) fullAddrParts.push(String(data.block_house).trim());
         if (data.union_area) fullAddrParts.push(String(data.union_area).trim());
 
+        const findOptionByValueOrText = (select, value) => {
+          const raw = String(value ?? '').trim();
+          if (!raw) return null;
+
+          return Array.from(select.options).find(option =>
+            String(option.value).trim() === raw ||
+            String(option.textContent || '').trim().toLowerCase() === raw.toLowerCase()
+          ) || null;
+        };
+
         if (data.division) {
           const divisionSelect = document.getElementById('select-division');
-          divisionSelect.value = String(data.division);
-          await onDivisionChange();
+          const divOption = findOptionByValueOrText(divisionSelect, data.division);
 
-          const divOption = Array.from(divisionSelect.options).find(
-            option => String(option.value) === String(data.division)
-          );
-          const divText = divOption?.text?.trim();
+          if (divOption) {
+            divisionSelect.value = divOption.value;
+            await onDivisionChange();
 
-          if (data.district) {
-            const districtSelect = document.getElementById('select-district');
-            districtSelect.value = String(data.district);
-            await onDistrictChange();
+            const divText = String(divOption.textContent || '').trim();
 
-            const distOption = Array.from(districtSelect.options).find(
-              option => String(option.value) === String(data.district)
-            );
-            const distText = distOption?.text?.trim();
+            if (data.district) {
+              const districtSelect = document.getElementById('select-district');
+              const distOption = findOptionByValueOrText(districtSelect, data.district);
 
-            if (data.upazilla) {
-              const upazillaSelect = document.getElementById('select-upazilla');
-              upazillaSelect.value = String(data.upazilla);
-              await onUpazilaChange();
+              if (distOption) {
+                districtSelect.value = distOption.value;
+                await onDistrictChange();
 
-              const upzOption = Array.from(upazillaSelect.options).find(
-                option => String(option.value) === String(data.upazilla)
-              );
-              const upzText = upzOption?.text?.trim();
+                const distText = String(distOption.textContent || '').trim();
 
-              if (data.union_area) {
-                const unionSelect = document.getElementById('select-union');
-                unionSelect.value = String(data.union_area);
+                if (data.upazilla) {
+                  const upazillaSelect = document.getElementById('select-upazilla');
+                  const upzOption = findOptionByValueOrText(upazillaSelect, data.upazilla);
+
+                  if (upzOption) {
+                    upazillaSelect.value = upzOption.value;
+                    await onUpazilaChange();
+
+                    const upzText = String(upzOption.textContent || '').trim();
+
+                    if (data.union_area) {
+                      const unionSelect = document.getElementById('select-union');
+                      const unionOption = findOptionByValueOrText(unionSelect, data.union_area);
+                      if (unionOption) unionSelect.value = unionOption.value;
+                    }
+
+                    if (upzText && !/^\d+$/.test(upzText)) fullAddrParts.push(upzText);
+                  }
+                }
+
+                if (distText && !/^\d+$/.test(distText)) fullAddrParts.push(distText);
               }
-
-              if (upzText && !/^\d+$/.test(upzText)) fullAddrParts.push(upzText);
             }
-            if (distText && !/^\d+$/.test(distText)) fullAddrParts.push(distText);
+
+            if (divText && !/^\d+$/.test(divText)) fullAddrParts.push(divText);
           }
-          if (divText && !/^\d+$/.test(divText)) fullAddrParts.push(divText);
         }
 
         document.getElementById('card-full-address').innerText =
@@ -443,6 +460,23 @@
       btn.disabled = true;
 
       const formData = new FormData(event.target);
+
+      // The dropdowns use numeric IDs internally so that district/upazila
+      // filtering works. Before saving, convert those selected IDs to the
+      // visible human-readable names. This makes the users table store:
+      // Dhaka / Narayanganj / Rupganj instead of 6 / 43 / 331.
+      const addressSelectNames = ['division', 'district', 'upazilla'];
+      addressSelectNames.forEach((fieldName) => {
+        const select = document.querySelector(`select[name="${fieldName}"]`);
+        if (!select) return;
+
+        const selected = select.options[select.selectedIndex];
+        const label = selected ? String(selected.textContent || '').trim() : '';
+
+        if (label && !/^Select\s/i.test(label) && !/^Loading\.\.\.$/i.test(label)) {
+          formData.set(fieldName, label);
+        }
+      });
 
       try {
         const response = await fetch('/user/update-profile', {
