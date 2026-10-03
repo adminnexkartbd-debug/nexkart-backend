@@ -585,31 +585,71 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
           if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
 
-          // Some existing profiles store Bangladesh location codes instead of names.
-          // Convert those codes for display without changing the values saved in the profile.
-          const resolveLocationName = (value, type) => {
-            const raw = String(value ?? '').trim();
-            if (!raw) return '';
+          // Convert stored Bangladesh location IDs to readable names for checkout.
+          // The same standard GeoCode dataset is used by the server when the order is saved.
+          const GEO_DATA_URLS = {
+            division: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/divisions/divisions.json',
+            district: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/districts/districts.json',
+            upazilla: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/upazilas/upazilas.json'
+        };
+          let checkoutGeoDataCache = null;
 
-            const maps = {
-              division: {
-                '6': 'Dhaka'
-              },
-              district: {
-                '43': 'Narayanganj'
-              },
-              upazilla: {
-                '331': 'Rupganj'
-              }
-            };
-
-            return maps[type]?.[raw] || raw;
+          const checkoutGeoMaps = {
+            division: {
+              '1': 'Chattagram', '2': 'Rajshahi', '3': 'Khulna', '4': 'Barisal',
+              '5': 'Sylhet', '6': 'Dhaka', '7': 'Rangpur', '8': 'Mymensingh'
+            },
+            district: {
+              '22': 'Meherpur', '33': 'Barisal', '43': 'Narayanganj', '47': 'Dhaka'
+            },
+            upazilla: {
+              '331': 'Rupganj', '332': 'Sonargaon'
+            }
           };
 
-          const displayDivision = resolveLocationName(user.division, 'division');
-          const displayDistrict = resolveLocationName(user.district, 'district');
-          const displayUpazilla = resolveLocationName(user.upazilla, 'upazilla');
-          const displayUnion = String(user.union_area || '').trim();
+          const checkoutIsNumericGeoCode = (value) => /^\d+$/.test(String(value ?? '').trim());
+
+          const checkoutLoadGeoData = async () => {
+            if (checkoutGeoDataCache) return checkoutGeoDataCache;
+            try {
+              const entries = await Promise.all(
+                Object.entries(GEO_DATA_URLS).map(async ([type, url]) => {
+                  const response = await fetch(url);
+                  if (!response.ok) throw new Error(`${type} geo data HTTP ${response.status}`);
+                  const json = await response.json();
+                  const table = Array.isArray(json)
+                    ? json.find(item => item.type === 'table')
+                    : null;
+                  return [type, table?.data || []];
+                })
+              );
+              checkoutGeoDataCache = Object.fromEntries(entries);
+              return checkoutGeoDataCache;
+            } catch (geoError) {
+              console.error('Checkout geo data load failed:', geoError);
+              return null;
+            }
+          };
+
+          const resolveLocationName = async (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+            if (!checkoutIsNumericGeoCode(raw)) return raw;
+
+            if (checkoutGeoMaps[type]?.[raw]) return checkoutGeoMaps[type][raw];
+
+            const geo = await checkoutLoadGeoData();
+            if (!geo) return '';
+
+            const rows = geo[type] || [];
+            const item = rows.find(entry => String(entry.id ?? '') === raw);
+            return item?.name || item?.bn_name || '';
+          };
+
+          const displayDivision = await resolveLocationName(user.division, 'division');
+          const displayDistrict = await resolveLocationName(user.district, 'district');
+          const displayUpazilla = await resolveLocationName(user.upazilla, 'upazilla');
+          const displayUnion = checkoutIsNumericGeoCode(user.union_area) ? '' : String(user.union_area || '').trim();
           const displayBlockHouse = String(user.block_house || '').trim();
 
           const addressParts = [displayBlockHouse, displayUnion, displayUpazilla, displayDistrict, displayDivision]
