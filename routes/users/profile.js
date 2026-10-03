@@ -110,6 +110,26 @@ router.post('/update-profile', upload.none(), async (req, res) => {
 
         const { name, phone_number, division, district, upazilla, union_area, post_code, block_house } = req.body;
 
+        // Keep the existing database format: division/district/upazilla are IDs.
+        // Validate/normalize values so blank or malformed values do not get saved.
+        const cleanValue = (value) => {
+            const v = String(value ?? '').trim();
+            return v || null;
+        };
+        const cleanGeoId = (value) => {
+            const v = String(value ?? '').trim();
+            return v && /^\d+$/.test(v) ? v : null;
+        };
+
+        const safeName = cleanValue(name);
+        const safePhone = cleanValue(phone_number);
+        const safeDivision = cleanGeoId(division);
+        const safeDistrict = cleanGeoId(district);
+        const safeUpazilla = cleanGeoId(upazilla);
+        const safeUnion = cleanValue(union_area);
+        const safePostCode = cleanValue(post_code);
+        const safeBlockHouse = cleanValue(block_house);
+
         const updateQuery = `
             UPDATE users 
             SET name = ?, 
@@ -124,14 +144,14 @@ router.post('/update-profile', upload.none(), async (req, res) => {
         `;
 
         await db.execute(updateQuery, [
-            name || null,
-            phone_number || null,
-            division || null,
-            district || null,
-            upazilla || null,
-            union_area || null,
-            post_code || null,
-            block_house || null,
+            safeName,
+            safePhone,
+            safeDivision,
+            safeDistrict,
+            safeUpazilla,
+            safeUnion,
+            safePostCode,
+            safeBlockHouse,
             userId
         ]);
 
