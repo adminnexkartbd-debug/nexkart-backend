@@ -110,22 +110,18 @@ router.post('/update-profile', upload.none(), async (req, res) => {
 
         const { name, phone_number, division, district, upazilla, union_area, post_code, block_house } = req.body;
 
-        // Keep the existing database format: division/district/upazilla are IDs.
-        // Validate/normalize values so blank or malformed values do not get saved.
+        // The profile UI sends readable location names on save.
+        // Keep this backward-compatible with old rows that still contain IDs.
         const cleanValue = (value) => {
             const v = String(value ?? '').trim();
             return v || null;
         };
-        const cleanGeoId = (value) => {
-            const v = String(value ?? '').trim();
-            return v && /^\d+$/.test(v) ? v : null;
-        };
 
         const safeName = cleanValue(name);
         const safePhone = cleanValue(phone_number);
-        const safeDivision = cleanGeoId(division);
-        const safeDistrict = cleanGeoId(district);
-        const safeUpazilla = cleanGeoId(upazilla);
+        const safeDivision = cleanValue(division);
+        const safeDistrict = cleanValue(district);
+        const safeUpazilla = cleanValue(upazilla);
         const safeUnion = cleanValue(union_area);
         const safePostCode = cleanValue(post_code);
         const safeBlockHouse = cleanValue(block_house);
