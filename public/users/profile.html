@@ -356,38 +356,55 @@
         document.getElementById('input-blockhouse').value = data.block_house || '';
 
         // Address Builder for Summary Card
-        let fullAddrParts = [];
-        if (data.block_house) fullAddrParts.push(data.block_house);
-        if (data.union_area) fullAddrParts.push(data.union_area);
+        // DB keeps geo IDs, but the UI always shows the readable option names.
+        const fullAddrParts = [];
+        if (data.block_house) fullAddrParts.push(String(data.block_house).trim());
+        if (data.union_area) fullAddrParts.push(String(data.union_area).trim());
 
         if (data.division) {
-          document.getElementById('select-division').value = data.division;
+          const divisionSelect = document.getElementById('select-division');
+          divisionSelect.value = String(data.division);
           await onDivisionChange();
 
-          const divText = document.getElementById('select-division').options[document.getElementById('select-division').selectedIndex]?.text;
+          const divOption = Array.from(divisionSelect.options).find(
+            option => String(option.value) === String(data.division)
+          );
+          const divText = divOption?.text?.trim();
 
           if (data.district) {
-            document.getElementById('select-district').value = data.district;
+            const districtSelect = document.getElementById('select-district');
+            districtSelect.value = String(data.district);
             await onDistrictChange();
-            const distText = document.getElementById('select-district').options[document.getElementById('select-district').selectedIndex]?.text;
+
+            const distOption = Array.from(districtSelect.options).find(
+              option => String(option.value) === String(data.district)
+            );
+            const distText = distOption?.text?.trim();
 
             if (data.upazilla) {
-              document.getElementById('select-upazilla').value = data.upazilla;
+              const upazillaSelect = document.getElementById('select-upazilla');
+              upazillaSelect.value = String(data.upazilla);
               await onUpazilaChange();
-              const upzText = document.getElementById('select-upazilla').options[document.getElementById('select-upazilla').selectedIndex]?.text;
+
+              const upzOption = Array.from(upazillaSelect.options).find(
+                option => String(option.value) === String(data.upazilla)
+              );
+              const upzText = upzOption?.text?.trim();
 
               if (data.union_area) {
-                document.getElementById('select-union').value = data.union_area;
+                const unionSelect = document.getElementById('select-union');
+                unionSelect.value = String(data.union_area);
               }
 
-              if(upzText) fullAddrParts.push(upzText);
+              if (upzText && !/^\d+$/.test(upzText)) fullAddrParts.push(upzText);
             }
-            if(distText) fullAddrParts.push(distText);
+            if (distText && !/^\d+$/.test(distText)) fullAddrParts.push(distText);
           }
-          if(divText) fullAddrParts.push(divText);
+          if (divText && !/^\d+$/.test(divText)) fullAddrParts.push(divText);
         }
 
-        document.getElementById('card-full-address').innerText = fullAddrParts.length > 0 ? fullAddrParts.join(', ') : 'Shipping address not set yet.';
+        document.getElementById('card-full-address').innerText =
+          fullAddrParts.length > 0 ? fullAddrParts.join(', ') : 'Shipping address not set yet.';
 
       } catch (err) {
         console.error("Error fetching profile:", err);
