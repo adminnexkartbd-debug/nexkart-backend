@@ -263,6 +263,116 @@ const BKASH_CONFIG = {
     RETURN_URL: process.env.BKASH_RETURN_URL
 };
 
+// ==================== [ BDGATE PAYMENT CONFIG ] ====================
+// BDGate hosted checkout. Keep the API path configurable because BDGate
+// accounts may expose either the current /api/v1 endpoint or the hosted
+// merchant endpoint documented by BDGate.
+const BDGATE_CONFIG = {
+    API_KEY: process.env.BDGATE_API_KEY,
+    BASE_URL: process.env.BDGATE_BASE_URL || 'https://api.bdgate.net',
+    CHECKOUT_PATH: process.env.BDGATE_CHECKOUT_PATH || '/api/v1/checkout',
+    VERIFY_PATH: process.env.BDGATE_VERIFY_PATH || '/api/v1/payment/verify',
+    WEBHOOK_URL: process.env.BDGATE_WEBHOOK_URL || `${process.env.APP_URL || 'http://localhost:3000'}/user/bdgate/webhook`,
+    WEBHOOK_SECRET: process.env.BDGATE_WEBHOOK_SECRET || '',
+    SUCCESS_URL: process.env.BDGATE_SUCCESS_URL || `${process.env.APP_URL || 'http://localhost:3000'}/user/bdgate/success`,
+    FAIL_URL: process.env.BDGATE_FAIL_URL || `${process.env.APP_URL || 'http://localhost:3000'}/user/bdgate/fail`
+};
+
+function bdgateUrl(endpoint) {
+    const base = String(BDGATE_CONFIG.BASE_URL || '').trim().replace(/\/$/, '');
+    const pathName = String(endpoint || '').trim();
+    if (!base) return pathName;
+    if (/^https?:\/\//i.test(pathName)) return pathName;
+    return `${base}/${pathName.replace(/^\//, '')}`;
+}
+
+function normalizeBdGateMethod(value) {
+    const method = String(value || '').trim().toLowerCase();
+    return ['bkash', 'nagad', 'upay', 'rocket'].includes(method) ? method : null;
+}
+
+async function createBdGatePayment({ orderId, amount, customerName, customerEmail, customerPhone, selectedMethod }) {
+    if (!BDGATE_CONFIG.API_KEY) {
+        throw new Error('BDGATE_API_KEY is not configured.');
+    }
+
+    const payload = {
+        amount: Number(amount).toFixed(2),
+        currency: 'BDT',
+        order_id: String(orderId),
+        customer_name: String(customerName || ''),
+        customer_email: String(customerEmail || ''),
+        customer_phone: String(customerPhone || ''),
+        description: `NexKartBD Order #${orderId}`,
+        success_url: `${BDGATE_CONFIG.SUCCESS_URL}${BDGATE_CONFIG.SUCCESS_URL.includes('?') ? '&' : '?'}order_id=${encodeURIComponent(orderId)}`,
+        fail_url: `${BDGATE_CONFIG.FAIL_URL}${BDGATE_CONFIG.FAIL_URL.includes('?') ? '&' : '?'}order_id=${encodeURIComponent(orderId)}`,
+        webhook_url: BDGATE_CONFIG.WEBHOOK_URL,
+        metadata: {
+            order_id: String(orderId),
+            selected_method: normalizeBdGateMethod(selectedMethod) || 'bkash',
+            source: 'nexkartbd'
+        }
+    };
+
+    // If the merchant's /api/v1/checkout endpoint supports a selected MFS field,
+    // include it. BDGate can safely ignore unknown metadata fields; the canonical
+    // order reference remains in order_id + metadata.order_id.
+    const method = normalizeBdGateMethod(selectedMethod);
+    if (method) payload.payment_method = method;
+
+    const response = await axios.post(bdgateUrl(BDGATE_CONFIG.CHECKOUT_PATH), payload, {
+        headers: {
+            Authorization: `Bearer ${BDGATE_CONFIG.API_KEY}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+        },
+        timeout: 30000
+    });
+
+    const data = response.data || {};
+    const paymentUrl = data.payment_url || data.checkout_url || data.redirect_url || data.url || data.data?.payment_url || data.data?.checkout_url || data.data?.redirect_url;
+    const sessionToken = data.session_token || data.token || data.data?.session_token || data.data?.token || null;
+
+    if (!paymentUrl) {
+        throw new Error(`BDGate checkout did not return a payment URL. ${data.message || data.error || ''}`.trim());
+    }
+
+    return { paymentUrl, sessionToken, raw: data };
+}
+
+function isBdGatePaidStatus(value) {
+    const status = String(value || '').trim().toLowerCase();
+    return ['completed', 'complete', 'success', 'successful', 'paid', 'confirmed'].includes(status);
+}
+
+async function verifyBdGatePayment({ orderId, transactionId, sessionToken }) {
+    if (!BDGATE_CONFIG.API_KEY) return null;
+
+    const candidates = [
+        { order_id: String(orderId), transaction_id: transactionId || undefined, session_token: sessionToken || undefined },
+        { order_id: String(orderId) },
+        ...(transactionId ? [{ transaction_id: String(transactionId) }] : [])
+    ];
+
+    let lastError = null;
+    for (const body of candidates) {
+        try {
+            const response = await axios.post(bdgateUrl(BDGATE_CONFIG.VERIFY_PATH), body, {
+                headers: { Authorization: `Bearer ${BDGATE_CONFIG.API_KEY}`, 'Content-Type': 'application/json', Accept: 'application/json' },
+                timeout: 15000
+            });
+            const data = response.data || {};
+            const status = data.status || data.payment_status || data.data?.status || data.data?.payment_status;
+            if (isBdGatePaidStatus(status)) return data;
+            lastError = new Error(data.message || `BDGate verification status: ${status || 'unknown'}`);
+        } catch (error) {
+            lastError = error;
+        }
+    }
+    if (lastError) console.error('BDGate verify error:', lastError.response?.data || lastError.message);
+    return null;
+}
+
 let bkashTokenCache = {
     token: null,
     expiresAt: 0
@@ -400,145 +510,6 @@ async function queryBkashPayment(paymentID) {
 
     return response.data;
 }
-
-// ==================== [ BDGATE HOSTED CHECKOUT ] ====================
-// BDGate credentials stay server-side. The browser only receives the hosted
-// payment URL returned by BDGate.
-const BDGATE_CONFIG = {
-    BASE_URL: String(process.env.BDGATE_BASE_URL || 'https://api.bdgate.net').trim().replace(/\/$/, ''),
-    API_KEY: process.env.BDGATE_API_KEY,
-    WEBHOOK_SECRET: process.env.BDGATE_WEBHOOK_SECRET,
-    WEBHOOK_URL: process.env.BDGATE_WEBHOOK_URL,
-    SUCCESS_URL: process.env.BDGATE_SUCCESS_URL,
-    FAIL_URL: process.env.BDGATE_FAIL_URL
-};
-
-function bdgateUrl(endpoint) {
-    const base = BDGATE_CONFIG.BASE_URL;
-    return `${base}/${String(endpoint || '').replace(/^\/+/, '')}`;
-}
-
-function normalizeBdGateMethod(value) {
-    const method = String(value || 'bkash').trim().toLowerCase();
-    const allowed = new Set(['bkash', 'nagad', 'upay', 'rocket']);
-    return allowed.has(method) ? method : null;
-}
-
-async function createBdGatePayment({
-    orderId,
-    amount,
-    customerName,
-    customerEmail,
-    customerPhone,
-    selectedMethod
-}) {
-    if (!BDGATE_CONFIG.API_KEY) {
-        throw new Error('BDGate API is not configured. Please set BDGATE_API_KEY in .env.');
-    }
-
-    const method = normalizeBdGateMethod(selectedMethod);
-    if (!method) {
-        throw new Error('Invalid BDGate payment method. Choose bKash, Nagad, Upay or Rocket.');
-    }
-
-    const baseUrl = process.env.APP_URL || 'https://www.nexkartbd.com';
-    const successUrl = BDGATE_CONFIG.SUCCESS_URL ||
-        `${baseUrl}/user/bdgate/success?order_id=${encodeURIComponent(orderId)}`;
-    const failUrl = BDGATE_CONFIG.FAIL_URL ||
-        `${baseUrl}/user/bdgate/fail?order_id=${encodeURIComponent(orderId)}`;
-    const webhookUrl = BDGATE_CONFIG.WEBHOOK_URL ||
-        `${baseUrl}/user/bdgate/webhook`;
-
-    const payload = {
-        amount: Number(amount).toFixed(2),
-        currency: 'BDT',
-        customer_name: customerName,
-        customer_email: customerEmail || '',
-        customer_phone: customerPhone,
-        description: `NexKart Order #${orderId}`,
-        success_url: successUrl,
-        fail_url: failUrl,
-        webhook_url: webhookUrl,
-        metadata: {
-            order_id: String(orderId),
-            selected_method: method,
-            source: 'nexkartbd'
-        }
-    };
-
-    const response = await axios.post(
-        bdgateUrl('/api/merchant/bdgatepay/sessions'),
-        payload,
-        {
-            headers: {
-                Authorization: `Bearer ${BDGATE_CONFIG.API_KEY}`,
-                'Content-Type': 'application/json',
-                Accept: 'application/json'
-            },
-            timeout: 30000
-        }
-    );
-
-    const paymentUrl = response.data?.payment_url || response.data?.checkout_url;
-    const sessionToken = response.data?.session_token || response.data?.token;
-
-    if (!paymentUrl) {
-        throw new Error(
-            `BDGate payment session failed: ${response.data?.message || response.data?.error || 'No payment_url returned'}`
-        );
-    }
-
-    return {
-        payment_url: paymentUrl,
-        session_token: sessionToken || null,
-        selected_method: method,
-        raw: response.data
-    };
-}
-
-function verifyBdGateWebhook(req) {
-    const secret = String(BDGATE_CONFIG.WEBHOOK_SECRET || '');
-    if (!secret) {
-        throw new Error('BDGate webhook secret is not configured.');
-    }
-
-    const received = String(
-        req.get('X-BDGate-Signature') ||
-        req.get('x-bdgate-signature') ||
-        ''
-    ).trim();
-
-    if (!received) return false;
-
-    // BDGate signs the webhook payload with HMAC-SHA256.
-    // Prefer the raw body when the application exposes it; otherwise use the
-    // parsed JSON representation as a compatibility fallback.
-    const rawBody = Buffer.isBuffer(req.body)
-        ? req.body
-        : Buffer.from(JSON.stringify(req.body || {}));
-
-    const expectedHex = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-    const expectedPrefixed = `sha256=${expectedHex}`;
-
-    const normalize = value => String(value).replace(/^sha256=/i, '').trim();
-    const a = normalize(received);
-    const b = normalize(expectedPrefixed);
-
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
-}
-
-function parseBdGateWebhookBody(req) {
-    if (Buffer.isBuffer(req.body)) {
-        try {
-            return JSON.parse(req.body.toString('utf8'));
-        } catch (_) {
-            return {};
-        }
-    }
-    return req.body || {};
-}
-
 
 async function hasTableColumn(tableName, columnName) {
     const [rows] = await db.query(
@@ -739,6 +710,7 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
                     await db.query(
                         `UPDATE orders
                          SET payment_status = ?,
+                             order_status = 'Processing',
                              bkash_payment_id = COALESCE(?, bkash_payment_id),
                              bkash_trx_id = COALESCE(?, bkash_trx_id),
                              payment_completed_at = NOW()
@@ -746,7 +718,7 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
                         ['complete', paymentInfo.paymentID || null, paymentInfo.trxID || null, order.order_id]
                     );
                 } else {
-                    await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['complete', order.order_id]);
+                    await db.query("UPDATE orders SET payment_status = ?, order_status = 'Processing' WHERE order_id = ?", ['complete', order.order_id]);
                 }
             }
             return {
@@ -1820,7 +1792,7 @@ router.post('/place-order', async (req, res) => {
         const {
             product_id, quantity, variant, payment_method, selected_gateway,
             name, email, phone, division, district, upazilla, union_area,
-            post_code, block_house, discount_amount, coupon_code, use_coins, bdgate_payment_method
+            post_code, block_house, discount_amount, coupon_code, use_coins
         } = req.body;
 
         // Shipping/contact data is authoritative from the logged-in user's profile.
@@ -1949,24 +1921,9 @@ router.post('/place-order', async (req, res) => {
         if (effectivePaymentMethod === 'cod' && Number(product.cod_available) === 0) {
             effectivePaymentMethod = 'online';
         }
-
-        let gatewayUsed = null;
-        if (effectivePaymentMethod === 'online') {
-            gatewayUsed = String(selected_gateway || 'bkash').trim().toLowerCase();
-            if (!['bkash', 'bdgate'].includes(gatewayUsed)) {
-                return res.status(400).json({ success: false, message: 'Invalid online payment gateway selected.' });
-            }
-        }
-
-        const bdgateMethod = gatewayUsed === 'bdgate'
-            ? normalizeBdGateMethod(bdgate_payment_method)
-            : null;
-
-        if (gatewayUsed === 'bdgate' && !bdgateMethod) {
-            return res.status(400).json({
-                success: false,
-                message: 'BDGate-এর জন্য bKash, Nagad, Upay অথবা Rocket নির্বাচন করুন।'
-            });
+        let gatewayUsed = effectivePaymentMethod === 'online' ? (String(selected_gateway || 'bkash').toLowerCase()) : null;
+        if (effectivePaymentMethod === 'online' && !['bkash', 'bdgate'].includes(gatewayUsed)) {
+            return res.status(400).json({ success: false, message: 'অনলাইন payment gateway নির্বাচন করুন: bKash অথবা BDGate.' });
         }
 
         // Resolve Bangladesh administrative IDs before saving the order.
@@ -2193,7 +2150,8 @@ router.post('/place-order', async (req, res) => {
             });
         }
 
-        // Online payment: direct bKash or BDGate hosted checkout.
+        // Online payment: the order is created first as Pending Payment. Stock,
+        // commission and coins are finalized ONLY after the gateway confirms payment.
         if (gatewayUsed === 'bkash') {
             try {
                 const bkashPayment = await createBkashPayment({
@@ -2219,15 +2177,13 @@ router.post('/place-order', async (req, res) => {
             } catch (bkashError) {
                 console.error('bKash Create Payment Error:', bkashError.response?.data || bkashError.message);
                 await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
-                return res.status(502).json({
-                    success: false,
-                    message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
-                });
+                return res.status(502).json({ success: false, message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' });
             }
         }
 
         if (gatewayUsed === 'bdgate') {
             try {
+                const bdgateMethod = normalizeBdGateMethod(req.body.bdgate_payment_method) || 'bkash';
                 const bdgatePayment = await createBdGatePayment({
                     orderId,
                     amount: totalAmount,
@@ -2237,12 +2193,10 @@ router.post('/place-order', async (req, res) => {
                     selectedMethod: bdgateMethod
                 });
 
-                // Keep the chosen provider in the order row. Optional session column
-                // is saved only when that migration exists.
-                if (await hasTableColumn('orders', 'bdgate_session_token')) {
+                if (bdgatePayment.sessionToken && await hasTableColumn('orders', 'bdgate_session_token')) {
                     await db.query(
                         'UPDATE orders SET bdgate_session_token = ? WHERE order_id = ?',
-                        [bdgatePayment.session_token, orderId]
+                        [bdgatePayment.sessionToken, orderId]
                     );
                 }
 
@@ -2251,23 +2205,15 @@ router.post('/place-order', async (req, res) => {
                     order_id: orderId,
                     selected_gateway: 'BDGATE',
                     bdgate_payment_method: bdgateMethod,
-                    payment_url: bdgatePayment.payment_url,
-                    payment_session: bdgatePayment.session_token
+                    payment_url: bdgatePayment.paymentUrl,
+                    session_token: bdgatePayment.sessionToken
                 });
             } catch (bdgateError) {
                 console.error('BDGate Create Payment Error:', bdgateError.response?.data || bdgateError.message);
                 await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
-                return res.status(502).json({
-                    success: false,
-                    message: 'BDGate payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
-                });
+                return res.status(502).json({ success: false, message: 'BDGate payment শুরু করা যায়নি: ' + (bdgateError.message || 'Unknown BDGate error') });
             }
         }
-
-        return res.status(400).json({
-            success: false,
-            message: 'Online payment gateway নির্বাচন করুন।'
-        });
 
     } catch (error) {
         console.error('PLACE ORDER ERROR:', error);
@@ -2363,112 +2309,172 @@ router.get('/bkash/callback', async (req, res) => {
     }
 });
 
-
-// ==================== [ BDGATE WEBHOOK + RETURN ROUTES ] ====================
-// BDGate's webhook is the authoritative payment confirmation for BDGate orders.
-// Do not finalize the order from the browser return URL alone.
+// ==================== [ BDGATE WEBHOOK + SUCCESS/FAIL ROUTES ] ====================
 router.post('/bdgate/webhook', async (req, res) => {
     try {
-        if (!verifyBdGateWebhook(req)) {
-            console.error('BDGate webhook signature verification failed.');
-            return res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+        const signatureHeader = String(req.get('X-BDGate-Signature') || '').trim();
+        const rawPayload = Buffer.isBuffer(req.body)
+            ? req.body
+            : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}));
+
+        if (BDGATE_CONFIG.WEBHOOK_SECRET) {
+            if (!signatureHeader) {
+                return res.status(401).json({ success: false, message: 'Missing BDGate webhook signature.' });
+            }
+            const provided = signatureHeader.replace(/^sha256=/i, '').trim();
+            const expected = crypto.createHmac('sha256', BDGATE_CONFIG.WEBHOOK_SECRET).update(rawPayload).digest('hex');
+            const a = Buffer.from(provided, 'utf8');
+            const b = Buffer.from(expected, 'utf8');
+            if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+                console.error('BDGate webhook signature mismatch.');
+                return res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+            }
         }
 
-        const payload = parseBdGateWebhookBody(req);
-        const event = String(payload.event || '').toLowerCase();
-        const metadata = payload.metadata || {};
-        const orderId = String(metadata.order_id || payload.order_id || '').trim();
+        const payload = Buffer.isBuffer(req.body) ? JSON.parse(rawPayload.toString('utf8')) : (req.body || {});
+        const data = payload.data || payload.payment || payload.result || payload;
+        const event = String(payload.event || data.event || '').toLowerCase();
+        const metadata = payload.metadata || data.metadata || {};
+        const orderId = metadata.order_id || payload.order_id || data.order_id || data.invoice_id || data.merchant_invoice_number || data.reference;
+        const transactionId = payload.tx_ref || payload.transaction_id || data.tx_ref || data.transaction_id || data.trxID || data.trx_id || null;
+        const sessionToken = payload.session_token || data.session_token || metadata.session_token || null;
+        const amount = Number(payload.amount ?? data.amount ?? 0);
+        const status = payload.status || data.status || data.payment_status || '';
 
-        if (!orderId) {
-            return res.status(400).json({ success: false, message: 'BDGate webhook order_id missing.' });
+        console.log('BDGate Webhook:', { event, orderId, transactionId, amount, status });
+
+        let order = null;
+        if (orderId) {
+            const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ? LIMIT 1', [String(orderId)]);
+            order = orders[0] || null;
         }
 
-        const [orders] = await db.query(
-            'SELECT * FROM orders WHERE order_id = ? LIMIT 1',
-            [orderId]
-        );
-
-        if (!orders.length) {
-            return res.status(404).json({ success: false, message: 'Order not found.' });
+        // Some BDGate IPN payloads (especially the personal-account/SMS-relay
+        // format shown in the merchant panel) may omit order_id but include
+        // amount + customer_phone. Use the newest matching pending BDGate order
+        // as a compatibility fallback, while preferring the explicit order_id
+        // whenever BDGate sends it.
+        if (!order && !orderId && (isBdGatePaidStatus(status) || ['payment.completed', 'payment.confirmed', 'payment.success'].includes(event))) {
+            const customerPhone = String(payload.customer_phone || data.customer_phone || '').trim();
+            if (customerPhone && Number.isFinite(amount) && amount > 0) {
+                const [matches] = await db.query(
+                    `SELECT * FROM orders
+                     WHERE payment_method = 'online'
+                       AND selected_gateway = 'bdgate'
+                       AND payment_status IN ('Pending Payment', 'Pending')
+                       AND ABS(total_amount - ?) < 0.01
+                       AND customer_phone = ?
+                     ORDER BY created_at DESC
+                     LIMIT 1`,
+                    [amount, customerPhone]
+                );
+                order = matches[0] || null;
+                if (order) console.warn('BDGate webhook had no order_id; matched pending order by amount + phone:', order.order_id);
+            }
         }
 
-        const order = orders[0];
-
-        if (event === 'payment.failed' || event === 'payment.cancelled' || event === 'payment.refunded') {
-            await db.query(
-                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
-                ['Failed', orderId]
-            );
-            return res.json({ success: true, message: 'BDGate failure event recorded.' });
+        if (!order) {
+            if (isBdGatePaidStatus(status) || ['payment.completed', 'payment.confirmed', 'payment.success'].includes(event)) {
+                return res.status(422).json({ success: false, message: 'BDGate webhook could not be matched to an order.' });
+            }
+            return res.json({ success: true, ignored: true });
         }
 
-        if (event !== 'payment.confirmed' && event !== 'payment.completed') {
-            // Acknowledge unknown/irrelevant events without changing the order.
-            return res.json({ success: true, message: 'BDGate event received.' });
+        const failedEvent = ['payment.failed', 'payment.cancelled', 'payment.canceled', 'payment.refunded', 'failed', 'cancelled', 'canceled', 'refunded'].includes(event) ||
+            ['failed', 'cancelled', 'canceled', 'refunded'].includes(String(status).toLowerCase());
+
+        if (failedEvent) {
+            if (String(order.payment_status).toLowerCase() !== 'complete') {
+                await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', order.order_id]);
+            }
+            return res.json({ success: true, order_id: order.order_id, payment_status: 'Failed' });
         }
 
-        const paidAmount = Number(payload.amount || 0);
+        const paid = ['payment.completed', 'payment.confirmed', 'payment.success', 'completed', 'confirmed', 'success'].includes(event) || isBdGatePaidStatus(status);
+        if (!paid) {
+            return res.json({ success: true, order_id: order.order_id, ignored: true, event });
+        }
+
         const expectedAmount = Number(order.total_amount || 0);
-        if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - expectedAmount) >= 0.01) {
-            console.error('BDGate amount mismatch:', {
-                orderId,
-                expectedAmount,
-                paidAmount
-            });
-            await db.query(
-                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
-                ['Failed', orderId]
-            );
-            return res.status(400).json({ success: false, message: 'Payment amount mismatch.' });
+        if (!Number.isFinite(amount) || Math.abs(amount - expectedAmount) >= 0.01) {
+            console.error('BDGate amount mismatch:', { orderId: order.order_id, expectedAmount, amount });
+            return res.status(422).json({ success: false, message: 'BDGate payment amount mismatch.' });
         }
 
-        const txRef = payload.tx_ref || payload.transaction_id || payload.payment_id || null;
+        const alreadyComplete = String(order.payment_status || '').toLowerCase() === 'complete';
+        if (!alreadyComplete) {
+            await finalizeSuccessfulOrder(order, 'paid', {
+                paymentID: sessionToken || transactionId,
+                trxID: transactionId
+            });
+        }
 
-        await finalizeSuccessfulOrder(order, 'paid', {
-            bdgateTransactionId: txRef,
-            paymentID: payload.session_token || payload.payment_id || null,
-            trxID: txRef
-        });
+        if (!alreadyComplete) {
+            const orderData = {
+                order_id: order.order_id, customer_name: order.customer_name, customer_email: order.customer_email,
+                customer_phone: order.customer_phone, shipping_address: order.shipping_address,
+                payment_method: order.payment_method, selected_gateway: order.selected_gateway,
+                payment_status: 'complete', quantity: order.quantity, variant: order.variant,
+                subtotal_price: order.subtotal_price, delivery_charge: order.delivery_charge, total_amount: order.total_amount
+            };
+            try { await sendInvoiceEmail(orderData, `Order #${order.order_id}`); } catch (emailError) { console.error('BDGate INVOICE EMAIL ERROR:', emailError?.message || emailError); }
+            try {
+                const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                const userAgent = req.headers['user-agent'];
+                await sendFacebookCAPI('Purchase', { email: order.customer_email, phone: order.customer_phone, name: order.customer_name, client_ip_address: clientIp, client_user_agent: userAgent }, {
+                    currency: 'BDT', value: Number(order.total_amount), order_id: order.order_id,
+                    contents: [{ id: order.product_id, quantity: order.quantity, item_price: Number(order.subtotal_price) / Math.max(1, Number(order.quantity)) }]
+                });
+                await sendGA4Measurement('purchase', String(order.user_id), {
+                    transaction_id: order.order_id, value: Number(order.total_amount), currency: 'BDT', tax: 0, shipping: Number(order.delivery_charge || 0),
+                    items: [{ item_id: order.product_id, item_name: `Order #${order.order_id}`, price: Number(order.subtotal_price) / Math.max(1, Number(order.quantity)), quantity: Number(order.quantity) }]
+                });
+            } catch (trackingError) { console.error('BDGate TRACKING ERROR:', trackingError?.message || trackingError); }
+        }
 
-        return res.json({
-            success: true,
-            message: 'BDGate payment confirmed and order finalized.'
-        });
+        return res.json({ success: true, order_id: order.order_id, payment_status: 'complete' });
     } catch (error) {
         console.error('BDGate Webhook Error:', error.response?.data || error.message);
-        return res.status(500).json({
-            success: false,
-            message: 'BDGate webhook processing failed.'
-        });
+        return res.status(500).json({ success: false, message: 'BDGate webhook processing failed.' });
     }
 });
 
 router.get('/bdgate/success', async (req, res) => {
     const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    const orderId = req.query.order_id || '';
-    const returnUrl = `${baseUrl}/user/dashboard`;
-    return res.redirect(
-        `${returnUrl}?payment=pending&gateway=bdgate&order_id=${encodeURIComponent(orderId)}`
-    );
+    const orderId = String(req.query.order_id || '').trim();
+    const transactionId = req.query.transaction_id || req.query.tx_ref || req.query.trxID || null;
+    try {
+        if (!orderId) return res.redirect(`${baseUrl}/user/dashboard?payment=pending`);
+        const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ? LIMIT 1', [orderId]);
+        if (!orders.length) return res.redirect(`${baseUrl}/user/dashboard?payment=failed&order_id=${encodeURIComponent(orderId)}`);
+        let order = orders[0];
+        if (String(order.payment_status || '').toLowerCase() !== 'complete') {
+            const verified = await verifyBdGatePayment({ orderId, transactionId });
+            if (verified) {
+                const amount = Number(verified.amount ?? verified.data?.amount ?? order.total_amount);
+                if (Math.abs(amount - Number(order.total_amount)) < 0.01) {
+                    await finalizeSuccessfulOrder(order, 'paid', { paymentID: transactionId, trxID: transactionId });
+                }
+            }
+        }
+        const [fresh] = await db.query('SELECT payment_status FROM orders WHERE order_id = ? LIMIT 1', [orderId]);
+        const payment = String(fresh[0]?.payment_status || '').toLowerCase() === 'complete' ? 'success' : 'pending';
+        return res.redirect(`${baseUrl}/user/dashboard?payment=${payment}&order_id=${encodeURIComponent(orderId)}`);
+    } catch (error) {
+        console.error('BDGate Success Route Error:', error.response?.data || error.message);
+        return res.redirect(`${baseUrl}/user/dashboard?payment=pending&order_id=${encodeURIComponent(orderId)}`);
+    }
 });
 
 router.get('/bdgate/fail', async (req, res) => {
     const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-    const orderId = req.query.order_id || '';
-    if (orderId) {
-        try {
-            await db.query(
-                "UPDATE orders SET payment_status = ? WHERE order_id = ? AND payment_status <> 'complete'",
-                ['Failed', orderId]
-            );
-        } catch (error) {
-            console.error('BDGate fail return update error:', error);
+    const orderId = String(req.query.order_id || '').trim();
+    try {
+        if (orderId) {
+            await db.query("UPDATE orders SET payment_status = ? WHERE order_id = ? AND LOWER(payment_status) <> 'complete'", ['Failed', orderId]);
         }
-    }
-    const returnUrl = `${baseUrl}/user/dashboard`;
-    return res.redirect(
-        `${returnUrl}?payment=failed&gateway=bdgate&order_id=${encodeURIComponent(orderId)}`
-    );
+    } catch (error) { console.error('BDGate Fail Route Error:', error.message); }
+    return res.redirect(`${baseUrl}/user/dashboard?payment=failed&order_id=${encodeURIComponent(orderId)}`);
 });
 
 // Kept for backward compatibility. It no longer marks an order paid without bKash verification.
