@@ -401,6 +401,145 @@ async function queryBkashPayment(paymentID) {
     return response.data;
 }
 
+// ==================== [ BDGATE HOSTED CHECKOUT ] ====================
+// BDGate credentials stay server-side. The browser only receives the hosted
+// payment URL returned by BDGate.
+const BDGATE_CONFIG = {
+    BASE_URL: String(process.env.BDGATE_BASE_URL || 'https://api.bdgate.net').trim().replace(/\/$/, ''),
+    API_KEY: process.env.BDGATE_API_KEY,
+    WEBHOOK_SECRET: process.env.BDGATE_WEBHOOK_SECRET,
+    WEBHOOK_URL: process.env.BDGATE_WEBHOOK_URL,
+    SUCCESS_URL: process.env.BDGATE_SUCCESS_URL,
+    FAIL_URL: process.env.BDGATE_FAIL_URL
+};
+
+function bdgateUrl(endpoint) {
+    const base = BDGATE_CONFIG.BASE_URL;
+    return `${base}/${String(endpoint || '').replace(/^\/+/, '')}`;
+}
+
+function normalizeBdGateMethod(value) {
+    const method = String(value || 'bkash').trim().toLowerCase();
+    const allowed = new Set(['bkash', 'nagad', 'upay', 'rocket']);
+    return allowed.has(method) ? method : null;
+}
+
+async function createBdGatePayment({
+    orderId,
+    amount,
+    customerName,
+    customerEmail,
+    customerPhone,
+    selectedMethod
+}) {
+    if (!BDGATE_CONFIG.API_KEY) {
+        throw new Error('BDGate API is not configured. Please set BDGATE_API_KEY in .env.');
+    }
+
+    const method = normalizeBdGateMethod(selectedMethod);
+    if (!method) {
+        throw new Error('Invalid BDGate payment method. Choose bKash, Nagad, Upay or Rocket.');
+    }
+
+    const baseUrl = process.env.APP_URL || 'https://www.nexkartbd.com';
+    const successUrl = BDGATE_CONFIG.SUCCESS_URL ||
+        `${baseUrl}/user/bdgate/success?order_id=${encodeURIComponent(orderId)}`;
+    const failUrl = BDGATE_CONFIG.FAIL_URL ||
+        `${baseUrl}/user/bdgate/fail?order_id=${encodeURIComponent(orderId)}`;
+    const webhookUrl = BDGATE_CONFIG.WEBHOOK_URL ||
+        `${baseUrl}/user/bdgate/webhook`;
+
+    const payload = {
+        amount: Number(amount).toFixed(2),
+        currency: 'BDT',
+        customer_name: customerName,
+        customer_email: customerEmail || '',
+        customer_phone: customerPhone,
+        description: `NexKart Order #${orderId}`,
+        success_url: successUrl,
+        fail_url: failUrl,
+        webhook_url: webhookUrl,
+        metadata: {
+            order_id: String(orderId),
+            selected_method: method,
+            source: 'nexkartbd'
+        }
+    };
+
+    const response = await axios.post(
+        bdgateUrl('/api/merchant/bdgatepay/sessions'),
+        payload,
+        {
+            headers: {
+                Authorization: `Bearer ${BDGATE_CONFIG.API_KEY}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            },
+            timeout: 30000
+        }
+    );
+
+    const paymentUrl = response.data?.payment_url || response.data?.checkout_url;
+    const sessionToken = response.data?.session_token || response.data?.token;
+
+    if (!paymentUrl) {
+        throw new Error(
+            `BDGate payment session failed: ${response.data?.message || response.data?.error || 'No payment_url returned'}`
+        );
+    }
+
+    return {
+        payment_url: paymentUrl,
+        session_token: sessionToken || null,
+        selected_method: method,
+        raw: response.data
+    };
+}
+
+function verifyBdGateWebhook(req) {
+    const secret = String(BDGATE_CONFIG.WEBHOOK_SECRET || '');
+    if (!secret) {
+        throw new Error('BDGate webhook secret is not configured.');
+    }
+
+    const received = String(
+        req.get('X-BDGate-Signature') ||
+        req.get('x-bdgate-signature') ||
+        ''
+    ).trim();
+
+    if (!received) return false;
+
+    // BDGate signs the webhook payload with HMAC-SHA256.
+    // Prefer the raw body when the application exposes it; otherwise use the
+    // parsed JSON representation as a compatibility fallback.
+    const rawBody = Buffer.isBuffer(req.body)
+        ? req.body
+        : Buffer.from(JSON.stringify(req.body || {}));
+
+    const expectedHex = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
+    const expectedPrefixed = `sha256=${expectedHex}`;
+
+    const normalize = value => String(value).replace(/^sha256=/i, '').trim();
+    const a = normalize(received);
+    const b = normalize(expectedPrefixed);
+
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
+function parseBdGateWebhookBody(req) {
+    if (Buffer.isBuffer(req.body)) {
+        try {
+            return JSON.parse(req.body.toString('utf8'));
+        } catch (_) {
+            return {};
+        }
+    }
+    return req.body || {};
+}
+
+
 async function hasTableColumn(tableName, columnName) {
     const [rows] = await db.query(
         `SELECT COUNT(*) AS cnt
@@ -1681,7 +1820,7 @@ router.post('/place-order', async (req, res) => {
         const {
             product_id, quantity, variant, payment_method, selected_gateway,
             name, email, phone, division, district, upazilla, union_area,
-            post_code, block_house, discount_amount, coupon_code, use_coins
+            post_code, block_house, discount_amount, coupon_code, use_coins, bdgate_payment_method
         } = req.body;
 
         // Shipping/contact data is authoritative from the logged-in user's profile.
@@ -1805,44 +1944,145 @@ router.post('/place-order', async (req, res) => {
             });
         }
 
-        // If COD is disabled for the product, server-side force bKash online payment.
+        // If COD is disabled for the product, server-side force online payment.
         let effectivePaymentMethod = String(payment_method || 'cod').toLowerCase();
         if (effectivePaymentMethod === 'cod' && Number(product.cod_available) === 0) {
             effectivePaymentMethod = 'online';
         }
-        const gatewayUsed = effectivePaymentMethod === 'online' ? (String(selected_gateway || 'bkash').toLowerCase()) : null;
 
-        if (effectivePaymentMethod === 'online' && gatewayUsed !== 'bkash') {
-            return res.status(400).json({ success: false, message: 'বর্তমানে শুধু bKash online payment available.' });
+        let gatewayUsed = null;
+        if (effectivePaymentMethod === 'online') {
+            gatewayUsed = String(selected_gateway || 'bkash').trim().toLowerCase();
+            if (!['bkash', 'bdgate'].includes(gatewayUsed)) {
+                return res.status(400).json({ success: false, message: 'Invalid online payment gateway selected.' });
+            }
         }
 
-        // Convert Bangladesh administrative IDs to names BEFORE saving the order.
-        // Important: order.shipping_address must never contain raw IDs such as 330, 43, 6.
-        const locationMaps = {
-            division: { '6': 'Dhaka' },
-            district: { '43': 'Narayanganj' },
+        const bdgateMethod = gatewayUsed === 'bdgate'
+            ? normalizeBdGateMethod(bdgate_payment_method)
+            : null;
+
+        if (gatewayUsed === 'bdgate' && !bdgateMethod) {
+            return res.status(400).json({
+                success: false,
+                message: 'BDGate-এর জন্য bKash, Nagad, Upay অথবা Rocket নির্বাচন করুন।'
+            });
+        }
+
+        // Resolve Bangladesh administrative IDs before saving the order.
+        // The user profile may contain IDs from the standard Bangladesh GeoCode dataset.
+        // Known IDs are handled locally; unknown numeric IDs are resolved from the
+        // maintained public geo dataset. We NEVER save an unresolved numeric ID.
+        const GEO_DATA_URLS = {
+            division: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/divisions/divisions.json',
+            district: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/districts/districts.json',
+            upazilla: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/upazilas/upazilas.json'
+        };
+        let geoDataCache = null;
+
+        const localGeoMaps = {
+            division: {
+                '1': 'Chattagram',
+                '2': 'Rajshahi',
+                '3': 'Khulna',
+                '4': 'Barisal',
+                '5': 'Sylhet',
+                '6': 'Dhaka',
+                '7': 'Rangpur',
+                '8': 'Mymensingh'
+            },
+            district: {
+                '1': 'Cumilla', '2': 'Feni', '3': 'Brahmanbaria', '4': 'Rangamati',
+                '5': 'Noakhali', '6': 'Chandpur', '7': 'Lakshmipur', '8': 'Chattogram',
+                '9': 'Coxsbazar', '10': 'Khagrachhari', '11': 'Bandarban',
+                '12': 'Sirajganj', '13': 'Pabna', '14': 'Bogura', '15': 'Rajshahi',
+                '16': 'Natore', '17': 'Joypurhat', '18': 'Chapainawabganj', '19': 'Naogaon',
+                '20': 'Jashore', '21': 'Satkhira', '22': 'Meherpur', '23': 'Narail',
+                '24': 'Chuadanga', '25': 'Kushtia', '26': 'Magura', '27': 'Khulna',
+                '28': 'Bagerhat', '29': 'Jhenaidah', '30': 'Jhalakathi', '31': 'Patuakhali',
+                '32': 'Pirojpur', '33': 'Barisal', '34': 'Bhola', '35': 'Barguna',
+                '36': 'Sylhet', '37': 'Moulvibazar', '38': 'Habiganj', '39': 'Sunamganj',
+                '40': 'Narsingdi', '41': 'Gazipur', '42': 'Shariatpur', '43': 'Narayanganj',
+                '44': 'Tangail', '45': 'Kishoreganj', '46': 'Manikganj', '47': 'Dhaka',
+                '48': 'Munshiganj', '49': 'Rajbari', '50': 'Madaripur', '51': 'Gopalganj',
+                '52': 'Faridpur', '53': 'Panchagarh', '54': 'Dinajpur', '55': 'Lalmonirhat',
+                '56': 'Nilphamari', '57': 'Gaibandha', '58': 'Thakurgaon', '59': 'Rangpur',
+                '60': 'Kurigram', '61': 'Sherpur', '62': 'Mymensingh', '63': 'Jamalpur',
+                '64': 'Netrokona'
+            },
             upazilla: {
-                '328': 'Araihazar',
-                '329': 'Bandar',
-                '330': 'Narayanganj Sadar',
                 '331': 'Rupganj',
                 '332': 'Sonargaon'
             }
         };
 
-        const resolveLocationName = (value, type) => {
-            const raw = String(value ?? '').trim();
-            if (!raw) return '';
-            if (locationMaps[type]?.[raw]) return locationMaps[type][raw];
-            // Never put an unresolved numeric administrative ID into shipping_address.
-            return /^\d+$/.test(raw) ? '' : raw;
+        const isNumericGeoCode = (value) => /^\d+$/.test(String(value ?? '').trim());
+
+        const loadGeoData = async () => {
+            if (geoDataCache) return geoDataCache;
+            try {
+                const entries = await Promise.all(
+                    Object.entries(GEO_DATA_URLS).map(async ([type, url]) => {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`${type} geo data HTTP ${response.status}`);
+                        const json = await response.json();
+                        const table = Array.isArray(json)
+                            ? json.find(item => item.type === 'table')
+                            : null;
+                        return [type, table?.data || []];
+                    })
+                );
+                geoDataCache = Object.fromEntries(entries);
+                return geoDataCache;
+            } catch (geoError) {
+                console.error('Geo data load failed:', geoError);
+                return null;
+            }
         };
 
-        const shippingDivision = resolveLocationName(orderDivision, 'division');
-        const shippingDistrict = resolveLocationName(orderDistrict, 'district');
-        const shippingUpazilla = resolveLocationName(orderUpazilla, 'upazilla');
-        const shippingUnion = /^\d+$/.test(orderUnion) ? '' : orderUnion;
+        const resolveLocationName = async (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+
+            // Already a readable name.
+            if (!isNumericGeoCode(raw)) return raw;
+
+            if (localGeoMaps[type]?.[raw]) return localGeoMaps[type][raw];
+
+            const geo = await loadGeoData();
+            if (!geo) return '';
+
+            const wantedId = String(raw);
+
+            const rows = geo[type] || [];
+            const item = rows.find(entry => String(entry.id ?? '') === wantedId);
+            return item?.name || item?.bn_name || '';
+
+            return '';
+        };
+
+        const shippingDivision = await resolveLocationName(orderDivision, 'division');
+        const shippingDistrict = await resolveLocationName(orderDistrict, 'district');
+        const shippingUpazilla = await resolveLocationName(orderUpazilla, 'upazilla');
+
+        // union_area is normally free-text in this project. Keep real text as-is.
+        // If an old profile contains a numeric-only union code, do not write the raw
+        // number into orders because it creates the unwanted "22,33" style address.
+        const shippingUnion = isNumericGeoCode(orderUnion) ? '' : orderUnion;
         const shippingBlockHouse = orderBlockHouse;
+
+        const unresolvedNumericLocations = [];
+        if (isNumericGeoCode(orderDivision) && !shippingDivision) unresolvedNumericLocations.push(`division=${orderDivision}`);
+        if (isNumericGeoCode(orderDistrict) && !shippingDistrict) unresolvedNumericLocations.push(`district=${orderDistrict}`);
+        if (isNumericGeoCode(orderUpazilla) && !shippingUpazilla) unresolvedNumericLocations.push(`upazilla=${orderUpazilla}`);
+
+        if (unresolvedNumericLocations.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'Shipping location code resolve করা যায়নি: ' + unresolvedNumericLocations.join(', ') +
+                         '. Profile address আবার save করে চেষ্টা করুন।'
+            });
+        }
 
         const fullShippingAddress = [
             shippingBlockHouse,
@@ -1850,14 +2090,7 @@ router.post('/place-order', async (req, res) => {
             shippingUpazilla,
             shippingDistrict,
             shippingDivision
-        ].filter(Boolean).join(', ') + (orderPostCode ? `, ${orderPostCode}` : '');
-
-        if (!fullShippingAddress || !shippingDistrict || !shippingDivision) {
-            return res.status(400).json({
-                success: false,
-                message: 'Shipping address-এর administrative location নাম resolve করা যায়নি। Profile address আবার save করে চেষ্টা করুন।'
-            });
-        }
+        ].filter(Boolean).join(', ') + (orderPostCode ? `, Post Code: ${orderPostCode}` : '');
         const orderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
         const paymentStatus = effectivePaymentMethod === 'online' ? 'Pending Payment' : 'Pending';
 
@@ -1960,33 +2193,81 @@ router.post('/place-order', async (req, res) => {
             });
         }
 
-        // Online bKash: create the payment first. Stock/commission are finalized only after bKash confirms payment.
-        try {
-            const bkashPayment = await createBkashPayment({
-                orderId,
-                amount: totalAmount,
-                payerReference: orderEmail || orderPhone || orderId
-            });
+        // Online payment: direct bKash or BDGate hosted checkout.
+        if (gatewayUsed === 'bkash') {
+            try {
+                const bkashPayment = await createBkashPayment({
+                    orderId,
+                    amount: totalAmount,
+                    payerReference: orderEmail || orderPhone || orderId
+                });
 
-            if (await hasTableColumn('orders', 'bkash_payment_id')) {
-                await db.query(
-                    'UPDATE orders SET bkash_payment_id = ? WHERE order_id = ?',
-                    [bkashPayment.paymentID, orderId]
-                );
+                if (await hasTableColumn('orders', 'bkash_payment_id')) {
+                    await db.query(
+                        'UPDATE orders SET bkash_payment_id = ? WHERE order_id = ?',
+                        [bkashPayment.paymentID, orderId]
+                    );
+                }
+
+                return res.json({
+                    success: true,
+                    order_id: orderId,
+                    selected_gateway: 'BKASH',
+                    payment_url: bkashPayment.bkashURL,
+                    payment_id: bkashPayment.paymentID
+                });
+            } catch (bkashError) {
+                console.error('bKash Create Payment Error:', bkashError.response?.data || bkashError.message);
+                await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
+                return res.status(502).json({
+                    success: false,
+                    message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
+                });
             }
-
-            return res.json({
-                success: true,
-                order_id: orderId,
-                selected_gateway: 'BKASH',
-                payment_url: bkashPayment.bkashURL,
-                payment_id: bkashPayment.paymentID
-            });
-        } catch (bkashError) {
-            console.error('bKash Create Payment Error:', bkashError.response?.data || bkashError.message);
-            await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
-            return res.status(502).json({ success: false, message: 'bKash payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।' });
         }
+
+        if (gatewayUsed === 'bdgate') {
+            try {
+                const bdgatePayment = await createBdGatePayment({
+                    orderId,
+                    amount: totalAmount,
+                    customerName: orderName,
+                    customerEmail: orderEmail,
+                    customerPhone: orderPhone,
+                    selectedMethod: bdgateMethod
+                });
+
+                // Keep the chosen provider in the order row. Optional session column
+                // is saved only when that migration exists.
+                if (await hasTableColumn('orders', 'bdgate_session_token')) {
+                    await db.query(
+                        'UPDATE orders SET bdgate_session_token = ? WHERE order_id = ?',
+                        [bdgatePayment.session_token, orderId]
+                    );
+                }
+
+                return res.json({
+                    success: true,
+                    order_id: orderId,
+                    selected_gateway: 'BDGATE',
+                    bdgate_payment_method: bdgateMethod,
+                    payment_url: bdgatePayment.payment_url,
+                    payment_session: bdgatePayment.session_token
+                });
+            } catch (bdgateError) {
+                console.error('BDGate Create Payment Error:', bdgateError.response?.data || bdgateError.message);
+                await db.query('UPDATE orders SET payment_status = ? WHERE order_id = ?', ['Failed', orderId]);
+                return res.status(502).json({
+                    success: false,
+                    message: 'BDGate payment শুরু করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
+                });
+            }
+        }
+
+        return res.status(400).json({
+            success: false,
+            message: 'Online payment gateway নির্বাচন করুন।'
+        });
 
     } catch (error) {
         console.error('PLACE ORDER ERROR:', error);
@@ -2080,6 +2361,114 @@ router.get('/bkash/callback', async (req, res) => {
         const returnUrl = BKASH_CONFIG.RETURN_URL || `${baseUrl}/user/dashboard`;
         return res.redirect(`${returnUrl}${returnUrl.includes('?') ? '&' : '?'}payment=failed&order_id=${encodeURIComponent(req.query.order_id || '')}`);
     }
+});
+
+
+// ==================== [ BDGATE WEBHOOK + RETURN ROUTES ] ====================
+// BDGate's webhook is the authoritative payment confirmation for BDGate orders.
+// Do not finalize the order from the browser return URL alone.
+router.post('/bdgate/webhook', async (req, res) => {
+    try {
+        if (!verifyBdGateWebhook(req)) {
+            console.error('BDGate webhook signature verification failed.');
+            return res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+        }
+
+        const payload = parseBdGateWebhookBody(req);
+        const event = String(payload.event || '').toLowerCase();
+        const metadata = payload.metadata || {};
+        const orderId = String(metadata.order_id || payload.order_id || '').trim();
+
+        if (!orderId) {
+            return res.status(400).json({ success: false, message: 'BDGate webhook order_id missing.' });
+        }
+
+        const [orders] = await db.query(
+            'SELECT * FROM orders WHERE order_id = ? LIMIT 1',
+            [orderId]
+        );
+
+        if (!orders.length) {
+            return res.status(404).json({ success: false, message: 'Order not found.' });
+        }
+
+        const order = orders[0];
+
+        if (event === 'payment.failed' || event === 'payment.cancelled' || event === 'payment.refunded') {
+            await db.query(
+                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+                ['Failed', orderId]
+            );
+            return res.json({ success: true, message: 'BDGate failure event recorded.' });
+        }
+
+        if (event !== 'payment.confirmed' && event !== 'payment.completed') {
+            // Acknowledge unknown/irrelevant events without changing the order.
+            return res.json({ success: true, message: 'BDGate event received.' });
+        }
+
+        const paidAmount = Number(payload.amount || 0);
+        const expectedAmount = Number(order.total_amount || 0);
+        if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - expectedAmount) >= 0.01) {
+            console.error('BDGate amount mismatch:', {
+                orderId,
+                expectedAmount,
+                paidAmount
+            });
+            await db.query(
+                'UPDATE orders SET payment_status = ? WHERE order_id = ?',
+                ['Failed', orderId]
+            );
+            return res.status(400).json({ success: false, message: 'Payment amount mismatch.' });
+        }
+
+        const txRef = payload.tx_ref || payload.transaction_id || payload.payment_id || null;
+
+        await finalizeSuccessfulOrder(order, 'paid', {
+            bdgateTransactionId: txRef,
+            paymentID: payload.session_token || payload.payment_id || null,
+            trxID: txRef
+        });
+
+        return res.json({
+            success: true,
+            message: 'BDGate payment confirmed and order finalized.'
+        });
+    } catch (error) {
+        console.error('BDGate Webhook Error:', error.response?.data || error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'BDGate webhook processing failed.'
+        });
+    }
+});
+
+router.get('/bdgate/success', async (req, res) => {
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const orderId = req.query.order_id || '';
+    const returnUrl = `${baseUrl}/user/dashboard`;
+    return res.redirect(
+        `${returnUrl}?payment=pending&gateway=bdgate&order_id=${encodeURIComponent(orderId)}`
+    );
+});
+
+router.get('/bdgate/fail', async (req, res) => {
+    const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const orderId = req.query.order_id || '';
+    if (orderId) {
+        try {
+            await db.query(
+                "UPDATE orders SET payment_status = ? WHERE order_id = ? AND payment_status <> 'complete'",
+                ['Failed', orderId]
+            );
+        } catch (error) {
+            console.error('BDGate fail return update error:', error);
+        }
+    }
+    const returnUrl = `${baseUrl}/user/dashboard`;
+    return res.redirect(
+        `${returnUrl}?payment=failed&gateway=bdgate&order_id=${encodeURIComponent(orderId)}`
+    );
 });
 
 // Kept for backward compatibility. It no longer marks an order paid without bKash verification.
