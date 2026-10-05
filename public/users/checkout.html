@@ -265,24 +265,56 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
                 <span class="text-xs font-bold text-gray-800">COD</span>
               </label>
-              <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
+              <label id="online-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
                 <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">bKash Payment</span>
+                <span class="text-xs font-bold text-gray-800">Online Payment</span>
               </label>
             </div>
             <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">এই পণ্যে COD নেই, তাই bKash online payment নির্বাচন করুন।</p>
           </div>
 
-          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
-            <label class="block text-xs font-bold text-gray-800">Select Payment Gateway:</label>
-            <div id="bkash-gateways-grid" class="grid grid-cols-1 gap-2">
+          <div id="bkash-gateways-container" class="pt-3 hidden space-y-3 border-t border-pink-200">
+            <label class="block text-xs font-bold text-gray-800">Select Online Gateway:</label>
+
+            <div id="online-gateway-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
-                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
+                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this); toggleBdGateMethods();">
                 <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[#e2136e] text-white font-extrabold tracking-tight text-base leading-none shadow-sm" aria-label="bKash">bKash</span>
-                <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
+                <span class="text-xs font-bold text-gray-800">Direct bKash</span>
+              </label>
+
+              <label class="gateway-card p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                <input type="radio" name="online_gateway" value="bdgate" class="hidden" onchange="highlightGateway(this); toggleBdGateMethods();">
+                <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-gray-900 text-white font-extrabold tracking-tight text-sm leading-none shadow-sm" aria-label="BDGate">BDGate</span>
+                <span class="text-xs font-bold text-gray-800">BDGate</span>
               </label>
             </div>
-            <p class="text-[10px] text-gray-500 italic">* Payment will be processed securely via bKash gateway.</p>
+
+            <div id="bdgate-methods-container" class="hidden space-y-2 pt-2">
+              <label class="block text-[11px] font-bold text-gray-700">BDGate Payment Method:</label>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="gateway-card bdgate-method-card selected p-2.5 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                  <input type="radio" name="bdgate_payment_method" value="bkash" checked class="hidden" onchange="highlightGateway(this, '.bdgate-method-card')">
+                  <span class="text-xs font-bold text-gray-800">bKash</span>
+                </label>
+                <label class="gateway-card bdgate-method-card p-2.5 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                  <input type="radio" name="bdgate_payment_method" value="nagad" class="hidden" onchange="highlightGateway(this, '.bdgate-method-card')">
+                  <span class="text-xs font-bold text-gray-800">Nagad</span>
+                </label>
+                <label class="gateway-card bdgate-method-card p-2.5 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                  <input type="radio" name="bdgate_payment_method" value="upay" class="hidden" onchange="highlightGateway(this, '.bdgate-method-card')">
+                  <span class="text-xs font-bold text-gray-800">Upay</span>
+                </label>
+                <label class="gateway-card bdgate-method-card p-2.5 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                  <input type="radio" name="bdgate_payment_method" value="rocket" class="hidden" onchange="highlightGateway(this, '.bdgate-method-card')">
+                  <span class="text-xs font-bold text-gray-800">Rocket</span>
+                </label>
+              </div>
+            </div>
+
+            <p id="online-payment-help" class="text-[10px] text-gray-500 italic">
+              * Direct bKash হলে bKash API ব্যবহার হবে। BDGate নির্বাচন করলে BDGate-এর hosted checkout-এ আপনার নির্বাচিত MFS method দিয়ে payment হবে।
+            </p>
           </div>
         </form>
       </div>
@@ -332,19 +364,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
 
     function togglePaymentGateways() {
-      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      const bkashContainer = document.getElementById('bkash-gateways-container');
+      const paymentMethod = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+      const onlineContainer = document.getElementById('bkash-gateways-container');
 
-      bkashContainer.classList.add('hidden');
+      onlineContainer.classList.toggle('hidden', paymentMethod !== 'online');
 
       if (paymentMethod === 'online') {
-        bkashContainer.classList.remove('hidden');
+        const selected = document.querySelector('input[name="online_gateway"]:checked');
+        if (!selected) {
+          const bkash = document.querySelector('input[name="online_gateway"][value="bkash"]');
+          if (bkash) bkash.checked = true;
+        }
       }
+
+      toggleBdGateMethods();
     }
 
-    function highlightGateway(element) {
-      document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
-      element.closest('.gateway-card').classList.add('selected');
+    function toggleBdGateMethods() {
+      const gateway = document.querySelector('input[name="online_gateway"]:checked')?.value || 'bkash';
+      const methods = document.getElementById('bdgate-methods-container');
+      if (methods) methods.classList.toggle('hidden', gateway !== 'bdgate');
+    }
+
+    function highlightGateway(element, selector = '.gateway-card') {
+      document.querySelectorAll(selector).forEach(card => card.classList.remove('selected'));
+      const card = element.closest(selector);
+      if (card) card.classList.add('selected');
     }
 
     async function fetchCheckoutProduct() {
@@ -585,31 +630,71 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
           if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
 
-          // Some existing profiles store Bangladesh location codes instead of names.
-          // Convert those codes for display without changing the values saved in the profile.
-          const resolveLocationName = (value, type) => {
-            const raw = String(value ?? '').trim();
-            if (!raw) return '';
+          // Convert stored Bangladesh location IDs to readable names for checkout.
+          // The same standard GeoCode dataset is used by the server when the order is saved.
+          const GEO_DATA_URLS = {
+            division: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/divisions/divisions.json',
+            district: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/districts/districts.json',
+            upazilla: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/upazilas/upazilas.json'
+        };
+          let checkoutGeoDataCache = null;
 
-            const maps = {
-              division: {
-                '6': 'Dhaka'
-              },
-              district: {
-                '43': 'Narayanganj'
-              },
-              upazilla: {
-                '331': 'Rupganj'
-              }
-            };
-
-            return maps[type]?.[raw] || raw;
+          const checkoutGeoMaps = {
+            division: {
+              '1': 'Chattagram', '2': 'Rajshahi', '3': 'Khulna', '4': 'Barisal',
+              '5': 'Sylhet', '6': 'Dhaka', '7': 'Rangpur', '8': 'Mymensingh'
+            },
+            district: {
+              '22': 'Meherpur', '33': 'Barisal', '43': 'Narayanganj', '47': 'Dhaka'
+            },
+            upazilla: {
+              '331': 'Rupganj', '332': 'Sonargaon'
+            }
           };
 
-          const displayDivision = resolveLocationName(user.division, 'division');
-          const displayDistrict = resolveLocationName(user.district, 'district');
-          const displayUpazilla = resolveLocationName(user.upazilla, 'upazilla');
-          const displayUnion = String(user.union_area || '').trim();
+          const checkoutIsNumericGeoCode = (value) => /^\d+$/.test(String(value ?? '').trim());
+
+          const checkoutLoadGeoData = async () => {
+            if (checkoutGeoDataCache) return checkoutGeoDataCache;
+            try {
+              const entries = await Promise.all(
+                Object.entries(GEO_DATA_URLS).map(async ([type, url]) => {
+                  const response = await fetch(url);
+                  if (!response.ok) throw new Error(`${type} geo data HTTP ${response.status}`);
+                  const json = await response.json();
+                  const table = Array.isArray(json)
+                    ? json.find(item => item.type === 'table')
+                    : null;
+                  return [type, table?.data || []];
+                })
+              );
+              checkoutGeoDataCache = Object.fromEntries(entries);
+              return checkoutGeoDataCache;
+            } catch (geoError) {
+              console.error('Checkout geo data load failed:', geoError);
+              return null;
+            }
+          };
+
+          const resolveLocationName = async (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+            if (!checkoutIsNumericGeoCode(raw)) return raw;
+
+            if (checkoutGeoMaps[type]?.[raw]) return checkoutGeoMaps[type][raw];
+
+            const geo = await checkoutLoadGeoData();
+            if (!geo) return '';
+
+            const rows = geo[type] || [];
+            const item = rows.find(entry => String(entry.id ?? '') === raw);
+            return item?.name || item?.bn_name || '';
+          };
+
+          const displayDivision = await resolveLocationName(user.division, 'division');
+          const displayDistrict = await resolveLocationName(user.district, 'district');
+          const displayUpazilla = await resolveLocationName(user.upazilla, 'upazilla');
+          const displayUnion = checkoutIsNumericGeoCode(user.union_area) ? '' : String(user.union_area || '').trim();
           const displayBlockHouse = String(user.block_house || '').trim();
 
           const addressParts = [displayBlockHouse, displayUnion, displayUpazilla, displayDistrict, displayDivision]
@@ -726,9 +811,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const paymentMethod = paymentRadio ? paymentRadio.value : 'cod';
 
       let selectedGateway = null;
+      let bdgatePaymentMethod = null;
       if (paymentMethod === 'online') {
         const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
         selectedGateway = selectedGatewayRadio ? selectedGatewayRadio.value : 'bkash';
+
+        if (selectedGateway === 'bdgate') {
+          const bdgateMethodRadio = document.querySelector('input[name="bdgate_payment_method"]:checked');
+          bdgatePaymentMethod = bdgateMethodRadio ? bdgateMethodRadio.value : 'bkash';
+        }
       }
 
       if (!name || !phone) {
@@ -751,6 +842,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         variant: selectedVariant || null,
         payment_method: paymentMethod,
         selected_gateway: selectedGateway,
+        bdgate_payment_method: bdgatePaymentMethod,
         name: name,
         email: email,
         phone: phone,
