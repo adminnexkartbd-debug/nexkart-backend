@@ -1,7 +1,7 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../../config/db'); // আপনার প্রজেক্টের ডাটাবেজ কানেকশন ফাইলের সঠিক পাথ দিন
+const db = require('../../db'); // আপনার প্রজেক্টের ডাটাবেজ কানেকশন ফাইলের সঠিক পাথ দিন
 
 // ১. সকল পেমেন্ট মেথড নিয়ে আসা (Get All Payment Methods for Admin)
 router.get('/', async (req, res) => {
