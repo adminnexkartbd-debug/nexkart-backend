@@ -340,6 +340,9 @@ router.get('/order-lists.html', ensureActiveAdmin, (req, res) => {
 router.get('/admin-review.html', ensureActiveAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/admin/admin-review.html'));
 });
+router.get('/paymentMethods.html', ensureActiveAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/admin/paymentMethods.html'));
+});
 
 router.get('/verify-documents.html', ensureActiveAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/admin/verify-documents.html'));
