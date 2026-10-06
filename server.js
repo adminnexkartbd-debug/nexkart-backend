@@ -309,6 +309,7 @@ const adminInboxRouter = require('./routes/admin/adminInbox');
 const inquariedRouter = require('./routes/admin/Inquaried_sl'); 
 const orderListRouter = require('./routes/admin/order-listRouter');
 const controlEmployeRouter = require('./routes/admin/controlEmployeRouter');
+const paymentMethodsAdminRouter = require('./routes/admins/paymentMethods');
 
 const cartRouter = require('./routes/users/cart.router');
 const adminReviewRouter = require('./routes/admin/adminReviewRouter');
@@ -337,6 +338,8 @@ app.use('/admin/orders-list', orderListRouter);
 app.use('/admin', verifyDocumentsRouter);
 app.use('/admin', superAdminRouter);
 app.use('/admin', withdrawRouter);
+app.use('/api/admins/payment-methods', paymentMethodsAdminRouter);
+
 app.use('/admin', returnRefundRouter);
 
 app.use('/user', popRouter);
