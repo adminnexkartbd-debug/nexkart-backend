@@ -62,18 +62,22 @@
         <button onclick="openTicketModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-ticket"></i> Support & Complains
         </button>
-        <!-- NEW IPR REPORT BUTTON -->
+        <!-- IPR REPORT BUTTON -->
         <button onclick="openIprModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-file-shield"></i> IPR Reports
         </button>
-        <!-- NEW SELLER STATUS BUTTON -->
+        <!-- SELLER STATUS BUTTON -->
         <button onclick="openSellerStatusModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-store"></i> Seller Status List
         </button>
-        <!-- NEW WITHDRAWAL REQUESTS BUTTON -->
+        <!-- WITHDRAWAL REQUESTS BUTTON -->
         <button onclick="openWithdrawalModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
         </button>
+        <!-- NEW ADD PAYMENT METHODS BUTTON -->
+        <a href="/add-payment-method.html" onclick="toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-credit-card"></i> Add Payment Methods
+        </a>
       </nav>
     </div>
 
@@ -120,8 +124,8 @@
         </div>
       </div>
 
-      <!-- CARDS -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+      <!-- CARDS GRID -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- 1. New Register Request Card -->
         <div onclick="openRegisterModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
@@ -188,7 +192,7 @@
           </div>
         </div>
 
-        <!-- 6. NEW IPR Reports Card -->
+        <!-- 6. IPR Reports Card -->
         <div onclick="openIprModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
           <div class="flex items-center justify-between">
             <div>
@@ -201,7 +205,7 @@
           </div>
         </div>
 
-        <!-- 7. NEW Seller Status Card -->
+        <!-- 7. Seller Status Card -->
         <div onclick="openSellerStatusModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
           <div class="flex items-center justify-between">
             <div>
@@ -214,7 +218,7 @@
           </div>
         </div>
 
-        <!-- 8. NEW Withdrawal Requests Card -->
+        <!-- 8. Withdrawal Requests Card -->
         <div onclick="openWithdrawalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
           <div class="flex items-center justify-between">
             <div>
@@ -226,6 +230,19 @@
             </div>
           </div>
         </div>
+
+        <!-- 9. NEW Add Payment Methods Card -->
+        <a href="/paymenmethods.html" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group block">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase">Settings</p>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Add Payment Methods</h3>
+            </div>
+            <div class="w-12 h-12 bg-cyan-100 text-cyan-600 rounded-xl flex items-center justify-center text-xl group-hover:bg-cyan-600 group-hover:text-white transition">
+              <i class="fa-solid fa-credit-card"></i>
+            </div>
+          </div>
+        </a>
 
       </div>
     </main>
@@ -441,7 +458,7 @@
         <button onclick="closeModal('ticketModal')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold px-2">&times;</button>
       </div>
 
-      <!-- Ticket Management Layout (Mobile Friendly Column / Row Toggle or Stacked View) -->
+      <!-- Ticket Management Layout -->
       <div class="flex-1 flex flex-col md:flex-row overflow-hidden border rounded-xl my-3 bg-slate-50">
         
         <!-- Left Sidebar: Ticket List -->
@@ -515,7 +532,7 @@
     </div>
   </div>
 
- <!-- POPUP 6: IPR REPORTS MODAL -->
+  <!-- POPUP 6: IPR REPORTS MODAL -->
   <div id="iprModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
     <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
@@ -552,7 +569,7 @@
     </div>
   </div>
 
-  <!-- POPUP 8: SELLER STATUS MODAL -->
+  <!-- POPUP 7: SELLER STATUS MODAL -->
   <div id="sellerStatusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
     <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
@@ -589,7 +606,7 @@
     </div>
   </div>
 
-  <!-- POPUP: WITHDRAWAL REQUESTS MODAL -->
+  <!-- POPUP 8: WITHDRAWAL REQUESTS MODAL -->
   <div id="withdrawalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
     <div class="bg-white rounded-2xl max-w-[98vw] sm:max-w-[95vw] w-full h-[90vh] p-4 sm:p-6 shadow-2xl relative flex flex-col justify-between">
       
@@ -663,7 +680,7 @@
     </div>
   </div>
 
-  <!-- POPUP 7: LOGOUT MODAL -->
+  <!-- POPUP 9: LOGOUT MODAL -->
   <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center relative">
       <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -969,24 +986,25 @@
     }
 
     async function changeOrderState(id, field, value) {
-  try {
-    const res = await fetch('/admin/api/update-order-status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, field, value })
-    });
-    const data = await res.json();
-    if (data.success) {
-      alert('Order status updated and confirmation email sent successfully via Google API!');
-      openOrderModal(); // Order list refresh korar jonno
-    } else {
-      alert(data.error || 'Failed to update order');
+      try {
+        const res = await fetch('/admin/api/update-order-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, field, value })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Order status updated successfully!');
+          openOrderModal();
+        } else {
+          alert(data.error || 'Failed to update order');
+        }
+      } catch (err) {
+        console.error('Error updating order:', err);
+        alert('Network error while updating status');
+      }
     }
-  } catch (err) {
-    console.error('Error updating order:', err);
-    alert('Network error while updating status');
-  }
-}
+
     // ================= COMMISSION REPORT LOGIC =================
     async function openCommissionModal() {
       openModal('commissionModal');
@@ -1128,7 +1146,7 @@
       }).join('');
     }
 
-   function selectTicket(id) {
+    function selectTicket(id) {
       activeTicket = allTicketsData.find(t => t.id === id);
       if (!activeTicket) return;
 
@@ -1147,7 +1165,6 @@
 
       statusSelect.value = activeTicket.status || 'open';
 
-      // যদি টিকিটটি ইতিমধ্যে closed থাকে, তবে ইনপুট ও বাটন ডিজেবল করে দেওয়া (ar reply dite parbe na)
       if (activeTicket.status === 'closed') {
         replyTextarea.value = '';
         replyTextarea.disabled = true;
@@ -1198,7 +1215,6 @@
       }
 
       container.innerHTML = `
-        <!-- Original User Complaint -->
         <div class="bg-white border rounded-xl p-4 shadow-sm space-y-2">
           <div class="flex justify-between items-center border-b pb-2">
             <div>
@@ -1213,8 +1229,6 @@
           </div>
           ${attachmentHTML}
         </div>
-
-        <!-- Admin Reply Box Section -->
         ${replyHTML}
       `;
     }
@@ -1268,7 +1282,7 @@
       }
     }
 
-   // IPR Reports Modal Open & Render
+    // IPR Reports Modal Open & Render
     async function openIprModal() {
       openModal('iprModal');
       const tableBody = document.getElementById('iprTableBody');
@@ -1320,7 +1334,7 @@
     }
 
     async function updateIprStatus(id, email, btnElement) {
-      if (!confirm('Are you sure you want to process this report? A confirmation mail will be sent via Google API and status will be updated to RESOLVED.')) return;
+      if (!confirm('Are you sure you want to process this report? Status will be updated to RESOLVED.')) return;
       
       if (btnElement) {
         btnElement.disabled = true;
@@ -1335,7 +1349,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert('Mail sent successfully via Google API & Status updated to RESOLVED!');
+          alert('Status updated to RESOLVED!');
           openIprModal();
         } else {
           alert(data.error || 'Failed to update status');
@@ -1353,6 +1367,7 @@
         }
       }
     }
+
     // ================= SELLER STATUS LIST LOGIC =================
     async function openSellerStatusModal() {
       openModal('sellerStatusModal');
@@ -1424,7 +1439,7 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Seller action updated and notification email sent successfully!');
+          alert('Seller action updated successfully!');
           openSellerStatusModal();
         } else {
           alert(data.error || 'Failed to update action');
@@ -1436,7 +1451,6 @@
         openSellerStatusModal();
       }
     }
-
 
     let allWithdrawalsData = [];
 
@@ -1550,13 +1564,12 @@
       }
     }
 
-
     window.onload = function() {
       fetchCurrentSuperAdmin();
     };
 
     window.onclick = function(event) {
-      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'logoutModal'];
+      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'withdrawalModal', 'logoutModal'];
       modals.forEach(id => {
         const modal = document.getElementById(id);
         if (event.target === modal) {
