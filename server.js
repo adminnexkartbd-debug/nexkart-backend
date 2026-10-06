@@ -38,9 +38,7 @@ app.use(
         "https://stats.g.doubleclick.net",
         "https://www.facebook.com",
         "https://connect.facebook.net",
-        "https://*.facebook.com",
-        "https://cloudflareinsights.com",
-        "https://*.cloudflareinsights.com"
+        "https://*.facebook.com"
       ], 
       scriptSrc: [
         "'self'", 
@@ -56,8 +54,7 @@ app.use(
         "https://connect.facebook.net",
         "https://*.facebook.net",
         "https://*.facebook.com"
-      , 
-        "https://static.cloudflareinsights.com"],
+      ],
       // Facebook Pixel এবং Google Tag ManagerScript লোডের জন্য scriptSrcElem স্পষ্ট করা হলো
       scriptSrcElem: [
         "'self'", 
@@ -72,8 +69,7 @@ app.use(
         "https://*.google-analytics.com",
         "https://connect.facebook.net",
         "https://*.facebook.net",
-        "https://*.facebook.com",
-        "https://static.cloudflareinsights.com"
+        "https://*.facebook.com"
       ],
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
@@ -325,6 +321,7 @@ const userSettingsRouter = require('./routes/users/settings');
 const popRouter = require('./routes/users/popRouter');
 const coinRoutes = require('./routes/users/coinRoutes');
 
+
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
 const startCommissionCron = require('./services/commissionCalculator');
@@ -338,9 +335,8 @@ app.use('/admin/orders-list', orderListRouter);
 app.use('/admin', verifyDocumentsRouter);
 app.use('/admin', superAdminRouter);
 app.use('/admin', withdrawRouter);
-app.use('/api/admins/payment-methods', paymentMethodsAdminRouter);
-
 app.use('/admin', returnRefundRouter);
+app.use('/api/admins/payment-methods', paymentMethodsAdminRouter);
 
 app.use('/user', popRouter);
 app.use('/user', sellerProfileRouter);
