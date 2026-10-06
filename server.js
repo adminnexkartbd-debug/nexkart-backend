@@ -13,10 +13,7 @@ app.use(compression());
 app.set('trust proxy', 1);
 
 
-//app.get('/sitemap.xml', (req, res) => {
- //   res.setHeader('Content-Type', 'application/xml');
- //   res.sendFile(path.join(__dirname, 'sitemap.xml'));
-//});
+
 
 // ১. ট্র্যাকিং আইডিগুলো ফ্রন্টএন্ডে পাঠানোর জন্য একটি API রাউট
 app.get('/api/config', (req, res) => {
@@ -41,7 +38,9 @@ app.use(
         "https://stats.g.doubleclick.net",
         "https://www.facebook.com",
         "https://connect.facebook.net",
-        "https://*.facebook.com"
+        "https://*.facebook.com",
+        "https://cloudflareinsights.com",
+        "https://*.cloudflareinsights.com"
       ], 
       scriptSrc: [
         "'self'", 
@@ -57,7 +56,8 @@ app.use(
         "https://connect.facebook.net",
         "https://*.facebook.net",
         "https://*.facebook.com"
-      ],
+      , 
+        "https://static.cloudflareinsights.com"],
       // Facebook Pixel এবং Google Tag ManagerScript লোডের জন্য scriptSrcElem স্পষ্ট করা হলো
       scriptSrcElem: [
         "'self'", 
@@ -72,7 +72,8 @@ app.use(
         "https://*.google-analytics.com",
         "https://connect.facebook.net",
         "https://*.facebook.net",
-        "https://*.facebook.com"
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
       ],
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
