@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexKart - Welcome Beauty</title>
+    <title>Login | NexKartBD</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
@@ -411,7 +411,25 @@
                 height: 120px;
             }
         }
-    </style>
+    
+/* NexKartBD Design 1 — visual enhancement; existing form and API behavior retained */
+:root{--nk-pink:#ff1761;--nk-ink:#172035;--nk-muted:#657085}
+html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflow-y:auto;background:radial-gradient(circle at 12% 12%,#ffe1ec 0,transparent 38%),linear-gradient(130deg,#fff7fa,#ffe9f1 56%,#fffafc);padding:32px 18px;color:var(--nk-ink)}
+.main-container{width:1080px;max-width:100%;min-height:630px;background:#fff;border-radius:25px;box-shadow:0 25px 75px rgba(154,42,91,.15);border:1px solid #ffe3ec;backdrop-filter:none}
+.cartoon-section{flex:1.07;position:relative;overflow:hidden;align-items:flex-start;text-align:left;justify-content:flex-start;padding:45px 42px;background:linear-gradient(150deg,#fff0f5 0%,#ffd8e7 58%,#ffb9d1 100%);border-right:0}
+.cartoon-section:before{content:'';position:absolute;width:360px;height:360px;right:-130px;bottom:-135px;border-radius:50%;background:rgba(255,255,255,.4)}
+.showcase-brand{display:flex;align-items:center;gap:10px;position:relative;z-index:2;font-size:24px;font-weight:800;color:#141b2c;letter-spacing:-.8px}.showcase-brand img{width:42px;height:42px;object-fit:contain}.showcase-brand strong{color:var(--nk-pink)}
+.showcase-copy{position:relative;z-index:2;margin-top:43px}.showcase-copy h2{font-size:clamp(29px,3.1vw,42px);line-height:1.18;color:#141b2c;font-weight:800;letter-spacing:-1.5px;margin-bottom:14px}.showcase-copy h2 em{color:var(--nk-pink);font-style:normal}.showcase-copy p{font-size:14px;line-height:1.75;color:#566077;max-width:350px}
+.showcase-benefits{position:relative;z-index:2;display:grid;gap:14px;margin-top:27px}.showcase-benefits span{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#28334b}.showcase-benefits i{color:var(--nk-pink);font-size:16px;width:22px}
+.shopping-art{position:absolute;right:6px;bottom:5px;width:65%;height:245px;pointer-events:none;z-index:1}.art-bag{position:absolute;bottom:15px;right:22%;width:145px;height:160px;border-radius:12px 12px 18px 18px;background:linear-gradient(135deg,#ff3d83,#f4085a);box-shadow:20px 20px 35px #d6568560;transform:rotate(-7deg)}.art-bag:before{content:'';position:absolute;width:60px;height:65px;border:11px solid #fa2570;border-bottom:0;border-radius:60px 60px 0 0;top:-43px;left:41px}.art-bag:after{content:'NexKartBD';position:absolute;color:#fff;font-weight:700;font-size:16px;top:75px;left:21px}.art-phone{position:absolute;right:2%;bottom:6px;width:80px;height:146px;background:linear-gradient(145deg,#282e4a,#0b1124);border:6px solid #20263d;border-radius:19px;transform:rotate(12deg);box-shadow:0 16px 26px #ae41604d}.art-phone:after{content:'✦';display:grid;place-items:center;color:#fff;font-size:44px;position:absolute;inset:5px;background:linear-gradient(160deg,#e09ae9,#f74684);border-radius:12px}.art-box{position:absolute;right:65%;bottom:8px;width:105px;height:95px;background:linear-gradient(140deg,#ffb5ce,#ff7fa7);border-radius:8px;transform:rotate(10deg);box-shadow:0 12px 25px #d6568550}.art-box:after{content:'✦';color:#fff;position:absolute;top:20px;left:35px;font-size:36px}
+.login-section{flex:1;padding:55px 55px;justify-content:center;min-width:0}.brand-logo{font-size:29px;letter-spacing:-.6px;color:#192138;margin-bottom:7px}.brand-logo i{color:var(--nk-pink)}.login-section>p{font-size:14px;margin-bottom:26px;color:var(--nk-muted)}
+.input-group{margin-bottom:16px}.input-group input{height:51px;background:#fff;border:1.5px solid #e5e8ee;border-radius:11px;font-size:14px;padding-left:44px}.input-group input:focus{border-color:var(--nk-pink);box-shadow:0 0 0 4px #ff176117}.input-group i{color:#7b8395}.btn-submit{min-height:50px;border-radius:11px;background:linear-gradient(100deg,#ff1761,#f83875);box-shadow:0 9px 18px #ff17612e}.btn-submit:hover{background:#e70e53;box-shadow:0 11px 24px #ff176142}.btn-google{min-height:48px;border:1.5px solid #e5e8ee;border-radius:11px}.btn-google:hover{border-color:#ff91b2}.options a,.signup-link a{color:var(--nk-pink)}.privacy-policy{line-height:1.6;margin-top:18px}.divider{margin:22px 0}.bg-animations{display:none}
+.password-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#6b7384;cursor:pointer;padding:7px;font-size:14px}.input-group input[type=password],.input-group input[data-password-field]{padding-right:43px}
+@media(max-width:800px){body{padding:16px}.main-container{width:650px;min-height:0;flex-direction:column;max-height:none;overflow:visible}.cartoon-section{padding:25px 28px;min-height:185px}.showcase-copy{margin-top:14px}.showcase-copy h2{font-size:28px;margin-bottom:6px}.showcase-copy p{font-size:12px;max-width:65%}.showcase-benefits,.shopping-art{display:none}.login-section{padding:32px 30px}.brand-logo{font-size:25px}}
+@media(max-width:440px){body{padding:10px}.main-container{border-radius:19px}.cartoon-section{padding:22px;min-height:175px}.showcase-copy h2{font-size:25px}.showcase-copy p{max-width:100%}.login-section{padding:26px 21px}.modal-content{max-width:96%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+</style>
 </head>
 <body>
 
@@ -429,18 +447,12 @@
     <div class="main-container">
         
         <!-- বাম পাশে লোগো ও ব্র্যান্ড শোকেস সেকশন -->
-        <div class="cartoon-section">
-            <div class="cartoon-img-box">
-                <img src="/images/logo.png" alt="NexKart Logo">
-            </div>
-            <h2>Be Your Own Kind of Beautiful</h2>
-            <p>Discover trendy cosmetics, skincare, and exclusive beauty products tailored just for you!</p>
-        </div>
+        <div class="cartoon-section"><div class="showcase-brand"><img src="/images/logo.png" alt="NexKartBD logo" onerror="this.style.display='none'">NexKart<strong>BD</strong></div><div class="showcase-copy"><h2>Shop More.<br><em>Live Better.</em></h2><p>Discover amazing products, exclusive deals and a better shopping experience with NexKartBD.</p></div><div class="showcase-benefits"><span><i class="fa-solid fa-shield-halved"></i> Original Products</span><span><i class="fa-solid fa-truck-fast"></i> Fast & Reliable Delivery</span><span><i class="fa-solid fa-lock"></i> Secure Shopping</span><span><i class="fa-solid fa-rotate-left"></i> Easy Return Policy</span></div><div class="shopping-art" aria-hidden="true"><div class="art-box"></div><div class="art-bag"></div><div class="art-phone"></div></div></div>
 
         <!-- ডান পাশের লগইন ফর্ম সেকশন -->
         <div class="login-section">
             <div class="brand-logo">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>NexKart Beauty
+                <i class="fa-solid fa-wand-magic-sparkles"></i>NexKartBD
             </div>
             <p>Welcome back! Please login to your account.</p>
 
@@ -452,7 +464,7 @@
 
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" name="password" placeholder="Enter your password" required>
+                    <input type="password" name="password" id="loginPassword" placeholder="Enter your password" required><button type="button" class="password-toggle" aria-label="Show password" onclick="const p=document.getElementById('loginPassword');p.type=p.type==='password'?'text':'password';this.setAttribute('aria-label',p.type==='password'?'Show password':'Hide password')"><i class="fa-regular fa-eye"></i></button>
                 </div>
 
                 <div class="options">
