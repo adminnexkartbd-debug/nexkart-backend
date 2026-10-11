@@ -12,7 +12,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- SEO Meta Tags -->
-  <title>Ticket Design V4 | My Coupons & Discount Vouchers | User Dashboard - NexKartBD</title>
+  <title>My Coupons & Discount Vouchers | User Dashboard - NexKartBD</title>
   <meta name="description" content="Check and claim your personal discount coupons, promo codes, and special offers on your NexKartBD profile.">
   <meta name="robots" content="noindex, nofollow"> <!-- প্রাইভেট ইউজার পেজ হওয়ায় গুগলে সার্চ ইন্ডেক্স অফ রাখা হয়েছে -->
   <link rel="canonical" href="https://www.nexkartbd.com/user/My-Coupons.html">
@@ -24,12 +24,208 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta property="og:url" content="https://www.nexkartbd.com/user/My-Coupons.html">
 
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', 'Segoe UI', sans-serif; }
+    
+    body { 
+      background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%); 
+      min-height: 100vh;
+      padding: 30px 15px; 
+    }
 
-:root{--pink:#f71964;--rose:#e11d48;--ink:#242238;--muted:#667085}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0%,#ffd7e5,transparent 33%),linear-gradient(135deg,#fff8fb,#fff0f5);font-family:Poppins,'Segoe UI',sans-serif;color:var(--ink);padding:32px 20px}
-.container{max-width:1250px;margin:auto}.header-bar{display:flex;align-items:center;gap:24px;margin-bottom:28px;flex-wrap:wrap}.back-btn{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:100px;background:#fff;color:var(--pink);font-weight:700;text-decoration:none;box-shadow:0 5px 18px #bc2b5830;border:1px solid #ffe2eb}.back-btn:hover{background:#fff1f5}.page-title{font-size:clamp(25px,3vw,38px);color:#d91450;font-weight:800;letter-spacing:-.8px}.coupon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.coupon-card{display:flex;min-height:220px;overflow:hidden;background:#fff;border-radius:22px;border:1px solid #ffe3eb;box-shadow:0 12px 28px #c42b5720;transition:transform .2s,box-shadow .2s}.coupon-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px #c42b5730}.coupon-left{position:relative;flex:0 0 38%;min-width:0;background:linear-gradient(135deg,#ff477e,#f71964);color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px 12px;isolation:isolate}.coupon-left:before,.coupon-left:after{content:'';position:absolute;right:-11px;width:22px;height:22px;border-radius:50%;background:#fff;z-index:2}.coupon-left:before{top:-11px}.coupon-left:after{bottom:-11px}.coupon-left.expired-bg{background:linear-gradient(135deg,#b3b5c0,#828593)}.discount-amount{font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1.1;overflow-wrap:anywhere}.off-text{font-size:17px;font-weight:800;letter-spacing:2px;margin-top:4px}.scope-badge{max-width:95%;padding:7px 10px;border-radius:30px;border:1px solid #ffffffaa;background:#ffffff24;font-size:11px;font-weight:700;margin-top:16px;overflow-wrap:anywhere}.coupon-right{flex:1;min-width:0;padding:23px 22px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}.product-title{display:block;font-size:17px;font-weight:750;color:#202338;text-decoration:none;overflow-wrap:anywhere}.product-title:hover{color:var(--rose)}.price-box{margin-top:10px;font-size:15px}.old-price{color:#9296a2;text-decoration:line-through;margin-right:10px}.new-price{color:#0c9c52;font-size:18px;font-weight:800}.save-tag{color:#f71964;font-weight:700;font-size:13px;margin-top:5px}.coupon-expiry{font-size:12px;font-weight:600;margin-top:10px}.text-active{color:#64748b}.text-expired{color:#a63b55}.coupon-action{display:flex;gap:10px;align-items:center;margin-top:8px}.coupon-code{flex:1;min-width:0;display:block;text-align:center;overflow-wrap:anywhere;padding:11px 7px;border:1px dashed #ff89ad;background:#fff7fa;border-radius:10px;font-size:13px;font-weight:800;color:#242238}.copy-btn{background:var(--pink);color:white;border:0;border-radius:10px;padding:12px 17px;font-size:13px;font-weight:700;cursor:pointer}.copy-btn:hover{background:#d60c4d}.copy-btn:disabled{background:#999ba7;cursor:not-allowed}.coupon-card.expired{opacity:.78}.coupon-card.expired .coupon-left{filter:grayscale(1)}.state-message{grid-column:1/-1;background:white;border:1px solid #ffe0e8;padding:24px;border-radius:16px;color:#8b2145}
-@media(max-width:850px){.coupon-grid{grid-template-columns:1fr}.coupon-card{min-height:200px}}@media(max-width:480px){body{padding:20px 12px}.header-bar{gap:12px}.page-title{font-size:25px}.coupon-left{flex-basis:35%;padding:15px 7px}.coupon-right{padding:16px 12px}.discount-amount{font-size:26px}.off-text{font-size:13px}.scope-badge{font-size:9px}.product-title{font-size:14px}.price-box{font-size:12px}.new-price{font-size:15px}.coupon-action{gap:6px}.copy-btn{padding:11px 10px;font-size:12px}.coupon-code{font-size:11px}}
+    .container { max-width: 850px; margin: 0 auto; }
 
+    /* Header & Back Button Area */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+      gap: 15px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #e11d48;
+      border: 1px solid #fecdd3;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: #e11d48;
+      color: #ffffff;
+      transform: translateX(-3px);
+    }
+
+    .page-title { 
+      font-size: 26px; 
+      color: #881337; 
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    /* Coupon Layout Grid */
+    .coupon-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); 
+      gap: 22px; 
+    }
+
+    /* Card Box */
+    .coupon-card { 
+      background: #ffffff; 
+      border-radius: 18px; 
+      display: flex; 
+      box-shadow: 0 10px 25px rgba(225, 29, 72, 0.06); 
+      position: relative; 
+      overflow: hidden; 
+      border: 1px solid #ffe4e6;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .coupon-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 30px rgba(225, 29, 72, 0.12);
+    }
+
+    .coupon-card.expired { 
+      filter: grayscale(0.8); 
+      opacity: 0.7; 
+    }
+
+    /* Card Left Banner */
+    .coupon-left { 
+      background: linear-gradient(135deg, #fb7185, #e11d48); 
+      color: white; 
+      padding: 20px 15px; 
+      width: 35%; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center; 
+      text-align: center;
+      position: relative;
+    }
+
+    .coupon-left.expired-bg { 
+      background: linear-gradient(135deg, #94a3b8, #64748b); 
+    }
+
+    .discount-amount { font-size: 24px; font-weight: 800; line-height: 1; }
+    .off-text { font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-top: 2px; }
+
+    .scope-badge { 
+      font-size: 9px; 
+      background: rgba(255, 255, 255, 0.25); 
+      backdrop-filter: blur(4px);
+      padding: 3px 8px; 
+      border-radius: 12px; 
+      margin-top: 8px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px;
+    }
+
+    /* Card Right Content */
+    .coupon-right { 
+      padding: 18px; 
+      width: 65%; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between; 
+    }
+
+    .product-title { 
+      font-size: 14px; 
+      font-weight: 700; 
+      color: #4c0519; 
+      margin-bottom: 6px;
+      line-height: 1.3;
+      text-decoration: none;
+      display: block;
+      transition: color 0.2s ease;
+    }
+
+    .product-title:hover {
+      color: #e11d48;
+      text-decoration: underline;
+    }
+
+    .price-box { font-size: 13px; margin-bottom: 8px; }
+    .old-price { text-decoration: line-through; color: #9f1239; opacity: 0.5; margin-right: 6px; }
+    .new-price { color: #15803d; font-weight: 700; }
+    .save-tag { font-size: 11px; color: #e11d48; font-weight: 600; margin-top: 2px; }
+
+    .coupon-expiry { font-size: 11px; font-weight: 600; margin-bottom: 12px; }
+    .text-expired { color: #f43f5e; }
+    .text-active { color: #16a34a; }
+
+    /* Action & Copy Box */
+    .coupon-action { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      background: #fff1f2; 
+      border: 1px dashed #fecdd3; 
+      padding: 6px 12px; 
+      border-radius: 10px; 
+    }
+
+    .coupon-code { 
+      font-family: 'Courier New', monospace; 
+      font-size: 13px; 
+      font-weight: 700; 
+      color: #881337; 
+    }
+
+    .copy-btn { 
+      background: #e11d48; 
+      color: white; 
+      border: none; 
+      padding: 6px 14px; 
+      font-size: 12px; 
+      font-weight: 600;
+      border-radius: 8px; 
+      cursor: pointer; 
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover { background: #be123c; }
+    .copy-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+
+    /* Decorative Coupon Circles */
+    .coupon-card::before, .coupon-card::after { 
+      content: ''; 
+      position: absolute; 
+      width: 18px; 
+      height: 18px; 
+      background-color: #ffe4e1; 
+      border-radius: 50%; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      z-index: 2;
+    }
+    .coupon-card::before { left: -9px; }
+    .coupon-card::after { right: -9px; }
+  
+/* Coupon product image — uses the real product_images table */
+.coupon-left{padding:12px;display:flex;align-items:stretch;justify-content:stretch}
+.coupon-visual{position:relative;display:flex;flex:1;min-height:205px;border-radius:15px;overflow:hidden;background:linear-gradient(145deg,#fff0f5,#ffd2e2);align-items:center;justify-content:center}
+.coupon-product-image{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;padding:18px 14px 10px;mix-blend-mode:multiply}
+.coupon-discount-sticker{position:absolute;z-index:1;left:0;top:0;background:linear-gradient(135deg,#ff5185,#ed1460);color:white;border-radius:0 0 17px 0;padding:12px 13px;box-shadow:0 5px 15px #c42b5740;max-width:75%;text-align:center}
+.coupon-discount-sticker .discount-amount{font-size:25px}.coupon-discount-sticker .off-text{font-size:12px;margin-top:0}.coupon-discount-sticker .scope-badge{display:block;font-size:9px;margin-top:5px;padding:3px 6px}
+.coupon-card.expired .coupon-visual{filter:grayscale(1)}
+.coupon-card.expired .coupon-discount-sticker{background:linear-gradient(135deg,#b5b5bd,#888995)}
+.coupon-visual.no-image:after{content:'NexKartBD';font-size:14px;font-weight:800;color:#df8ca7;letter-spacing:1px}
+@media(max-width:480px){.coupon-visual{min-height:190px}.coupon-discount-sticker{padding:8px}.coupon-discount-sticker .discount-amount{font-size:21px}.coupon-product-image{padding:12px 6px}}
 </style>
 </head>
 <body>
@@ -56,6 +252,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </main>
 
   <script>
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
     async function fetchCoupons() {
       const container = document.getElementById('couponContainer');
       try {
@@ -89,7 +288,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             }
 
             const statusHTML = coupon.is_expired 
-              ? `<span class="text-expired">❌ Status: EXPIRED (${coupon.status_reason})</span>`
+              ? `<span class="text-expired">❌ Status: EXPIRED (${escapeHTML(coupon.status_reason)})</span>`
               : `<span class="text-active">⏳ Valid Till: ${dateFormatted}</span>`;
 
             // Dynamic Product Details Page Link Setup
@@ -101,19 +300,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const couponCard = `
               <article class="coupon-card ${coupon.is_expired ? 'expired' : ''}">
                 <div class="coupon-left ${coupon.is_expired ? 'expired-bg' : ''}">
-                  <div class="discount-amount">৳${coupon.discount_amount}</div>
-                  <div class="off-text">OFF</div>
-                  <span class="scope-badge">${coupon.coupon_scope}</span>
+                  <div class="coupon-visual ${coupon.primary_image ? '' : 'no-image'}">
+                    ${coupon.primary_image ? `<img class="coupon-product-image" src="${escapeHTML(coupon.primary_image)}" alt="" loading="lazy" onerror="this.remove();this.parentElement.classList.add('no-image')">` : ''}
+                    <div class="coupon-discount-sticker">
+                      <div class="discount-amount">৳${coupon.discount_amount}</div>
+                      <div class="off-text">OFF</div>
+                      <span class="scope-badge">${escapeHTML(coupon.coupon_scope)}</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="coupon-right">
                   <div>
-                    <a href="${productLink}" class="product-title">${coupon.product_name}</a>
+                    <a href="${productLink}" class="product-title">🛍️ ${escapeHTML(coupon.product_name)}</a>
                     ${priceHTML}
                     <div class="coupon-expiry">${statusHTML}</div>
                   </div>
                   <div class="coupon-action">
-                    <span class="coupon-code" id="code_${coupon.id}">${coupon.coupon_name}</span>
-                    <button type="button" class="copy-btn" ${coupon.is_expired ? 'disabled' : ''} onclick="copyCode('code_${coupon.id}', this)">${coupon.is_expired ? 'Expired' : 'Copy'}</button>
+                    <span class="coupon-code" id="code_${coupon.id}">${escapeHTML(coupon.coupon_name)}</span>
+                    <button 
+                      class="copy-btn" 
+                      ${coupon.is_expired ? 'disabled' : ''} 
+                      onclick="copyCode('code_${coupon.id}', this)">
+                      ${coupon.is_expired ? 'Expired' : 'Copy'}
+                    </button>
                   </div>
                 </div>
               </article>
