@@ -267,48 +267,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </label>
               <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
                 <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
-                <span class="text-xs font-bold text-gray-800">Online Payment</span>
+                <span class="text-xs font-bold text-gray-800">bKash Payment</span>
               </label>
             </div>
-            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">এই পণ্যে COD নেই, তাই Online Payment নির্বাচন করুন।</p>
+            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">এই পণ্যে COD নেই, তাই bKash online payment নির্বাচন করুন।</p>
           </div>
 
-          <div id="bkash-gateways-container" class="pt-3 hidden space-y-3 border-t border-pink-200">
-            <label class="block text-xs font-bold text-gray-800">Select Online Gateway:</label>
-            <div id="bkash-gateways-grid" class="grid grid-cols-2 gap-2">
-              <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center cursor-pointer border-2 border-pink-100">
-                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this); toggleBdGateMethods()">
+          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+            <label class="block text-xs font-bold text-gray-800">Select Payment Gateway:</label>
+            <div id="bkash-gateways-grid" class="grid grid-cols-1 gap-2">
+              <label class="gateway-card selected p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center">
+                <input type="radio" name="online_gateway" value="bkash" checked class="hidden" onchange="highlightGateway(this)">
                 <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[#e2136e] text-white font-extrabold tracking-tight text-base leading-none shadow-sm" aria-label="bKash">bKash</span>
-                <span class="text-xs font-bold text-gray-800">Direct bKash</span>
-              </label>
-              <label class="gateway-card p-3 rounded-xl bg-white flex items-center justify-center gap-2 text-center cursor-pointer border-2 border-transparent">
-                <input type="radio" name="online_gateway" value="bdgate" class="hidden" onchange="highlightGateway(this); toggleBdGateMethods()">
-                <span class="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-slate-800 text-white font-extrabold tracking-tight text-sm leading-none shadow-sm" aria-label="BDGate">BDGate</span>
-                <span class="text-xs font-bold text-gray-800">BDGate</span>
+                <span class="text-xs font-bold text-gray-800">bKash Online Payment</span>
               </label>
             </div>
-            <div id="bdgate-methods-container" class="hidden rounded-xl border border-pink-100 bg-pink-50/40 p-3 space-y-2">
-              <label class="block text-[11px] font-extrabold text-gray-800">BDGate Payment Method:</label>
-              <div class="grid grid-cols-2 gap-2">
-                <label class="bdgate-method-card selected p-2.5 rounded-lg bg-white border-2 border-pink-400 cursor-pointer text-center">
-                  <input type="radio" name="bdgate_payment_method" value="bkash" checked class="hidden" onchange="highlightBdGateMethod(this)">
-                  <span class="text-xs font-bold text-gray-800">bKash</span>
-                </label>
-                <label class="bdgate-method-card p-2.5 rounded-lg bg-white border-2 border-transparent cursor-pointer text-center">
-                  <input type="radio" name="bdgate_payment_method" value="nagad" class="hidden" onchange="highlightBdGateMethod(this)">
-                  <span class="text-xs font-bold text-gray-800">Nagad</span>
-                </label>
-                <label class="bdgate-method-card p-2.5 rounded-lg bg-white border-2 border-transparent cursor-pointer text-center">
-                  <input type="radio" name="bdgate_payment_method" value="upay" class="hidden" onchange="highlightBdGateMethod(this)">
-                  <span class="text-xs font-bold text-gray-800">Upay</span>
-                </label>
-                <label class="bdgate-method-card p-2.5 rounded-lg bg-white border-2 border-transparent cursor-pointer text-center">
-                  <input type="radio" name="bdgate_payment_method" value="rocket" class="hidden" onchange="highlightBdGateMethod(this)">
-                  <span class="text-xs font-bold text-gray-800">Rocket</span>
-                </label>
-              </div>
-              <p class="text-[10px] text-gray-500 italic">* BDGate payment successful হলে webhook দিয়ে order automatically complete হবে।</p>
-            </div>
+            <p class="text-[10px] text-gray-500 italic">* Payment will be processed securely via bKash gateway.</p>
           </div>
         </form>
       </div>
@@ -342,6 +316,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const COIN_VALUE_BDT = 0.30;
 
     document.addEventListener("DOMContentLoaded", () => {
+      if (urlParams.get('source') === 'cart') return;
       if (checkoutSlug || productId) {
         fetchCheckoutProduct();
       }
@@ -358,41 +333,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
 
     function togglePaymentGateways() {
-      const paymentRadio = document.querySelector('input[name="payment"]:checked');
-      const paymentMethod = paymentRadio ? paymentRadio.value : 'cod';
-      const onlineContainer = document.getElementById('bkash-gateways-container');
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      const bkashContainer = document.getElementById('bkash-gateways-container');
+
+      bkashContainer.classList.add('hidden');
+
       if (paymentMethod === 'online') {
-        onlineContainer.classList.remove('hidden');
-      } else {
-        onlineContainer.classList.add('hidden');
-        const bdgateMethods = document.getElementById('bdgate-methods-container');
-        if (bdgateMethods) bdgateMethods.classList.add('hidden');
+        bkashContainer.classList.remove('hidden');
       }
     }
 
     function highlightGateway(element) {
       document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
-      const card = element.closest('.gateway-card');
-      if (card) card.classList.add('selected');
-    }
-
-    function toggleBdGateMethods() {
-      const gateway = document.querySelector('input[name="online_gateway"]:checked')?.value;
-      const box = document.getElementById('bdgate-methods-container');
-      if (!box) return;
-      box.classList.toggle('hidden', gateway !== 'bdgate');
-    }
-
-    function highlightBdGateMethod(element) {
-      document.querySelectorAll('.bdgate-method-card').forEach(card => {
-        card.classList.remove('selected', 'border-pink-400');
-        card.classList.add('border-transparent');
-      });
-      const card = element.closest('.bdgate-method-card');
-      if (card) {
-        card.classList.add('selected', 'border-pink-400');
-        card.classList.remove('border-transparent');
-      }
+      element.closest('.gateway-card').classList.add('selected');
     }
 
     async function fetchCheckoutProduct() {
@@ -814,14 +767,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const paymentMethod = paymentRadio ? paymentRadio.value : 'cod';
 
       let selectedGateway = null;
-      let bdgatePaymentMethod = null;
       if (paymentMethod === 'online') {
         const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
         selectedGateway = selectedGatewayRadio ? selectedGatewayRadio.value : 'bkash';
-        if (selectedGateway === 'bdgate') {
-          const bdgateMethodRadio = document.querySelector('input[name="bdgate_payment_method"]:checked');
-          bdgatePaymentMethod = bdgateMethodRadio ? bdgateMethodRadio.value : 'bkash';
-        }
       }
 
       if (!name || !phone) {
@@ -844,7 +792,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         variant: selectedVariant || null,
         payment_method: paymentMethod,
         selected_gateway: selectedGateway,
-        bdgate_payment_method: bdgatePaymentMethod,
         name: name,
         email: email,
         phone: phone,
@@ -906,5 +853,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }
     }
   </script>
+<script>
+(function(){
+ if(new URLSearchParams(location.search).get('source') !== 'cart') return;
+ document.addEventListener('DOMContentLoaded',function(){
+   document.body.innerHTML = `<div style="max-width:1200px;margin:0 auto;padding:10px 14px 30px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 16px"><a href="/user/cart-html" style="font-weight:700;color:#d63384;text-decoration:none">← Back to cart</a><h1 style="font:800 22px system-ui;color:#222">NexKartBD Checkout</h1><span style="color:#64748b;font:500 12px system-ui">Secure order</span></div><iframe title="Cart checkout" id="cart-checkout-frame" src="/user/cart-checkout-content.html" style="display:block;width:100%;height:1600px;border:0;border-radius:18px;background:transparent" loading="eager"></iframe></div>`;
+   document.body.style.margin='0';document.body.style.background='#fff3f6';
+ });
+})();
+</script>
 </body>
 </html>
