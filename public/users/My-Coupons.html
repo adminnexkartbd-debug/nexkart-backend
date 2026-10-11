@@ -226,6 +226,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .coupon-card.expired .coupon-discount-sticker{background:linear-gradient(135deg,#b5b5bd,#888995)}
 .coupon-visual.no-image:after{content:'NexKartBD';font-size:14px;font-weight:800;color:#df8ca7;letter-spacing:1px}
 @media(max-width:480px){.coupon-visual{min-height:190px}.coupon-discount-sticker{padding:8px}.coupon-discount-sticker .discount-amount{font-size:21px}.coupon-product-image{padding:12px 6px}}
+
+/* Nexkart coupon large card + image update 2026-10-12 */
+.container{max-width:1440px}
+.coupon-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+.coupon-card{min-height:315px;border-radius:24px;box-shadow:0 14px 38px rgba(200,39,93,.13)}
+.coupon-left{width:46%;flex:0 0 46%;padding:12px}
+.coupon-right{width:54%;flex:1;min-width:0;padding:26px 24px;gap:14px}
+.coupon-visual{width:100%;min-height:290px;border-radius:18px;background:linear-gradient(145deg,#fff6f9,#ffe2eb)}
+.coupon-product-image{object-fit:contain;padding:12px 8px 8px;mix-blend-mode:normal}
+.coupon-discount-sticker{padding:12px 16px;max-width:65%;border-radius:0 0 18px 0}
+.coupon-discount-sticker .discount-amount{font-size:30px}
+.coupon-discount-sticker .off-text{font-size:13px}
+.product-title{font-size:17px;line-height:1.5}
+.price-box{font-size:15px;margin:12px 0}.new-price{font-size:19px}
+.save-tag,.coupon-expiry{font-size:13px}
+.coupon-action{padding:10px 12px;gap:10px}.coupon-code{font-size:14px;overflow-wrap:anywhere}
+.copy-btn{padding:11px 18px;font-size:13px}
+@media(max-width:1050px){.coupon-grid{grid-template-columns:1fr;max-width:780px;margin:0 auto}.coupon-card{min-height:300px}.coupon-visual{min-height:275px}}
+@media(max-width:600px){body{padding:20px 12px}.coupon-grid{gap:18px}.coupon-card{min-height:235px;border-radius:18px}.coupon-left{width:43%;flex-basis:43%;padding:8px}.coupon-right{width:57%;padding:16px 12px;gap:8px}.coupon-visual{min-height:220px;border-radius:13px}.coupon-product-image{padding:9px 5px 6px}.coupon-discount-sticker{padding:8px;max-width:80%}.coupon-discount-sticker .discount-amount{font-size:22px}.coupon-discount-sticker .off-text{font-size:11px}.coupon-discount-sticker .scope-badge{font-size:8px}.product-title{font-size:14px;line-height:1.35}.price-box{font-size:12px;margin:7px 0}.new-price{font-size:15px}.save-tag,.coupon-expiry{font-size:11px}.coupon-action{padding:6px;gap:5px}.coupon-code{font-size:11px}.copy-btn{padding:9px 10px;font-size:11px}}
+@media(max-width:370px){.coupon-card{flex-direction:column}.coupon-left,.coupon-right{width:100%;flex-basis:auto}.coupon-visual{min-height:245px}.coupon-right{padding:17px}.coupon-product-image{padding:12px}}
 </style>
 </head>
 <body>
