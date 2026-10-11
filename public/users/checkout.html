@@ -854,13 +854,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
   </script>
 <script>
-(function(){
- if(new URLSearchParams(location.search).get('source') !== 'cart') return;
- document.addEventListener('DOMContentLoaded',function(){
-   document.body.innerHTML = `<div style="max-width:1200px;margin:0 auto;padding:10px 14px 30px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 16px"><a href="/user/cart-html" style="font-weight:700;color:#d63384;text-decoration:none">← Back to cart</a><h1 style="font:800 22px system-ui;color:#222">NexKartBD Checkout</h1><span style="color:#64748b;font:500 12px system-ui">Secure order</span></div><iframe title="Cart checkout" id="cart-checkout-frame" src="/user/cart-checkout-content.html" style="display:block;width:100%;height:1600px;border:0;border-radius:18px;background:transparent" loading="eager"></iframe></div>`;
-   document.body.style.margin='0';document.body.style.background='#fff3f6';
- });
-})();
+// Cart checkout must load as a full document, never inside an iframe.
+if (new URLSearchParams(window.location.search).get('source') === 'cart') {
+  window.location.replace('/user/cart-checkout-content.html');
+}
 </script>
 </body>
 </html>
