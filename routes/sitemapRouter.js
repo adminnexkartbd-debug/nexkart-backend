@@ -26,6 +26,10 @@ router.get('/sitemap.xml', async (req, res) => {
         // 1. SELECT product data
         const [products] = await db.query(`SELECT id, slug, updated_at FROM products`);
 
+        // 2. SELECT distinct categories and promo badges from products table
+        const [categories] = await db.query(`SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ''`);
+        const [promos] = await db.query(`SELECT DISTINCT promo_badge FROM products WHERE promo_badge IS NOT NULL AND promo_badge != ''`);
+
         // Create XML Document
         const root = create({ version: '1.0', encoding: 'UTF-8' })
             .ele('urlset', { xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9' });
@@ -38,7 +42,25 @@ router.get('/sitemap.xml', async (req, res) => {
                 .ele('priority').txt(route === '/' ? '1.0' : '0.8').up();
         });
 
-        // 2. Dynamic Product Pages with correct URL structure: /user/product/slug
+        // 3. Dynamic Category Pages (e.g., /user/category.html?category=...)
+        categories.forEach(cat => {
+            const encodedCategory = encodeURIComponent(cat.category);
+            root.ele('url')
+                .ele('loc').txt(`${baseUrl}/user/category.html?category=${encodedCategory}`).up()
+                .ele('changefreq').txt('weekly').up()
+                .ele('priority').txt('0.8').up();
+        });
+
+        // 4. Dynamic Promo Pages (e.g., /user/category.html?promo=super_deal)
+        promos.forEach(p => {
+            const encodedPromo = encodeURIComponent(p.promo_badge);
+            root.ele('url')
+                .ele('loc').txt(`${baseUrl}/user/category.html?promo=${encodedPromo}`).up()
+                .ele('changefreq').txt('weekly').up()
+                .ele('priority').txt('0.8').up();
+        });
+
+        // 5. Dynamic Product Pages with correct URL structure: /user/product/slug
         products.forEach(product => {
             const productPath = product.slug 
                 ? `/user/product/${product.slug}`
