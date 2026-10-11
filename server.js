@@ -53,7 +53,8 @@ app.use(
         "https://*.google-analytics.com",
         "https://connect.facebook.net",
         "https://*.facebook.net",
-        "https://*.facebook.com"
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
       ],
       // Facebook Pixel এবং Google Tag ManagerScript লোডের জন্য scriptSrcElem স্পষ্ট করা হলো
       scriptSrcElem: [
@@ -69,7 +70,8 @@ app.use(
         "https://*.google-analytics.com",
         "https://connect.facebook.net",
         "https://*.facebook.net",
-        "https://*.facebook.com"
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
       ],
       scriptSrcAttr: ["'unsafe-inline'"], 
       styleSrc: [
