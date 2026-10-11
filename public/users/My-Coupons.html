@@ -12,7 +12,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- SEO Meta Tags -->
-  <title>My Coupons & Discount Vouchers | User Dashboard - NexKartBD</title>
+  <title>Ticket Design V4 | My Coupons & Discount Vouchers | User Dashboard - NexKartBD</title>
   <meta name="description" content="Check and claim your personal discount coupons, promo codes, and special offers on your NexKartBD profile.">
   <meta name="robots" content="noindex, nofollow"> <!-- প্রাইভেট ইউজার পেজ হওয়ায় গুগলে সার্চ ইন্ডেক্স অফ রাখা হয়েছে -->
   <link rel="canonical" href="https://www.nexkartbd.com/user/My-Coupons.html">
@@ -25,40 +25,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   <style>
 
-:root{--pink:#e11d48;--pink2:#fb7185;--ink:#3d1527;--muted:#806775;--line:#f8dbe3;--surface:#fff;--bg:#fff7fa}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
-body{min-height:100vh;background:radial-gradient(circle at 85% 0%,#ffe2ed 0,transparent 38%),linear-gradient(145deg,#fff9fb,#fff0f5);color:var(--ink);padding:clamp(18px,3.5vw,44px) 16px}
-.container{max-width:1140px;margin:auto}
-.header-bar{display:flex;align-items:center;gap:20px;margin-bottom:28px;flex-wrap:wrap}
-.back-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 19px;border-radius:13px;background:white;border:1px solid var(--line);color:var(--pink);font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 16px #a5274820;transition:.2s}
-.back-btn:hover{background:#fff0f4;transform:translateX(-2px)}
-.page-title{font-size:clamp(25px,3vw,34px);letter-spacing:-.8px;color:#95143d;font-weight:800}
-.coupon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
-.coupon-card{display:flex;position:relative;overflow:hidden;min-width:0;min-height:205px;border:1px solid #f8e0e7;border-radius:21px;background:white;box-shadow:0 10px 35px #aa31501a;transition:transform .25s,box-shadow .25s}
-.coupon-card:hover{transform:translateY(-4px);box-shadow:0 17px 42px #aa31502b}
-.coupon-card.expired{opacity:.7;filter:grayscale(.75)}
-.coupon-left{width:34%;min-width:128px;padding:24px 12px;background:linear-gradient(150deg,#ff7190,#e11d48 75%);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative}
-.coupon-left:after{content:'';position:absolute;right:-1px;top:0;height:100%;border-right:2px dashed #fff9}
-.coupon-left.expired-bg{background:linear-gradient(150deg,#a7b1c0,#68788b)}
-.discount-amount{font-size:clamp(25px,2.8vw,34px);font-weight:850;letter-spacing:-1px;overflow-wrap:anywhere}
-.off-text{font-size:13px;font-weight:800;letter-spacing:2px;margin-top:4px}
-.scope-badge{max-width:100%;overflow-wrap:anywhere;margin-top:13px;border-radius:20px;padding:6px 9px;background:#ffffff32;font-size:10px;font-weight:700;text-transform:uppercase}
-.coupon-right{width:66%;min-width:0;padding:21px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
-.product-title{font-size:16px;font-weight:800;line-height:1.4;color:#48162b;text-decoration:none;display:block;margin-bottom:10px;overflow-wrap:anywhere}
-.product-title:hover{color:var(--pink)}
-.price-box{font-size:13px;margin-bottom:11px;line-height:1.7}.old-price{text-decoration:line-through;color:#a48a95;margin-right:7px}.new-price{font-weight:800;color:#168448;font-size:16px}.save-tag{font-size:12px;font-weight:700;color:var(--pink)}
-.coupon-expiry{font-size:12px;font-weight:700;line-height:1.5}.text-expired{color:#df3657}.text-active{color:#188650}
-.coupon-action{display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px dashed #f2a8bd;background:#fff5f8;padding:7px;border-radius:12px;min-width:0}
-.coupon-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:800;overflow-wrap:anywhere;padding-left:7px;color:#87123a}
-.copy-btn{border:0;border-radius:9px;padding:10px 14px;background:var(--pink);color:white;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.2s}
-.copy-btn:hover:not(:disabled){background:#bd123b}.copy-btn:disabled{background:#aeb6c1;cursor:not-allowed}
-.coupon-card::before,.coupon-card::after{content:'';position:absolute;z-index:2;width:20px;height:20px;background:#fff5f9;border-radius:50%;left:calc(34% - 10px)}
-.coupon-card::before{top:-10px}.coupon-card::after{bottom:-10px}
-@media(max-width:850px){.coupon-grid{grid-template-columns:1fr;max-width:650px;margin:auto}.header-bar{max-width:650px;margin:0 auto 25px}}
-@media(max-width:480px){body{padding:18px 12px}.header-bar{gap:13px}.page-title{font-size:25px}.coupon-card{min-height:190px}.coupon-left{width:34%;min-width:105px;padding:15px 7px}.coupon-right{padding:14px;width:66%;gap:9px}.product-title{font-size:14px}.discount-amount{font-size:25px}.scope-badge{font-size:9px}.coupon-code{font-size:11px;padding-left:3px}.copy-btn{padding:9px 10px}.coupon-card::before,.coupon-card::after{left:calc(34% - 10px)}}
-@media(max-width:350px){.coupon-action{flex-wrap:wrap}.copy-btn{width:100%}}
+:root{--pink:#f71964;--rose:#e11d48;--ink:#242238;--muted:#667085}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0%,#ffd7e5,transparent 33%),linear-gradient(135deg,#fff8fb,#fff0f5);font-family:Poppins,'Segoe UI',sans-serif;color:var(--ink);padding:32px 20px}
+.container{max-width:1250px;margin:auto}.header-bar{display:flex;align-items:center;gap:24px;margin-bottom:28px;flex-wrap:wrap}.back-btn{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:100px;background:#fff;color:var(--pink);font-weight:700;text-decoration:none;box-shadow:0 5px 18px #bc2b5830;border:1px solid #ffe2eb}.back-btn:hover{background:#fff1f5}.page-title{font-size:clamp(25px,3vw,38px);color:#d91450;font-weight:800;letter-spacing:-.8px}.coupon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.coupon-card{display:flex;min-height:220px;overflow:hidden;background:#fff;border-radius:22px;border:1px solid #ffe3eb;box-shadow:0 12px 28px #c42b5720;transition:transform .2s,box-shadow .2s}.coupon-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px #c42b5730}.coupon-left{position:relative;flex:0 0 38%;min-width:0;background:linear-gradient(135deg,#ff477e,#f71964);color:white;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px 12px;isolation:isolate}.coupon-left:before,.coupon-left:after{content:'';position:absolute;right:-11px;width:22px;height:22px;border-radius:50%;background:#fff;z-index:2}.coupon-left:before{top:-11px}.coupon-left:after{bottom:-11px}.coupon-left.expired-bg{background:linear-gradient(135deg,#b3b5c0,#828593)}.discount-amount{font-size:clamp(28px,3vw,42px);font-weight:800;line-height:1.1;overflow-wrap:anywhere}.off-text{font-size:17px;font-weight:800;letter-spacing:2px;margin-top:4px}.scope-badge{max-width:95%;padding:7px 10px;border-radius:30px;border:1px solid #ffffffaa;background:#ffffff24;font-size:11px;font-weight:700;margin-top:16px;overflow-wrap:anywhere}.coupon-right{flex:1;min-width:0;padding:23px 22px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}.product-title{display:block;font-size:17px;font-weight:750;color:#202338;text-decoration:none;overflow-wrap:anywhere}.product-title:hover{color:var(--rose)}.price-box{margin-top:10px;font-size:15px}.old-price{color:#9296a2;text-decoration:line-through;margin-right:10px}.new-price{color:#0c9c52;font-size:18px;font-weight:800}.save-tag{color:#f71964;font-weight:700;font-size:13px;margin-top:5px}.coupon-expiry{font-size:12px;font-weight:600;margin-top:10px}.text-active{color:#64748b}.text-expired{color:#a63b55}.coupon-action{display:flex;gap:10px;align-items:center;margin-top:8px}.coupon-code{flex:1;min-width:0;display:block;text-align:center;overflow-wrap:anywhere;padding:11px 7px;border:1px dashed #ff89ad;background:#fff7fa;border-radius:10px;font-size:13px;font-weight:800;color:#242238}.copy-btn{background:var(--pink);color:white;border:0;border-radius:10px;padding:12px 17px;font-size:13px;font-weight:700;cursor:pointer}.copy-btn:hover{background:#d60c4d}.copy-btn:disabled{background:#999ba7;cursor:not-allowed}.coupon-card.expired{opacity:.78}.coupon-card.expired .coupon-left{filter:grayscale(1)}.state-message{grid-column:1/-1;background:white;border:1px solid #ffe0e8;padding:24px;border-radius:16px;color:#8b2145}
+@media(max-width:850px){.coupon-grid{grid-template-columns:1fr}.coupon-card{min-height:200px}}@media(max-width:480px){body{padding:20px 12px}.header-bar{gap:12px}.page-title{font-size:25px}.coupon-left{flex-basis:35%;padding:15px 7px}.coupon-right{padding:16px 12px}.discount-amount{font-size:26px}.off-text{font-size:13px}.scope-badge{font-size:9px}.product-title{font-size:14px}.price-box{font-size:12px}.new-price{font-size:15px}.coupon-action{gap:6px}.copy-btn{padding:11px 10px;font-size:12px}.coupon-code{font-size:11px}}
 
-  </style>
+</style>
 </head>
 <body>
 
@@ -70,7 +42,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <header class="container">
     <div class="header-bar">
       <!-- Back Button: আগের পেজে ফেরার জন্য -->
-      <a href="/user/dashboard" onclick="if (history.length > 1) { history.back(); return false; }" class="back-btn" aria-label="Go back">
+      <a href="javascript:history.back()" class="back-btn" aria-label="Go back">
         <span aria-hidden="true">←</span> Back
       </a>
       <h1 class="page-title">🌸 My Coupons</h1>
@@ -135,18 +107,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
                 <div class="coupon-right">
                   <div>
-                    <a href="${productLink}" class="product-title">🛍️ ${coupon.product_name}</a>
+                    <a href="${productLink}" class="product-title">${coupon.product_name}</a>
                     ${priceHTML}
                     <div class="coupon-expiry">${statusHTML}</div>
                   </div>
                   <div class="coupon-action">
                     <span class="coupon-code" id="code_${coupon.id}">${coupon.coupon_name}</span>
-                    <button 
-                      class="copy-btn" 
-                      ${coupon.is_expired ? 'disabled' : ''} 
-                      onclick="copyCode('code_${coupon.id}', this)">
-                      ${coupon.is_expired ? 'Expired' : 'Copy'}
-                    </button>
+                    <button type="button" class="copy-btn" ${coupon.is_expired ? 'disabled' : ''} onclick="copyCode('code_${coupon.id}', this)">${coupon.is_expired ? 'Expired' : 'Copy'}</button>
                   </div>
                 </div>
               </article>
