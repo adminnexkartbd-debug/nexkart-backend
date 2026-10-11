@@ -49,6 +49,10 @@ const createBDGatePayment = async (orderData, totalAmount) => {
 };
 
 // ==================== HTML PAGE RENDER ====================
+router.get('/cart-checkout-content.html', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-checkout-content.html'));
+});
+
 router.get('/cart-html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html'));
 });
