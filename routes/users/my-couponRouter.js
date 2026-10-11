@@ -16,7 +16,15 @@ router.get('/', async (req, res) => {
                 c.description AS coupon_description,
                 p.title AS original_product_name,
                 p.regular_price,
-                p.sale_price
+                p.sale_price,
+                (SELECT CASE
+                    WHEN pi.image_path LIKE 'http%' THEN pi.image_path
+                    WHEN pi.image_path LIKE '/uploads/%' THEN pi.image_path
+                    ELSE CONCAT('/uploads/', pi.image_path)
+                  END
+                 FROM product_images pi
+                 WHERE pi.product_id = p.id
+                 ORDER BY pi.id ASC LIMIT 1) AS primary_image
             FROM coupons c
             LEFT JOIN products p ON TRIM(c.product_id) = TRIM(p.product_id)
             ORDER BY c.id DESC
@@ -56,6 +64,7 @@ router.get('/', async (req, res) => {
                 coupon_scope: coupon.coupon_scope || 'general',
                 product_id: coupon.product_id || '',
                 product_name: productName,
+                primary_image: coupon.primary_image || null,
                 original_price: originalPrice,
                 final_price: finalPrice,
                 description: coupon.coupon_description || '',
