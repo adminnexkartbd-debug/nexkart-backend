@@ -19,7 +19,7 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
         [invoice,userId,req.body.checkout_type,checkout.amount_bdt,JSON.stringify(checkout)]);
       const payment_url = await initiate({invoice,amount:checkout.amount_bdt,name:checkout.name,phone:checkout.phone,email:checkout.email,address:checkout.address});
       return res.json({success:true,invoice,payment_url});
-    } catch (err) { console.error('PayStation start:',err);return res.status(400).json({success:false,message:'Payment could not be started'}); }
+    } catch (err) { console.error('PayStation start:',err);const safe=/^(Invalid coupon|Coupon not applicable|Coupon expired|Insufficient stock|Invalid product price|Complete shipping profile required|Product not found|Cart empty|Invalid quantity|PayStation currently requires)/.test(String(err.message||''));return res.status(400).json({success:false,message:safe?err.message:'Payment could not be started'}); }
   }
   async function reconcile(invoice) {
     if (typeof invoice !== 'string' || !/^NXK[0-9a-f]{15,40}$/i.test(invoice)) throw new Error('Invalid invoice');
