@@ -271,7 +271,7 @@ router.post('/api/cart/place-order', isAuthenticated, async (req, res) => {
         const grandTotal = Math.max(0, totalSubtotal - appliedDiscount) + totalDeliveryCharge;
 
         const fullAddress = [block_house, union_area, upazilla, district, division, post_code ? `Post Code: ${post_code}` : ''].filter(Boolean).join(', ');
-        const baseOrderId = 'NXK-' + Date.now().toString().slice(-8) + Math.floor(100 + Math.random() * 900);
+        const baseOrderId = 'NXK-' + require('crypto').randomInt(10000000000, 100000000000).toString();
 
         if (req.session) {
             req.session.pendingOrder = {
