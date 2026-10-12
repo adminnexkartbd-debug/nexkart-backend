@@ -310,6 +310,8 @@ const controlEmployeRouter = require('./routes/admin/controlEmployeRouter');
 const paymentMethodsAdminRouter = require('./routes/admin/paymentMethods');
 
 const cartRouter = require('./routes/users/cart.router');
+const makePaystationRouter = require('./routes/users/paystation.router');
+const paystationAdapters = require('./services/payment/checkoutAdapters');
 const adminReviewRouter = require('./routes/admin/adminReviewRouter');
 const verifyDocumentsRouter = require('./routes/admin/verifyDocuments'); 
 const superAdminRouter = require('./routes/admin/superAdminRouter'); 
@@ -343,6 +345,7 @@ app.use('/api/admin/payment-methods', paymentMethodsAdminRouter);
 app.use('/user', popRouter);
 app.use('/user', sellerProfileRouter);
 app.use('/user', userInboxRouter);
+app.use('/user', makePaystationRouter(paystationAdapters));
 app.use('/user', cartRouter);
 app.use('/user', myOrderRouter);
 app.use('/user', userRoutes); 
