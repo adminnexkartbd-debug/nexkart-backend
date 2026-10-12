@@ -1,5 +1,7 @@
 'use strict';
 const db = require('../../db');
+const crypto = require('crypto');
+const makeOrderId = () => 'NXK-' + crypto.randomInt(10000000000, 100000000000).toString();
 const money = n => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const positive = n => Number.isInteger(Number(n)) && Number(n) > 0;
 const address = p => [p.block_house,p.union_area,p.upazilla,p.district,p.division,p.post_code ? `Post Code: ${p.post_code}` : ''].filter(Boolean).join(', ');
@@ -30,9 +32,9 @@ async function buildCheckoutSnapshot({userId,type,input}) {
     const qty=Number(item.quantity);
     if (!positive(qty) || qty>Number(item.stock_quantity)) throw new Error('Insufficient stock');
     if (!item.admin_id) throw new Error('Seller missing');
-    const price=type==='cart' ? Number(item.sale_price)>0?Number(item.sale_price):Number(item.regular_price) : Number(item.sale_price);
+    const price=Number(item.sale_price)>0 ? Number(item.sale_price) : Number(item.regular_price);
     if (!Number.isFinite(price)||price<=0) throw new Error('Invalid product price');
-    orderItems.push({product_id:item.id,seller_id:item.admin_id,quantity:qty,variant:item.variant||null,price:money(price),subtotal:money(price*qty),delivery: getDelivery(item,qty),cart_id:item.cart_id||null});
+    orderItems.push({product_id:item.id,public_product_id:item.product_id,seller_id:item.admin_id,quantity:qty,variant:item.variant||null,price:money(price),subtotal:money(price*qty),delivery: getDelivery(item,qty),cart_id:item.cart_id||null});
   }
   const subtotal=money(orderItems.reduce((s,x)=>s+x.subtotal,0));
   const delivery=money(orderItems.reduce((s,x)=>s+x.delivery,0));
@@ -42,7 +44,7 @@ async function buildCheckoutSnapshot({userId,type,input}) {
     if (!rows.length) throw new Error('Invalid coupon');
     const c=rows[0], product=orderItems[0];
     if (c.expiry_date && new Date(c.expiry_date)<new Date()) throw new Error('Coupon expired');
-    if (c.product_id && String(c.product_id)!=='0' && String(c.product_id)!==String(product.product_id)) throw new Error('Coupon not applicable');
+    if (c.product_id && String(c.product_id)!=='0' && String(c.product_id)!==String(product.product_id) && String(c.product_id)!==String(product.public_product_id)) throw new Error('Coupon not applicable');
     couponDiscount=money(Math.min(subtotal,Math.max(0,Number(c.discount_amount)||0)));couponCode=c.coupon_name;
   }
   if (type==='cart' && input.coupon_code) {
@@ -50,7 +52,7 @@ async function buildCheckoutSnapshot({userId,type,input}) {
     if(!rows.length) throw new Error('Invalid coupon');
     const c=rows[0];
     if(c.expiry_date && new Date(c.expiry_date)<new Date()) throw new Error('Coupon expired');
-    if(c.product_id && String(c.product_id)!=='0' && !orderItems.some(i=>String(i.product_id)===String(c.product_id))) throw new Error('Coupon not applicable');
+    if(c.product_id && String(c.product_id)!=='0' && !orderItems.some(i=>String(i.product_id)===String(c.product_id) || String(i.public_product_id)===String(c.product_id))) throw new Error('Coupon not applicable');
     couponDiscount=money(Math.min(subtotal,Math.max(0,Number(c.discount_amount)||0)));couponCode=c.coupon_name;
   }
   if(type==='cart' && !input.coupon_code && Number(input.discount_amount)>0) throw new Error('Coupon code required for discount');
@@ -96,12 +98,12 @@ async function finalizePaidCheckout({invoice,trxId,attempt}) {
       if(!products.length || Number(products[0].stock_quantity)<item.quantity) throw new Error('Insufficient stock after payment; manual reconciliation required');
       const newStock=Number(products[0].stock_quantity)-item.quantity;
       await conn.query('UPDATE products SET stock_quantity=?,sold_qty=?,stock_status=? WHERE id=?',[newStock,Number(products[0].sold_qty||0)+item.quantity,newStock===0?'out_of_stock':'in_stock',item.product_id]);
-      const orderId=`PS-${locked[0].id}-${i+1}`;
+      const orderId=makeOrderId();
       const itemCoupon=money(Math.min(item.subtotal,remainingCoupon));
       remainingCoupon=money(remainingCoupon-itemCoupon);
       const itemCoin=i===0?snapshot.coin_discount:0;
       const itemTotal=money(Math.max(0,item.subtotal-itemCoupon-itemCoin)+item.delivery);
-      await conn.query(`INSERT INTO orders (order_id,user_id,product_id,seller_id,quantity,variant,subtotal_price,delivery_charge,discount_amount,coupon_discount,coin_discount,total_amount,payment_method,selected_gateway,payment_status,order_status,customer_name,customer_email,customer_phone,shipping_address,created_at,payment_completed_at,qtyCalculate,sendMail,vat_cm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW(),0,0,0)`,[orderId,locked[0].user_id,item.product_id,item.seller_id,item.quantity,item.variant,item.subtotal,item.delivery,itemCoupon+itemCoin,itemCoupon,itemCoin,itemTotal,'online','paystation','complete','Pending',snapshot.name,snapshot.email,snapshot.phone,snapshot.address]);
+      await conn.query(`INSERT INTO orders (order_id,user_id,product_id,seller_id,quantity,variant,subtotal_price,delivery_charge,discount_amount,coupon_discount,coin_discount,total_amount,payment_method,selected_gateway,payment_status,order_status,customer_name,customer_email,customer_phone,shipping_address,created_at,payment_completed_at,qtyCalculate,sendMail,vat_cm) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW(),0,0,0)`,[orderId,locked[0].user_id,item.product_id,item.seller_id,item.quantity,item.variant,item.subtotal,item.delivery,itemCoupon+itemCoin,itemCoupon,itemCoin,itemTotal,'online','paystation','paid','Processing',snapshot.name,snapshot.email,snapshot.phone,snapshot.address]);
       const commissionAmount=money(item.subtotal*commissionRate/100);
       await conn.query(`INSERT INTO commission_table (order_number,commission_rate,commission_amount,seller_id,payment_type,date) VALUES (?,?,?,?,?,NOW())`,[orderId,commissionRate,commissionAmount,item.seller_id,'paid']);
     }
