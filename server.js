@@ -323,9 +323,6 @@ const userSettingsRouter = require('./routes/users/settings');
 const popRouter = require('./routes/users/popRouter');
 const coinRoutes = require('./routes/users/coinRoutes');
 
-const paystationRouter = require('./routes/users/paystation.router');
-
-
 
 const startStockCron = require('./services/stockCalculator'); 
 const startMailCron = require('./services/mailService'); 
@@ -365,8 +362,6 @@ app.use('/api/message-center', messageCenterRouter);
 app.use('/api/admin', adminSettingRoute);
 app.use('/api/coins', coinRoutes);
 app.use('/api/control-employee', controlEmployeRouter);
-
-app.use('/user', paystationRouter);
 
 app.use('/admin/uploads', express.static(path.join(__dirname, 'uploads')));
 
