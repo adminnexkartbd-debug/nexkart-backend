@@ -37,7 +37,7 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
       amount: Number.isFinite(amount) ? amount : '(invalid)',
       hasTrxId: Boolean(result.trx_id)
     });
-    if (status!=='success') return status;
+    if (!['success', 'successful'].includes(status)) return status;
     if (!result.trx_id) throw new Error('Missing transaction ID');
     // finalizePaidCheckout MUST use one InnoDB transaction, SELECT ... FOR UPDATE,
     // recheck finalized_at, ensure unique trx_id, and atomically insert orders,
