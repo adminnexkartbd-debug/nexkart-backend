@@ -13,7 +13,7 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
       const checkout = await buildCheckoutSnapshot({ userId, type: req.body.checkout_type, input: req.body });
       // buildCheckoutSnapshot must independently validate product price, coupon, coins, stock,
       // shipping address, delivery fee and return an integer payable amount in BDT.
-      if (!Number.isInteger(checkout.amount_bdt) || checkout.amount_bdt <= 0) throw new Error('Invalid server calculated total');
+      if (!Number.isFinite(checkout.amount_bdt) || checkout.amount_bdt <= 0) throw new Error('Invalid server calculated total');
       const invoice = 'NXK' + Date.now() + crypto.randomBytes(5).toString('hex');
       await db.query('INSERT INTO paystation_attempts (invoice,user_id,checkout_type,amount_bdt,snapshot_json) VALUES (?,?,?,?,?)',
         [invoice,userId,req.body.checkout_type,checkout.amount_bdt,JSON.stringify(checkout)]);
