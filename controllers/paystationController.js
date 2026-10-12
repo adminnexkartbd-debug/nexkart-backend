@@ -31,6 +31,12 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
     const amount=Number(result.payment_amount);
     if (String(result.invoice_number)!==invoice || !Number.isFinite(amount) || Math.abs(amount-Number(attempt.amount_bdt))>0.001) throw new Error('Invoice/amount mismatch');
     const status=String(result.trx_status||'').toLowerCase();
+    console.log('[PayStation Verify]', {
+      invoice,
+      status: status || '(missing)',
+      amount: Number.isFinite(amount) ? amount : '(invalid)',
+      hasTrxId: Boolean(result.trx_id)
+    });
     if (status!=='success') return status;
     if (!result.trx_id) throw new Error('Missing transaction ID');
     // finalizePaidCheckout MUST use one InnoDB transaction, SELECT ... FOR UPDATE,
