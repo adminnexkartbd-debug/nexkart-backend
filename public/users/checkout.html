@@ -847,8 +847,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           return;
         }
 
-        alert(`Your order has been placed successfully! Order ID: ${result.order_id || 'Created'}`);
-        window.location.href = '/user/dashboard';
+        // COD does not have a payment callback. Show a clear success state, then navigate.
+        if (placeOrderBtn) {
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Order Placed Successfully!';
+          placeOrderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+        alert(`Order placed successfully! Order ID: ${result.order_id || 'Created'}`);
+        window.location.replace('/user/dashboard?order=success&order_id=' + encodeURIComponent(result.order_id || ''));
         return;
       } catch (err) {
         console.error('Order Submit Error:', err);
