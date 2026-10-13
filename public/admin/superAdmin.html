@@ -1138,9 +1138,16 @@
         if (!data.length) { body.innerHTML = '<tr><td colspan="5" class="p-4 text-center">No unpaid commissions</td></tr>'; return; }
         body.innerHTML = data.map(s => {
           const enough = s.available_balance >= s.total_unpaid && s.total_unpaid > 0;
-          return `<tr class="border-b align-top"><td class="p-3"><b>${commEscape(s.seller_name || s.seller_id)}</b><div class="text-xs">${commEscape(s.seller_email || '')}</div><div class="text-xs">Seller #${commEscape(s.seller_id)}</div></td><td class="p-3 text-xs">${s.commissions.map(c => `<div>#${commEscape(c.order_number)} (ID ${commEscape(c.id)}): ${commMoney(c.commission_amount)}</div>`).join('')}</td><td class="p-3 font-bold">${commMoney(s.total_unpaid)}</td><td class="p-3">${commMoney(s.available_balance)}</td><td class="p-3">${enough ? `<button class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs" onclick="deductCodSettlement(${Number(s.seller_id)})">Deduct & Settle</button>` : `<button class="bg-amber-600 text-white px-3 py-2 rounded-lg text-xs" onclick="showCodPaymentForm(${Number(s.seller_id)})">Send Payment Request</button>`} <button class="bg-sky-700 text-white px-3 py-2 rounded-lg text-xs mt-1" onclick="markCodSettled(${Number(s.seller_id)})">Mark as Settled</button></td></tr>`;
+          const newRows=s.commissions.map(c=>`<div>#${commEscape(c.order_number)} (ID ${commEscape(c.id)}): ${commMoney(c.commission_amount)}</div>`).join('');
+          const locked=s.requests.map(r=>`<div class="mt-2 p-2 bg-amber-50 rounded border border-amber-200"><b>Payment Requested #${r.id}</b> — ${commMoney(r.amount)} (${commEscape(r.status)})<div>${r.commissions.map(c=>`#${commEscape(c.order_number)} / ID ${c.id}`).join(', ')}</div><div class="text-amber-700">Locked: cannot deduct or request again</div>${r.status==='submitted'?`<div>Sender: ${commEscape(r.sender_number||'')} | TrxID: ${commEscape(r.transaction_id||'')}</div><button class="bg-sky-700 text-white px-3 py-2 rounded-lg text-xs mt-1" onclick="markCodSettled(${Number(s.seller_id)},${Number(r.id)})">Verify & Mark Settled</button>`:'<div>Awaiting seller payment submission</div>'}</div>`).join('');
+          return `<tr class="border-b align-top"><td class="p-3"><b>${commEscape(s.seller_name||s.seller_id)}</b><div class="text-xs">${commEscape(s.seller_email||'')}</div><div class="text-xs">Seller #${commEscape(s.seller_id)}</div></td><td class="p-3 text-xs">${newRows||'<span class="text-slate-400">No new commissions</span>'}${locked}</td><td class="p-3 font-bold">${commMoney(s.total_unpaid)}<div class="text-xs font-normal">New/unlocked only</div></td><td class="p-3">${commMoney(s.available_balance)}</td><td class="p-3">${s.total_unpaid>0?(enough?`<button class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs" onclick="deductCodSettlement(${Number(s.seller_id)})">Deduct & Settle New</button>`:`<button class="bg-amber-600 text-white px-3 py-2 rounded-lg text-xs" onclick="showCodPaymentForm(${Number(s.seller_id)})">Send Payment Request (New)</button>`):'<span class="text-slate-500 text-xs">Existing requests locked</span>'}</td></tr>`;
         }).join('');
       } catch (e) { body.innerHTML = `<tr><td colspan="5" class="p-4 text-red-600">${commEscape(e.message)}</td></tr>`; }
+    }
+    async function retryCodReceipt(sellerId, commissionIds, mode) {
+      const res=await fetch('/admin/api/cod-settlements/resend-receipt',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:sellerId,commission_ids:commissionIds,mode})});
+      const data=await res.json();if(!res.ok)throw Error(data.error||'Email retry failed');
+      return data;
     }
     async function deductCodSettlement(id) {
       const seller = codSettlementRows.find(x => Number(x.seller_id) === id);
@@ -1150,7 +1157,9 @@
       try {
         const res = await fetch('/admin/api/cod-settlements/deduct', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id})});
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Deduction failed');
-        alert(data.email_sent ? `Settled ${commMoney(data.deducted)}. PDF receipt emailed.` : `Settled ${commMoney(data.deducted)}, but receipt email failed: ${data.email_error || 'unknown error'}. Do NOT deduct again.`);
+        if(data.email_sent) alert(`Settled ${commMoney(data.deducted)}. Seller notified with PDF receipt.`);
+        else { try { await retryCodReceipt(id,data.settled_ids,'balance'); alert(`Settled ${commMoney(data.deducted)}. PDF email sent on retry.`); }
+          catch(mailErr){ alert(`Commission settled and balance deducted, but email failed: ${mailErr.message}. Do NOT deduct again. Contact support to resend the receipt.`); } }
         await loadCodSettlements();
         await refreshCodCommissionReport();
       } catch (e) { alert(e.message); } finally { message.textContent = ''; }
@@ -1170,7 +1179,7 @@
       try {
         const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number})});
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Email failed');
-        alert('Payment request emailed with link: ' + data.payment_url + '\nCommission remains unpaid until verified.');
+        alert(data.email_sent ? 'Payment request emailed with link: ' + data.payment_url + '\nThese commission IDs are now locked.' : 'Payment request saved and IDs locked, but email failed: ' + (data.email_error||'unknown') + '\nLink: ' + data.payment_url);
         await loadCodSettlements();
         await refreshCodCommissionReport();
         document.getElementById('codPaymentForm').classList.add('hidden');
@@ -1181,16 +1190,20 @@
 
     async function loadCodPaymentSubmissions(){
       const el=document.getElementById('codPaymentSubmissions');el.textContent='Loading...';
-      try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await r.json();if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Mark as Settled for this seller.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
+      try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await r.json();if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Verify & Mark Settled for this exact request.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
     }
-    async function markCodSettled(id) {
+    async function markCodSettled(id,requestId) {
       const seller=codSettlementRows.find(x=>Number(x.seller_id)===id);
       if(!seller) return alert('Seller not found');
-      if(!confirm(`Have you independently VERIFIED payment of ${commMoney(seller.total_unpaid)} from ${seller.seller_name||id}?\n\nThis will mark ALL currently unpaid commissions PAID without deducting the seller balance. This action cannot be undone from this screen.`)) return;
+      const request=seller.requests.find(r=>Number(r.id)===Number(requestId));
+      if(!request||request.status!=='submitted')return alert('Submitted request not found');
+      if(!confirm(`Have you independently VERIFIED payment of ${commMoney(request.amount)} from ${seller.seller_name||id} for payment request #${requestId}?\n\nThis will mark ONLY this request's commission IDs PAID without deducting the seller balance. This action cannot be undone from this screen.`)) return;
       try {
-        const res=await fetch('/admin/api/cod-settlements/mark-settled',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id})});
+        const res=await fetch('/admin/api/cod-settlements/mark-settled',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id,request_id:requestId})});
         const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed to mark settled');
-        alert(data.email_sent?`Settled ${commMoney(data.settled_amount)}. Thank-you email with branded PDF sent.`:`Settled ${commMoney(data.settled_amount)}, but PDF email failed: ${data.email_error||'unknown'}. Do not settle again.`);
+        if(data.email_sent) alert(`Settled ${commMoney(data.settled_amount)}. Seller received PDF thank-you receipt.`);
+        else { try { await retryCodReceipt(id,data.settled_ids,'manual'); alert(`Settled ${commMoney(data.settled_amount)}. PDF email sent on retry.`); }
+          catch(mailErr){alert(`Payment settled, but receipt email failed: ${mailErr.message}. Do NOT settle again.`);} }
         await loadCodSettlements();
         await refreshCodCommissionReport();
       }catch(err){alert(err.message);}
