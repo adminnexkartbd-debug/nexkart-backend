@@ -429,7 +429,7 @@ async function getCommissionRate() {
     return rate;
 }
 
-async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType }) {
+async function recordOrderCommission({ orderId, sellerId, subtotal, couponDiscount = 0, coinDiscount = 0, paymentType }) {
     // IMPORTANT: commission is read ONLY from the database `commission` table.
     // There is intentionally NO hardcoded commission percentage here.
     //
@@ -456,7 +456,8 @@ async function recordOrderCommission({ orderId, sellerId, subtotal, paymentType 
     // Read the current rate from the database only when creating the commission
     // record for this order. Delivery is excluded; subtotal is the commission base.
     const commissionRate = await getCommissionRate();
-    const commissionAmount = Math.max(0, (Number(subtotal) * commissionRate) / 100);
+    const commissionBase = Math.max(0, Number(subtotal || 0) - Number(couponDiscount || 0) - Number(coinDiscount || 0));
+    const commissionAmount = Math.round((commissionBase * commissionRate / 100 + Number.EPSILON) * 100) / 100;
     const hasPaymentType = await hasTableColumn('commission_table', 'payment_type');
 
     // `commission_table.order_number` must have a UNIQUE index (see the supplied
@@ -649,6 +650,8 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         orderId: order.order_id,
         sellerId: order.seller_id,
         subtotal: order.subtotal_price,
+        couponDiscount: order.coupon_discount,
+        coinDiscount: order.coin_discount,
         paymentType
     });
 
