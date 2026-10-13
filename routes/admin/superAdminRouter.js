@@ -461,38 +461,84 @@ router.post('/api/update-order-status', ensureSuperAdmin, async (req, res) => {
 // The ledger is informational: its commission_amount is NOT added again to commission_table.
 router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
     try {
-        const [results] = await db.query(`
+        // The commission table is the source of truth. Optional report tables
+        // must never prevent the primary commission list from loading.
+        const [rows] = await db.query(`
             SELECT c.id, c.order_number, c.commission_rate, c.commission_amount,
-                   c.seller_id, c.date,
-                   a.name AS seller_name, a.email AS seller_email,
-                   l.product_amount AS cod_product_amount,
-                   l.delivery_charge AS cod_delivery_charge,
-                   l.commission_amount AS cod_ledger_commission,
-                   l.seller_amount AS cod_seller_amount,
-                   l.collection_status AS cod_collection_status,
-                   o.payment_method, o.payment_status, o.order_status,
-                   o.total_amount AS order_total,
-                   o.discount_amount AS order_discount,
-                   o.subtotal_price AS order_subtotal
+                   c.seller_id, c.payment_type, c.date,
+                   a.name AS seller_name, a.email AS seller_email
             FROM commission_table c
-            LEFT JOIN admins a ON c.seller_id = a.id
-            LEFT JOIN seller_cod_ledger l
-                   ON l.order_id = c.order_number AND l.seller_id = c.seller_id
-            LEFT JOIN (
-                SELECT order_id, seller_id,
-                       MAX(payment_method) AS payment_method,
-                       MAX(payment_status) AS payment_status,
-                       MAX(order_status) AS order_status,
-                       MAX(total_amount) AS total_amount,
-                       MAX(discount_amount) AS discount_amount,
-                       MAX(subtotal_price) AS subtotal_price
-                FROM orders GROUP BY order_id, seller_id
-            ) o ON o.order_id = c.order_number AND o.seller_id = c.seller_id
+            LEFT JOIN admins a ON a.id = c.seller_id
             ORDER BY c.date DESC, c.id DESC
         `);
+        const results = rows.map(row => ({
+            ...row,
+            cod_product_amount: null, cod_delivery_charge: null,
+            cod_ledger_commission: null, cod_seller_amount: null,
+            cod_collection_status: null, payment_method: null,
+            payment_status: null, order_status: null, order_total: null,
+            order_discount: null, order_subtotal: null
+        }));
+        const key = (order, seller) => `${String(order)}::${String(seller)}`;
+        const index = new Map();
+        for (const row of results) {
+            const k = key(row.order_number, row.seller_id);
+            if (!index.has(k)) index.set(k, []);
+            index.get(k).push(row);
+        }
+        // Enrichment is best-effort and independent of commission loading.
+        try {
+            const [cols] = await db.query('SHOW COLUMNS FROM seller_cod_ledger');
+            const names = new Set(cols.map(c => c.Field));
+            const fields = ['product_amount','delivery_charge','commission_amount','seller_amount','collection_status']
+                .filter(name => names.has(name));
+            if (names.has('order_id') && names.has('seller_id') && fields.length) {
+                const [ledger] = await db.query(`SELECT order_id, seller_id, ${fields.map(f => '`'+f+'`').join(', ')} FROM seller_cod_ledger`);
+                const seen = new Set();
+                for (const item of ledger) {
+                    const k = key(item.order_id, item.seller_id);
+                    if (seen.has(k)) continue;
+                    seen.add(k);
+                    for (const row of index.get(k) || []) {
+                        if (item.product_amount !== undefined) row.cod_product_amount = item.product_amount;
+                        if (item.delivery_charge !== undefined) row.cod_delivery_charge = item.delivery_charge;
+                        if (item.commission_amount !== undefined) row.cod_ledger_commission = item.commission_amount;
+                        if (item.seller_amount !== undefined) row.cod_seller_amount = item.seller_amount;
+                        if (item.collection_status !== undefined) row.cod_collection_status = item.collection_status;
+                    }
+                }
+            }
+        } catch (extraErr) {
+            console.warn('Optional COD ledger enrichment skipped:', extraErr.message);
+        }
+        try {
+            const [cols] = await db.query('SHOW COLUMNS FROM orders');
+            const names = new Set(cols.map(c => c.Field));
+            const fields = ['payment_method','payment_status','order_status','total_amount','discount_amount','subtotal_price']
+                .filter(name => names.has(name));
+            if (names.has('order_id') && names.has('seller_id') && fields.length) {
+                const [orders] = await db.query(`SELECT order_id, seller_id, ${fields.map(f => '`'+f+'`').join(', ')} FROM orders`);
+                const seen = new Set();
+                for (const item of orders) {
+                    const k = key(item.order_id, item.seller_id);
+                    if (seen.has(k)) continue;
+                    seen.add(k);
+                    for (const row of index.get(k) || []) {
+                        if (item.payment_method !== undefined) row.payment_method = item.payment_method;
+                        if (item.payment_status !== undefined) row.payment_status = item.payment_status;
+                        if (item.order_status !== undefined) row.order_status = item.order_status;
+                        if (item.total_amount !== undefined) row.order_total = item.total_amount;
+                        if (item.discount_amount !== undefined) row.order_discount = item.discount_amount;
+                        if (item.subtotal_price !== undefined) row.order_subtotal = item.subtotal_price;
+                    }
+                }
+            }
+        } catch (extraErr) {
+            console.warn('Optional order enrichment skipped:', extraErr.message);
+        }
         res.json(results);
     } catch (err) {
-        console.error('Commission report error:', err);
+        console.error('Commission report primary query error:', err);
         res.status(500).json({ error: 'Failed to fetch commissions' });
     }
 });
