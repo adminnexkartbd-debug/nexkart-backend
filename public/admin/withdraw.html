@@ -30,7 +30,7 @@
     </div>
 
     <!-- Balance & Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <div class="bg-gradient-to-br from-pink-500 to-rose-600 text-white p-6 rounded-2xl shadow-md">
         <p class="text-xs text-pink-100 font-medium">Available Balance</p>
         <h3 class="text-3xl font-extrabold mt-2">৳ <span id="availableBalance">0</span></h3>
@@ -41,6 +41,18 @@
         <p class="text-xs text-slate-400 font-medium">Total Sales</p>
         <h3 class="text-2xl font-bold text-slate-700 mt-2">৳ <span id="totalSales">0</span></h3>
         <span class="inline-block mt-3 bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-lg font-medium">সর্বমোট বিক্রয়</span>
+      </div>
+
+      <!-- COD sales are recorded separately and are NOT withdrawable balance -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-100">
+        <p class="text-xs text-slate-500 font-medium"><i class="fa-solid fa-truck-fast text-amber-600 mr-1"></i> COD Total Sales</p>
+        <h3 class="text-2xl font-bold text-slate-700 mt-2">৳ <span id="codTotalSales">0</span></h3>
+        <span class="inline-block mt-3 bg-amber-50 text-amber-700 text-xs px-2.5 py-1 rounded-lg font-medium">COD বিক্রয়ের হিসাব (উত্তোলনযোগ্য নয়)</span>
+        <div class="text-xs text-slate-500 mt-3 space-y-1">
+          <p>Pending Collection: <strong class="text-amber-700">৳ <span id="codPendingSales">0</span></strong></p>
+          <p>Collected: <strong class="text-emerald-700">৳ <span id="codCollectedSales">0</span></strong></p>
+          <p>COD Orders: <strong id="codOrderCount">0</strong></p>
+        </div>
       </div>
 
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -176,6 +188,12 @@
           document.getElementById('availableBalance').innerText = data.balanceInfo.availableBalance.toLocaleString();
           document.getElementById('totalSales').innerText = data.balanceInfo.totalSales.toLocaleString();
           document.getElementById('totalWithdrawn').innerText = data.balanceInfo.totalWithdrawn.toLocaleString();
+          const money = value => Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const cod = data.codSales || {};
+          document.getElementById('codTotalSales').innerText = money(cod.totalSales);
+          document.getElementById('codPendingSales').innerText = money(cod.pendingSales);
+          document.getElementById('codCollectedSales').innerText = money(cod.collectedSales);
+          document.getElementById('codOrderCount').innerText = Number(cod.orderCount || 0).toLocaleString('en-BD');
 
           const pType = globalData.payment_type;
           if (pType) {
