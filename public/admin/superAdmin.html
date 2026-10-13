@@ -1123,6 +1123,15 @@
       } catch(e) { console.warn('Commission report refresh:',e); }
     }
     // ================= COD SETTLEMENT LOGIC =================
+    async function readCodResponse(response) {
+      const text = await response.text();
+      try { return JSON.parse(text); }
+      catch (_) {
+        const path = new URL(response.url, location.origin).pathname;
+        const hint = response.redirected ? 'Session redirected. Sign in again.' : response.status === 404 ? 'Backend route missing. Replace superAdminRouter.js and restart Node.js.' : response.status === 502 || response.status === 504 ? 'Server gateway error or timeout. Check Node.js logs.' : 'Server returned HTML or an empty response. Check Node.js logs.';
+        throw new Error(`${path}: HTTP ${response.status}. ${hint} Refresh settlement list before trying again; payment may already be settled.`);
+      }
+    }
     let codSettlementRows = [];
     let codSelectedSeller = null;
     async function openCodSettlementModal() { openModal('codSettlementModal'); await loadCodSettlements(); }
@@ -1132,7 +1141,7 @@
       document.getElementById('codPaymentForm').classList.add('hidden');
       try {
         const response = await fetch('/admin/api/cod-settlements', {credentials:'include',cache:'no-store'});
-        const data = await response.json();
+        const data = await readCodResponse(response);
         if (!response.ok) throw new Error(data.error || 'Unable to load settlements');
         codSettlementRows = data;
         if (!data.length) { body.innerHTML = '<tr><td colspan="5" class="p-4 text-center">No unpaid commissions</td></tr>'; return; }
@@ -1146,7 +1155,7 @@
     }
     async function retryCodReceipt(sellerId, commissionIds, mode) {
       const res=await fetch('/admin/api/cod-settlements/resend-receipt',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:sellerId,commission_ids:commissionIds,mode})});
-      const data=await res.json();if(!res.ok)throw Error(data.error||'Email retry failed');
+      const data=await readCodResponse(res);if(!res.ok)throw Error(data.error||'Email retry failed');
       return data;
     }
     async function deductCodSettlement(id) {
@@ -1156,10 +1165,10 @@
       message.textContent = 'Processing settlement...';
       try {
         const res = await fetch('/admin/api/cod-settlements/deduct', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id})});
-        const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Deduction failed');
+        const data = await readCodResponse(res); if (!res.ok) throw new Error(data.error || 'Deduction failed');
         if(data.email_sent) alert(`Settled ${commMoney(data.deducted)}. Seller notified with PDF receipt.`);
         else { try { await retryCodReceipt(id,data.settled_ids,'balance'); alert(`Settled ${commMoney(data.deducted)}. PDF email sent on retry.`); }
-          catch(mailErr){ alert(`Commission settled and balance deducted, but email failed: ${mailErr.message}. Do NOT deduct again. Contact support to resend the receipt.`); } }
+          catch(mailErr){ alert(`Commission settled and balance deducted, but email failed: ${data.email_error || "Initial email failed"}; retry: ${mailErr.message}. Do NOT deduct again. Contact support to resend the receipt.`); } }
         await loadCodSettlements();
         await refreshCodCommissionReport();
       } catch (e) { alert(e.message); } finally { message.textContent = ''; }
@@ -1178,7 +1187,7 @@
       if (!confirm(`Email ${method} payment instructions to seller? Number: ${number}`)) return;
       try {
         const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number})});
-        const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Email failed');
+        const data = await readCodResponse(res); if (!res.ok) throw new Error(data.error || 'Email failed');
         alert(data.email_sent ? 'Payment request emailed with link: ' + data.payment_url + '\nThese commission IDs are now locked.' : 'Payment request saved and IDs locked, but email failed: ' + (data.email_error||'unknown') + '\nLink: ' + data.payment_url);
         await loadCodSettlements();
         await refreshCodCommissionReport();
@@ -1190,7 +1199,7 @@
 
     async function loadCodPaymentSubmissions(){
       const el=document.getElementById('codPaymentSubmissions');el.textContent='Loading...';
-      try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await r.json();if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Verify & Mark Settled for this exact request.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
+      try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await readCodResponse(r);if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Verify & Mark Settled for this exact request.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
     }
     async function markCodSettled(id,requestId) {
       const seller=codSettlementRows.find(x=>Number(x.seller_id)===id);
@@ -1200,10 +1209,10 @@
       if(!confirm(`Have you independently VERIFIED payment of ${commMoney(request.amount)} from ${seller.seller_name||id} for payment request #${requestId}?\n\nThis will mark ONLY this request's commission IDs PAID without deducting the seller balance. This action cannot be undone from this screen.`)) return;
       try {
         const res=await fetch('/admin/api/cod-settlements/mark-settled',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id,request_id:requestId})});
-        const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed to mark settled');
+        const data=await readCodResponse(res);if(!res.ok)throw new Error(data.error||'Failed to mark settled');
         if(data.email_sent) alert(`Settled ${commMoney(data.settled_amount)}. Seller received PDF thank-you receipt.`);
         else { try { await retryCodReceipt(id,data.settled_ids,'manual'); alert(`Settled ${commMoney(data.settled_amount)}. PDF email sent on retry.`); }
-          catch(mailErr){alert(`Payment settled, but receipt email failed: ${mailErr.message}. Do NOT settle again.`);} }
+          catch(mailErr){alert(`Payment settled, but receipt email failed: ${data.email_error || "Initial email failed"}; retry: ${mailErr.message}. Do NOT settle again.`);} }
         await loadCodSettlements();
         await refreshCodCommissionReport();
       }catch(err){alert(err.message);}
