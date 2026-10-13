@@ -80,11 +80,11 @@ router.post('/verify-pin', async (req, res) => {
 // Get Commission Rate
 router.get('/get-commission', async (req, res) => {
     try {
-        const [results] = await db.query(`SELECT commision_rate FROM comission LIMIT 1`);
+        const [results] = await db.query(`SELECT commission_rate FROM commission WHERE id = 1 LIMIT 1`);
         if (!results || results.length === 0) {
             return res.status(404).json({ success: false, message: 'Commission rate not found.' });
         }
-        res.status(200).json({ success: true, rate: results[0].commision_rate });
+        res.status(200).json({ success: true, rate: Number(results[0].commission_rate) });
     } catch (error) {
         console.error('Error fetching commission:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -98,8 +98,18 @@ router.post('/update-commission', async (req, res) => {
         if (rate === undefined || rate === null || rate === '') {
             return res.status(400).json({ success: false, message: 'Commission rate is required.' });
         }
-        await db.query(`UPDATE comission SET commision_rate = ? WHERE id = 1`, [rate]);
-        res.status(200).json({ success: true, message: 'Commission rate updated successfully.' });
+        const numericRate = Number(rate);
+        if (!['string', 'number'].includes(typeof rate) || String(rate).trim() === '' || !Number.isFinite(numericRate) || numericRate < 0 || numericRate > 100) {
+            return res.status(400).json({ success: false, message: 'Commission rate must be a number between 0 and 100.' });
+        }
+        const [existing] = await db.query('SELECT id FROM commission WHERE id = 1 LIMIT 1');
+        if (!existing.length) {
+            return res.status(404).json({ success: false, message: 'Commission configuration row (id 1) not found.' });
+        }
+        await db.query(`UPDATE commission SET commission_rate = ? WHERE id = 1`, [numericRate]);
+        const [saved] = await db.query('SELECT commission_rate FROM commission WHERE id = 1 LIMIT 1');
+        if (!saved.length) return res.status(404).json({ success: false, message: 'Commission configuration row no longer exists.' });
+        res.status(200).json({ success: true, rate: Number(saved[0].commission_rate), message: 'Commission rate updated successfully.' });
     } catch (error) {
         console.error('Error updating commission:', error);
         res.status(500).json({ success: false, message: error.message });
