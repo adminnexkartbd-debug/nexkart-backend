@@ -31,8 +31,28 @@ router.get('/api/withdraw/info', ensureActiveAdmin, async (req, res) => {
     const totalWithdrawn = Number(admin.total_withdraw || 0);
     const availableBalance = totalSales - totalWithdrawn;
 
+    // COD is an informational ledger only: never add these amounts to
+    // admins.total_sales or availableBalance. Exclude cancelled orders.
+    const [codRows] = await db.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN collection_status <> 'cancelled' THEN seller_amount ELSE 0 END), 0) AS totalSales,
+         COALESCE(SUM(CASE WHEN collection_status = 'pending_collection' THEN seller_amount ELSE 0 END), 0) AS pendingSales,
+         COALESCE(SUM(CASE WHEN collection_status = 'collected' THEN seller_amount ELSE 0 END), 0) AS collectedSales,
+         COUNT(CASE WHEN collection_status <> 'cancelled' THEN 1 END) AS orderCount
+       FROM seller_cod_ledger
+       WHERE seller_id = ?`,
+      [adminId]
+    );
+    const codSales = {
+      totalSales: Number(codRows[0]?.totalSales || 0),
+      pendingSales: Number(codRows[0]?.pendingSales || 0),
+      collectedSales: Number(codRows[0]?.collectedSales || 0),
+      orderCount: Number(codRows[0]?.orderCount || 0)
+    };
+
     return res.status(200).json({
       success: true,
+      codSales,
       balanceInfo: {
         availableBalance: availableBalance > 0 ? availableBalance : 0,
         totalWithdrawn: totalWithdrawn,
