@@ -473,7 +473,7 @@
       <p class="text-xs text-slate-500 my-3">Available balance = total_sales − total_withdraw. Deduct settles all current unpaid commission IDs for one seller. Insufficient balance: send manual payment instructions by email.</p>
       <div id="codSettlementMessage" class="text-sm mb-2"></div>
       <div class="overflow-auto flex-1"><table class="w-full min-w-[850px] text-sm text-left"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-3">Seller</th><th class="p-3">Unpaid Orders / IDs</th><th class="p-3">Total Unpaid</th><th class="p-3">Available Balance</th><th class="p-3">Action</th></tr></thead><tbody id="codSettlementBody"></tbody></table></div>
-      <div id="codPaymentForm" class="hidden border-t pt-3 mt-3"><h4 class="font-semibold text-sm mb-2">Send manual payment instructions (not a gateway link)</h4><p id="codPaymentSeller" class="text-xs mb-2"></p><div class="flex flex-wrap gap-2"><select id="codPaymentMethod" class="border rounded-lg p-2 text-sm"><option value="bkash">bKash</option><option value="nagad">Nagad</option></select><input id="codPaymentNumber" class="border rounded-lg p-2 text-sm" placeholder="01XXXXXXXXX" maxlength="11" inputmode="numeric"><button onclick="submitCodPaymentRequest()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Send Email</button><button onclick="document.getElementById('codPaymentForm').classList.add('hidden')" class="border px-4 py-2 rounded-lg text-sm">Cancel</button></div><p class="text-xs text-slate-500 mt-2">Payment number and method are only used for this email; they are not saved in the database.</p></div>
+      <div id="codPaymentForm" class="hidden border-t pt-3 mt-3"><h4 class="font-semibold text-sm mb-2">Send payment instructions and optional verified payment link</h4><p id="codPaymentSeller" class="text-xs mb-2"></p><div class="flex flex-wrap gap-2"><select id="codPaymentMethod" class="border rounded-lg p-2 text-sm"><option value="bkash">bKash</option><option value="nagad">Nagad</option></select><input id="codPaymentNumber" class="border rounded-lg p-2 text-sm" placeholder="01XXXXXXXXX" maxlength="11" inputmode="numeric"><input id="codPaymentUrl" type="url" class="border rounded-lg p-2 text-sm flex-1 min-w-[210px]" placeholder="Optional real HTTPS payment link"><button onclick="submitCodPaymentRequest()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Send Email</button><button onclick="document.getElementById('codPaymentForm').classList.add('hidden')" class="border px-4 py-2 rounded-lg text-sm">Cancel</button></div><p class="text-xs text-slate-500 mt-2">Payment details and optional payment link are only used for this email; they are not saved in the database. Only use a verified, working checkout URL.</p></div>
     </div>
   </div>
 
@@ -1129,7 +1129,7 @@
         if (!data.length) { body.innerHTML = '<tr><td colspan="5" class="p-4 text-center">No unpaid commissions</td></tr>'; return; }
         body.innerHTML = data.map(s => {
           const enough = s.available_balance >= s.total_unpaid && s.total_unpaid > 0;
-          return `<tr class="border-b align-top"><td class="p-3"><b>${commEscape(s.seller_name || s.seller_id)}</b><div class="text-xs">${commEscape(s.seller_email || '')}</div><div class="text-xs">Seller #${commEscape(s.seller_id)}</div></td><td class="p-3 text-xs">${s.commissions.map(c => `<div>#${commEscape(c.order_number)} (ID ${commEscape(c.id)}): ${commMoney(c.commission_amount)}</div>`).join('')}</td><td class="p-3 font-bold">${commMoney(s.total_unpaid)}</td><td class="p-3">${commMoney(s.available_balance)}</td><td class="p-3">${enough ? `<button class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs" onclick="deductCodSettlement(${Number(s.seller_id)})">Deduct & Settle</button>` : `<button class="bg-amber-600 text-white px-3 py-2 rounded-lg text-xs" onclick="showCodPaymentForm(${Number(s.seller_id)})">Send Payment Request</button>`}</td></tr>`;
+          return `<tr class="border-b align-top"><td class="p-3"><b>${commEscape(s.seller_name || s.seller_id)}</b><div class="text-xs">${commEscape(s.seller_email || '')}</div><div class="text-xs">Seller #${commEscape(s.seller_id)}</div></td><td class="p-3 text-xs">${s.commissions.map(c => `<div>#${commEscape(c.order_number)} (ID ${commEscape(c.id)}): ${commMoney(c.commission_amount)}</div>`).join('')}</td><td class="p-3 font-bold">${commMoney(s.total_unpaid)}</td><td class="p-3">${commMoney(s.available_balance)}</td><td class="p-3">${enough ? `<button class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs" onclick="deductCodSettlement(${Number(s.seller_id)})">Deduct & Settle</button>` : `<button class="bg-amber-600 text-white px-3 py-2 rounded-lg text-xs" onclick="showCodPaymentForm(${Number(s.seller_id)})">Send Payment Request</button>`} <button class="bg-sky-700 text-white px-3 py-2 rounded-lg text-xs mt-1" onclick="markCodSettled(${Number(s.seller_id)})">Mark as Settled</button></td></tr>`;
         }).join('');
       } catch (e) { body.innerHTML = `<tr><td colspan="5" class="p-4 text-red-600">${commEscape(e.message)}</td></tr>`; }
     }
@@ -1154,15 +1154,29 @@
     async function submitCodPaymentRequest() {
       const method = document.getElementById('codPaymentMethod').value;
       const number = document.getElementById('codPaymentNumber').value.trim();
+      const payment_url = document.getElementById('codPaymentUrl').value.trim();
       if (!/^01\d{9}$/.test(number)) return alert('Enter valid 11-digit mobile number');
       if (!confirm(`Email ${method} payment instructions to seller? Number: ${number}`)) return;
       try {
-        const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number})});
+        const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number,payment_url})});
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Email failed');
         alert('Payment instructions sent. Commission remains unpaid until payment verification.');
         document.getElementById('codPaymentForm').classList.add('hidden');
         document.getElementById('codPaymentNumber').value = '';
+        document.getElementById('codPaymentUrl').value = '';
       } catch (e) { alert(e.message); }
+    }
+
+    async function markCodSettled(id) {
+      const seller=codSettlementRows.find(x=>Number(x.seller_id)===id);
+      if(!seller) return alert('Seller not found');
+      if(!confirm(`Have you independently VERIFIED payment of ${commMoney(seller.total_unpaid)} from ${seller.seller_name||id}?\n\nThis will mark ALL currently unpaid commissions PAID without deducting the seller balance. This action cannot be undone from this screen.`)) return;
+      try {
+        const res=await fetch('/admin/api/cod-settlements/mark-settled',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:id})});
+        const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed to mark settled');
+        alert(data.email_sent?`Settled ${commMoney(data.settled_amount)}. Thank-you email with branded PDF sent.`:`Settled ${commMoney(data.settled_amount)}, but PDF email failed: ${data.email_error||'unknown'}. Do not settle again.`);
+        await loadCodSettlements();
+      }catch(err){alert(err.message);}
     }
 
     // ================= TICKETS & COMPLAINS LOGIC =================
