@@ -609,14 +609,19 @@ function settlementMailHtml({ seller, amount, rows, title, message, method, numb
 async function settlementFetchLogo() {
     const https = require('https');
     return new Promise(resolve => {
-        const request = https.get(settlementLogoUrl, {timeout:3500}, response => {
-            if (response.statusCode !== 200) { response.resume(); return resolve(null); }
+        let request;
+        const timer = setTimeout(() => { finish(null); if(request) request.destroy(); }, 3500);
+        let done = false;
+        function finish(value) { if(done) return; done=true; clearTimeout(timer); resolve(value); }
+        request = https.get(settlementLogoUrl, response => {
+            if (response.statusCode !== 200) { response.resume(); return finish(null); }
             const chunks=[]; let size=0;
-            response.on('data', chunk => { size+=chunk.length; if(size>800000) response.destroy(); else chunks.push(chunk); });
-            response.on('end', () => resolve(size<=800000 ? Buffer.concat(chunks) : null));
-            response.on('error', () => resolve(null));
+            response.on('data', chunk => { size+=chunk.length; if(size>800000) { finish(null); response.destroy(); } else chunks.push(chunk); });
+            response.on('end', () => finish(size<=800000 ? Buffer.concat(chunks) : null));
+            response.on('error', () => finish(null));
+            response.on('aborted', () => finish(null));
         });
-        request.on('timeout', () => request.destroy()); request.on('error', () => resolve(null));
+        request.on('error', () => finish(null));
     });
 }
 async function settlementPdf(seller, rows, amount, mode='balance', payment=null) {
