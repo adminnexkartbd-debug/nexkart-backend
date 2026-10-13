@@ -549,40 +549,50 @@ router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
 const settlementMoney = v => Math.round(Number(v || 0) * 100) / 100;
 async function settlementEmail(to, subject, html, attachment) {
     if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error('Seller email missing or invalid');
-    const errors=[];
-    // Try configured Resend first, then Gmail. One failed provider must not prevent fallback.
-    if (process.env.RESEND_API_KEY && (process.env.SETTLEMENT_FROM_EMAIL || process.env.RESEND_FROM_EMAIL)) {
-        try {
-            const payload={from:process.env.SETTLEMENT_FROM_EMAIL || process.env.RESEND_FROM_EMAIL,to:[to],subject,html};
-            if(attachment)payload.attachments=[{filename:'NexkartBD-Commission-Settlement.pdf',content:attachment.toString('base64')}];
-            const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
-            const result=await response.json().catch(()=>({}));
-            if(!response.ok || !result.id)throw new Error(result.message || `HTTP ${response.status}`);
-            console.info('COD receipt email accepted by Resend:',result.id);
-            return result.id;
-        }catch(e){errors.push('Resend: '+e.message);console.error('COD receipt Resend failed; trying Gmail:',e.message);}
+    const required = ['GOOGLE_USER_CLIENT_ID', 'GOOGLE_USER_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN'];
+    const missing = required.filter(k => !process.env[k]);
+    if (missing.length) throw new Error('Gmail OAuth missing: ' + missing.join(', '));
+    try {
+        const oauth = new google.auth.OAuth2(
+            process.env.GOOGLE_USER_CLIENT_ID,
+            process.env.GOOGLE_USER_CLIENT_SECRET,
+            process.env.GOOGLE_OAUTH_REDIRECT_URI
+        );
+        oauth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+        const gmail = google.gmail({ version: 'v1', auth: oauth });
+        const boundary = 'nexkart_settlement_' + crypto.randomBytes(8).toString('hex');
+        const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf8').toString('base64') + '?=';
+        const parts = [
+            `To: ${to}`,
+            `Subject: ${encodedSubject}`,
+            'MIME-Version: 1.0',
+            `Content-Type: multipart/mixed; boundary="${boundary}"`,
+            '', `--${boundary}`,
+            'Content-Type: text/html; charset=UTF-8',
+            'Content-Transfer-Encoding: base64',
+            '', Buffer.from(html, 'utf8').toString('base64')
+        ];
+        if (attachment) {
+            if (!Buffer.isBuffer(attachment)) throw new Error('PDF attachment must be a Buffer');
+            parts.push(
+                `--${boundary}`,
+                'Content-Type: application/pdf; name="NexkartBD-Commission-Settlement.pdf"',
+                'Content-Disposition: attachment; filename="NexkartBD-Commission-Settlement.pdf"',
+                'Content-Transfer-Encoding: base64',
+                '', attachment.toString('base64')
+            );
+        }
+        parts.push(`--${boundary}--`, '');
+        const raw = Buffer.from(parts.join('\r\n'), 'utf8').toString('base64url');
+        const sent = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+        if (!sent.data?.id) throw new Error('Gmail did not return a message ID');
+        console.info('COD settlement receipt accepted by Gmail OAuth:', sent.data.id);
+        return sent.data.id;
+    } catch (err) {
+        const message = err.response?.data?.error?.message || err.message;
+        console.error('COD settlement Gmail OAuth send failed:', err.response?.data || err);
+        throw new Error('Gmail OAuth email failed: ' + message);
     }
-    const required=['GOOGLE_USER_CLIENT_ID','GOOGLE_USER_CLIENT_SECRET','GOOGLE_REFRESH_TOKEN'];
-    const missing=required.filter(k=>!process.env[k]);
-    if(!missing.length){
-        try {
-            const oauth=new google.auth.OAuth2(process.env.GOOGLE_USER_CLIENT_ID,process.env.GOOGLE_USER_CLIENT_SECRET,process.env.GOOGLE_OAUTH_REDIRECT_URI);
-            oauth.setCredentials({refresh_token:process.env.GOOGLE_REFRESH_TOKEN});
-            const gmail=google.gmail({version:'v1',auth:oauth});
-            const boundary='nexkart_settlement_'+crypto.randomBytes(8).toString('hex');
-            const encodedSubject='=?UTF-8?B?'+Buffer.from(subject).toString('base64')+'?=';
-            const from=process.env.SETTLEMENT_FROM_EMAIL || process.env.GMAIL_FROM_EMAIL || process.env.GOOGLE_SENDER_EMAIL;
-            const parts=[...(from?[`From: ${from}`]:[]),`To: ${to}`,`Subject: ${encodedSubject}`,'MIME-Version: 1.0',`Content-Type: multipart/mixed; boundary="${boundary}"`,'',`--${boundary}`,'Content-Type: text/html; charset=UTF-8','Content-Transfer-Encoding: base64','',Buffer.from(html).toString('base64')];
-            if(attachment)parts.push(`--${boundary}`,'Content-Type: application/pdf; name="NexkartBD-Commission-Settlement.pdf"','Content-Disposition: attachment; filename="NexkartBD-Commission-Settlement.pdf"','Content-Transfer-Encoding: base64','',attachment.toString('base64'));
-            parts.push(`--${boundary}--`,'');
-            const raw=Buffer.from(parts.join('\r\n')).toString('base64url');
-            const sent=await gmail.users.messages.send({userId:'me',requestBody:{raw}});
-            if(!sent.data?.id)throw new Error('Gmail did not return message ID');
-            console.info('COD receipt email accepted by Gmail:',sent.data.id);
-            return sent.data.id;
-        }catch(e){errors.push('Gmail: '+(e.response?.data?.error?.message||e.message));console.error('COD receipt Gmail failed:',e.response?.data||e.message);}
-    }else errors.push('Gmail OAuth missing: '+missing.join(', '));
-    throw new Error('All settlement email providers failed. '+errors.join(' | '));
 }
 // Random opaque tokens are stored hashed in MySQL; no new .env secrets required.
 const settlementOrigin = () => String(process.env.APP_URL || 'https://www.nexkartbd.com').replace(/\/$/, '');
