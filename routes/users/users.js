@@ -2173,6 +2173,36 @@ router.get('/bkash-success', async (req, res) => {
 });
 
 // Backend POST Route Example
+
+// Customer Product Report. Separate from the existing IPR reporting workflow.
+router.post('/report-product', async (req, res) => {
+    try {
+        const userId = req.user?.id || req.session?.user?.id || req.session?.userId;
+        if (!userId) return res.status(401).json({ success: false, message: 'Login required' });
+        const productId = String(req.body?.product_id || '').trim();
+        const reason = String(req.body?.reason || '').trim();
+        const details = String(req.body?.details || '').trim();
+        const allowed = new Set(['wrong_info','fake_product','unsafe_product','wrong_image','other']);
+        if (!productId || productId.length > 100 || !allowed.has(reason) || details.length > 1000) {
+            return res.status(400).json({ success: false, message: 'Invalid report details' });
+        }
+        const [products] = await db.query('SELECT id, admin_id FROM products WHERE id = ? OR product_id = ? LIMIT 1', [productId, productId]);
+        if (!products.length) return res.status(404).json({ success: false, message: 'Product not found' });
+        const product = products[0];
+        // Unique pending report per user/product/reason, enforced by a generated-key UNIQUE index in SQL.
+        const [result] = await db.query(
+            `INSERT INTO product_reports (product_id, seller_id, user_id, reason, details, status, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
+            [product.id, product.admin_id || null, userId, reason, details || null]
+        );
+        return res.status(201).json({ success: true, report_id: result.insertId, message: 'Report submitted' });
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ success: false, message: 'এই Product-এর একই কারণে আপনার একটি Pending Report আছে।' });
+        console.error('Product report error:', error);
+        return res.status(500).json({ success: false, message: 'Could not submit report' });
+    }
+});
+
 router.post('/user/inquiry', async (req, res) => {
     try {
         const { product_id, question, user_name } = req.body;
