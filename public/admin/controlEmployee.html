@@ -316,8 +316,8 @@
             try {
                 const response = await fetch('/api/control-employee/get-commission');
                 const data = await response.json();
-                if (data.success) {
-                    currentCommissionRate = data.rate;
+                if (response.ok && data.success) {
+                    currentCommissionRate = Number(data.rate);
                     document.getElementById('cardCommissionDisplay').innerText = data.rate + '%';
                 } else {
                     document.getElementById('cardCommissionDisplay').innerText = 'N/A';
@@ -330,8 +330,8 @@
 
         async function updateCommission() {
             const inputVal = document.getElementById('newCommissionInput').value;
-            if (!inputVal || isNaN(inputVal)) {
-                showToast('Please enter a valid number', 'error');
+            if (inputVal.trim() === '' || !Number.isFinite(Number(inputVal)) || Number(inputVal) < 0 || Number(inputVal) > 100) {
+                showToast('Enter a commission rate between 0 and 100', 'error');
                 return;
             }
 
@@ -342,9 +342,10 @@
                     body: JSON.stringify({ rate: inputVal })
                 });
                 const data = await response.json();
-                if (data.success) {
+                if (response.ok && data.success) {
+                    currentCommissionRate = Number(data.rate);
+                    document.getElementById('cardCommissionDisplay').innerText = currentCommissionRate + '%';
                     showToast('Commission updated successfully!', 'success');
-                    fetchCommissionRate();
                     closeCardModal();
                 } else {
                     showToast(data.message || 'Failed to update commission', 'error');
@@ -840,7 +841,7 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Set New Commission Rate (%)</label>
                             <div class="flex space-x-2">
-                                <input type="number" id="newCommissionInput" value="${currentCommissionRate}" step="0.1" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                                <input type="number" id="newCommissionInput" value="${currentCommissionRate}" min="0" max="100" step="any" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
                                 <button onclick="updateCommission()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition-colors shadow-sm">Update</button>
                             </div>
                         </div>
