@@ -309,6 +309,8 @@
             word-break: break-word;
         }
 
+        /* NexkartBD branding on printed order slip */
+        .print-brand-logo { display: block; width: auto; max-width: 190px; height: auto; max-height: 75px; object-fit: contain; margin: 0 auto 8px; }
         /* 🖨️ PRINT SLIP STYLING (Screen-এ হিডেন থাকবে) */
         #printableArea {
             display: none;
@@ -488,6 +490,8 @@
 <!-- 🖨️ Hidden Printable Shipping Slip Structure -->
 <div id="printableArea">
     <div class="shipping-label-box">
+        <!-- NexkartBD official logo; loaded ahead of print -->
+        <img class="print-brand-logo" src="https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png" alt="NexkartBD Logo" loading="eager" decoding="sync">
         <!-- 🌐 WEBSITE NAME AT TOP -->
         <div class="website-domain">www.nexkartbd.com</div>
 
