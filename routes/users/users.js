@@ -2195,6 +2195,62 @@ router.post('/report-product', async (req, res) => {
              VALUES (?, ?, ?, ?, ?, 'pending', NOW(), NOW())`,
             [product.id, product.admin_id || null, userId, reason, details || null]
         );
+        // Report saved successfully. Notify ONLY the actual super admin(s), not sellers.
+        // Email delivery failure must not turn an already-saved report into a failed submission.
+        try {
+            const [superAdmins] = await db.query(
+                `SELECT DISTINCT email FROM admins
+                 WHERE super_admin = '1'
+                   AND email IS NOT NULL AND TRIM(email) <> ''`
+            );
+            const recipients = [...new Set(superAdmins.map(a => String(a.email || '').trim()).filter(Boolean))];
+            if (recipients.length) {
+                const [productInfo] = await db.query('SELECT title FROM products WHERE id = ? LIMIT 1', [product.id]);
+                const [reporterInfo] = await db.query('SELECT name, email FROM users WHERE id = ? LIMIT 1', [userId]);
+                const safe = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                const reasonLabels = {
+                    wrong_info: 'Wrong or misleading information',
+                    fake_product: 'Fake or suspicious product',
+                    unsafe_product: 'Unsafe or prohibited product',
+                    wrong_image: 'Incorrect image or category',
+                    other: 'Other'
+                };
+                const reportUrl = `${String(process.env.APP_URL || 'https://www.nexkartbd.com').replace(/\/$/, '')}/user/product-details?id=${encodeURIComponent(product.id)}`;
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: recipients.join(', '),
+                    subject: `NexKartBD Product Report #${result.insertId} - Product ${product.id}`,
+                    text: [
+                        `New product report #${result.insertId}`,
+                        `Product: ${productInfo[0]?.title || product.id}`,
+                        `Product ID: ${product.id}`,
+                        `Seller ID: ${product.admin_id || 'N/A'}`,
+                        `Reporter: ${reporterInfo[0]?.name || 'Customer'} (ID: ${userId})`,
+                        `Reporter email: ${reporterInfo[0]?.email || 'N/A'}`,
+                        `Reason: ${reasonLabels[reason]}`,
+                        `Details: ${details || 'Not provided'}`,
+                        `Product URL: ${reportUrl}`,
+                        'Status: pending'
+                    ].join('\n'),
+                    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;border:1px solid #eee;border-radius:12px">
+                        <h2 style="color:#e83e72">New Product Report #${result.insertId}</h2>
+                        <p><b>Product:</b> ${safe(productInfo[0]?.title || product.id)}</p>
+                        <p><b>Product ID:</b> ${safe(product.id)} | <b>Seller ID:</b> ${safe(product.admin_id || 'N/A')}</p>
+                        <p><b>Reporter:</b> ${safe(reporterInfo[0]?.name || 'Customer')} (ID: ${safe(userId)})</p>
+                        <p><b>Reporter email:</b> ${safe(reporterInfo[0]?.email || 'N/A')}</p>
+                        <p><b>Reason:</b> ${safe(reasonLabels[reason])}</p>
+                        <p><b>Details:</b> ${safe(details || 'Not provided')}</p>
+                        <p><b>Status:</b> Pending</p>
+                        <p><a href="${safe(reportUrl)}">View product</a></p>
+                        <p style="color:#777;font-size:12px">Only accounts with admins.super_admin = 1 receive this notification.</p>
+                    </div>`
+                });
+            } else {
+                console.warn(`[Product Report] Report #${result.insertId} saved, but no admin with super_admin=1 and email was found.`);
+            }
+        } catch (mailError) {
+            console.error(`[Product Report] Report #${result.insertId} saved; admin email notification failed:`, mailError);
+        }
         return res.status(201).json({ success: true, report_id: result.insertId, message: 'Report submitted' });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ success: false, message: 'এই Product-এর একই কারণে আপনার একটি Pending Report আছে।' });
