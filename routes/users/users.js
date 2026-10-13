@@ -576,6 +576,26 @@ async function recordCoinUsage({ userId, orderId, coinDiscount }) {
 // blocks two callbacks arriving at the same Node.js process at the same time.
 const orderFinalizationLocks = new Set();
 
+
+// COD amounts are receivables, not collected online sales.
+// The UNIQUE(order_id) ledger constraint makes retries idempotent.
+async function recordCodSellerLedger(order, commissionAmount) {
+    if (String(order.payment_method || '').trim().toLowerCase() !== 'cod') return;
+    const productAmount = Math.max(0,
+        Number(order.subtotal_price || 0) - Number(order.coupon_discount || 0) - Number(order.coin_discount || 0));
+    const deliveryCharge = Math.max(0, Number(order.delivery_charge || 0));
+    const commission = Number(commissionAmount);
+    if (!Number.isFinite(productAmount) || !Number.isFinite(commission) || commission < 0 || commission > productAmount) {
+        throw new Error('Invalid COD commission/amount for ledger');
+    }
+    const sellerAmount = Math.round((productAmount - commission + Number.EPSILON) * 100) / 100;
+    await db.query(`INSERT INTO seller_cod_ledger
+        (order_id, seller_id, product_amount, delivery_charge, commission_amount, seller_amount, collection_status)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending_collection')
+        ON DUPLICATE KEY UPDATE id = id`,
+        [order.order_id, order.seller_id, productAmount, deliveryCharge, commission, sellerAmount]);
+}
+
 async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
     if (!order || !order.order_id) throw new Error('Invalid order for finalization.');
 
@@ -593,6 +613,8 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         );
 
         if (alreadyFinalized.length > 0) {
+            // A previous retry may have recorded commission before COD ledger creation.
+            await recordCodSellerLedger(order, alreadyFinalized[0].commission_amount);
             if (paymentType === 'paid') {
                 const hasBkashPaymentId = await hasTableColumn('orders', 'bkash_payment_id');
                 const hasBkashTrxId = await hasTableColumn('orders', 'bkash_trx_id');
@@ -662,6 +684,9 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
         orderId: order.order_id,
         coinDiscount: order.coin_discount
     });
+
+    // COD ledger is separate from admins.total_sales; online flow is untouched.
+    await recordCodSellerLedger(order, commission.commissionAmount);
 
     // COD should not depend on bKash-specific columns. Only successful online
     // payments need the bKash payment/trx fields updated.
