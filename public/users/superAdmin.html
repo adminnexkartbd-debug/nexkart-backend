@@ -435,7 +435,8 @@
               <th class="p-3">Seller Details</th>
               <th class="p-3">Rate</th>
               <th class="p-3">Commission Amount</th>
-              <th class="p-3">Payment</th>
+              <th class="p-3">Payment Type</th>
+              <th class="p-3">Payment Method</th>
               <th class="p-3">Order Amount</th>
               <th class="p-3">Discount</th>
               <th class="p-3">COD Seller Net</th>
@@ -1024,7 +1025,7 @@
     async function openCommissionModal() {
       openModal('commissionModal');
       const tableBody = document.getElementById('commissionTableBody');
-      tableBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-400">Loading Commissions...</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400">Loading Commissions...</td></tr>`;
       try {
         const res = await fetch('/admin/api/all-commissions', { credentials: 'include', cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch commissions');
@@ -1032,7 +1033,7 @@
         filterCommissionData();
       } catch (err) {
         console.error('Error loading commissions:', err);
-        tableBody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-red-500">Failed to load commission data.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-red-500">Failed to load commission data.</td></tr>`;
       }
     }
 
@@ -1041,7 +1042,7 @@
       const month = document.getElementById('commMonthFilter').value;
       const year = document.getElementById('commYearFilter').value;
       const filtered = allCommissionData.filter(item => {
-        const searchable = [item.order_number, item.seller_name, item.seller_email, item.seller_id].join(' ').toLowerCase();
+        const searchable = [item.order_number, item.seller_name, item.seller_email, item.seller_id, item.payment_type, item.payment_method].join(' ').toLowerCase();
         const d = new Date(item.date);
         return (!query || searchable.includes(query)) &&
           (month === 'all' || (!isNaN(d) && String(d.getMonth() + 1).padStart(2, '0') === month)) &&
@@ -1070,7 +1071,7 @@
       document.getElementById('commCodPending').textContent = commMoney(pending);
       document.getElementById('commCodCollected').textContent = commMoney(collected);
       if (!items.length) {
-        body.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-slate-400">No commission records found.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400">No commission records found.</td></tr>`;
         return;
       }
       body.innerHTML = items.map(x => {
@@ -1082,6 +1083,7 @@
           <td class="p-3"><p class="font-semibold text-xs">${commEscape(x.seller_name || 'Unknown Seller')}</p><p class="text-xs text-slate-400">${commEscape(x.seller_email || 'ID: ' + x.seller_id)}</p></td>
           <td class="p-3 text-xs">${commEscape(x.commission_rate)}%</td>
           <td class="p-3 font-bold text-indigo-600 text-xs">${commMoney(x.commission_amount)}</td>
+          <td class="p-3 text-xs font-semibold uppercase">${commEscape(x.payment_type || '—')}</td>
           <td class="p-3 text-xs uppercase">${commEscape(x.payment_method || (hasCod ? 'COD' : '—'))}</td>
           <td class="p-3 text-xs">${x.order_total == null ? '—' : commMoney(x.order_total)}</td>
           <td class="p-3 text-xs">${x.order_discount == null ? '—' : commMoney(x.order_discount)}</td>
