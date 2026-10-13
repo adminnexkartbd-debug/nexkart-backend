@@ -558,24 +558,57 @@ async function settlementEmail(to, subject, html, attachment) {
     const raw = Buffer.from(parts.join('\r\n')).toString('base64url');
     await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
 }
-function settlementPdf(seller, rows, amount) {
+const settlementLogoUrl = 'https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png';
+const settlementEscape = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function settlementMailHtml({ seller, amount, rows, title, message, method, number, paymentUrl, settled }) {
+    const detail = rows.map(x => `<tr><td style="padding:11px;border-bottom:1px solid #e2e8f0">#${settlementEscape(x.order_number)}<br><small style="color:#64748b">Commission ID ${x.id}</small></td><td style="padding:11px;border-bottom:1px solid #e2e8f0;text-align:right">BDT ${settlementMoney(x.commission_amount).toFixed(2)}</td></tr>`).join('');
+    const button = paymentUrl ? `<p style="margin:26px 0"><a href="${settlementEscape(paymentUrl)}" style="background:#0f766e;color:#fff;padding:14px 22px;border-radius:10px;text-decoration:none;font-weight:bold">Pay commission securely</a></p><p style="font-size:12px;color:#64748b;word-break:break-all">${settlementEscape(paymentUrl)}</p>` : '';
+    return `<!doctype html><html><body style="margin:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#0f172a"><div style="max-width:620px;margin:32px auto;background:#fff;border-radius:18px;overflow:hidden"><div style="background:#0f172a;padding:30px;color:#fff"><img src="${settlementLogoUrl}" alt="NexkartBD" style="max-height:54px;max-width:180px"><h1 style="margin:20px 0 4px;font-size:24px">${settlementEscape(title)}</h1><div style="color:#cbd5e1">NexkartBD Seller Finance</div></div><div style="padding:30px"><p>Hello ${settlementEscape(seller.name || 'Seller')},</p><p style="line-height:1.7">${settlementEscape(message)}</p><div style="background:${settled?'#ecfdf5':'#fff7ed'};padding:20px;border-radius:12px;margin:22px 0"><div style="font-size:12px;color:#475569">${settled?'TOTAL SETTLED':'TOTAL PAYMENT DUE'}</div><div style="font-size:29px;font-weight:bold">BDT ${amount.toFixed(2)}</div><div style="font-size:12px;color:#475569">${rows.length} commission record(s)</div></div>${method ? `<p><b>Payment method:</b> ${settlementEscape(method.toUpperCase())}<br><b>Payment number:</b> ${settlementEscape(number)}</p>`:''}${button}<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8fafc"><th style="padding:11px;text-align:left">Order / Commission</th><th style="padding:11px;text-align:right">Amount</th></tr></thead><tbody>${detail}</tbody></table><p style="margin-top:24px;line-height:1.7">${settled?'Thank you for settling your commission. We truly appreciate your partnership and continued trust in NexkartBD. Your detailed settlement receipt is attached as a PDF.':'After paying, please share your transaction ID with NexkartBD support. Your commissions will remain unpaid until the payment is verified.'}</p><p>Warm regards,<br><b>NexkartBD Team</b></p></div><div style="background:#f8fafc;padding:18px;text-align:center;font-size:12px;color:#64748b">NexkartBD · <a href="https://www.nexkartbd.com">www.nexkartbd.com</a></div></div></body></html>`;
+}
+async function settlementFetchLogo() {
+    const https = require('https');
+    return new Promise(resolve => {
+        const request = https.get(settlementLogoUrl, {timeout:3500}, response => {
+            if (response.statusCode !== 200) { response.resume(); return resolve(null); }
+            const chunks=[]; let size=0;
+            response.on('data', chunk => { size+=chunk.length; if(size>800000) response.destroy(); else chunks.push(chunk); });
+            response.on('end', () => resolve(size<=800000 ? Buffer.concat(chunks) : null));
+            response.on('error', () => resolve(null));
+        });
+        request.on('timeout', () => request.destroy()); request.on('error', () => resolve(null));
+    });
+}
+async function settlementPdf(seller, rows, amount, mode='balance') {
     const PDFDocument = require('pdfkit');
+    const logo = await settlementFetchLogo();
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ margin: 48, size: 'A4' });
-        const chunks = [];
-        doc.on('data', x => chunks.push(x)); doc.on('end', () => resolve(Buffer.concat(chunks))); doc.on('error', reject);
-        doc.fontSize(20).text('NexkartBD - COD Commission Settlement');
-        doc.moveDown().fontSize(11).text(`Seller: ${seller.name || seller.id}`)
-           .text(`Seller ID: ${seller.id}`).text(`Email: ${seller.email || ''}`)
-           .text(`Settlement date: ${new Date().toISOString()}`);
-        doc.moveDown().fontSize(12).text('Paid commission records:');
-        for (const x of rows) {
-            if (doc.y > 740) doc.addPage();
-            doc.fontSize(10).text(`ID ${x.id} | Order ${x.order_number} | Rate ${x.commission_rate}% | BDT ${settlementMoney(x.commission_amount).toFixed(2)}`);
+        const doc = new PDFDocument({ margin: 44, size: 'A4', bufferPages:true });
+        const chunks=[]; doc.on('data',x=>chunks.push(x)); doc.on('end',()=>resolve(Buffer.concat(chunks))); doc.on('error',reject);
+        const dark='#0f172a', teal='#0f766e', muted='#64748b';
+        function pageHeader(){
+            doc.rect(0,0,595,126).fill(dark);
+            if(logo) { try { doc.image(logo,44,26,{fit:[125,48]}); } catch(e) { doc.fillColor('#fff').font('Helvetica-Bold').fontSize(21).text('NexkartBD',44,34); } }
+            else doc.fillColor('#fff').font('Helvetica-Bold').fontSize(21).text('NexkartBD',44,34);
+            doc.fillColor('#cbd5e1').font('Helvetica').fontSize(10).text('SELLER FINANCE  /  OFFICIAL RECEIPT',44,91);
+            doc.y=151;
         }
-        doc.moveDown().fontSize(14).text(`Total deducted from available balance: BDT ${amount.toFixed(2)}`);
-        doc.moveDown().fontSize(9).text('This receipt confirms commission settlement from the seller balance.');
-        doc.end();
+        pageHeader();
+        doc.fillColor(dark).font('Helvetica-Bold').fontSize(20).text('Commission Settlement Receipt');
+        doc.moveDown(.5).fillColor(muted).font('Helvetica').fontSize(10).text(`Issued: ${new Date().toISOString().replace('T',' ').slice(0,19)} UTC`);
+        doc.moveDown(.8).fillColor(dark).font('Helvetica-Bold').fontSize(11).text(`Seller: ${String(seller.name||seller.id).replace(/[^\x20-\x7E]/g,'')}`);
+        doc.font('Helvetica').fontSize(10).text(`Seller ID: ${seller.id}     Email: ${seller.email||'N/A'}`);
+        doc.moveDown(.7).roundedRect(44,doc.y,507,76,10).fill('#ecfdf5');
+        const cardY=doc.y; doc.fillColor(teal).font('Helvetica-Bold').fontSize(11).text('PAYMENT SETTLED',60,cardY+14); doc.fontSize(22).text(`BDT ${amount.toFixed(2)}`,60,cardY+33);
+        doc.y=cardY+99; doc.fillColor(muted).font('Helvetica').fontSize(10).text(`Settlement method: ${mode==='balance'?'Seller available balance deduction':'Manual payment verified by Super Admin'}`);
+        doc.moveDown(1.4); doc.fillColor(dark).font('Helvetica-Bold').fontSize(11).text('COMMISSION BREAKDOWN'); doc.moveDown(.6);
+        function heading(){const y=doc.y;doc.rect(44,y,507,25).fill('#e2e8f0');doc.fillColor(dark).font('Helvetica-Bold').fontSize(9).text('COMMISSION ID',53,y+8).text('ORDER',158,y+8).text('RATE',374,y+8).text('AMOUNT (BDT)',444,y+8);doc.y=y+30;}
+        heading();
+        rows.forEach((x,i)=>{if(doc.y>710){doc.addPage();pageHeader();heading();}const y=doc.y; if(i%2===0)doc.rect(44,y,507,26).fill('#f8fafc');doc.fillColor(dark).font('Helvetica').fontSize(9).text(String(x.id),53,y+8,{width:100}).text(String(x.order_number||''),158,y+8,{width:210}).text(`${x.commission_rate??'-'}%`,374,y+8,{width:55}).text(settlementMoney(x.commission_amount).toFixed(2),444,y+8,{width:98,align:'right'});doc.y=y+27;});
+        if(doc.y>690){doc.addPage();pageHeader();}
+        doc.moveDown().fillColor(teal).font('Helvetica-Bold').fontSize(12).text(`TOTAL SETTLED: BDT ${amount.toFixed(2)}`,44,doc.y,{align:'right',width:507});
+        doc.moveDown(1.5).fillColor(dark).font('Helvetica-Bold').fontSize(11).text('Thank you for being a valued NexkartBD seller!');
+        doc.moveDown(.4).fillColor(muted).font('Helvetica').fontSize(10).text('We appreciate your partnership. This receipt confirms the commission records listed above have been marked paid.');
+        const count=doc.bufferedPageRange().count;for(let i=0;i<count;i++){doc.switchToPage(i);doc.fillColor(muted).font('Helvetica').fontSize(8).text(`NexkartBD  |  www.nexkartbd.com  |  Page ${i+1} of ${count}`,44,795,{width:507,align:'center'});}doc.end();
     });
 }
 router.get('/api/cod-settlements', ensureSuperAdmin, async (req, res) => {
@@ -620,7 +653,7 @@ router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) =>
     try {
         if (!receipt.seller.email) throw new Error('Seller email missing');
         const pdf = await settlementPdf(receipt.seller, receipt.rows, receipt.amount);
-        await settlementEmail(receipt.seller.email, 'NexkartBD COD commission settlement receipt', `<p>Dear Seller,</p><p>Your ${receipt.rows.length} outstanding commission(s), total <b>BDT ${receipt.amount.toFixed(2)}</b>, have been deducted from your available balance.</p><p>The attached PDF lists each commission ID and order.</p><p>NexkartBD Team</p>`, pdf);
+        await settlementEmail(receipt.seller.email, 'NexkartBD | Commission Settled - Thank You', settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Commission settled successfully',message:'Your outstanding commission has been deducted from your seller available balance and is now fully settled.',settled:true}), pdf);
         email_sent = true;
     } catch (err) { email_error = err.message; console.error('Settlement committed but receipt email failed:', err); }
     res.json({ success: true, deducted: receipt.amount, settled_ids: receipt.rows.map(x=>x.id), email_sent, email_error });
@@ -629,18 +662,48 @@ router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req
     const sellerId = Number(req.body?.seller_id);
     const method = String(req.body?.method || '').toLowerCase().trim();
     const number = String(req.body?.number || '').trim();
+    const paymentUrl = String(req.body?.payment_url || '').trim();
+    if (paymentUrl && (!/^https:\/\/[^\s]+$/i.test(paymentUrl) || paymentUrl.length > 1500)) return res.status(400).json({error:'Payment URL must be a valid HTTPS link'});
     if (!Number.isSafeInteger(sellerId) || sellerId <= 0 || !['bkash','nagad'].includes(method) || !/^01\d{9}$/.test(number)) return res.status(400).json({ error: 'Choose bKash/Nagad and a valid 11-digit number' });
     try {
         const [[seller]] = await db.query('SELECT id,name,email FROM admins WHERE id=?', [sellerId]);
         if (!seller || !seller.email) return res.status(404).json({ error: 'Seller email not found' });
-        const [rows] = await db.query(`SELECT id,order_number,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id`, [sellerId]);
+        const [rows] = await db.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id`, [sellerId]);
         if (!rows.length) return res.status(409).json({ error: 'No unpaid commissions' });
         const amount = settlementMoney(rows.reduce((a,x) => a + Number(x.commission_amount || 0), 0));
-        const details = rows.map(x => `<li>Order ${String(x.order_number).replace(/[&<>"']/g,'')} (ID ${x.id}): BDT ${settlementMoney(x.commission_amount).toFixed(2)}</li>`).join('');
-        // Manual payment instructions, not a fabricated gateway payment URL. No payment details are stored.
-        await settlementEmail(seller.email, 'NexkartBD unpaid COD commission payment instructions', `<p>Dear Seller,</p><p>Your unpaid commission total is <b>BDT ${amount.toFixed(2)}</b>.</p><ul>${details}</ul><p>Please send the payment manually using <b>${method.toUpperCase()}</b> to <b>${number}</b> and contact NexkartBD support with the transaction reference.</p><p>This is a payment instruction, not an automated checkout link. Payment status stays unpaid until verified by an administrator.</p><p>NexkartBD Team</p>`);
+        await settlementEmail(seller.email, 'NexkartBD | Commission Payment Request', settlementMailHtml({seller,amount,rows,title:'Commission payment reminder',message:'You have outstanding COD commissions. Please complete the payment using the details below.',method,number,paymentUrl,settled:false}));
         res.json({ success: true, email_sent: true, total_unpaid: amount });
     } catch (err) { console.error('COD payment reminder:', err); res.status(500).json({ error: 'Failed to send payment instructions' }); }
+});
+
+// Manual settlement is only for a payment the administrator has independently verified.
+// No seller balance is deducted: funds were received outside the seller wallet.
+router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,res)=>{
+    const sellerId=Number(req.body?.seller_id);
+    if(!Number.isSafeInteger(sellerId)||sellerId<=0) return res.status(400).json({error:'Invalid seller ID'});
+    let conn;
+    try {conn=await db.getConnection();} catch(err){return res.status(500).json({error:'Database connection unavailable'});}
+    let receipt;
+    try {
+        await conn.beginTransaction();
+        const [[seller]]=await conn.query('SELECT id,name,email FROM admins WHERE id=? FOR UPDATE',[sellerId]);
+        if(!seller){await conn.rollback();return res.status(404).json({error:'Seller not found'});}
+        const [rows]=await conn.query("SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id FOR UPDATE",[sellerId]);
+        if(!rows.length){await conn.rollback();return res.status(409).json({error:'No unpaid commissions to settle'});}
+        const amount=settlementMoney(rows.reduce((sum,x)=>sum+Number(x.commission_amount||0),0));
+        const ids=rows.map(x=>x.id);
+        const [result]=await conn.query(`UPDATE commission_table SET payment_type='paid' WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND id IN (${ids.map(()=>'?').join(',')})`,[sellerId,...ids]);
+        if(result.affectedRows!==ids.length) throw new Error('Concurrent update conflict');
+        await conn.commit(); receipt={seller,rows,amount};
+    }catch(err){try{await conn.rollback();}catch(_){} console.error('Manual settlement failed:',err);return res.status(500).json({error:'Settlement failed; no changes committed'});}finally{conn.release();}
+    let email_sent=false,email_error=null;
+    try{
+        if(!receipt.seller.email) throw new Error('Seller email missing');
+        const pdf=await settlementPdf(receipt.seller,receipt.rows,receipt.amount,'manual');
+        await settlementEmail(receipt.seller.email,'NexkartBD | Payment Confirmed - Thank You',settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Your payment is confirmed',message:'Thank you! We have verified your payment and marked all the commission records listed below as paid.',settled:true}),pdf);
+        email_sent=true;
+    }catch(err){email_error=err.message;console.error('Manual settlement committed, receipt email failed:',err);}
+    res.json({success:true,settled_amount:receipt.amount,settled_ids:receipt.rows.map(x=>x.id),email_sent,email_error});
 });
 
 // ================= TICKETS & COMPLAINS APIs =================
