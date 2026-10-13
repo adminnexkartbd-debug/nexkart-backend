@@ -2200,7 +2200,7 @@ router.post('/report-product', async (req, res) => {
         try {
             const [superAdmins] = await db.query(
                 `SELECT DISTINCT email FROM admins
-                 WHERE super_admin = '1'
+                 WHERE super_admin = 'approved'
                    AND email IS NOT NULL AND TRIM(email) <> ''`
             );
             const recipients = [...new Set(superAdmins.map(a => String(a.email || '').trim()).filter(Boolean))];
@@ -2242,11 +2242,11 @@ router.post('/report-product', async (req, res) => {
                         <p><b>Details:</b> ${safe(details || 'Not provided')}</p>
                         <p><b>Status:</b> Pending</p>
                         <p><a href="${safe(reportUrl)}">View product</a></p>
-                        <p style="color:#777;font-size:12px">Only accounts with admins.super_admin = 1 receive this notification.</p>
+                        <p style="color:#777;font-size:12px">Only accounts with admins.super_admin = approved receive this notification.</p>
                     </div>`
                 });
             } else {
-                console.warn(`[Product Report] Report #${result.insertId} saved, but no admin with super_admin=1 and email was found.`);
+                console.warn(`[Product Report] Report #${result.insertId} saved, but no admin with super_admin=approved and email was found.`);
             }
         } catch (mailError) {
             console.error(`[Product Report] Report #${result.insertId} saved; admin email notification failed:`, mailError);
