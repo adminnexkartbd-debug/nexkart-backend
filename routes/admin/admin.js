@@ -318,6 +318,22 @@ router.get('/api/admin/reviews/pending-count', ensureActiveAdmin, async (req, re
     }
 });
 
+// Home Total Sales: existing online sales + COD seller earnings (display only).
+router.get('/api/stats/cod_sales', ensureActiveAdmin, async (req, res) => {
+  try {
+    const sellerId = Number(req.user.id || req.user.admin_id);
+    const [rows] = await db.query(`
+      SELECT COALESCE(SUM(seller_amount), 0) AS cod_sales
+      FROM defaultdb.seller_cod_ledger
+      WHERE seller_id = ? AND collection_status <> 'cancelled'
+    `, [sellerId]);
+    res.json({ success: true, codSales: Number(rows[0].cod_sales || 0) });
+  } catch (error) {
+    console.error('COD sales dashboard error:', error);
+    res.status(500).json({ success: false, message: 'COD sales unavailable' });
+  }
+});
+
 // ==========================================
 // ১৪. সকল অ্যাডমিন HTML ফাইল পেজ রাউটস
 // ==========================================
