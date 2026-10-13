@@ -548,51 +548,24 @@ router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
 // Use commission_table IDs, not order joins, to avoid duplicate deductions.
 const settlementMoney = v => Math.round(Number(v || 0) * 100) / 100;
 async function settlementEmail(to, subject, html, attachment) {
-    if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error('Seller email missing or invalid');
-    const required = ['GOOGLE_USER_CLIENT_ID', 'GOOGLE_USER_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN'];
-    const missing = required.filter(k => !process.env[k]);
-    if (missing.length) throw new Error('Gmail OAuth missing: ' + missing.join(', '));
-    try {
-        const oauth = new google.auth.OAuth2(
-            process.env.GOOGLE_USER_CLIENT_ID,
-            process.env.GOOGLE_USER_CLIENT_SECRET,
-            process.env.GOOGLE_OAUTH_REDIRECT_URI
-        );
-        oauth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
-        const gmail = google.gmail({ version: 'v1', auth: oauth });
-        const boundary = 'nexkart_settlement_' + crypto.randomBytes(8).toString('hex');
-        const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject, 'utf8').toString('base64') + '?=';
-        const parts = [
-            `To: ${to}`,
-            `Subject: ${encodedSubject}`,
-            'MIME-Version: 1.0',
-            `Content-Type: multipart/mixed; boundary="${boundary}"`,
-            '', `--${boundary}`,
-            'Content-Type: text/html; charset=UTF-8',
-            'Content-Transfer-Encoding: base64',
-            '', Buffer.from(html, 'utf8').toString('base64')
-        ];
-        if (attachment) {
-            if (!Buffer.isBuffer(attachment)) throw new Error('PDF attachment must be a Buffer');
-            parts.push(
-                `--${boundary}`,
-                'Content-Type: application/pdf; name="NexkartBD-Commission-Settlement.pdf"',
-                'Content-Disposition: attachment; filename="NexkartBD-Commission-Settlement.pdf"',
-                'Content-Transfer-Encoding: base64',
-                '', attachment.toString('base64')
-            );
-        }
-        parts.push(`--${boundary}--`, '');
-        const raw = Buffer.from(parts.join('\r\n'), 'utf8').toString('base64url');
-        const sent = await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
-        if (!sent.data?.id) throw new Error('Gmail did not return a message ID');
-        console.info('COD settlement receipt accepted by Gmail OAuth:', sent.data.id);
-        return sent.data.id;
-    } catch (err) {
-        const message = err.response?.data?.error?.message || err.message;
-        console.error('COD settlement Gmail OAuth send failed:', err.response?.data || err);
-        throw new Error('Gmail OAuth email failed: ' + message);
+    if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error('Invalid seller email');
+    // All settlement emails use the existing Google Gmail API OAuth credentials.
+    for(const key of ['GOOGLE_USER_CLIENT_ID','GOOGLE_USER_CLIENT_SECRET','GOOGLE_REFRESH_TOKEN']) {
+        if(!process.env[key]) throw new Error('Missing '+key+'; configure the existing Gmail OAuth credentials');
     }
+    const oauth = new google.auth.OAuth2(process.env.GOOGLE_USER_CLIENT_ID, process.env.GOOGLE_USER_CLIENT_SECRET, process.env.GOOGLE_OAUTH_REDIRECT_URI);
+    oauth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+    const gmail = google.gmail({ version: 'v1', auth: oauth });
+    const boundary = 'nexkart_settlement_' + crypto.randomBytes(8).toString('hex');
+    const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject).toString('base64') + '?=';
+    const from=process.env.GMAIL_FROM_EMAIL || process.env.GOOGLE_SENDER_EMAIL;
+    const parts = [...(from?[`From: ${from}`]:[]),`To: ${to}`, `Subject: ${encodedSubject}`, 'MIME-Version: 1.0', `Content-Type: multipart/mixed; boundary="${boundary}"`, '', `--${boundary}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', Buffer.from(html).toString('base64')];
+    if (attachment) parts.push(`--${boundary}`, 'Content-Type: application/pdf; name="NexkartBD-Commission-Settlement.pdf"', 'Content-Disposition: attachment; filename="NexkartBD-Commission-Settlement.pdf"', 'Content-Transfer-Encoding: base64', '', attachment.toString('base64'));
+    parts.push(`--${boundary}--`, '');
+    const raw = Buffer.from(parts.join('\r\n')).toString('base64url');
+    const sent=await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+    if (!sent.data?.id) throw new Error('Gmail did not return message ID');
+    return sent.data.id;
 }
 // Random opaque tokens are stored hashed in MySQL; no new .env secrets required.
 const settlementOrigin = () => String(process.env.APP_URL || 'https://www.nexkartbd.com').replace(/\/$/, '');
@@ -646,7 +619,7 @@ async function settlementFetchLogo() {
         request.on('timeout', () => request.destroy()); request.on('error', () => resolve(null));
     });
 }
-async function settlementPdf(seller, rows, amount, mode='balance') {
+async function settlementPdf(seller, rows, amount, mode='balance', payment=null) {
     const PDFDocument = require('pdfkit');
     const logo = await settlementFetchLogo();
     return new Promise((resolve, reject) => {
@@ -668,6 +641,11 @@ async function settlementPdf(seller, rows, amount, mode='balance') {
         doc.moveDown(.7).roundedRect(44,doc.y,507,76,10).fill('#ecfdf5');
         const cardY=doc.y; doc.fillColor(teal).font('Helvetica-Bold').fontSize(11).text('PAYMENT SETTLED',60,cardY+14); doc.fontSize(22).text(`BDT ${amount.toFixed(2)}`,60,cardY+33);
         doc.y=cardY+99; doc.fillColor(muted).font('Helvetica').fontSize(10).text(`Settlement method: ${mode==='balance'?'Seller available balance deduction':'Manual payment verified by Super Admin'}`);
+        if (payment) {
+            doc.moveDown(.5).text(`Payment request: #${payment.id} | Method: ${String(payment.method || '').toUpperCase()}`);
+            doc.text(`Receiver: ${payment.number || 'N/A'} | Sender: ${payment.sender_number || 'N/A'}`);
+            doc.text(`Transaction ID: ${payment.transaction_id || 'N/A'}`);
+        }
         doc.moveDown(1.4); doc.fillColor(dark).font('Helvetica-Bold').fontSize(11).text('COMMISSION BREAKDOWN'); doc.moveDown(.6);
         function heading(){const y=doc.y;doc.rect(44,y,507,25).fill('#e2e8f0');doc.fillColor(dark).font('Helvetica-Bold').fontSize(9).text('COMMISSION ID',53,y+8).text('ORDER',158,y+8).text('RATE',374,y+8).text('AMOUNT (BDT)',444,y+8);doc.y=y+30;}
         heading();
@@ -739,7 +717,12 @@ router.post('/api/cod-settlements/resend-receipt', ensureSuperAdmin, async (req,
         const [rows]=await db.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND id IN (${ids.map(()=>'?').join(',')}) AND LOWER(TRIM(payment_type))='paid' ORDER BY id`,[sellerId,...ids]);
         if(rows.length!==ids.length)return res.status(409).json({error:'Some commission IDs are not settled. No email sent.'});
         const amount=settlementMoney(rows.reduce((a,x)=>a+Number(x.commission_amount||0),0));
-        const pdf=await settlementPdf(seller,rows,amount,mode);
+        let payment=null;
+        if(mode==='manual') {
+            const [[matched]]=await db.query(`SELECT pr.id,pr.method,pr.number,pr.sender_number,pr.transaction_id FROM cod_commission_payment_requests pr JOIN cod_commission_payment_items i ON i.request_id=pr.id WHERE pr.seller_id=? AND pr.status='settled' GROUP BY pr.id HAVING COUNT(*)=? AND SUM(i.commission_id IN (${ids.map(()=>'?').join(',')}))=? LIMIT 1`,[sellerId,ids.length,...ids,ids.length]);
+            payment=matched || null;
+        }
+        const pdf=await settlementPdf(seller,rows,amount,mode,payment);
         if(!Buffer.isBuffer(pdf)||pdf.subarray(0,5).toString()!=='%PDF-')throw new Error('PDF generation failed');
         await settlementEmail(seller.email,'NexkartBD | Official Commission Settlement Receipt',settlementMailHtml({seller,amount,rows,title:mode==='balance'?'Commission deducted from your seller balance':'Commission payment successfully settled',message:mode==='balance'?'Your NexkartBD commission has been deducted from your available seller balance. The listed commission records are now paid. Please find your official PDF statement attached.':'Thank you for your payment. NexkartBD has verified your payment and settled the commission records listed below. Your official PDF receipt is attached.',settled:true}),pdf);
         res.json({success:true,email_sent:true});
@@ -771,6 +754,7 @@ router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req
 router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,res)=>{
     const sellerId=Number(req.body?.seller_id),requestId=Number(req.body?.request_id);
     if(!Number.isSafeInteger(sellerId)||sellerId<=0||!Number.isSafeInteger(requestId)||requestId<=0) return res.status(400).json({error:'Invalid seller ID'});
+    try { require.resolve('pdfkit'); } catch (_) { return res.status(503).json({ error: 'PDFKit is not installed. Run npm install pdfkit before settling.' }); }
     let conn;
     try {conn=await db.getConnection();} catch(err){return res.status(500).json({error:'Database connection unavailable'});}
     let receipt;
@@ -778,7 +762,7 @@ router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,re
         await conn.beginTransaction();
         const [[seller]]=await conn.query('SELECT id,name,email FROM admins WHERE id=? FOR UPDATE',[sellerId]);
         if(!seller){await conn.rollback();return res.status(404).json({error:'Seller not found'});}
-        const [[payment]]=await conn.query("SELECT id,status FROM cod_commission_payment_requests WHERE id=? AND seller_id=? AND status='submitted' FOR UPDATE",[requestId,sellerId]);
+        const [[payment]]=await conn.query("SELECT id,status,method,number,sender_number,transaction_id FROM cod_commission_payment_requests WHERE id=? AND seller_id=? AND status='submitted' FOR UPDATE",[requestId,sellerId]);
         if(!payment){await conn.rollback();return res.status(409).json({error:'A submitted payment request is required; verify the TrxID first'});}
         const [rows]=await conn.query("SELECT c.id,c.order_number,c.commission_rate,c.commission_amount FROM cod_commission_payment_items i JOIN commission_table c ON c.id=i.commission_id WHERE i.request_id=? AND c.seller_id=? AND LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.id FOR UPDATE",[requestId,sellerId]);
         if(!rows.length){await conn.rollback();return res.status(409).json({error:'No unpaid commissions to settle'});}
@@ -787,12 +771,12 @@ router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,re
         const [result]=await conn.query(`UPDATE commission_table SET payment_type='paid' WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND id IN (${ids.map(()=>'?').join(',')})`,[sellerId,...ids]);
         if(result.affectedRows!==ids.length) throw new Error('Concurrent update conflict');
         await conn.query("UPDATE cod_commission_payment_requests SET status='settled',settled_at=NOW() WHERE id=? AND seller_id=? AND status='submitted'",[requestId,sellerId]);
-        await conn.commit(); receipt={seller,rows,amount};
+        await conn.commit(); receipt={seller,rows,amount,payment};
     }catch(err){try{await conn.rollback();}catch(_){} console.error('Manual settlement failed:',err);return res.status(500).json({error:'Settlement failed; no changes committed'});}finally{conn.release();}
     let email_sent=false,email_error=null;
     try{
         if(!receipt.seller.email) throw new Error('Seller email missing');
-        const pdf=await settlementPdf(receipt.seller,receipt.rows,receipt.amount,'manual');
+        const pdf=await settlementPdf(receipt.seller,receipt.rows,receipt.amount,'manual',receipt.payment);
         if (pdf.subarray(0,5).toString() !== '%PDF-') throw new Error('Invalid PDF receipt');
         await settlementEmail(receipt.seller.email,'NexkartBD | Payment Confirmed - Thank You',settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Your payment is confirmed',message:'Thank you! We have verified your payment and marked all the commission records listed below as paid.',settled:true}),pdf);
         email_sent=true;
