@@ -463,7 +463,7 @@ router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
     try {
         const [results] = await db.query(`
             SELECT c.id, c.order_number, c.commission_rate, c.commission_amount,
-                   c.seller_id, c.payment_type, c.date,
+                   c.seller_id, c.date,
                    a.name AS seller_name, a.email AS seller_email,
                    l.product_amount AS cod_product_amount,
                    l.delivery_charge AS cod_delivery_charge,
