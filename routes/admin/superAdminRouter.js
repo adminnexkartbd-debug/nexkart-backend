@@ -457,28 +457,42 @@ router.post('/api/update-order-status', ensureSuperAdmin, async (req, res) => {
 
 // ================= ALL COMMISSIONS API =================
 
-// ৯. Fetch All Commissions (JOIN with admins for Seller Name and Email)
+// Commission records enriched with COD ledger (one ledger row per order).
+// The ledger is informational: its commission_amount is NOT added again to commission_table.
 router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
-    const query = `
-        SELECT 
-            c.id, 
-            c.order_number, 
-            c.commission_rate, 
-            c.commission_amount, 
-            c.seller_id, 
-            c.date,
-            a.name AS seller_name,
-            a.email AS seller_email
-        FROM commission_table c
-        LEFT JOIN admins a ON c.seller_id = a.id
-        ORDER BY c.date DESC
-    `;
-
     try {
-        const [results] = await db.query(query);
+        const [results] = await db.query(`
+            SELECT c.id, c.order_number, c.commission_rate, c.commission_amount,
+                   c.seller_id, c.payment_type, c.date,
+                   a.name AS seller_name, a.email AS seller_email,
+                   l.product_amount AS cod_product_amount,
+                   l.delivery_charge AS cod_delivery_charge,
+                   l.commission_amount AS cod_ledger_commission,
+                   l.seller_amount AS cod_seller_amount,
+                   l.collection_status AS cod_collection_status,
+                   o.payment_method, o.payment_status, o.order_status,
+                   o.total_amount AS order_total,
+                   o.discount_amount AS order_discount,
+                   o.subtotal_price AS order_subtotal
+            FROM commission_table c
+            LEFT JOIN admins a ON c.seller_id = a.id
+            LEFT JOIN seller_cod_ledger l
+                   ON l.order_id = c.order_number AND l.seller_id = c.seller_id
+            LEFT JOIN (
+                SELECT order_id, seller_id,
+                       MAX(payment_method) AS payment_method,
+                       MAX(payment_status) AS payment_status,
+                       MAX(order_status) AS order_status,
+                       MAX(total_amount) AS total_amount,
+                       MAX(discount_amount) AS discount_amount,
+                       MAX(subtotal_price) AS subtotal_price
+                FROM orders GROUP BY order_id, seller_id
+            ) o ON o.order_id = c.order_number AND o.seller_id = c.seller_id
+            ORDER BY c.date DESC, c.id DESC
+        `);
         res.json(results);
     } catch (err) {
-        console.error('Database Fetch Error:', err);
+        console.error('Commission report error:', err);
         res.status(500).json({ error: 'Failed to fetch commissions' });
     }
 });
