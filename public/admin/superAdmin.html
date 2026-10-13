@@ -382,7 +382,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border">
           <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
             <div class="relative w-full sm:w-60">
-              <input type="text" id="commOrderSearch" onkeyup="filterCommissionData()" placeholder="Search by Order Number..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-300">
+              <input type="text" id="commOrderSearch" onkeyup="filterCommissionData()" placeholder="Order / Seller / Email..." class="w-full pl-9 pr-3 py-1.5 border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 border-slate-300">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
             </div>
 
@@ -418,17 +418,30 @@
             <span id="totalCommissionSum" class="text-sm font-bold">৳0.00</span>
           </div>
         </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+          <div class="rounded-lg bg-indigo-50 p-3"><p class="text-slate-500">Commission Rows</p><b id="commRowCount">0</b></div>
+          <div class="rounded-lg bg-amber-50 p-3"><p class="text-slate-500">COD Seller Net</p><b id="commCodNet">৳0.00</b></div>
+          <div class="rounded-lg bg-orange-50 p-3"><p class="text-slate-500">COD Pending</p><b id="commCodPending">৳0.00</b></div>
+          <div class="rounded-lg bg-green-50 p-3"><p class="text-slate-500">COD Collected</p><b id="commCodCollected">৳0.00</b></div>
+        </div>
       </div>
 
       <!-- Commission Table Body -->
       <div class="flex-1 overflow-y-auto my-4 overflow-x-auto">
-        <table class="w-full text-left text-sm min-w-[650px]">
+        <table class="w-full text-left text-sm min-w-[1250px]">
           <thead class="bg-slate-50 text-slate-500 uppercase text-xs sticky top-0 z-10">
             <tr>
               <th class="p-3">Order Number</th>
               <th class="p-3">Seller Details</th>
               <th class="p-3">Rate</th>
               <th class="p-3">Commission Amount</th>
+              <th class="p-3">Payment Type</th>
+              <th class="p-3">Payment Method</th>
+              <th class="p-3">Order Amount</th>
+              <th class="p-3">Discount</th>
+              <th class="p-3">COD Seller Net</th>
+              <th class="p-3">COD Collection</th>
+              <th class="p-3">Order Status</th>
               <th class="p-3">Date</th>
             </tr>
           </thead>
@@ -1006,73 +1019,80 @@
     }
 
     // ================= COMMISSION REPORT LOGIC =================
+    const commMoney = n => `৳${(Number(n) || 0).toLocaleString('en-BD', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    const commEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
     async function openCommissionModal() {
       openModal('commissionModal');
       const tableBody = document.getElementById('commissionTableBody');
-      tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Loading Commissions...</td></tr>`;
-
+      tableBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400">Loading Commissions...</td></tr>`;
       try {
-        const res = await fetch('/admin/api/all-commissions');
+        const res = await fetch('/admin/api/all-commissions', { credentials: 'include', cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch commissions');
-
         allCommissionData = await res.json();
         filterCommissionData();
       } catch (err) {
         console.error('Error loading commissions:', err);
-        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Failed to load commission data.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-red-500">Failed to load commission data.</td></tr>`;
       }
     }
 
     function filterCommissionData() {
-      const searchQuery = document.getElementById('commOrderSearch').value.toLowerCase().trim();
-      const selectedMonth = document.getElementById('commMonthFilter').value;
-      const selectedYear = document.getElementById('commYearFilter').value;
-
-      let filtered = allCommissionData.filter(item => {
-        const matchOrder = !searchQuery || String(item.order_number).toLowerCase().includes(searchQuery);
-        
-        const dateObj = new Date(item.date);
-        const itemMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const itemYear = String(dateObj.getFullYear());
-
-        const matchMonth = selectedMonth === 'all' || itemMonth === selectedMonth;
-        const matchYear = selectedYear === 'all' || itemYear === selectedYear;
-
-        return matchOrder && matchMonth && matchYear;
+      const query = document.getElementById('commOrderSearch').value.toLowerCase().trim();
+      const month = document.getElementById('commMonthFilter').value;
+      const year = document.getElementById('commYearFilter').value;
+      const filtered = allCommissionData.filter(item => {
+        const searchable = [item.order_number, item.seller_name, item.seller_email, item.seller_id, item.payment_type, item.payment_method].join(' ').toLowerCase();
+        const d = new Date(item.date);
+        return (!query || searchable.includes(query)) &&
+          (month === 'all' || (!isNaN(d) && String(d.getMonth() + 1).padStart(2, '0') === month)) &&
+          (year === 'all' || (!isNaN(d) && String(d.getFullYear()) === year));
       });
-
       renderCommissionTable(filtered);
     }
 
     function renderCommissionTable(items) {
-      const tableBody = document.getElementById('commissionTableBody');
-      let totalAmount = 0;
-
-      if (!items || items.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No commission records found.</td></tr>`;
-        document.getElementById('totalCommissionSum').innerText = `৳0.00`;
+      const body = document.getElementById('commissionTableBody');
+      const sum = items.reduce((a, x) => a + (Number(x.commission_amount) || 0), 0);
+      // COD ledger is joined to commission rows; deduplicate by seller + order for summaries.
+      const uniqueCod = new Map();
+      items.forEach(x => {
+        if (x.cod_collection_status !== null && x.cod_collection_status !== undefined) {
+          uniqueCod.set(`${x.seller_id}::${x.order_number}`, x);
+        }
+      });
+      const codRows = [...uniqueCod.values()].filter(x => x.cod_collection_status !== 'cancelled');
+      const codNet = codRows.reduce((a,x) => a + (Number(x.cod_seller_amount) || 0), 0);
+      const pending = codRows.filter(x => x.cod_collection_status === 'pending_collection').reduce((a,x) => a + (Number(x.cod_seller_amount) || 0), 0);
+      const collected = codRows.filter(x => x.cod_collection_status === 'collected').reduce((a,x) => a + (Number(x.cod_seller_amount) || 0), 0);
+      document.getElementById('totalCommissionSum').textContent = commMoney(sum);
+      document.getElementById('commRowCount').textContent = String(items.length);
+      document.getElementById('commCodNet').textContent = commMoney(codNet);
+      document.getElementById('commCodPending').textContent = commMoney(pending);
+      document.getElementById('commCodCollected').textContent = commMoney(collected);
+      if (!items.length) {
+        body.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400">No commission records found.</td></tr>`;
         return;
       }
-
-      tableBody.innerHTML = items.map(item => {
-        const commVal = parseFloat(item.commission_amount) || 0;
-        totalAmount += commVal;
-
-        return `
-          <tr>
-            <td class="p-3 font-bold text-slate-800">#${item.order_number}</td>
-            <td class="p-3">
-              <p class="font-semibold text-slate-800 text-xs">${item.seller_name || 'Unknown Seller'}</p>
-              <p class="text-xs text-slate-400">${item.seller_email || 'ID: ' + item.seller_id}</p>
-            </td>
-            <td class="p-3 text-xs font-medium text-slate-600">${item.commission_rate}%</td>
-            <td class="p-3 font-bold text-indigo-600 text-xs">৳${commVal.toFixed(2)}</td>
-            <td class="p-3 text-xs text-slate-500">${new Date(item.date).toLocaleString()}</td>
-          </tr>
-        `;
+      body.innerHTML = items.map(x => {
+        const hasCod = x.cod_collection_status != null;
+        const status = hasCod ? x.cod_collection_status : '—';
+        const statusColor = status === 'collected' ? 'text-green-700' : status === 'pending_collection' ? 'text-orange-700' : status === 'cancelled' ? 'text-red-700' : 'text-slate-400';
+        return `<tr class="hover:bg-slate-50">
+          <td class="p-3 font-bold text-slate-800">#${commEscape(x.order_number)}</td>
+          <td class="p-3"><p class="font-semibold text-xs">${commEscape(x.seller_name || 'Unknown Seller')}</p><p class="text-xs text-slate-400">${commEscape(x.seller_email || 'ID: ' + x.seller_id)}</p></td>
+          <td class="p-3 text-xs">${commEscape(x.commission_rate)}%</td>
+          <td class="p-3 font-bold text-indigo-600 text-xs">${commMoney(x.commission_amount)}</td>
+          <td class="p-3 text-xs font-semibold uppercase">${commEscape(x.payment_type || '—')}</td>
+          <td class="p-3 text-xs uppercase">${commEscape(x.payment_method || (hasCod ? 'COD' : '—'))}</td>
+          <td class="p-3 text-xs">${x.order_total == null ? '—' : commMoney(x.order_total)}</td>
+          <td class="p-3 text-xs">${x.order_discount == null ? '—' : commMoney(x.order_discount)}</td>
+          <td class="p-3 text-xs font-semibold">${hasCod ? commMoney(x.cod_seller_amount) : '—'}</td>
+          <td class="p-3 text-xs font-semibold ${statusColor}">${commEscape(status.replaceAll('_', ' '))}</td>
+          <td class="p-3 text-xs">${commEscape(x.order_status || '—')}</td>
+          <td class="p-3 text-xs text-slate-500">${x.date && !isNaN(new Date(x.date)) ? new Date(x.date).toLocaleString() : '—'}</td>
+        </tr>`;
       }).join('');
-
-      document.getElementById('totalCommissionSum').innerText = `৳${totalAmount.toFixed(2)}`;
     }
 
     // ================= TICKETS & COMPLAINS LOGIC =================
