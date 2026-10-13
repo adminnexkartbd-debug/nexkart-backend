@@ -292,6 +292,14 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
           </div>
         </div>
 
+
+        <!-- Customer product reporting (separate from IPR reporting) -->
+        <div class="flex justify-end pt-2">
+          <button type="button" onclick="openProductReport()" class="text-xs font-semibold text-gray-600 hover:text-[#d63384] flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white/80 hover:bg-pink-50">
+            <i class="fa-regular fa-flag"></i> Report this Product
+          </button>
+        </div>
+
         <div class="theme-glass-input p-4 rounded-2xl flex items-center justify-between border-2 border-pink-200 shadow-sm">
           <div>
             <div class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Quantity</div>
@@ -1850,6 +1858,61 @@ function openGooglePopup() {
     document.addEventListener('DOMContentLoaded', () => {
       fetchProductData();
     });
+  
+    // Customer product reporting; intentionally independent from /user/ipr-report.
+    function openProductReport() {
+      const modal = document.getElementById('product-report-modal');
+      document.getElementById('report-feedback').classList.add('hidden');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      document.getElementById('report-reason').focus();
+    }
+    function closeProductReport() {
+      const modal = document.getElementById('product-report-modal');
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+    }
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeProductReport(); });
+    async function submitProductReport(event) {
+      event.preventDefault();
+      const productId = window.currentLoadedProductId;
+      const reason = document.getElementById('report-reason').value;
+      const details = document.getElementById('report-details').value.trim();
+      const feedback = document.getElementById('report-feedback');
+      const button = document.getElementById('report-submit-btn');
+      feedback.classList.remove('hidden');
+      if (!productId || !reason) { feedback.textContent = 'Product এবং কারণ নির্বাচন করুন।'; return; }
+      button.disabled = true; button.textContent = 'Submitting...';
+      try {
+        const response = await fetch('/user/report-product', {method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({product_id:productId,reason,details})});
+        const data = await response.json().catch(()=>({}));
+        if (response.status === 401) { feedback.textContent = 'Report করতে আগে Login করুন।'; return; }
+        if (!response.ok || !data.success) { feedback.textContent = data.message || 'Report জমা দেওয়া যায়নি। আবার চেষ্টা করুন।'; return; }
+        feedback.textContent = 'ধন্যবাদ! আপনার Report জমা হয়েছে। Admin যাচাই করবেন।';
+        feedback.className = 'text-sm text-green-700';
+        document.getElementById('product-report-form').reset();
+        button.textContent = 'Report Submitted';
+        return;
+      } catch (err) { feedback.textContent = 'Network সমস্যা। আবার চেষ্টা করুন।'; }
+      finally { button.disabled = false; if(button.textContent !== 'Report Submitted') button.textContent = 'Submit Report'; }
+    }
+
   </script>
+
+  <div id="product-report-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" onclick="if(event.target===this) closeProductReport()">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center gap-3"><h2 id="report-modal-title" class="text-xl font-extrabold text-gray-900"><i class="fa-regular fa-flag text-[#ff4b6e]"></i> Report Product</h2><button type="button" onclick="closeProductReport()" aria-label="Close report" class="text-gray-500 text-2xl">&times;</button></div>
+      <p class="text-sm text-gray-600">পণ্যের তথ্য ভুল বা সন্দেহজনক হলে জানান। এটি IPR / Copyright অভিযোগের ফর্ম নয়।</p>
+      <form id="product-report-form" class="space-y-3" onsubmit="submitProductReport(event)">
+        <label for="report-reason" class="block text-sm font-semibold">অভিযোগের কারণ</label>
+        <select id="report-reason" required class="w-full border border-pink-200 rounded-xl p-3 bg-white text-sm">
+          <option value="">কারণ নির্বাচন করুন</option><option value="wrong_info">ভুল বা বিভ্রান্তিকর তথ্য</option><option value="fake_product">নকল বা সন্দেহজনক পণ্য</option><option value="unsafe_product">অনিরাপদ বা নিষিদ্ধ পণ্য</option><option value="wrong_image">ভুল ছবি বা ক্যাটাগরি</option><option value="other">অন্যান্য</option>
+        </select>
+        <label for="report-details" class="block text-sm font-semibold">বিস্তারিত (ঐচ্ছিক)</label>
+        <textarea id="report-details" maxlength="1000" rows="4" placeholder="সমস্যাটি লিখুন..." class="w-full border border-pink-200 rounded-xl p-3 text-sm"></textarea>
+        <p id="report-feedback" role="status" aria-live="polite" class="text-sm hidden"></p>
+        <button id="report-submit-btn" type="submit" class="w-full rounded-xl bg-[#ff4b6e] text-white font-bold py-3 disabled:opacity-60">Submit Report</button>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>
