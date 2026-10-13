@@ -265,7 +265,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
             </div>
             <div class="flex items-center gap-2.5 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 sm:col-span-2">
               <i class="fa-regular fa-clock text-amber-600"></i>
-              <span>Estimated Delivery: <strong id="estimated-delivery-time">3-5 Business Days</strong></span>
+              <span>Estimated Delivery: <strong id="estimated-delivery-time">3-5 Business Days</strong><span id="estimated-delivery-dates" class="block mt-1 font-semibold text-amber-800"></span></span>
             </div>
           </div>
           <div id="delivery-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1"></div>
@@ -433,6 +433,20 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="suggested-grid"></div>
       </div>
+    </div>
+  </div>
+
+
+  <!-- International shipping notice: displayed only for non-BD origins -->
+  <div id="international-shipping-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="international-shipping-title" onclick="if(event.target===this) closeInternationalShippingNotice()">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-pink-100" role="document">
+      <div class="flex justify-between items-start gap-3">
+        <div class="flex items-center gap-3"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 text-xl"><i class="fa-solid fa-plane"></i></span><div><h2 id="international-shipping-title" class="text-lg font-bold text-gray-900">International Shipping</h2><p class="text-xs text-gray-500">বিদেশ থেকে সরাসরি শিপিং</p></div></div>
+        <button type="button" onclick="closeInternationalShippingNotice()" class="rounded-xl p-2 text-gray-500 hover:bg-gray-100" aria-label="Close shipping notice"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="mt-4 text-sm leading-7 text-gray-700">এই পণ্যটি বাংলাদেশ থেকে নয়, <strong id="international-origin">বিদেশ</strong> থেকে পাঠানো হবে। এটি একটি <strong>International Shipping</strong> পণ্য। কাস্টমস ও আন্তর্জাতিক পরিবহনের কারণে ডেলিভারিতে কিছুটা বেশি সময় লাগতে পারে।</p>
+      <div class="mt-4 rounded-2xl bg-amber-50 border border-amber-100 p-4 text-sm"><div class="font-semibold text-amber-900">Estimated Delivery: <span id="international-delivery-days">—</span></div><div id="international-delivery-dates" class="mt-1 font-bold text-amber-800"></div><p class="mt-2 text-xs text-amber-700">তারিখগুলো আজ থেকে আনুমানিক হিসাব করা; অর্ডারের দিন ও শিপিং পরিস্থিতি অনুযায়ী পরিবর্তন হতে পারে।</p></div>
+      <button type="button" onclick="closeInternationalShippingNotice()" class="mt-5 w-full rounded-2xl bg-[#ff4b6e] py-3 text-sm font-bold text-white hover:bg-[#e63b5d]">বুঝেছি, পণ্যটি দেখুন</button>
     </div>
   </div>
 
@@ -1241,8 +1255,7 @@ function openGooglePopup() {
         variantSection.classList.add('hidden');
       }
 
-      document.getElementById('shipping-from-loc').innerText = product.shipping_from || 'Main Warehouse';
-      document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+      updateShippingAndDelivery(product);
 
       document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKartBD Official';
       
@@ -1415,6 +1428,57 @@ function openGooglePopup() {
         btn.innerHTML = `<span>Show Less</span> <i class="fa-solid fa-chevron-up text-[10px]"></i>`;
         isSpecExpanded = true;
       }
+    }
+
+
+    // Shipping origin and delivery ETA are read from the existing product API.
+    // Use Bangladesh calendar dates, not the visitor's computer timezone.
+    function bangladeshToday() {
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+      const v = Object.fromEntries(parts.map(p => [p.type, p.value]));
+      return new Date(Date.UTC(Number(v.year), Number(v.month) - 1, Number(v.day), 12));
+    }
+
+    function deliveryDateRange(value) {
+      const raw = String(value || '').trim();
+      // Accept 21-30, 21–30 Days, 21 to 30 days, or 21 days.
+      const match = raw.match(/(\d{1,3})\s*(?:-|–|—|to)\s*(\d{1,3})/i) || raw.match(/(\d{1,3})/);
+      if (!match) return '';
+      const start = Number(match[1]);
+      const end = Number(match[2] || match[1]);
+      if (start < 1 || end < start || end > 365) return '';
+      const today = bangladeshToday();
+      const fmt = d => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+      const a = new Date(today.getTime()); a.setUTCDate(a.getUTCDate() + start);
+      const b = new Date(today.getTime()); b.setUTCDate(b.getUTCDate() + end);
+      return fmt(a) + (end === start ? '' : ' – ' + fmt(b));
+    }
+
+    function closeInternationalShippingNotice() {
+      const modal = document.getElementById('international-shipping-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function updateShippingAndDelivery(product) {
+      const origin = String(product.shipping_from || '').trim();
+      const delivery = String(product.delivery_time || product.estimated_delivery || '3-5 Business Days').trim();
+      const dates = deliveryDateRange(delivery);
+      document.getElementById('shipping-from-loc').textContent = origin || 'Main Warehouse';
+      document.getElementById('estimated-delivery-time').textContent = delivery;
+      document.getElementById('estimated-delivery-dates').textContent = dates ? 'সম্ভাব্য তারিখ: ' + dates : '';
+
+      // BD / Bangladesh / বাংলাদেশের products are local; unknown origin is not assumed international.
+      const local = /^(BD|BGD|Bangladesh|বাংলাদেশ)$/i.test(origin);
+      if (!origin || local) return;
+      document.getElementById('international-origin').textContent = origin;
+      document.getElementById('international-delivery-days').textContent = delivery;
+      document.getElementById('international-delivery-dates').textContent = dates ? 'সম্ভাব্য ডেলিভারি: ' + dates : '';
+      const modal = document.getElementById('international-shipping-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
     }
 
     async function fetchProductData() {
