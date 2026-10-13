@@ -588,8 +588,9 @@ router.get('/cod-commission-payment/:token', async (req,res)=>{
         if(!/^[a-f0-9]{64}$/.test(token)) return res.status(404).send('Invalid payment link');
         const [[p]]=await db.query('SELECT id,seller_id,method,number,amount,status,expires_at FROM cod_commission_payment_requests WHERE token_hash=? LIMIT 1',[settlementTokenHash(token)]);
         if(!p || new Date(p.expires_at).getTime()<Date.now()) return res.status(410).send('Payment request expired or unavailable');
+        if(p.status==='submitted') return res.type('html').send('<h2>Payment details submitted. Awaiting verification. Thank you!</h2>');
         if(p.status==='settled') return res.type('html').send('<h2>Commission already settled. Thank you!</h2>');
-        const [[due]]=await db.query("SELECT COALESCE(SUM(commission_amount),0) AS amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid'",[p.seller_id]);
+        const [[due]]=await db.query("SELECT COALESCE(SUM(c.commission_amount),0) AS amount FROM cod_commission_payment_items i JOIN commission_table c ON c.id=i.commission_id WHERE i.request_id=? AND c.seller_id=? AND LOWER(TRIM(c.payment_type))='unpaid'",[p.id,p.seller_id]);
         if(Number(due.amount)<=0) return res.send('<h2>Commission already settled. Thank you!</h2>');
         const amount=settlementMoney(due.amount);
         res.set('Cache-Control','no-store').type('html').send(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NexkartBD | Commission Payment</title><style>body{margin:0;background:#eef2f7;font:15px Arial;color:#0f172a;padding:24px}main{max-width:540px;margin:auto;background:white;border-radius:20px;box-shadow:0 10px 35px #1e293b18;overflow:hidden}header{background:#0f172a;padding:28px;color:white}header img{max-width:155px}section{padding:26px}.amount{background:#ecfdf5;border-radius:12px;padding:18px;font-size:27px;font-weight:bold}label{display:block;margin-top:18px;font-weight:600}input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:9px;margin-top:7px;font-size:16px}button{background:#0f766e;border:0;color:white;padding:14px;width:100%;border-radius:10px;margin-top:22px;font-weight:bold;cursor:pointer}.hint{font-size:13px;color:#475569;line-height:1.6}#msg{margin-top:15px}</style></head><body><main><header><img src="${settlementLogoUrl}" alt="NexkartBD"><h2>Commission Payment</h2></header><section><p>Send the amount to the following ${settlementEscape(p.method.toUpperCase())} number.</p><div class="amount">৳${amount.toFixed(2)}</div><p><b>Method:</b> ${settlementEscape(p.method.toUpperCase())}<br><b>Number:</b> ${settlementEscape(p.number)}</p><p class="hint">After sending money, submit the number you paid from and the transaction ID. Payment will remain unpaid until Super Admin verifies it.</p><form id="payForm"><label>Sender mobile number<input name="sender_number" pattern="01[0-9]{9}" maxlength="11" required placeholder="01XXXXXXXXX"></label><label>Transaction ID (TrxID)<input name="transaction_id" maxlength="100" minlength="5" required placeholder="Enter your payment TrxID"></label><button type="submit">Submit Payment Details</button></form><p id="msg" role="status"></p><p class="hint">Thank you for being a NexkartBD seller.</p></section></main><script>document.getElementById('payForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.target,b=f.querySelector('button'),m=document.getElementById('msg');b.disabled=true;m.textContent='Submitting...';try{const r=await fetch(location.pathname+'/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sender_number:f.sender_number.value,transaction_id:f.transaction_id.value})});const d=await r.json();if(!r.ok)throw Error(d.error||'Failed');m.textContent='Submitted successfully. NexkartBD will verify your payment. Thank you!';f.style.display='none';}catch(err){m.textContent=err.message;b.disabled=false;}});</script></body></html>`);
@@ -601,7 +602,7 @@ router.post('/cod-commission-payment/:token/submit',async(req,res)=>{
     const trx=String(req.body?.transaction_id||'').trim();
     if(!/^[a-f0-9]{64}$/.test(token)||!/^01\d{9}$/.test(sender)||! /^[A-Za-z0-9_-]{5,100}$/.test(trx))return res.status(400).json({error:'Valid mobile number and transaction ID required'});
     try{
-        const [result]=await db.query("UPDATE cod_commission_payment_requests SET sender_number=?,transaction_id=?,status='submitted',submitted_at=NOW() WHERE token_hash=? AND expires_at>NOW() AND status IN ('pending','submitted')",[sender,trx,settlementTokenHash(token)]);
+        const [result]=await db.query("UPDATE cod_commission_payment_requests SET sender_number=?,transaction_id=?,status='submitted',submitted_at=NOW() WHERE token_hash=? AND expires_at>NOW() AND status='pending'",[sender,trx,settlementTokenHash(token)]);
         if(!result.affectedRows)return res.status(409).json({error:'Payment request expired or already settled'});
         res.json({success:true});
     }catch(err){console.error('Payment submission:',err);res.status(500).json({error:'Unable to submit payment details'});}
@@ -659,21 +660,21 @@ async function settlementPdf(seller, rows, amount, mode='balance') {
         doc.moveDown().fillColor(teal).font('Helvetica-Bold').fontSize(12).text(`TOTAL SETTLED: BDT ${amount.toFixed(2)}`,44,doc.y,{align:'right',width:507});
         doc.moveDown(1.5).fillColor(dark).font('Helvetica-Bold').fontSize(11).text('Thank you for being a valued NexkartBD seller!');
         doc.moveDown(.4).fillColor(muted).font('Helvetica').fontSize(10).text('We appreciate your partnership. This receipt confirms the commission records listed above have been marked paid.');
-        const count=doc.bufferedPageRange().count;for(let i=0;i<count;i++){doc.switchToPage(i);doc.fillColor(muted).font('Helvetica').fontSize(8).text(`NexkartBD  |  www.nexkartbd.com  |  Page ${i+1} of ${count}`,44,795,{width:507,align:'center'});}doc.end();
+        const count=doc.bufferedPageRange().count;for(let i=0;i<count;i++){doc.switchToPage(i);doc.fillColor(muted).font('Helvetica').fontSize(8).text(`NexkartBD  |  www.nexkartbd.com  |  Page ${i+1} of ${count}`,44,780,{width:507,align:'center',lineBreak:false});}doc.end();
     });
 }
 router.get('/api/cod-settlements', ensureSuperAdmin, async (req, res) => {
     try {
-        const [rows] = await db.query(`SELECT c.id, c.order_number, c.commission_rate, c.commission_amount, c.seller_id, c.date, a.name AS seller_name, a.email AS seller_email, a.total_sales, a.total_withdraw FROM commission_table c JOIN admins a ON a.id=c.seller_id WHERE LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.seller_id,c.id`);
+        const [rows] = await db.query(`SELECT c.id,c.order_number,c.commission_rate,c.commission_amount,c.seller_id,c.date,a.name AS seller_name,a.email AS seller_email,a.total_sales,a.total_withdraw,pr.id AS request_id,pr.status AS request_status,pr.amount AS request_amount,pr.sender_number,pr.transaction_id FROM commission_table c JOIN admins a ON a.id=c.seller_id LEFT JOIN cod_commission_payment_items pi ON pi.commission_id=c.id LEFT JOIN cod_commission_payment_requests pr ON pr.id=pi.request_id AND pr.status IN ('pending','submitted') AND pr.expires_at>NOW() WHERE LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.seller_id,c.id`);
         const grouped = new Map();
-        for (const row of rows) {
-            if (!grouped.has(row.seller_id)) grouped.set(row.seller_id, { seller_id: row.seller_id, seller_name: row.seller_name, seller_email: row.seller_email, available_balance: settlementMoney(Math.max(0, Number(row.total_sales || 0) - Number(row.total_withdraw || 0))), total_unpaid: 0, commissions: [] });
-            const g = grouped.get(row.seller_id);
-            g.total_unpaid = settlementMoney(g.total_unpaid + Number(row.commission_amount || 0));
-            g.commissions.push({ id: row.id, order_number: row.order_number, commission_rate: row.commission_rate, commission_amount: row.commission_amount, date: row.date });
+        for(const row of rows){
+            if(!grouped.has(row.seller_id))grouped.set(row.seller_id,{seller_id:row.seller_id,seller_name:row.seller_name,seller_email:row.seller_email,available_balance:settlementMoney(Math.max(0,Number(row.total_sales||0)-Number(row.total_withdraw||0))),total_unpaid:0,commissions:[],requests:[]});
+            const g=grouped.get(row.seller_id);
+            if(row.request_id){let r=g.requests.find(x=>x.id===row.request_id);if(!r){r={id:row.request_id,status:row.request_status,amount:0,commissions:[],sender_number:row.sender_number,transaction_id:row.transaction_id};g.requests.push(r);}r.amount=settlementMoney(r.amount+Number(row.commission_amount||0));r.commissions.push({id:row.id,order_number:row.order_number,commission_amount:row.commission_amount});}
+            else{g.total_unpaid=settlementMoney(g.total_unpaid+Number(row.commission_amount||0));g.commissions.push({id:row.id,order_number:row.order_number,commission_rate:row.commission_rate,commission_amount:row.commission_amount,date:row.date});}
         }
         res.json([...grouped.values()]);
-    } catch (err) { console.error('COD settlements load:', err); res.status(500).json({ error: 'Failed to load settlements. Check admins balance columns.' }); }
+    } catch(err){console.error('COD settlements load:',err);res.status(500).json({error:'Failed to load settlements; ensure COD_PAYMENT_LOCK_MIGRATION.sql was executed'});}
 });
 router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) => {
     const sellerId = Number(req.body?.seller_id);
@@ -686,7 +687,7 @@ router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) =>
         await conn.beginTransaction();
         const [[seller]] = await conn.query('SELECT id,name,email,total_sales,total_withdraw FROM admins WHERE id=? FOR UPDATE', [sellerId]);
         if (!seller) { await conn.rollback(); return res.status(404).json({ error: 'Seller not found' }); }
-        const [rows] = await conn.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id FOR UPDATE`, [sellerId]);
+        const [rows] = await conn.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND NOT EXISTS (SELECT 1 FROM cod_commission_payment_items pi JOIN cod_commission_payment_requests pr ON pr.id=pi.request_id WHERE pi.commission_id=commission_table.id AND pr.status IN ('pending','submitted') AND pr.expires_at>NOW()) ORDER BY id FOR UPDATE`, [sellerId]);
         if (!rows.length) { await conn.rollback(); return res.status(409).json({ error: 'No unpaid commissions' }); }
         const amount = settlementMoney(rows.reduce((a,x) => a + Number(x.commission_amount || 0), 0));
         const balance = settlementMoney(Number(seller.total_sales || 0) - Number(seller.total_withdraw || 0));
@@ -696,7 +697,6 @@ router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) =>
         const ids = rows.map(x => x.id);
         const [updated] = await conn.query(`UPDATE commission_table SET payment_type='paid' WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND id IN (${ids.map(() => '?').join(',')})`, [sellerId, ...ids]);
         if (updated.affectedRows !== ids.length) throw new Error('Concurrent settlement update conflict');
-        await conn.query("UPDATE cod_commission_payment_requests SET status='settled',settled_at=NOW() WHERE seller_id=? AND status IN ('pending','submitted')",[sellerId]);
         await conn.commit();
         receipt = { seller, rows, amount };
     } catch (err) { try { await conn.rollback(); } catch (_) {} console.error('COD settlement deduction:', err); return res.status(500).json({ error: 'Settlement failed; no changes committed' }); }
@@ -704,36 +704,57 @@ router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) =>
     let email_sent = false, email_error = null;
     try {
         if (!receipt.seller.email) throw new Error('Seller email missing');
-        const pdf = await settlementPdf(receipt.seller, receipt.rows, receipt.amount);
-        await settlementEmail(receipt.seller.email, 'NexkartBD | Commission Settled - Thank You', settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Commission settled successfully',message:'Your outstanding commission has been deducted from your seller available balance and is now fully settled.',settled:true}), pdf);
+        const pdf = await settlementPdf(receipt.seller, receipt.rows, receipt.amount, 'balance');
+        if (pdf.subarray(0,5).toString() !== '%PDF-') throw new Error('Invalid PDF receipt');
+        await settlementEmail(receipt.seller.email, 'NexkartBD | Commission Settled - Thank You', settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Commission deducted and settled',message:'NexkartBD has deducted the commission listed below from your available seller balance. These commissions are now paid. Your official PDF statement is attached for your records.',settled:true}), pdf);
         email_sent = true;
     } catch (err) { email_error = err.message; console.error('Settlement committed but receipt email failed:', err); }
     res.json({ success: true, deducted: receipt.amount, settled_ids: receipt.rows.map(x=>x.id), email_sent, email_error });
 });
-router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req, res) => {
-    const sellerId = Number(req.body?.seller_id);
-    const method = String(req.body?.method || '').toLowerCase().trim();
-    const number = String(req.body?.number || '').trim();
-    if (!Number.isSafeInteger(sellerId) || sellerId <= 0 || !['bkash','nagad'].includes(method) || !/^01\d{9}$/.test(number)) return res.status(400).json({ error: 'Choose bKash/Nagad and a valid 11-digit number' });
-    try {
-        const [[seller]] = await db.query('SELECT id,name,email FROM admins WHERE id=?', [sellerId]);
-        if (!seller || !seller.email) return res.status(404).json({ error: 'Seller email not found' });
-        const [rows] = await db.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id`, [sellerId]);
-        if (!rows.length) return res.status(409).json({ error: 'No unpaid commissions' });
-        const amount = settlementMoney(rows.reduce((a,x) => a + Number(x.commission_amount || 0), 0));
-        const token=crypto.randomBytes(32).toString('hex');
-        const paymentUrl=makeSettlementLink(token);
-        await db.query("INSERT INTO cod_commission_payment_requests (seller_id,token_hash,method,number,amount,status,expires_at) VALUES (?,?,?,?,?,'pending',DATE_ADD(NOW(), INTERVAL 7 DAY))",[sellerId,settlementTokenHash(token),method,number,amount]);
-        await settlementEmail(seller.email, 'NexkartBD | Commission Payment Request', settlementMailHtml({seller,amount,rows,title:'Commission payment reminder',message:'You have outstanding COD commissions. Please complete the payment using the details below.',method,number,paymentUrl,settled:false}));
-        res.json({ success: true, email_sent: true, total_unpaid: amount, payment_url: paymentUrl });
-    } catch (err) { console.error('COD payment reminder:', err); res.status(500).json({ error: 'Failed to send payment instructions: ' + err.message }); }
+// Email-only retry: never deduct balance or update commissions again.
+router.post('/api/cod-settlements/resend-receipt', ensureSuperAdmin, async (req,res)=>{
+    const sellerId=Number(req.body?.seller_id);
+    const ids=Array.isArray(req.body?.commission_ids) ? [...new Set(req.body.commission_ids.map(Number))] : [];
+    const mode=req.body?.mode==='manual'?'manual':'balance';
+    if(!Number.isSafeInteger(sellerId)||sellerId<=0||!ids.length||ids.length>500||ids.some(id=>!Number.isSafeInteger(id)||id<=0))return res.status(400).json({error:'Valid seller and settled commission IDs required'});
+    try{
+        const [[seller]]=await db.query('SELECT id,name,email FROM admins WHERE id=?',[sellerId]);
+        if(!seller?.email)return res.status(404).json({error:'Seller email missing'});
+        const [rows]=await db.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND id IN (${ids.map(()=>'?').join(',')}) AND LOWER(TRIM(payment_type))='paid' ORDER BY id`,[sellerId,...ids]);
+        if(rows.length!==ids.length)return res.status(409).json({error:'Some commission IDs are not settled. No email sent.'});
+        const amount=settlementMoney(rows.reduce((a,x)=>a+Number(x.commission_amount||0),0));
+        const pdf=await settlementPdf(seller,rows,amount,mode);
+        if(!Buffer.isBuffer(pdf)||pdf.subarray(0,5).toString()!=='%PDF-')throw new Error('PDF generation failed');
+        await settlementEmail(seller.email,'NexkartBD | Official Commission Settlement Receipt',settlementMailHtml({seller,amount,rows,title:mode==='balance'?'Commission deducted from your seller balance':'Commission payment successfully settled',message:mode==='balance'?'Your NexkartBD commission has been deducted from your available seller balance. The listed commission records are now paid. Please find your official PDF statement attached.':'Thank you for your payment. NexkartBD has verified your payment and settled the commission records listed below. Your official PDF receipt is attached.',settled:true}),pdf);
+        res.json({success:true,email_sent:true});
+    }catch(err){console.error('COD settlement receipt resend failed:',err);res.status(502).json({error:'Receipt email failed: '+err.message});}
+});
+router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req,res)=>{
+    const sellerId=Number(req.body?.seller_id),method=String(req.body?.method||'').toLowerCase().trim(),number=String(req.body?.number||'').trim();
+    if(!Number.isSafeInteger(sellerId)||sellerId<=0||!['bkash','nagad'].includes(method)||!/^01\d{9}$/.test(number))return res.status(400).json({error:'Choose bKash/Nagad and valid 11-digit number'});
+    const conn=await db.getConnection();let details;
+    try{
+        await conn.beginTransaction();
+        const [[seller]]=await conn.query('SELECT id,name,email FROM admins WHERE id=? FOR UPDATE',[sellerId]);
+        if(!seller?.email){await conn.rollback();return res.status(404).json({error:'Seller email not found'});}
+        const [rows]=await conn.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND NOT EXISTS (SELECT 1 FROM cod_commission_payment_items pi JOIN cod_commission_payment_requests pr ON pr.id=pi.request_id WHERE pi.commission_id=commission_table.id AND pr.status IN ('pending','submitted') AND pr.expires_at>NOW()) ORDER BY id FOR UPDATE`,[sellerId]);
+        if(!rows.length){await conn.rollback();return res.status(409).json({error:'All current unpaid commissions already have active payment requests'});}
+        const amount=settlementMoney(rows.reduce((a,x)=>a+Number(x.commission_amount||0),0));
+        const token=crypto.randomBytes(32).toString('hex'),paymentUrl=makeSettlementLink(token);
+        const [result]=await conn.query("INSERT INTO cod_commission_payment_requests (seller_id,token_hash,method,number,amount,status,expires_at) VALUES (?,?,?,?,?,'pending',DATE_ADD(NOW(),INTERVAL 7 DAY))",[sellerId,settlementTokenHash(token),method,number,amount]);
+        for(const row of rows)await conn.query('INSERT INTO cod_commission_payment_items (request_id,commission_id,commission_amount) VALUES (?,?,?)',[result.insertId,row.id,row.commission_amount]);
+        await conn.commit();details={seller,rows,amount,paymentUrl,request_id:result.insertId};
+    }catch(err){try{await conn.rollback();}catch(_){}console.error('Payment request:',err);return res.status(500).json({error:'Failed to create payment request: '+err.message});}finally{conn.release();}
+    try{await settlementEmail(details.seller.email,'NexkartBD | Commission Payment Request',settlementMailHtml({seller:details.seller,amount:details.amount,rows:details.rows,title:'Commission payment reminder',message:'This payment request covers only the commission IDs listed below. New commissions will be billed separately.',method,number,paymentUrl:details.paymentUrl,settled:false}));
+        res.json({success:true,email_sent:true,total_unpaid:details.amount,payment_url:details.paymentUrl,request_id:details.request_id});
+    }catch(err){console.error('Payment request saved but email failed:',err);res.json({success:true,email_sent:false,email_error:err.message,request_id:details.request_id,payment_url:details.paymentUrl,total_unpaid:details.amount});}
 });
 
 // Manual settlement is only for a payment the administrator has independently verified.
 // No seller balance is deducted: funds were received outside the seller wallet.
 router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,res)=>{
-    const sellerId=Number(req.body?.seller_id);
-    if(!Number.isSafeInteger(sellerId)||sellerId<=0) return res.status(400).json({error:'Invalid seller ID'});
+    const sellerId=Number(req.body?.seller_id),requestId=Number(req.body?.request_id);
+    if(!Number.isSafeInteger(sellerId)||sellerId<=0||!Number.isSafeInteger(requestId)||requestId<=0) return res.status(400).json({error:'Invalid seller ID'});
     let conn;
     try {conn=await db.getConnection();} catch(err){return res.status(500).json({error:'Database connection unavailable'});}
     let receipt;
@@ -741,19 +762,22 @@ router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,re
         await conn.beginTransaction();
         const [[seller]]=await conn.query('SELECT id,name,email FROM admins WHERE id=? FOR UPDATE',[sellerId]);
         if(!seller){await conn.rollback();return res.status(404).json({error:'Seller not found'});}
-        const [rows]=await conn.query("SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id FOR UPDATE",[sellerId]);
+        const [[payment]]=await conn.query("SELECT id,status FROM cod_commission_payment_requests WHERE id=? AND seller_id=? AND status='submitted' FOR UPDATE",[requestId,sellerId]);
+        if(!payment){await conn.rollback();return res.status(409).json({error:'A submitted payment request is required; verify the TrxID first'});}
+        const [rows]=await conn.query("SELECT c.id,c.order_number,c.commission_rate,c.commission_amount FROM cod_commission_payment_items i JOIN commission_table c ON c.id=i.commission_id WHERE i.request_id=? AND c.seller_id=? AND LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.id FOR UPDATE",[requestId,sellerId]);
         if(!rows.length){await conn.rollback();return res.status(409).json({error:'No unpaid commissions to settle'});}
         const amount=settlementMoney(rows.reduce((sum,x)=>sum+Number(x.commission_amount||0),0));
         const ids=rows.map(x=>x.id);
         const [result]=await conn.query(`UPDATE commission_table SET payment_type='paid' WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND id IN (${ids.map(()=>'?').join(',')})`,[sellerId,...ids]);
         if(result.affectedRows!==ids.length) throw new Error('Concurrent update conflict');
-        await conn.query("UPDATE cod_commission_payment_requests SET status='settled',settled_at=NOW() WHERE seller_id=? AND status IN ('pending','submitted')",[sellerId]);
+        await conn.query("UPDATE cod_commission_payment_requests SET status='settled',settled_at=NOW() WHERE id=? AND seller_id=? AND status='submitted'",[requestId,sellerId]);
         await conn.commit(); receipt={seller,rows,amount};
     }catch(err){try{await conn.rollback();}catch(_){} console.error('Manual settlement failed:',err);return res.status(500).json({error:'Settlement failed; no changes committed'});}finally{conn.release();}
     let email_sent=false,email_error=null;
     try{
         if(!receipt.seller.email) throw new Error('Seller email missing');
         const pdf=await settlementPdf(receipt.seller,receipt.rows,receipt.amount,'manual');
+        if (pdf.subarray(0,5).toString() !== '%PDF-') throw new Error('Invalid PDF receipt');
         await settlementEmail(receipt.seller.email,'NexkartBD | Payment Confirmed - Thank You',settlementMailHtml({seller:receipt.seller,amount:receipt.amount,rows:receipt.rows,title:'Your payment is confirmed',message:'Thank you! We have verified your payment and marked all the commission records listed below as paid.',settled:true}),pdf);
         email_sent=true;
     }catch(err){email_error=err.message;console.error('Manual settlement committed, receipt email failed:',err);}
