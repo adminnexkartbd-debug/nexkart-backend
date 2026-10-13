@@ -543,6 +543,106 @@ router.get('/api/all-commissions', ensureSuperAdmin, async (req, res) => {
     }
 });
 
+// COD settlement: payment_type='unpaid' is the sole settlement eligibility condition.
+// Use commission_table IDs, not order joins, to avoid duplicate deductions.
+const settlementMoney = v => Math.round(Number(v || 0) * 100) / 100;
+async function settlementEmail(to, subject, html, attachment) {
+    const oauth = new google.auth.OAuth2(process.env.GOOGLE_USER_CLIENT_ID, process.env.GOOGLE_USER_CLIENT_SECRET, process.env.GOOGLE_OAUTH_REDIRECT_URI);
+    oauth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+    const gmail = google.gmail({ version: 'v1', auth: oauth });
+    const boundary = 'nexkart_settlement_' + Date.now();
+    const encodedSubject = '=?UTF-8?B?' + Buffer.from(subject).toString('base64') + '?=';
+    const parts = [`To: ${to}`, `Subject: ${encodedSubject}`, 'MIME-Version: 1.0', `Content-Type: multipart/mixed; boundary="${boundary}"`, '', `--${boundary}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', Buffer.from(html).toString('base64')];
+    if (attachment) parts.push(`--${boundary}`, 'Content-Type: application/pdf; name="COD-settlement.pdf"', 'Content-Disposition: attachment; filename="COD-settlement.pdf"', 'Content-Transfer-Encoding: base64', '', attachment.toString('base64').replace(/.{76}/g, '$&\r\n'));
+    parts.push(`--${boundary}--`);
+    const raw = Buffer.from(parts.join('\r\n')).toString('base64url');
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw } });
+}
+function settlementPdf(seller, rows, amount) {
+    const PDFDocument = require('pdfkit');
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ margin: 48, size: 'A4' });
+        const chunks = [];
+        doc.on('data', x => chunks.push(x)); doc.on('end', () => resolve(Buffer.concat(chunks))); doc.on('error', reject);
+        doc.fontSize(20).text('NexkartBD - COD Commission Settlement');
+        doc.moveDown().fontSize(11).text(`Seller: ${seller.name || seller.id}`)
+           .text(`Seller ID: ${seller.id}`).text(`Email: ${seller.email || ''}`)
+           .text(`Settlement date: ${new Date().toISOString()}`);
+        doc.moveDown().fontSize(12).text('Paid commission records:');
+        for (const x of rows) {
+            if (doc.y > 740) doc.addPage();
+            doc.fontSize(10).text(`ID ${x.id} | Order ${x.order_number} | Rate ${x.commission_rate}% | BDT ${settlementMoney(x.commission_amount).toFixed(2)}`);
+        }
+        doc.moveDown().fontSize(14).text(`Total deducted from available balance: BDT ${amount.toFixed(2)}`);
+        doc.moveDown().fontSize(9).text('This receipt confirms commission settlement from the seller balance.');
+        doc.end();
+    });
+}
+router.get('/api/cod-settlements', ensureSuperAdmin, async (req, res) => {
+    try {
+        const [rows] = await db.query(`SELECT c.id, c.order_number, c.commission_rate, c.commission_amount, c.seller_id, c.date, a.name AS seller_name, a.email AS seller_email, a.total_sales, a.total_withdraw FROM commission_table c JOIN admins a ON a.id=c.seller_id WHERE LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.seller_id,c.id`);
+        const grouped = new Map();
+        for (const row of rows) {
+            if (!grouped.has(row.seller_id)) grouped.set(row.seller_id, { seller_id: row.seller_id, seller_name: row.seller_name, seller_email: row.seller_email, available_balance: settlementMoney(Math.max(0, Number(row.total_sales || 0) - Number(row.total_withdraw || 0))), total_unpaid: 0, commissions: [] });
+            const g = grouped.get(row.seller_id);
+            g.total_unpaid = settlementMoney(g.total_unpaid + Number(row.commission_amount || 0));
+            g.commissions.push({ id: row.id, order_number: row.order_number, commission_rate: row.commission_rate, commission_amount: row.commission_amount, date: row.date });
+        }
+        res.json([...grouped.values()]);
+    } catch (err) { console.error('COD settlements load:', err); res.status(500).json({ error: 'Failed to load settlements. Check admins balance columns.' }); }
+});
+router.post('/api/cod-settlements/deduct', ensureSuperAdmin, async (req, res) => {
+    const sellerId = Number(req.body?.seller_id);
+    if (!Number.isSafeInteger(sellerId) || sellerId <= 0) return res.status(400).json({ error: 'Invalid seller ID' });
+    try { require.resolve('pdfkit'); } catch (_) { return res.status(503).json({ error: 'PDFKit is not installed. Run npm install pdfkit before settling.' }); }
+    let conn;
+    try { conn = await db.getConnection(); } catch (err) { console.error('Settlement connection error:', err); return res.status(500).json({ error: 'Database connection unavailable' }); }
+    let receipt;
+    try {
+        await conn.beginTransaction();
+        const [[seller]] = await conn.query('SELECT id,name,email,total_sales,total_withdraw FROM admins WHERE id=? FOR UPDATE', [sellerId]);
+        if (!seller) { await conn.rollback(); return res.status(404).json({ error: 'Seller not found' }); }
+        const [rows] = await conn.query(`SELECT id,order_number,commission_rate,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id FOR UPDATE`, [sellerId]);
+        if (!rows.length) { await conn.rollback(); return res.status(409).json({ error: 'No unpaid commissions' }); }
+        const amount = settlementMoney(rows.reduce((a,x) => a + Number(x.commission_amount || 0), 0));
+        const balance = settlementMoney(Number(seller.total_sales || 0) - Number(seller.total_withdraw || 0));
+        if (!(amount > 0) || balance < amount) { await conn.rollback(); return res.status(409).json({ error: 'Insufficient available balance', available_balance: Math.max(0,balance), total_unpaid: amount }); }
+        // Increase total_withdraw to reduce available balance, preserving total_sales accounting.
+        await conn.query('UPDATE admins SET total_withdraw=COALESCE(total_withdraw,0)+? WHERE id=?', [amount, sellerId]);
+        const ids = rows.map(x => x.id);
+        const [updated] = await conn.query(`UPDATE commission_table SET payment_type='paid' WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' AND id IN (${ids.map(() => '?').join(',')})`, [sellerId, ...ids]);
+        if (updated.affectedRows !== ids.length) throw new Error('Concurrent settlement update conflict');
+        await conn.commit();
+        receipt = { seller, rows, amount };
+    } catch (err) { try { await conn.rollback(); } catch (_) {} console.error('COD settlement deduction:', err); return res.status(500).json({ error: 'Settlement failed; no changes committed' }); }
+    finally { conn.release(); }
+    let email_sent = false, email_error = null;
+    try {
+        if (!receipt.seller.email) throw new Error('Seller email missing');
+        const pdf = await settlementPdf(receipt.seller, receipt.rows, receipt.amount);
+        await settlementEmail(receipt.seller.email, 'NexkartBD COD commission settlement receipt', `<p>Dear Seller,</p><p>Your ${receipt.rows.length} outstanding commission(s), total <b>BDT ${receipt.amount.toFixed(2)}</b>, have been deducted from your available balance.</p><p>The attached PDF lists each commission ID and order.</p><p>NexkartBD Team</p>`, pdf);
+        email_sent = true;
+    } catch (err) { email_error = err.message; console.error('Settlement committed but receipt email failed:', err); }
+    res.json({ success: true, deducted: receipt.amount, settled_ids: receipt.rows.map(x=>x.id), email_sent, email_error });
+});
+router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req, res) => {
+    const sellerId = Number(req.body?.seller_id);
+    const method = String(req.body?.method || '').toLowerCase().trim();
+    const number = String(req.body?.number || '').trim();
+    if (!Number.isSafeInteger(sellerId) || sellerId <= 0 || !['bkash','nagad'].includes(method) || !/^01\d{9}$/.test(number)) return res.status(400).json({ error: 'Choose bKash/Nagad and a valid 11-digit number' });
+    try {
+        const [[seller]] = await db.query('SELECT id,name,email FROM admins WHERE id=?', [sellerId]);
+        if (!seller || !seller.email) return res.status(404).json({ error: 'Seller email not found' });
+        const [rows] = await db.query(`SELECT id,order_number,commission_amount FROM commission_table WHERE seller_id=? AND LOWER(TRIM(payment_type))='unpaid' ORDER BY id`, [sellerId]);
+        if (!rows.length) return res.status(409).json({ error: 'No unpaid commissions' });
+        const amount = settlementMoney(rows.reduce((a,x) => a + Number(x.commission_amount || 0), 0));
+        const details = rows.map(x => `<li>Order ${String(x.order_number).replace(/[&<>"']/g,'')} (ID ${x.id}): BDT ${settlementMoney(x.commission_amount).toFixed(2)}</li>`).join('');
+        // Manual payment instructions, not a fabricated gateway payment URL. No payment details are stored.
+        await settlementEmail(seller.email, 'NexkartBD unpaid COD commission payment instructions', `<p>Dear Seller,</p><p>Your unpaid commission total is <b>BDT ${amount.toFixed(2)}</b>.</p><ul>${details}</ul><p>Please send the payment manually using <b>${method.toUpperCase()}</b> to <b>${number}</b> and contact NexkartBD support with the transaction reference.</p><p>This is a payment instruction, not an automated checkout link. Payment status stays unpaid until verified by an administrator.</p><p>NexkartBD Team</p>`);
+        res.json({ success: true, email_sent: true, total_unpaid: amount });
+    } catch (err) { console.error('COD payment reminder:', err); res.status(500).json({ error: 'Failed to send payment instructions' }); }
+});
+
 // ================= TICKETS & COMPLAINS APIs =================
 
 // ১০. সকল Support Tickets ফেস করার API
