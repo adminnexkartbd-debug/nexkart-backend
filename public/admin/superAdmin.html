@@ -473,7 +473,8 @@
       <p class="text-xs text-slate-500 my-3">Available balance = total_sales − total_withdraw. Deduct settles all current unpaid commission IDs for one seller. Insufficient balance: send manual payment instructions by email.</p>
       <div id="codSettlementMessage" class="text-sm mb-2"></div>
       <div class="overflow-auto flex-1"><table class="w-full min-w-[850px] text-sm text-left"><thead class="bg-slate-100 sticky top-0"><tr><th class="p-3">Seller</th><th class="p-3">Unpaid Orders / IDs</th><th class="p-3">Total Unpaid</th><th class="p-3">Available Balance</th><th class="p-3">Action</th></tr></thead><tbody id="codSettlementBody"></tbody></table></div>
-      <div id="codPaymentForm" class="hidden border-t pt-3 mt-3"><h4 class="font-semibold text-sm mb-2">Send payment instructions and optional verified payment link</h4><p id="codPaymentSeller" class="text-xs mb-2"></p><div class="flex flex-wrap gap-2"><select id="codPaymentMethod" class="border rounded-lg p-2 text-sm"><option value="bkash">bKash</option><option value="nagad">Nagad</option></select><input id="codPaymentNumber" class="border rounded-lg p-2 text-sm" placeholder="01XXXXXXXXX" maxlength="11" inputmode="numeric"><input id="codPaymentUrl" type="url" class="border rounded-lg p-2 text-sm flex-1 min-w-[210px]" placeholder="Optional real HTTPS payment link"><button onclick="submitCodPaymentRequest()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Send Email</button><button onclick="document.getElementById('codPaymentForm').classList.add('hidden')" class="border px-4 py-2 rounded-lg text-sm">Cancel</button></div><p class="text-xs text-slate-500 mt-2">Payment details and optional payment link are only used for this email; they are not saved in the database. Only use a verified, working checkout URL.</p></div>
+      <div class="border-t pt-3 mt-3"><button class="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs" onclick="loadCodPaymentSubmissions()">View Submitted TrxIDs</button><div id="codPaymentSubmissions" class="text-xs mt-2"></div></div>
+      <div id="codPaymentForm" class="hidden border-t pt-3 mt-3"><h4 class="font-semibold text-sm mb-2">Send payment instructions and auto-generated payment link</h4><p id="codPaymentSeller" class="text-xs mb-2"></p><div class="flex flex-wrap gap-2"><select id="codPaymentMethod" class="border rounded-lg p-2 text-sm"><option value="bkash">bKash</option><option value="nagad">Nagad</option></select><input id="codPaymentNumber" class="border rounded-lg p-2 text-sm" placeholder="01XXXXXXXXX" maxlength="11" inputmode="numeric"><button onclick="submitCodPaymentRequest()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">Send Email</button><button onclick="document.getElementById('codPaymentForm').classList.add('hidden')" class="border px-4 py-2 rounded-lg text-sm">Cancel</button></div><p class="text-xs text-slate-500 mt-2">A unique 7-day link is generated using APP_URL. Seller submits sender number and TrxID; Super Admin verifies manually. Request and submission are stored in MySQL.</p></div>
     </div>
   </div>
 
@@ -1113,6 +1114,14 @@
       }).join('');
     }
 
+    async function refreshCodCommissionReport() {
+      // Update all report counters/tables without requiring a full browser reload.
+      try { const r = await fetch('/admin/api/all-commissions', {credentials:'include',cache:'no-store'});
+        if (!r.ok) throw new Error('Commission report refresh failed');
+        allCommissionData = await r.json();
+        filterCommissionData();
+      } catch(e) { console.warn('Commission report refresh:',e); }
+    }
     // ================= COD SETTLEMENT LOGIC =================
     let codSettlementRows = [];
     let codSelectedSeller = null;
@@ -1143,6 +1152,7 @@
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Deduction failed');
         alert(data.email_sent ? `Settled ${commMoney(data.deducted)}. PDF receipt emailed.` : `Settled ${commMoney(data.deducted)}, but receipt email failed: ${data.email_error || 'unknown error'}. Do NOT deduct again.`);
         await loadCodSettlements();
+        await refreshCodCommissionReport();
       } catch (e) { alert(e.message); } finally { message.textContent = ''; }
     }
     function showCodPaymentForm(id) {
@@ -1154,19 +1164,25 @@
     async function submitCodPaymentRequest() {
       const method = document.getElementById('codPaymentMethod').value;
       const number = document.getElementById('codPaymentNumber').value.trim();
-      const payment_url = document.getElementById('codPaymentUrl').value.trim();
+
       if (!/^01\d{9}$/.test(number)) return alert('Enter valid 11-digit mobile number');
       if (!confirm(`Email ${method} payment instructions to seller? Number: ${number}`)) return;
       try {
-        const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number,payment_url})});
+        const res = await fetch('/admin/api/cod-settlements/payment-request', {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({seller_id:codSelectedSeller,method,number})});
         const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Email failed');
-        alert('Payment instructions sent. Commission remains unpaid until payment verification.');
+        alert('Payment request emailed with link: ' + data.payment_url + '\nCommission remains unpaid until verified.');
+        await loadCodSettlements();
+        await refreshCodCommissionReport();
         document.getElementById('codPaymentForm').classList.add('hidden');
         document.getElementById('codPaymentNumber').value = '';
-        document.getElementById('codPaymentUrl').value = '';
+
       } catch (e) { alert(e.message); }
     }
 
+    async function loadCodPaymentSubmissions(){
+      const el=document.getElementById('codPaymentSubmissions');el.textContent='Loading...';
+      try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await r.json();if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Mark as Settled for this seller.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
+    }
     async function markCodSettled(id) {
       const seller=codSettlementRows.find(x=>Number(x.seller_id)===id);
       if(!seller) return alert('Seller not found');
@@ -1176,6 +1192,7 @@
         const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed to mark settled');
         alert(data.email_sent?`Settled ${commMoney(data.settled_amount)}. Thank-you email with branded PDF sent.`:`Settled ${commMoney(data.settled_amount)}, but PDF email failed: ${data.email_error||'unknown'}. Do not settle again.`);
         await loadCodSettlements();
+        await refreshCodCommissionReport();
       }catch(err){alert(err.message);}
     }
 
