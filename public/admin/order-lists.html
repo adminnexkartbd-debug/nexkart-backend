@@ -533,6 +533,18 @@
                 <span>৳ <span id="printSubtotalPrice">0</span></span>
             </div>
             <div class="price-row">
+                <span>Coin Discount:</span>
+                <span>- ৳ <span id="printCoinDiscount">0.00</span></span>
+            </div>
+            <div class="price-row">
+                <span>Coupon Discount:</span>
+                <span>- ৳ <span id="printCouponDiscount">0.00</span></span>
+            </div>
+            <div class="price-row" style="border-top:1px dashed #999; padding-top:6px; font-weight:600;">
+                <span>Subtotal (After Discount):</span>
+                <span>৳ <span id="printDiscountedSubtotal">0.00</span></span>
+            </div>
+            <div class="price-row">
                 <span>Delivery Charge:</span>
                 <span>৳ <span id="printDeliveryCharge">0</span></span>
             </div>
@@ -742,10 +754,27 @@
         document.getElementById('printSellerPhone').innerText = sellerPhone;
         document.getElementById('printSellerAddress').innerText = sellerAddress;
 
-        // Price Breakdown
-        document.getElementById('printSubtotalPrice').innerText = order.subtotal_price || '0';
-        document.getElementById('printDeliveryCharge').innerText = order.delivery_charge || '0';
-        document.getElementById('printTotalAmount').innerText = order.total_amount || '0';
+        // Price Breakdown: discounts must be supplied by the orders API.
+        // Missing/NULL discount values are displayed as zero.
+        const amount = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) ? Math.max(0, n) : 0;
+        };
+        const money = (value) => amount(value).toFixed(2);
+        const firstAvailable = (...values) => values.find(v => v !== undefined && v !== null && v !== '');
+        const coinDiscount = amount(firstAvailable(order.coin_discount, order.coins_discount, order.coin_discount_amount));
+        const couponDiscount = amount(firstAvailable(order.coupon_discount, order.coupon_discount_amount));
+        const deliveryCharge = amount(order.delivery_charge);
+        const originalSubtotal = amount(order.subtotal_price);
+        const discountedSubtotal = Math.max(0, originalSubtotal - coinDiscount - couponDiscount);
+
+        document.getElementById('printSubtotalPrice').innerText = money(originalSubtotal);
+        document.getElementById('printCoinDiscount').innerText = money(coinDiscount);
+        document.getElementById('printCouponDiscount').innerText = money(couponDiscount);
+        document.getElementById('printDiscountedSubtotal').innerText = money(discountedSubtotal);
+        document.getElementById('printDeliveryCharge').innerText = money(deliveryCharge);
+        // Keep the saved order total authoritative; never alter billing in the print view.
+        document.getElementById('printTotalAmount').innerText = money(order.total_amount);
 
         // Trigger Print Window
         window.print();
