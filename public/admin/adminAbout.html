@@ -1094,10 +1094,8 @@
             try {
                 const res = await fetch(`${this.apiBaseUrl}/profile`, {
                     method: 'GET',
-                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
                     }
                 });
 
@@ -1170,10 +1168,8 @@
             try {
                 const res = await fetch(`${this.apiBaseUrl}/profile/update`, {
                     method: 'PUT',
-                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1183,7 +1179,7 @@
                     alert('Profile updated successfully!');
                     await this.fetchAndSetProfile();
                 } else {
-                    alert(result.error ? `${result.message}: ${result.error}` : (result.message || 'Update failed'));
+                    alert([result.message, result.error].filter(Boolean).join(' — ') || 'Update failed');
                 }
             } catch (err) {
                 console.error('Update error:', err);
@@ -1204,10 +1200,8 @@
         try {
             const response = await fetch('/api/admin/delete-account', {
                 method: 'DELETE',
-                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
                 }
             });
 
@@ -1232,10 +1226,8 @@
         try {
             const response = await fetch('/api/admin/cancel-delete', {
                 method: 'POST',
-                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
                 }
             });
 
