@@ -78,6 +78,7 @@
                 <a href="/admin/home.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition-colors">
                     <i class="fa-solid fa-chart-pie w-6 text-white"></i> Dashboard
                 </a>
+                <button type="button" onclick="openProductReports()" class="w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-flag w-6"></i> Product Reports</button>
                 <button type="button" onclick="openManagementReport()" class="w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-box-archive w-6"></i> Management Report</button>
             </div>
 
@@ -168,6 +169,7 @@
                             </div>
                             <div class="w-10 h-10 md:w-12 md:h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0"><i class="fa-solid fa-user-gear"></i></div>
                         </div>
+                        <div onclick="openProductReports()" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all"><p class="text-xs font-semibold uppercase text-slate-500">Product Reports</p><h3 class="text-xl font-bold text-amber-700 mt-1">Manage Complaints</h3><p class="text-xs text-slate-500 mt-2">Pending / Cancel / Solved</p></div>
                         <div onclick="openManagementReport()" class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-violet-400 hover:shadow-md transition-all"><p class="text-xs font-semibold uppercase text-slate-500">Management Report</p><h3 class="text-xl font-bold text-violet-700 mt-1">Product Dump & Release</h3><p class="text-xs text-slate-500 mt-2">Product / Seller search and archive management</p></div>
                     </div>
                 </div>
@@ -312,6 +314,11 @@
     </div>
 
 
+<div id="productReportsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex-col">
+ <div class="bg-slate-900 text-white p-4 flex justify-between items-center"><h3 class="font-bold"><i class="fa-solid fa-flag mr-2"></i>Product Reports Management</h3><button onclick="closeProductReports()" class="p-2"><i class="fa-solid fa-xmark"></i></button></div>
+ <div class="bg-white p-4 flex gap-2 flex-wrap"><input id="prSearch" class="border rounded-xl px-4 py-2 flex-1 min-w-[180px]" placeholder="Report ID, Product ID, Seller ID, Email" onkeydown="if(event.key==='Enter')loadProductReports()"><button onclick="loadProductReports()" class="bg-indigo-600 text-white rounded-xl px-5 py-2">Search / Refresh</button></div>
+ <div class="flex-1 overflow-auto bg-slate-100 p-4"><p id="prStatus" class="text-sm text-slate-500 mb-3"></p><div class="bg-white border rounded-2xl overflow-x-auto"><table class="w-full min-w-[1100px] text-left text-sm"><thead class="bg-slate-50"><tr><th class="p-3">Report / Product</th><th class="p-3">Seller</th><th class="p-3">Reported By</th><th class="p-3">Reason / Details</th><th class="p-3">Status</th><th class="p-3">Action</th></tr></thead><tbody id="prRows"></tbody></table></div></div>
+</div>
 <div id="managementReportModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex-col">
  <div class="bg-slate-900 text-white p-4 flex justify-between items-center"><h3 class="font-bold"><i class="fa-solid fa-box-archive mr-2"></i>Management Report — Product Dump & Release</h3><button onclick="closeManagementReport()" class="p-2"><i class="fa-solid fa-xmark"></i></button></div>
  <div class="bg-white p-4 flex flex-wrap gap-3 items-center"><input id="mrSearch" class="border rounded-xl px-4 py-2 flex-1 min-w-[180px]" placeholder="Search email, Seller ID, Product ID or title" onkeydown="if(event.key==='Enter')loadManagementReport()"><button onclick="loadManagementReport()" class="bg-indigo-600 text-white rounded-xl px-5 py-2">Search</button><button onclick="mrSwitch('live')" id="mrLiveTab" class="rounded-xl px-4 py-2 bg-indigo-100 text-indigo-800">Live Products</button><button onclick="mrSwitch('dump')" id="mrDumpTab" class="rounded-xl px-4 py-2 bg-slate-100">Dump List</button></div>
@@ -319,6 +326,13 @@
 </div>
     <script>
 
+function openProductReports(){const m=document.getElementById('productReportsModal');m.classList.remove('hidden');m.classList.add('flex');loadProductReports();}
+function closeProductReports(){const m=document.getElementById('productReportsModal');m.classList.add('hidden');m.classList.remove('flex');}
+async function loadProductReports(){const tbody=document.getElementById('prRows'),status=document.getElementById('prStatus');tbody.innerHTML='<tr><td colspan="6" class="p-5">Loading...</td></tr>';
+ try{const q=document.getElementById('prSearch').value.trim();const response=await fetch('/api/control-employee/product-reports-management?q='+encodeURIComponent(q));const data=await response.json();if(!response.ok||!data.success)throw Error(data.message||'Unable to load reports');status.textContent=`Showing ${data.rows.length} reports (max 200)`;
+ tbody.innerHTML=data.rows.map(r=>`<tr class="border-t align-top"><td class="p-3"><b>Report #${mrEsc(r.id)}</b><div>Product #${mrEsc(r.product_id)} ${mrEsc(r.product_title||'')}</div><div class="text-xs text-slate-400">${mrEsc(r.created_at||'')}</div></td><td class="p-3"><b>${mrEsc(r.seller_name||'N/A')}</b><div>${mrEsc(r.shop_name||'')}</div><div>${mrEsc(r.seller_email||'')}</div><div>${mrEsc(r.seller_phone||'')}</div><div>Seller ID: ${mrEsc(r.seller_id)}</div></td><td class="p-3">User ID: ${mrEsc(r.user_id)}</td><td class="p-3"><b>${mrEsc(r.reason)}</b><div class="max-w-[320px] whitespace-pre-wrap break-words">${mrEsc(r.details)}</div></td><td class="p-3"><span class="font-semibold">${mrEsc(r.status)}</span></td><td class="p-3"><div class="flex gap-2 flex-wrap"><button onclick="setProductReportStatus(${Number(r.id)},'pending')" class="bg-amber-100 text-amber-800 rounded-lg px-3 py-2">Pending</button><button onclick="setProductReportStatus(${Number(r.id)},'rejected')" class="bg-red-100 text-red-800 rounded-lg px-3 py-2">Cancel</button><button onclick="setProductReportStatus(${Number(r.id)},'resolved')" class="bg-emerald-100 text-emerald-800 rounded-lg px-3 py-2">Solved</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="p-5 text-center">No reports found</td></tr>';}
+ catch(e){status.textContent=e.message;tbody.innerHTML='<tr><td colspan="6" class="p-5 text-red-600">'+mrEsc(e.message)+'</td></tr>';}}
+async function setProductReportStatus(id,status){if(!confirm(`Change report #${id} status to ${status}?`))return;try{const response=await fetch('/api/control-employee/product-reports-management/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});const data=await response.json();if(!response.ok||!data.success)throw Error(data.message||'Failed');showToast('Report status updated','success');loadProductReports();}catch(e){showToast(e.message,'error');}}
 let mrMode = 'live';
 function mrEsc(v){return String(v == null ? '' : v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function openManagementReport(){document.getElementById('managementReportModal').classList.remove('hidden');document.getElementById('managementReportModal').classList.add('flex');loadManagementReport();}
@@ -332,7 +346,7 @@ async function loadManagementReport(){
  }catch(e){status.textContent=e.message;el.innerHTML='<tr><td colspan="5" class="p-6 text-red-600">'+mrEsc(e.message)+'</td></tr>';}
 }
 async function mrAction(action,id){const target=action.includes('seller')?'seller':'product';const msg=action.startsWith('dump')?'DUMP':'RELEASE';if(!confirm(`${msg} ${target} #${id}? ${target==='seller'?'This affects ALL currently matching products.':''}`))return;if(!confirm(`FINAL CONFIRMATION: ${msg} ${target} #${id}?`))return;
- try{const response=await fetch('/api/control-employee/management-report/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id})});const data=await response.json();if(!response.ok||!data.success)throw Error(data.message||'Operation failed');showToast(`${msg} successful: ${data.count} products`,'success');await loadManagementReport();}catch(e){showToast(e.message,'error');}}
+ try{const response=await fetch('/api/control-employee/management-report/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id})});const data=await response.json();if(!response.ok||!data.success)throw Error(data.message||'Operation failed');showToast(`${msg} successful: ${data.count} products`,'success');if(data.emails){const failures=data.emails.filter(e=>!e.sent);if(failures.length)showToast(`Products updated, but ${failures.length} seller email(s) failed: ${failures.map(e=>e.error).join('; ')}`,'error');}await loadManagementReport();}catch(e){showToast(e.message,'error');}}
 
         let currentCommissionRate = 0;
 
