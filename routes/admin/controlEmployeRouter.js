@@ -281,4 +281,41 @@ router.post('/suspend-and-delete-admin', async (req, res) => {
     }
 });
 
+
+// Management Report: transactional product snapshot dump/release.
+// The archive table must be installed from management_report.sql first.
+const mrAuth=(req,res,next)=>{if(!req.session||req.session.pinVerified!==true)return res.status(403).json({success:false,message:'Admin PIN verification required.'});next();};
+const mrId=x=>Number.isSafeInteger(Number(x))&&Number(x)>0?Number(x):null;
+router.get('/management-report',mrAuth,async(req,res)=>{
+ try{const mode=req.query.mode==='dump'?'dump':'live';const q=String(req.query.q||'').trim().slice(0,150);const like='%'+q+'%';
+ let rows;
+ if(mode==='live'){
+ const [data]=await db.query(`SELECT p.*, a.name AS seller_name,a.shop_name,a.email,a.phone FROM products p LEFT JOIN admins a ON a.id=p.admin_id WHERE (?='' OR CAST(p.id AS CHAR)=? OR CAST(p.admin_id AS CHAR)=? OR a.email LIKE ? OR a.name LIKE ? OR a.shop_name LIKE ?) ORDER BY p.id DESC LIMIT 200`,[q,q,q,like,like,like]);
+ rows=data.map(p=>({product_id:p.id,seller_id:p.admin_id,title:p.name||p.title||p.product_name||('Product #'+p.id),seller_name:p.seller_name,shop_name:p.shop_name,email:p.email,phone:p.phone}));
+ }else{
+ const [data]=await db.query(`SELECT d.product_id,d.seller_id,d.product_json,d.dumped_at,a.name AS seller_name,a.shop_name,a.email,a.phone FROM management_product_dump d LEFT JOIN admins a ON a.id=d.seller_id WHERE (?='' OR CAST(d.product_id AS CHAR)=? OR CAST(d.seller_id AS CHAR)=? OR a.email LIKE ? OR a.name LIKE ? OR a.shop_name LIKE ?) ORDER BY d.dumped_at DESC LIMIT 200`,[q,q,q,like,like,like]);
+ rows=data.map(p=>{const prod=typeof p.product_json==='string'?JSON.parse(p.product_json):p.product_json;return {product_id:p.product_id,seller_id:p.seller_id,title:prod.name||prod.title||prod.product_name||('Product #'+p.product_id),seller_name:p.seller_name,shop_name:p.shop_name,email:p.email,phone:p.phone,dumped_at:p.dumped_at};});
+ }
+ res.json({success:true,rows});}catch(e){console.error('management-report:',e);res.status(500).json({success:false,message:e.message});}
+});
+router.post('/management-report/action',mrAuth,async(req,res)=>{
+ const {action}=req.body||{};const id=mrId(req.body&&req.body.id);if(!id||!['dump-product','dump-seller','release-product','release-seller'].includes(action))return res.status(400).json({success:false,message:'Invalid action or ID'});
+ let conn;try{
+ conn=await db.getConnection();await conn.beginTransaction();
+ const isSeller=action.endsWith('seller'),isDump=action.startsWith('dump');
+ if(isDump){
+ const [products]=await conn.query(`SELECT * FROM products WHERE ${isSeller?'admin_id':'id'}=? FOR UPDATE`,[id]);
+ if(!products.length){await conn.rollback();return res.status(404).json({success:false,message:'No live products found'});}
+ for(const p of products){await conn.query('INSERT INTO management_product_dump (product_id,seller_id,product_json) VALUES (?,?,?)',[p.id,p.admin_id,JSON.stringify(p)]);}
+ const ids=products.map(p=>p.id);await conn.query('DELETE FROM products WHERE id IN (?)',[ids]);
+ await conn.commit();return res.json({success:true,count:ids.length});
+ }
+ const [dumped]=await conn.query(`SELECT * FROM management_product_dump WHERE ${isSeller?'seller_id':'product_id'}=? FOR UPDATE`,[id]);
+ if(!dumped.length){await conn.rollback();return res.status(404).json({success:false,message:'No dumped products found'});}
+ const [columns]=await conn.query('SHOW COLUMNS FROM products');const allowed=new Set(columns.map(c=>c.Field));
+ for(const d of dumped){const p=typeof d.product_json==='string'?JSON.parse(d.product_json):d.product_json;const keys=Object.keys(p).filter(k=>allowed.has(k));if(!keys.includes('id'))throw Error('Product ID missing from archive');await conn.query(`INSERT INTO products (${keys.map(k=>'`'+k+'`').join(',')}) VALUES (${keys.map(()=>'?').join(',')})`,keys.map(k=>p[k]));}
+ await conn.query(`DELETE FROM management_product_dump WHERE ${isSeller?'seller_id':'product_id'}=?`,[id]);await conn.commit();res.json({success:true,count:dumped.length});
+ }catch(e){if(conn)try{await conn.rollback();}catch(_){}console.error('management-report action:',e);res.status(500).json({success:false,message:e.code==='ER_ROW_IS_REFERENCED_2'?'Related product records prevent physical dump. Nothing was changed.':e.message});}finally{if(conn)conn.release();}
+});
+
 module.exports = router;
