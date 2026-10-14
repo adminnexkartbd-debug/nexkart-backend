@@ -298,6 +298,29 @@ router.get('/management-report',mrAuth,async(req,res)=>{
  }
  res.json({success:true,rows});}catch(e){console.error('management-report:',e);res.status(500).json({success:false,message:e.message});}
 });
+// Product Reports: only the admin PIN-verified session can review reports.
+router.get('/product-reports-management',mrAuth,async(req,res)=>{
+ try{const q=String(req.query.q||'').trim().slice(0,120),like='%'+q+'%';
+ const [rows]=await db.query(`SELECT r.id,r.product_id,r.seller_id,r.user_id,r.reason,r.details,r.status,r.created_at,r.updated_at,p.title AS product_title,a.name AS seller_name,a.shop_name,a.email AS seller_email,a.phone AS seller_phone FROM product_reports r LEFT JOIN products p ON p.id=r.product_id LEFT JOIN admins a ON a.id=r.seller_id WHERE (?='' OR CAST(r.id AS CHAR)=? OR CAST(r.product_id AS CHAR)=? OR CAST(r.seller_id AS CHAR)=? OR a.email LIKE ? OR a.name LIKE ? OR r.reason LIKE ?) ORDER BY r.created_at DESC LIMIT 200`,[q,q,q,q,like,like,like]);
+ res.json({success:true,rows});}catch(e){console.error('product reports:',e);res.status(500).json({success:false,message:e.message});}
+});
+router.post('/product-reports-management/status',mrAuth,async(req,res)=>{
+ try{const id=mrId(req.body&&req.body.id),status=String(req.body&&req.body.status||'');
+ if(!id||!['pending','rejected','resolved'].includes(status))return res.status(400).json({success:false,message:'Invalid report or status'});
+ const [result]=await db.query('UPDATE product_reports SET status=?,updated_at=NOW() WHERE id=?',[status,id]);
+ if(!result.affectedRows)return res.status(404).json({success:false,message:'Report not found'});
+ res.json({success:true,status});}catch(e){console.error('report status:',e);res.status(500).json({success:false,message:e.message});}
+});
+function mrMailEsc(x){return String(x==null?'':x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function mrNotifySeller(seller,action,count){
+ if(!seller||!seller.email)return {sent:false,error:'Seller email unavailable'};
+ const released=action.startsWith('release'),subject=released?'Your NexkartBD products have been restored':'Important update about your NexkartBD products';
+ const heading=released?'Your products are live again':'Your products have been temporarily removed';
+ const body=released?`We have restored ${count} product(s) to your store. They are now available again, subject to their existing publication status.`:`We have temporarily removed ${count} product(s) from the live catalog. Your product information has been safely archived and can be restored by our management team.`;
+ const html=`<div style="background:#f1f5f9;padding:32px 12px;font-family:Arial,sans-serif;color:#0f172a"><div style="max-width:560px;margin:auto;background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px #0001"><div style="background:#0f172a;text-align:center;padding:26px"><img src="https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png" alt="NexkartBD" style="max-height:64px;max-width:190px"><div style="color:#cbd5e1;font-size:13px;margin-top:8px">Seller Management Notification</div></div><div style="padding:30px"><div style="font-size:13px;font-weight:bold;color:${released?'#059669':'#d97706'}">${released?'PRODUCTS RESTORED':'PRODUCT MANAGEMENT UPDATE'}</div><h2 style="font-size:23px;margin:12px 0">${heading}</h2><p>Hello ${mrMailEsc(seller.name||seller.shop_name||'Seller')},</p><p style="line-height:1.8;color:#475569">${body}</p><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin:20px 0"><strong>Products affected: ${count}</strong><br><span style="color:#64748b">Store: ${mrMailEsc(seller.shop_name||'NexkartBD Seller')}</span></div><p style="color:#64748b;font-size:13px">For questions, please contact NexkartBD support.</p><p>Regards,<br><strong>NexkartBD Team</strong></p></div></div></div>`;
+ const raw=[`To: ${seller.email}`,`Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,`MIME-Version: 1.0`,`Content-Type: text/html; charset=UTF-8`,`Content-Transfer-Encoding: base64`,'',Buffer.from(html).toString('base64')].join('\r\n');
+ try{const response=await gmail.users.messages.send({userId:'me',requestBody:{raw:Buffer.from(raw).toString('base64url')}});return {sent:true,message_id:response.data.id};}catch(e){console.error('Management report Gmail notification failed:',e);return {sent:false,error:e.message};}
+}
 router.post('/management-report/action',mrAuth,async(req,res)=>{
  const {action}=req.body||{};const id=mrId(req.body&&req.body.id);if(!id||!['dump-product','dump-seller','release-product','release-seller'].includes(action))return res.status(400).json({success:false,message:'Invalid action or ID'});
  let conn;try{
@@ -313,13 +336,13 @@ router.post('/management-report/action',mrAuth,async(req,res)=>{
  const marks=cols.map(()=>'?').join(',');
  for(const p of products){await conn.query(`INSERT INTO management_product_dump_full (${names}) VALUES (${marks})`,cols.map(c=>p[c]));}
  const ids=products.map(p=>p.id);await conn.query('DELETE FROM products WHERE id IN (?)',[ids]);
- await conn.commit();return res.json({success:true,count:ids.length});
+ await conn.commit();const sellerIds=[...new Set(products.map(p=>p.admin_id))];const emails=[];for(const sid of sellerIds){try{const [sr]=await db.query('SELECT name,shop_name,email FROM admins WHERE id=? LIMIT 1',[sid]);emails.push({seller_id:sid,...await mrNotifySeller(sr[0],action,products.filter(p=>p.admin_id===sid).length)});}catch(e){emails.push({seller_id:sid,sent:false,error:e.message});}}return res.json({success:true,count:ids.length,emails});
  }
  const [dumped]=await conn.query(`SELECT * FROM management_product_dump_full WHERE ${isSeller?'admin_id':'id'}=? FOR UPDATE`,[id]);
  if(!dumped.length){await conn.rollback();return res.status(404).json({success:false,message:'No dumped products found'});}
  const [columns]=await conn.query('SHOW COLUMNS FROM products');const allowed=new Set(columns.map(c=>c.Field));
  for(const p of dumped){const keys=columns.map(c=>c.Field);if(!keys.includes('id'))throw Error('Product ID missing from archive');await conn.query(`INSERT INTO products (${keys.map(k=>'`'+k+'`').join(',')}) VALUES (${keys.map(()=>'?').join(',')})`,keys.map(k=>p[k]));}
- await conn.query(`DELETE FROM management_product_dump_full WHERE ${isSeller?'admin_id':'id'}=?`,[id]);await conn.commit();res.json({success:true,count:dumped.length});
+ await conn.query(`DELETE FROM management_product_dump_full WHERE ${isSeller?'admin_id':'id'}=?`,[id]);await conn.commit();const sellerIds=[...new Set(dumped.map(p=>p.admin_id))];const emails=[];for(const sid of sellerIds){try{const [sr]=await db.query('SELECT name,shop_name,email FROM admins WHERE id=? LIMIT 1',[sid]);emails.push({seller_id:sid,...await mrNotifySeller(sr[0],action,dumped.filter(p=>p.admin_id===sid).length)});}catch(e){emails.push({seller_id:sid,sent:false,error:e.message});}}res.json({success:true,count:dumped.length,emails});
  }catch(e){if(conn)try{await conn.rollback();}catch(_){}console.error('management-report action:',e);res.status(500).json({success:false,message:e.code==='ER_ROW_IS_REFERENCED_2'?'Related product records prevent physical dump. Nothing was changed.':e.message});}finally{if(conn)conn.release();}
 });
 
