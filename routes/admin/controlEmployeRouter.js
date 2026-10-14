@@ -199,88 +199,107 @@ router.get('/get-all-admins', async (req, res) => {
     }
 });
 
-// Permanent Suspension & Product Deletion with Google API Email Notification
-router.post('/suspend-and-delete-admin', async (req, res) => {
+// Seller account deletion: PIN-gated, transactional DB cleanup, optional Cloudinary cleanup.
+const deleteSellerId = value => Number.isSafeInteger(Number(value)) && Number(value) > 0 ? Number(value) : null;
+const quoteDeleteCol = name => '`' + name.replace(/`/g, '``') + '`';
+async function deleteTableColumns(conn, table) {
+    const [rows] = await conn.query('SHOW COLUMNS FROM ' + quoteDeleteCol(table));
+    return rows.map(row => row.Field);
+}
+function cloudinaryPublicId(url) {
     try {
-        const { id } = req.body;
-        if (!id) {
-            return res.status(400).json({ success: false, message: 'Admin ID is required.' });
-        }
-
-        // 1. Fetch current admin details
-        const [adminRows] = await db.query(`SELECT * FROM admins WHERE id = ?`, [id]);
-        if (!adminRows || adminRows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Admin record not found.' });
-        }
-
-        const seller = adminRows[0];
-        const sellerEmail = seller.email;
-
-        // 2. Delete products where admin_id matches
-        await db.query(`DELETE FROM products WHERE admin_id = ?`, [id]);
-
-        // 3. Clear fields in admins table
-        const resetQuery = `
-            UPDATE admins 
-            SET 
-                name = NULL, email = NULL, password = NULL, picture = NULL,
-                role = NULL, parent_admin_id = NULL, shop_name = NULL, phone = NULL,
-                address = NULL, facebook_link = NULL, slogan = NULL, shop_about = NULL,
-                payment_type = 'none', mobile_number = NULL, bank_acc_name = NULL,
-                bank_acc_number = NULL, bank_name = NULL, bank_branch = NULL,
-                routing_number = NULL, status = 'rejected', is_verified = 0,
-                super_admin = 'pending', verification_code = NULL, temp_data = NULL,
-                verification_doc = NULL, total_sales = 0.00, total_withdraw = 0.00,
-                delete_requested_at = NULL, is_deletion_pending = 0,
-                deletion_requested_at = NULL, action = 'suspended'
-            WHERE id = ?
-        `;
-        await db.query(resetQuery, [id]);
-
-        // 4. Send Email via Google REST API
-        if (sellerEmail) {
-            try {
-                const rawEmail = createRawEmail({
-                    to: sellerEmail,
-                    from: process.env.GMAIL_USER || 'admin.nexkartbd@gmail.com',
-                    subject: 'Account Permanently Suspended - Policy Violation',
-                    message: `Dear User,\n\nYour account has been permanently suspended due to policy violations.`,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                            <h2 style="color: #dc2626;">Account Permanent Suspension Notice</h2>
-                            <p>Dear User,</p>
-                            <p>Your seller account has been <strong>permanently suspended and cleared</strong> due to policy/violence violations.</p>
-                            <p>All products linked to your account have been deleted from our system.</p>
-                            <br/>
-                            <p>Regards,<br/><strong>NexKart Support Team</strong></p>
-                        </div>
-                    `
-                });
-
-                const response = await gmail.users.messages.send({
-                    userId: 'me',
-                    requestBody: {
-                        raw: rawEmail
-                    }
-                });
-
-                console.log('Google API Email sent successfully:', response.data.id);
-            } catch (mailErr) {
-                console.error('Error sending Google API mail:', mailErr.message);
+        const parsed = new URL(url);
+        if (parsed.hostname !== 'res.cloudinary.com') return null;
+        const match = parsed.pathname.match(/^\/([^/]+)\/(image|video|raw)\/upload\/(?:v\d+\/)?(.+)$/);
+        if (!match || match[1] !== process.env.CLOUDINARY_CLOUD_NAME) return null;
+        return {resource_type:match[2], public_id:decodeURIComponent(match[3]).replace(/\.[^/.]+$/, '')};
+    } catch (_) { return null; }
+}
+router.post('/suspend-and-delete-admin', async (req, res) => {
+    if (!req.session || req.session.pinVerified !== true) return res.status(403).json({success:false,message:'Verify admin PIN first.'});
+    const id = deleteSellerId(req.body && req.body.id);
+    if (!id || req.body.confirm !== 'DELETE SELLER') return res.status(400).json({success:false,message:'Seller ID and deletion confirmation required.'});
+    let conn;
+    let seller;
+    let deletedCount = 0;
+    let imageRowsDeleted = 0;
+    const imageUrls = new Set();
+    try {
+        conn = await db.getConnection();
+        await conn.beginTransaction();
+        const [admins] = await conn.query('SELECT * FROM admins WHERE id=? FOR UPDATE',[id]);
+        if (!admins.length) { await conn.rollback(); return res.status(404).json({success:false,message:'Seller not found.'}); }
+        seller = admins[0];
+        if (seller.role !== 'seller' || seller.action === 'suspended') { await conn.rollback(); return res.status(400).json({success:false,message:'Only active seller accounts may be deleted.'}); }
+        const [products] = await conn.query('SELECT * FROM products WHERE admin_id=? FOR UPDATE',[id]);
+        deletedCount = products.length;
+        const ids = products.map(product => product.id);
+        const candidateUrl = (key,value) => {
+            if (typeof value !== 'string' || !/(image|photo|thumbnail|gallery|picture|url)/i.test(key)) return;
+            const urls = value.match(/https?:\/\/[^\s"'<>\\]+/g) || [];
+            urls.forEach(url => imageUrls.add(url.replace(/[),\]]+$/, '')));
+        };
+        products.forEach(product => Object.entries(product).forEach(([key,value]) => candidateUrl(key,value)));
+        if (ids.length) {
+            // Delete only product media and variants; never erase orders, financial records or reviews to force deletion.
+            for (const table of ['product_images','product_variants']) {
+                const cols = await deleteTableColumns(conn,table);
+                const fk = cols.includes('product_id') ? 'product_id' : null;
+                if (!fk) throw new Error(table+' has no product_id column; deletion aborted safely.');
+                const [media] = await conn.query('SELECT * FROM '+quoteDeleteCol(table)+' WHERE '+quoteDeleteCol(fk)+' IN (?)',[ids]);
+                media.forEach(record => Object.entries(record).forEach(([key,value]) => candidateUrl(key,value)));
+                const [removed] = await conn.query('DELETE FROM '+quoteDeleteCol(table)+' WHERE '+quoteDeleteCol(fk)+' IN (?)',[ids]);
+                if (table === 'product_images') imageRowsDeleted = removed.affectedRows;
             }
+            // A foreign key from orders/reports/reviews can block this DELETE. In that case roll back everything.
+            await conn.query('DELETE FROM products WHERE admin_id=?',[id]);
         }
-
-        return res.status(200).json({ 
-            success: true, 
-            message: 'Seller account suspended, fields cleared, products deleted, and email notification sent via Google API.' 
-        });
-
-    } catch (error) {
-        console.error('Error in suspend-and-delete-admin:', error);
-        res.status(500).json({ success: false, message: error.message });
+        // Preserve the seller row/Google ID, consistent with existing suspended-account behavior.
+        const [result] = await conn.query(`UPDATE admins SET
+            name=NULL,email=NULL,password=NULL,picture=NULL,role=NULL,parent_admin_id=NULL,
+            shop_name=NULL,phone=NULL,address=NULL,facebook_link=NULL,slogan=NULL,shop_about=NULL,
+            payment_type='none',mobile_number=NULL,bank_acc_name=NULL,bank_acc_number=NULL,
+            bank_name=NULL,bank_branch=NULL,routing_number=NULL,status='rejected',is_verified=0,
+            super_admin='pending',verification_code=NULL,temp_data=NULL,verification_doc=NULL,
+            total_sales=0,total_withdraw=0,delete_requested_at=NULL,is_deletion_pending=0,
+            deletion_requested_at=NULL,action='suspended' WHERE id=?`,[id]);
+        if (result.affectedRows !== 1) throw new Error('Seller account update failed');
+        await conn.commit();
+    } catch (err) {
+        if (conn) try { await conn.rollback(); } catch (_) {}
+        console.error('Seller deletion failed:',err);
+        const related = err.code === 'ER_ROW_IS_REFERENCED_2' || err.code === 'ER_ROW_IS_REFERENCED';
+        return res.status(related?409:500).json({success:false,message:related?'Orders, reviews or other linked records prevent deleting products. No database changes were made.':err.message});
+    } finally { if (conn) conn.release(); }
+    // External image deletion happens only AFTER DB commit; external services cannot join MySQL transactions.
+    const cloudinary = {deleted:0,failed:[],skipped:0};
+    if (imageUrls.size) {
+        if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+            try {
+                const {v2:cloud} = require('cloudinary');
+                cloud.config({cloud_name:process.env.CLOUDINARY_CLOUD_NAME,api_key:process.env.CLOUDINARY_API_KEY,api_secret:process.env.CLOUDINARY_API_SECRET});
+                for (const url of imageUrls) {
+                    const info = cloudinaryPublicId(url);
+                    if (!info) {cloudinary.skipped++;continue;}
+                    try {
+                        const result = await cloud.uploader.destroy(info.public_id,{resource_type:info.resource_type,invalidate:true});
+                        if (result.result === 'ok' || result.result === 'not found') cloudinary.deleted++;
+                        else cloudinary.failed.push({url,error:result.result});
+                    } catch(e) {cloudinary.failed.push({url,error:e.message});}
+                }
+            } catch(e) {cloudinary.failed.push({error:e.message});}
+        } else cloudinary.skipped = imageUrls.size;
     }
+    let emailSent = false;
+    if (seller.email) {
+        try {
+            const rawEmail = createRawEmail({to:seller.email,from:process.env.GMAIL_USER || 'admin.nexkartbd@gmail.com',subject:'NexkartBD Seller Account Closure',message:`Your NexkartBD seller account has been closed. ${deletedCount} product(s) were removed.`,html:`<div style="font-family:Arial;padding:24px"><h2>NexkartBD Seller Account Closure</h2><p>Hello ${String(seller.name||'Seller').replace(/[&<>"']/g,'')},</p><p>Your seller account has been closed and ${deletedCount} product(s) removed from our catalog.</p><p>NexkartBD Support</p></div>`});
+            await gmail.users.messages.send({userId:'me',requestBody:{raw:rawEmail}});
+            emailSent = true;
+        } catch(err) { console.error('Seller closure Gmail failed:',err); }
+    }
+    res.json({success:true,message:'Seller suspended and products deleted from database.',products_deleted:deletedCount,image_records_deleted:imageRowsDeleted,cloudinary,email_sent:emailSent});
 });
-
 
 // Management Report: transactional product snapshot dump/release.
 // The archive table must be installed from management_report.sql first.
