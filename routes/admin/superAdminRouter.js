@@ -754,6 +754,34 @@ router.post('/api/cod-settlements/payment-request', ensureSuperAdmin, async (req
     }catch(err){console.error('Payment request saved but email failed:',err);res.json({success:true,email_sent:false,email_error:err.message,request_id:details.request_id,payment_url:details.paymentUrl,total_unpaid:details.amount});}
 });
 
+// Resend a payment reminder for the SAME locked commission IDs.
+// The original opaque token cannot be recovered from its SHA-256 hash, so rotate it.
+router.post('/api/cod-settlements/payment-reminder', ensureSuperAdmin, async (req,res)=>{
+    const requestId=Number(req.body?.request_id);
+    if(!Number.isSafeInteger(requestId)||requestId<=0) return res.status(400).json({error:'Invalid payment request ID'});
+    let conn, details;
+    try {
+        conn=await db.getConnection();
+        await conn.beginTransaction();
+        const [[request]]=await conn.query(`SELECT pr.*, a.name AS seller_name,a.email AS seller_email FROM cod_commission_payment_requests pr JOIN admins a ON a.id=pr.seller_id WHERE pr.id=? FOR UPDATE`,[requestId]);
+        if(!request){await conn.rollback();return res.status(404).json({error:'Payment request not found'});}
+        if(request.status!=='pending'){await conn.rollback();return res.status(409).json({error:'Reminder is available only while awaiting payment submission'});}
+        const [rows]=await conn.query(`SELECT c.id,c.order_number,c.commission_rate,c.commission_amount FROM cod_commission_payment_items pi JOIN commission_table c ON c.id=pi.commission_id WHERE pi.request_id=? AND c.seller_id=? AND LOWER(TRIM(c.payment_type))='unpaid' ORDER BY c.id`,[requestId,request.seller_id]);
+        const [[counts]]=await conn.query('SELECT COUNT(*) AS total FROM cod_commission_payment_items WHERE request_id=?',[requestId]);
+        if(!rows.length||rows.length!==Number(counts.total)){await conn.rollback();return res.status(409).json({error:'Commission items changed. Check this request before sending a reminder.'});}
+        if(!request.seller_email){await conn.rollback();return res.status(400).json({error:'Seller email not found'});}
+        const token=crypto.randomBytes(32).toString('hex');
+        await conn.query('UPDATE cod_commission_payment_requests SET token_hash=?,expires_at=DATE_ADD(NOW(),INTERVAL 7 DAY) WHERE id=? AND status=\'pending\'',[settlementTokenHash(token),requestId]);
+        await conn.commit();
+        details={seller:{id:request.seller_id,name:request.seller_name,email:request.seller_email},rows,amount:settlementMoney(request.amount),method:request.method,number:request.number,paymentUrl:makeSettlementLink(token)};
+    }catch(err){if(conn){try{await conn.rollback();}catch(_){}}console.error('COD payment reminder:',err);return res.status(500).json({error:'Unable to prepare reminder: '+err.message});}
+    finally{if(conn)conn.release();}
+    try {
+        await settlementEmail(details.seller.email,'NexkartBD | Commission Payment Reminder',settlementMailHtml({seller:details.seller,amount:details.amount,rows:details.rows,title:'Friendly payment reminder',message:'This is a reminder for your existing unpaid commission request. The commission IDs and total have not changed. Please use the updated payment link below to submit your transaction details.',method:details.method,number:details.number,paymentUrl:details.paymentUrl,settled:false}));
+        return res.json({success:true,email_sent:true,request_id:requestId});
+    }catch(err){console.error('COD payment reminder Gmail failure:',err);return res.json({success:true,email_sent:false,email_error:err.message,request_id:requestId});}
+});
+
 // Manual settlement is only for a payment the administrator has independently verified.
 // No seller balance is deducted: funds were received outside the seller wallet.
 router.post('/api/cod-settlements/mark-settled', ensureSuperAdmin, async (req,res)=>{
