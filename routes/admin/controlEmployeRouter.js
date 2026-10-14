@@ -3,6 +3,43 @@ const router = express.Router();
 const db = require('../../db');
 const { google } = require('googleapis');
 
+// Download the official logo and embed it as an inline Gmail MIME image.
+const NEXKART_LOGO_URL = 'https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png';
+async function getNexkartInlineLogo() {
+    const https = require('https');
+    return new Promise((resolve, reject) => {
+        const req = https.get(NEXKART_LOGO_URL, {timeout: 7000}, res => {
+            if (res.statusCode !== 200) { res.resume(); return reject(new Error('Logo HTTP '+res.statusCode)); }
+            const parts = []; let size = 0;
+            res.on('data', part => { size += part.length; if (size > 1024*1024) { req.destroy(new Error('Logo too large')); return; } parts.push(part); });
+            res.on('end', () => resolve(Buffer.concat(parts)));
+            res.on('error', reject);
+        });
+        req.on('timeout', () => req.destroy(new Error('Logo request timeout')));
+        req.on('error', reject);
+    });
+}
+function makeNexkartGmailMime(to, subject, plain, html, logo) {
+    const boundary = 'nexkart-related-' + require('crypto').randomBytes(12).toString('hex');
+    const alt = 'nexkart-alt-' + require('crypto').randomBytes(12).toString('hex');
+    const cid = 'nexkart-logo@nexkartbd.com';
+    const content = logo ? html.replaceAll(NEXKART_LOGO_URL, 'cid:' + cid) : html;
+    const mime = [
+        `To: ${String(to).replace(/[\r\n]/g, '')}`,
+        `Subject: =?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/related; boundary="${boundary}"`, '',
+        `--${boundary}`, `Content-Type: multipart/alternative; boundary="${alt}"`, '',
+        `--${alt}`, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', Buffer.from(plain, 'utf8').toString('base64'),
+        `--${alt}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', Buffer.from(content, 'utf8').toString('base64'),
+        `--${alt}--`
+    ];
+    if (logo) mime.push(`--${boundary}`, 'Content-Type: image/png; name="nexkart.png"', 'Content-Transfer-Encoding: base64', `Content-ID: <${cid}>`, 'Content-Disposition: inline; filename="nexkart.png"', '', logo.toString('base64'));
+    mime.push(`--${boundary}--`);
+    return Buffer.from(mime.join('\r\n'), 'utf8').toString('base64url');
+}
+
+
 // Google OAuth2 Client Setup
 const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID || '',
@@ -313,15 +350,33 @@ router.post('/suspend-and-delete-admin', async (req, res) => {
             } catch(e) {cloudinary.failed.push({error:e.message});}
         } else cloudinary.skipped = imageUrls.size;
     }
+    // Notify the original seller address captured before account data was cleared.
+    // Use only the existing Google Gmail OAuth2 API client.
     let emailSent = false;
+    let emailError = null;
     if (seller.email) {
         try {
-            const rawEmail = createRawEmail({to:seller.email,from:process.env.GMAIL_USER || 'admin.nexkartbd@gmail.com',subject:'NexkartBD Seller Account Closure',message:`Your NexkartBD seller account has been closed. ${deletedCount} product(s) were removed.`,html:`<div style="font-family:Arial;padding:24px"><h2>NexkartBD Seller Account Closure</h2><p>Hello ${String(seller.name||'Seller').replace(/[&<>"']/g,'')},</p><p>Your seller account has been closed and ${deletedCount} product(s) removed from our catalog.</p><p>NexkartBD Support</p></div>`});
-            await gmail.users.messages.send({userId:'me',requestBody:{raw:rawEmail}});
-            emailSent = true;
-        } catch(err) { console.error('Seller closure Gmail failed:',err); }
-    }
-    res.json({success:true,message:'Seller suspended and products deleted from database.',products_deleted:deletedCount,image_records_deleted:imageRowsDeleted,cloudinary,email_sent:emailSent});
+            const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+            const supportEmail = process.env.GMAIL_USER || 'admin.nexkartbd@gmail.com';
+            const sellerName = escapeHtml(seller.name || seller.shop_name || 'Seller');
+            const shopName = escapeHtml(seller.shop_name || 'Your Store');
+            const safeSupportEmail = escapeHtml(supportEmail);
+            const subject = 'NexkartBD | Seller Account Closure Confirmation';
+            const plain = `Hello ${seller.name || 'Seller'},\n\nYour NexkartBD seller account has been closed following an administrative action.\nStore: ${seller.shop_name || 'Your Store'}\nProducts removed: ${deletedCount}\n\nIf you need assistance or believe this action requires review, contact ${supportEmail}.\n\nNexkartBD Support Team`;
+            const html = `<!DOCTYPE html><html><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a"><div style="padding:35px 12px"><div style="max-width:580px;margin:auto;background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0"><div style="background:#0f172a;padding:28px;text-align:center"><img src="https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png" alt="NexkartBD" style="max-width:185px;max-height:65px"><div style="color:#cbd5e1;font-size:12px;margin-top:12px;letter-spacing:1px">ACCOUNT NOTIFICATION</div></div><div style="padding:32px 28px"><div style="display:inline-block;background:#fef2f2;color:#b91c1c;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:bold">ACCOUNT CLOSED</div><h1 style="font-size:25px;line-height:1.3;margin:18px 0 14px">Seller account closure confirmation</h1><p style="color:#475569;line-height:1.8">Hello <strong>${sellerName}</strong>,</p><p style="color:#475569;line-height:1.8">We are writing to confirm that your NexkartBD seller account has been closed following an administrative action. The products associated with this account have been removed from our catalog.</p><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:24px 0"><div style="color:#64748b;font-size:12px">STORE</div><div style="font-weight:bold;margin:5px 0 16px">${shopName}</div><div style="color:#64748b;font-size:12px">PRODUCTS REMOVED</div><div style="font-size:26px;font-weight:bold;margin-top:5px">${deletedCount}</div></div><h2 style="font-size:17px">Need help or a review?</h2><p style="color:#475569;line-height:1.7">If you have questions or believe this decision needs review, please contact our support team. Include your registered seller email so we can locate your account.</p><div style="text-align:center;margin:24px 0"><a href="mailto:${safeSupportEmail}?subject=NexkartBD%20Seller%20Account%20Support" style="background:#4f46e5;color:#fff;text-decoration:none;padding:14px 24px;border-radius:10px;display:inline-block;font-weight:bold">Contact Support</a></div><p style="font-size:13px;color:#64748b">Or email us at <a href="mailto:${safeSupportEmail}" style="color:#4f46e5">${safeSupportEmail}</a>.</p><p style="margin-top:28px;color:#475569">Regards,<br><strong>NexkartBD Support Team</strong></p></div><div style="background:#f8fafc;padding:16px 28px;text-align:center;font-size:12px;color:#64748b">NexkartBD • Seller Account Notification</div></div></div></body></html>`;
+            let logo = null;
+            try { logo = await getNexkartInlineLogo(); }
+            catch (e) { console.warn('Inline logo unavailable; using remote image URL:', e.message); }
+            const raw = makeNexkartGmailMime(seller.email, subject, plain, html, logo);
+            const result = await gmail.users.messages.send({userId:'me',requestBody:{raw}});
+            emailSent = !!(result.data && result.data.id);
+            if (!emailSent) emailError = 'Gmail API returned no message ID';
+        } catch (err) {
+            emailError = err.message;
+            console.error('Seller closure Gmail failed:', err);
+        }
+    } else emailError = 'Seller email address unavailable';
+    res.json({success:true,message:'Seller suspended and products deleted from database.',products_deleted:deletedCount,image_records_deleted:imageRowsDeleted,cloudinary,email_sent:emailSent,email_error:emailError});
 });
 
 // Management Report: transactional product snapshot dump/release.
@@ -360,8 +415,9 @@ async function mrNotifySeller(seller,action,count){
  const heading=released?'Your products are live again':'Your products have been temporarily removed';
  const body=released?`We have restored ${count} product(s) to your store. They are now available again, subject to their existing publication status.`:`We have temporarily removed ${count} product(s) from the live catalog. Your product information has been safely archived and can be restored by our management team.`;
  const html=`<div style="background:#f1f5f9;padding:32px 12px;font-family:Arial,sans-serif;color:#0f172a"><div style="max-width:560px;margin:auto;background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px #0001"><div style="background:#0f172a;text-align:center;padding:26px"><img src="https://res.cloudinary.com/yhctkgwj/image/upload/v1791893714/nexkart.png" alt="NexkartBD" style="max-height:64px;max-width:190px"><div style="color:#cbd5e1;font-size:13px;margin-top:8px">Seller Management Notification</div></div><div style="padding:30px"><div style="font-size:13px;font-weight:bold;color:${released?'#059669':'#d97706'}">${released?'PRODUCTS RESTORED':'PRODUCT MANAGEMENT UPDATE'}</div><h2 style="font-size:23px;margin:12px 0">${heading}</h2><p>Hello ${mrMailEsc(seller.name||seller.shop_name||'Seller')},</p><p style="line-height:1.8;color:#475569">${body}</p><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin:20px 0"><strong>Products affected: ${count}</strong><br><span style="color:#64748b">Store: ${mrMailEsc(seller.shop_name||'NexkartBD Seller')}</span></div><p style="color:#64748b;font-size:13px">For questions, please contact NexkartBD support.</p><p>Regards,<br><strong>NexkartBD Team</strong></p></div></div></div>`;
- const raw=[`To: ${seller.email}`,`Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,`MIME-Version: 1.0`,`Content-Type: text/html; charset=UTF-8`,`Content-Transfer-Encoding: base64`,'',Buffer.from(html).toString('base64')].join('\r\n');
- try{const response=await gmail.users.messages.send({userId:'me',requestBody:{raw:Buffer.from(raw).toString('base64url')}});return {sent:true,message_id:response.data.id};}catch(e){console.error('Management report Gmail notification failed:',e);return {sent:false,error:e.message};}
+ let logo = null; try { logo = await getNexkartInlineLogo(); } catch(e) { console.warn('Inline logo unavailable:',e.message); }
+ const raw=makeNexkartGmailMime(seller.email,subject,body,html,logo);
+ try{const response=await gmail.users.messages.send({userId:'me',requestBody:{raw}});return {sent:true,message_id:response.data.id};}catch(e){console.error('Management report Gmail notification failed:',e);return {sent:false,error:e.message};}
 }
 router.post('/management-report/action',mrAuth,async(req,res)=>{
  const {action}=req.body||{};const id=mrId(req.body&&req.body.id);if(!id||!['dump-product','dump-seller','release-product','release-seller'].includes(action))return res.status(400).json({success:false,message:'Invalid action or ID'});
