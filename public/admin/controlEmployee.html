@@ -648,27 +648,24 @@ async function mrAction(action,id){const target=action.includes('seller')?'selle
         }
 
         async function confirmAndSuspendAdmin(id, sellerEmail) {
-            const confirmDelete = confirm(`Are you sure you want to delete and permanently suspend account ID #${id}? \n\nThis will: \n1. Delete all products with admin_id = ${id} \n2. Clear seller profile fields (keeping Google ID) \n3. Set action to "suspended" \n4. Send permanent ban email notification.`);
-            if (!confirmDelete) return;
-
+            const yes = confirm(`DELETE SELLER ACCOUNT?\n\nSeller ID: ${id}\nEmail: ${sellerEmail}\n\nThis will permanently remove the seller's products, product image records and variants, then suspend the seller account.\n\nYES = Continue, NO = Cancel.`);
+            if (!yes) return;
+            const final = prompt(`Final confirmation for seller #${id}: type DELETE SELLER`);
+            if (final !== 'DELETE SELLER') { showToast('Deletion cancelled', 'info'); return; }
             try {
                 const response = await fetch('/api/control-employee/suspend-and-delete-admin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({id,confirm:'DELETE SELLER'})
                 });
-
                 const data = await response.json();
-                if (data.success) {
-                    showToast('Account suspended, products deleted & mail sent!', 'success');
-                    fetchAllAdmins();
-                } else {
-                    showToast(data.message || 'Failed to process suspension', 'error');
+                if (!response.ok || !data.success) throw Error(data.message || 'Delete failed');
+                showToast(`Seller suspended. ${data.products_deleted} products and ${data.image_records_deleted} image records removed.`, 'success');
+                if (data.cloudinary && (data.cloudinary.failed.length || data.cloudinary.skipped)) {
+                    alert(`Database deletion completed. Cloud image cleanup incomplete: ${data.cloudinary.failed.length} failed, ${data.cloudinary.skipped} skipped. Check Cloudinary configuration and image URLs.`);
                 }
-            } catch (error) {
-                console.error('Error suspending admin:', error);
-                showToast('Server error during operation', 'error');
-            }
+                if (!data.email_sent) showToast('Account deleted, but Gmail notification was not sent.', 'error');
+                fetchAllAdmins();
+            } catch (error) { showToast(error.message, 'error'); }
         }
 
         let sellersList = [];
