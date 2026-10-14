@@ -1,160 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexKartBD - Cosmetics Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style> 
-    body { font-family: 'Poppins', sans-serif; } 
-    .cosmetic-bg {
-      background-image: radial-gradient(#f472b6 1px, transparent 1px), radial-gradient(#db2777 1px, #fdf2f8 1px);
-      background-size: 40px 40px;
-      background-position: 0 0, 20px 20px;
-    }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexKartBD - Cosmetics Portal</title>
+<style>
+:root{--pink:#db2777;--rose:#f472b6;--purple:#9333ea;--ink:#292236;--muted:#817888;--line:#f2e5ee}*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#fdf8fb;min-height:100vh;display:grid;place-items:center;padding:30px 18px}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 12% 15%,#fce1ef 0,transparent 34%),radial-gradient(circle at 90% 88%,#f2e5fc 0,transparent 37%);pointer-events:none}.shell{position:relative;width:min(100%,1000px);display:grid;grid-template-columns:1fr 1fr;background:white;border:1px solid #f2e6ee;border-radius:25px;overflow:hidden;box-shadow:0 28px 90px #8e487021}.brand{padding:55px 49px;min-height:550px;background:linear-gradient(148deg,#fff3f8 0%,#fbe8f3 58%,#f2e5ff 100%);display:flex;flex-direction:column;justify-content:space-between;position:relative}.brand:after{content:"";position:absolute;right:-90px;bottom:95px;width:265px;height:265px;border:1px solid #d85b9b2b;border-radius:50%;box-shadow:0 0 0 37px #ffffff27,0 0 0 76px #ffffff20;pointer-events:none}.logo{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:800;letter-spacing:-.8px}.mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--pink),var(--purple));color:white;display:grid;place-items:center;font-size:24px;font-weight:700;box-shadow:0 9px 20px #db27772b}.eyebrow{font-size:11px;letter-spacing:2.2px;font-weight:800;color:var(--pink);text-transform:uppercase}.brand h1{font-size:clamp(32px,4vw,48px);line-height:1.14;letter-spacing:-2px;margin:17px 0 17px;font-weight:800;max-width:390px}.brand h1 span{color:var(--pink)}.brand p{color:#716579;font-size:14px;line-height:1.9;max-width:365px;margin:0}.brand-footer{display:flex;gap:22px;color:#a45b88;font-size:12px;font-weight:600;z-index:1}.login{padding:55px 49px;display:flex;flex-direction:column;justify-content:center}.login-inner{width:100%;max-width:355px;margin:auto}.top-pill{display:inline-flex;align-items:center;gap:7px;background:#fdf0f7;border:1px solid #f8d9ea;color:#bd2776;border-radius:100px;padding:8px 12px;font-size:11px;font-weight:700}.dot{width:6px;height:6px;border-radius:50%;background:#db2777}.login h2{font-size:29px;letter-spacing:-1.2px;margin:23px 0 7px}.sub{font-size:13px;color:var(--muted);line-height:1.8;margin:0}.google{width:100%;display:flex;align-items:center;justify-content:center;gap:13px;background:var(--pink);color:white;text-decoration:none;border:1px solid var(--pink);padding:16px 18px;border-radius:12px;font-weight:700;font-size:14px;margin:32px 0 17px;transition:.2s;box-shadow:0 10px 23px #db27772c}.google:hover{background:#be185d;transform:translateY(-1px)}.google svg{width:20px;height:20px;background:white;border-radius:50%;padding:3px}.note{padding:17px 18px;border:1px solid #f6e4ef;background:#fffbfd;border-radius:12px;color:#8d7284;font-size:12px;line-height:1.85;text-align:center}.note strong{color:#a52a72}.legal{font-size:11px;color:#9b8c9b;text-align:center;margin-top:32px;line-height:1.8}.legal button{border:0;background:none;padding:0;color:var(--pink);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}.error{padding:13px 14px;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;border-radius:11px;font-size:12px;margin-top:18px;line-height:1.6}.hidden{display:none!important}.overlay{position:fixed;inset:0;z-index:50;background:#1d1029a8;display:grid;place-items:center;padding:16px;backdrop-filter:blur(5px)}.modal{width:min(100%,850px);height:min(82vh,700px);background:white;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 90px #0003}.modal-head,.modal-foot{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:16px}.modal-foot{justify-content:flex-end;border-top:1px solid var(--line);border-bottom:0}.close{background:#fdf0f7;border:0;border-radius:9px;padding:9px 14px;color:var(--pink);font-weight:700;cursor:pointer}.modal iframe{width:100%;border:0;flex:1}@media(max-width:740px){body{padding:15px}.shell{grid-template-columns:1fr;border-radius:20px}.brand{min-height:auto;padding:29px 26px 31px;gap:34px}.brand:after{display:none}.brand h1{font-size:31px;letter-spacing:-1.2px;margin:10px 0}.brand p{font-size:12px}.brand-footer{gap:14px}.login{padding:34px 26px 36px}.login-inner{max-width:none}.login h2{margin-top:16px;font-size:26px}.google{margin-top:24px}.legal{margin-top:25px}}
+</style>
 </head>
-<body class="cosmetic-bg min-h-screen flex items-center justify-center p-4">
-
-  <div class="bg-white/90 backdrop-blur-md border border-pink-200 rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full grid grid-cols-1 md:grid-cols-2">
-    
-    <!-- Left Visual / Cosmetics Banner Section -->
-    <div class="bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
-      <div class="absolute -top-12 -left-12 w-40 h-40 bg-white/20 rounded-full blur-2xl"></div>
-      <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-purple-900/30 rounded-full blur-2xl"></div>
-
-      <div class="relative z-10">
-        <div class="flex items-center gap-2 mb-6">
-          <div class="bg-white/25 backdrop-blur-md p-2.5 rounded-2xl">
-            <i class="fa-solid fa-spray-can-sparkles text-2xl text-pink-100"></i>
-          </div>
-          <span class="font-bold text-xl tracking-wide uppercase text-white">NexKartBD ✨</span>
-        </div>
-        <h1 class="text-3xl md:text-4xl font-extrabold leading-tight mb-3">
-          Luxury Cosmetics & Beauty Portal 💄
-        </h1>
-        <p class="text-pink-100 text-sm leading-relaxed">
-          গুগল অ্যাকাউন্ট দিয়ে খুব সহজেই এডমিন ও সেলার প্যানেলে প্রবেশ করুন। নতুন হলে প্রথমবার লগইন করলে অ্যাকাউন্ট স্বয়ংক্রিয়ভাবে তৈরি হয়ে যাবে।
-        </p>
-      </div>
-
-      <div class="relative z-10 mt-8 pt-6 border-t border-white/20 text-xs text-pink-100 flex items-center justify-between">
-        <span><i class="fa-solid fa-gem mr-1"></i> Glow & Beauty</span>
-        <span><i class="fa-solid fa-shield-halved mr-1"></i> Secure Auth</span>
-      </div>
-    </div>
-
-    <!-- Right Login Section -->
-    <div class="p-8 md:p-10 flex flex-col justify-between">
-      
-      <div>
-        <div class="mb-6 text-center">
-          <h2 class="text-2xl font-bold text-slate-800">Sign In / Sign Up 💕</h2>
-          <p class="text-xs text-slate-500 mt-1">আপনার গুগল অ্যাকাউন্ট ব্যবহার করুন</p>
-        </div>
-
-        <div id="errorMsg" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 text-xs rounded-xl text-center font-medium"></div>
-
-        <!-- Google Sign In Button (Primary Option) -->
-        <div class="w-full space-y-4 my-4">
-          <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-pink-50 text-slate-700 font-semibold py-3.5 px-4 rounded-xl border border-pink-200 shadow-md transition cursor-pointer">
-            <svg class="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            Continue with Google
-          </button>
-        </div>
-
-        <div class="text-center text-xs text-slate-400 mt-4">
-          <p>নতুন ব্যবহারকারী হলে গুগল দিয়ে লগইন করার পর সুপার অ্যাডমিন অ্যাপ্রুভ করলে প্যানেল সচল হবে।</p>
-        </div>
-      </div>
-
-      <!-- Privacy Policy Link -->
-      <div class="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
-        By continuing, you agree to our 
-        <button onclick="openPrivacyModal()" class="text-pink-600 hover:text-pink-700 font-semibold underline cursor-pointer">
-          Privacy Policy
-        </button>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- Privacy Policy Modal (Popup) -->
-  <div id="privacyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-      
-      <!-- Modal Header -->
-      <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-pink-50/50">
-        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-pink-500"></i> Privacy Policy
-        </h3>
-        <button onclick="closePrivacyModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-      
-      <!-- Modal Content (Iframe) -->
-      <div class="flex-1 bg-slate-50 relative">
-        <iframe src="https://adminnexkartbd-debug.github.io/nexkartbd-privacy/" class="w-full h-full border-0"></iframe>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="p-3 border-t border-slate-100 flex justify-end bg-white">
-        <button onclick="closePrivacyModal()" class="px-5 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium text-xs rounded-xl shadow-sm transition">
-          Close
-        </button>
-      </div>
-
-    </div>
-  </div>
-
+<body>
+<main class="shell">
+<section class="brand" aria-label="NexKartBD introduction"><div class="logo"><span class="mark">N</span><span>NexKartBD <span style="color:#db2777">✦</span></span></div><div><div class="eyebrow">Beauty & Business</div><h1>Luxury Cosmetics <span>& Beauty Portal.</span></h1><p>গুগল অ্যাকাউন্ট দিয়ে খুব সহজেই এডমিন ও সেলার প্যানেলে প্রবেশ করুন। নতুন হলে প্রথমবার লগইন করলে অ্যাকাউন্ট স্বয়ংক্রিয়ভাবে তৈরি হয়ে যাবে।</p></div><div class="brand-footer"><span>✧ Glow & Beauty</span><span>♢ Secure Auth</span></div></section>
+<section class="login"><div class="login-inner"><span class="top-pill"><span class="dot"></span> Admin & Seller Portal</span><h2>Welcome to NexKartBD</h2><p class="sub">Sign In / Sign Up<br>আপনার গুগল অ্যাকাউন্ট ব্যবহার করুন</p><div id="errorMsg" class="error hidden" role="alert"></div><a class="google" href="/auth/google" aria-label="Continue with Google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>Continue with Google</a><div class="note">নতুন ব্যবহারকারী হলে গুগল দিয়ে লগইন করার পর <strong>সুপার অ্যাডমিন অ্যাপ্রুভ</strong> করলে প্যানেল সচল হবে।</div><div class="legal">By continuing, you agree to our <button type="button" id="openPrivacy">Privacy Policy</button></div></div></section>
+</main>
+<div class="overlay hidden" id="privacyModal" role="dialog" aria-modal="true" aria-label="Privacy Policy"><div class="modal"><div class="modal-head"><h3>Privacy Policy</h3><button class="close" id="closePrivacyTop" type="button">✕</button></div><iframe title="NexKartBD Privacy Policy" data-src="https://adminnexkartbd-debug.github.io/nexkartbd-privacy/"></iframe><div class="modal-foot"><button class="close" id="closePrivacyBottom" type="button">Close</button></div></div></div>
 <script>
-    // URL এ এরর স্ট্যাটাস থাকলে তা ডাইনামিকালি দেখানো
-    const urlParams = new URLSearchParams(window.location.search);
-    const errDiv = document.getElementById('errorMsg');
-
-    if(urlParams.get('error') === 'pending') {
-        errDiv.classList.remove('hidden');
-        errDiv.innerText = "আপনার অ্যাকাউন্টটি এখনো সুপার অ্যাডমিন অ্যাপ্রুভ (Active) করেনি!";
-    } else if(urlParams.get('error') === 'suspended' || urlParams.get('error') === 'suspend') {
-        errDiv.classList.remove('hidden');
-        errDiv.innerText = "আপনার অ্যাকাউন্টটি বর্তমানে সাসপেন্ড (Suspend) করা হয়েছে!";
-    }
-
-    // সেশন চেক
-    window.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const res = await fetch('/auth/check-session');
-            const data = await res.json();
-            if (data.loggedIn) {
-                window.location.href = '/admin/home.html';
-            }
-        } catch (err) {
-            console.error("Session check failed", err);
-        }
-    });
-
-    function handleGoogleLogin() {
-        window.location.href = '/auth/google';
-    }
-
-    // Privacy Policy Modal Functions
-    function openPrivacyModal() {
-        document.getElementById('privacyModal').classList.remove('hidden');
-    }
-
-    function closePrivacyModal() {
-        document.getElementById('privacyModal').classList.add('hidden');
-    }
-  </script>
-
-</body>
-</html>
+const params=new URLSearchParams(window.location.search);const err=params.get('error');const errDiv=document.getElementById('errorMsg');const messages={pending:'আপনার অ্যাকাউন্টটি এখনো সুপার অ্যাডমিন অ্যাপ্রুভ (Active) করেনি!',suspended:'আপনার অ্যাকাউন্টটি বর্তমানে সাসপেন্ড (Suspend) করা হয়েছে!',suspend:'আপনার অ্যাকাউন্টটি বর্তমানে সাসপেন্ড (Suspend) করা হয়েছে!'};if(messages[err]){errDiv.textContent=messages[err];errDiv.classList.remove('hidden')}
+window.addEventListener('DOMContentLoaded',async()=>{try{const res=await fetch('/auth/check-session',{credentials:'same-origin'});if(!res.ok)return;const data=await res.json();if(data.loggedIn)window.location.href='/admin/home.html'}catch(e){console.warn('Session check failed',e)}});
+const modal=document.getElementById('privacyModal');function openPrivacy(){modal.classList.remove('hidden');const frame=modal.querySelector('iframe');if(!frame.src)frame.src=frame.dataset.src}function closePrivacy(){modal.classList.add('hidden')}document.getElementById('openPrivacy').addEventListener('click',openPrivacy);document.getElementById('closePrivacyTop').addEventListener('click',closePrivacy);document.getElementById('closePrivacyBottom').addEventListener('click',closePrivacy);modal.addEventListener('click',e=>{if(e.target===modal)closePrivacy()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePrivacy()});
+</script>
+</body></html>
