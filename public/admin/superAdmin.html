@@ -1148,7 +1148,7 @@
         body.innerHTML = data.map(s => {
           const enough = s.available_balance >= s.total_unpaid && s.total_unpaid > 0;
           const newRows=s.commissions.map(c=>`<div>#${commEscape(c.order_number)} (ID ${commEscape(c.id)}): ${commMoney(c.commission_amount)}</div>`).join('');
-          const locked=s.requests.map(r=>`<div class="mt-2 p-2 bg-amber-50 rounded border border-amber-200"><b>Payment Requested #${r.id}</b> — ${commMoney(r.amount)} (${commEscape(r.status)})<div>${r.commissions.map(c=>`#${commEscape(c.order_number)} / ID ${c.id}`).join(', ')}</div><div class="text-amber-700">Locked: cannot deduct or request again</div>${r.status==='submitted'?`<div>Sender: ${commEscape(r.sender_number||'')} | TrxID: ${commEscape(r.transaction_id||'')}</div><button class="bg-sky-700 text-white px-3 py-2 rounded-lg text-xs mt-1" onclick="markCodSettled(${Number(s.seller_id)},${Number(r.id)})">Verify & Mark Settled</button>`:'<div>Awaiting seller payment submission</div>'}</div>`).join('');
+          const locked=s.requests.map(r=>`<div class="mt-2 p-2 bg-amber-50 rounded border border-amber-200"><b>Payment Requested #${r.id}</b> — ${commMoney(r.amount)} (${commEscape(r.status)})<div>${r.commissions.map(c=>`#${commEscape(c.order_number)} / ID ${c.id}`).join(', ')}</div><div class="text-amber-700">Locked: cannot deduct or request again</div>${r.status==='submitted'?`<div>Sender: ${commEscape(r.sender_number||'')} | TrxID: ${commEscape(r.transaction_id||'')}</div><button class="bg-sky-700 text-white px-3 py-2 rounded-lg text-xs mt-1" onclick="markCodSettled(${Number(s.seller_id)},${Number(r.id)})">Verify & Mark Settled</button>`:`<div>Awaiting seller payment submission</div><button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-xs mt-2" onclick="sendCodPaymentReminder(${Number(r.id)})">Send Reminder Email</button>`}</div>`).join('');
           return `<tr class="border-b align-top"><td class="p-3"><b>${commEscape(s.seller_name||s.seller_id)}</b><div class="text-xs">${commEscape(s.seller_email||'')}</div><div class="text-xs">Seller #${commEscape(s.seller_id)}</div></td><td class="p-3 text-xs">${newRows||'<span class="text-slate-400">No new commissions</span>'}${locked}</td><td class="p-3 font-bold">${commMoney(s.total_unpaid)}<div class="text-xs font-normal">New/unlocked only</div></td><td class="p-3">${commMoney(s.available_balance)}</td><td class="p-3">${s.total_unpaid>0?(enough?`<button class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs" onclick="deductCodSettlement(${Number(s.seller_id)})">Deduct & Settle New</button>`:`<button class="bg-amber-600 text-white px-3 py-2 rounded-lg text-xs" onclick="showCodPaymentForm(${Number(s.seller_id)})">Send Payment Request (New)</button>`):'<span class="text-slate-500 text-xs">Existing requests locked</span>'}</td></tr>`;
         }).join('');
       } catch (e) { body.innerHTML = `<tr><td colspan="5" class="p-4 text-red-600">${commEscape(e.message)}</td></tr>`; }
@@ -1197,6 +1197,18 @@
       } catch (e) { alert(e.message); }
     }
 
+    async function sendCodPaymentReminder(requestId) {
+      if (!confirm(`Resend payment instructions for request #${requestId}? The previous payment link will be replaced; commission IDs and amount will stay unchanged.`)) return;
+      const message=document.getElementById('codSettlementMessage');
+      message.textContent='Sending payment reminder...';
+      try {
+        const response=await fetch('/admin/api/cod-settlements/payment-reminder',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:requestId})});
+        const data=await readCodResponse(response);
+        if(!response.ok)throw new Error(data.error||'Unable to send reminder');
+        alert(data.email_sent?'Reminder email sent successfully via Gmail OAuth.':'Reminder link refreshed, but Gmail delivery failed: '+(data.email_error||'Unknown error')+'\nDo not create another payment request.');
+        await loadCodSettlements();
+      }catch(err){alert(err.message);}finally{message.textContent='';}
+    }
     async function loadCodPaymentSubmissions(){
       const el=document.getElementById('codPaymentSubmissions');el.textContent='Loading...';
       try{const r=await fetch('/admin/api/cod-settlements/payment-submissions',{credentials:'include'});const data=await readCodResponse(r);if(!r.ok)throw Error(data.error||'Failed');el.innerHTML=data.length?data.map(p=>`<div class="border rounded-lg p-2 my-2"><b>Seller #${commEscape(p.seller_id)}</b> — ${commMoney(p.amount)}<br>${commEscape(p.method)}: ${commEscape(p.number)}<br>Sender: ${commEscape(p.sender_number)} | TrxID: <b>${commEscape(p.transaction_id)}</b><br><span class="text-slate-500">Verify in your merchant account, then use Verify & Mark Settled for this exact request.</span></div>`).join(''):'No submitted transactions yet.';}catch(e){el.textContent=e.message;}
