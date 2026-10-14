@@ -22,77 +22,127 @@ app.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
-// ==================== CSP: existing allowances + external integrations ====================
-// Replace the previous CSP middleware with this single middleware.
-const cspScripts = [
-  "'self'", "'unsafe-inline'", "'unsafe-eval'",
-  'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net',
-  'https://cdn.tailwindcss.com', 'https://unpkg.com',
-  'https://www.googletagmanager.com', 'https://www.google-analytics.com',
-  'https://*.google-analytics.com', 'https://connect.facebook.net',
-  'https://*.facebook.net', 'https://*.facebook.com',
-  'https://static.cloudflareinsights.com',
-  'https://apis.google.com', 'https://accounts.google.com',
-  'https://www.gstatic.com', 'https://www.google.com',
-  'https://www.recaptcha.net', 'https://www.paystation.com.bd',
-  'https://*.paystation.com.bd'
-];
-const cspStyles = [
-  "'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com',
-  'https://fonts.googleapis.com', 'https://cdn.jsdelivr.net',
-  'https://unpkg.com', 'https://www.googletagmanager.com',
-  'https://www.gstatic.com'
-];
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'", 'https://www.googletagmanager.com'],
-    connectSrc: [
-      "'self'", 'http://localhost:*', 'https:', 'wss:', 'ws:',
-      'https://www.google-analytics.com', 'https://*.google-analytics.com',
-      'https://stats.g.doubleclick.net', 'https://www.facebook.com',
-      'https://connect.facebook.net', 'https://*.facebook.com',
-      'https://api.cloudinary.com', 'https://*.cloudinary.com',
-      'https://apis.google.com', 'https://accounts.google.com',
-      'https://www.googleapis.com', 'https://*.googleapis.com',
-      'https://www.paystation.com.bd', 'https://*.paystation.com.bd'
-    ],
-    scriptSrc: cspScripts,
-    scriptSrcElem: cspScripts,
-    scriptSrcAttr: ["'unsafe-inline'"],
-    styleSrc: cspStyles,
-    styleSrcElem: cspStyles,
-    imgSrc: [
-      "'self'", 'data:', 'blob:', 'https:',
-      'https://res.cloudinary.com', 'https://*.cloudinary.com',
-      'https://via.placeholder.com', 'https://dummyimage.com',
-      'https://*.dummyimage.com', 'https://lh3.googleusercontent.com',
-      'https://*.googleusercontent.com', 'https://ui-avatars.com',
-      'https://images.unsplash.com', 'https://*.unsplash.com',
-      'https://www.svgrepo.com', 'https://www.google.com.bd',
-      'https://www.google.com', 'https://www.googletagmanager.com',
-      'https://www.google-analytics.com', 'https://*.google-analytics.com',
-      'https://fonts.gstatic.com', 'https://www.facebook.com',
-      'https://connect.facebook.net', 'https://*.facebook.com',
-      'https://cx.atdmt.com'
-    ],
-    mediaSrc: ["'self'", 'data:', 'blob:', 'https:',
-      'https://res.cloudinary.com', 'https://*.cloudinary.com'],
-    fontSrc: ["'self'", 'data:', 'https://cdnjs.cloudflare.com',
-      'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-    frameSrc: ["'self'", 'https://adminnexkartbd-debug.github.io',
-      'https://www.facebook.com', 'https://tagassistant.google.com',
-      'https://*.facebook.com', 'https://accounts.google.com',
-      'https://www.google.com', 'https://www.recaptcha.net',
-      'https://www.paystation.com.bd', 'https://*.paystation.com.bd'],
-    workerSrc: ["'self'", 'blob:'],
-    childSrc: ["'self'", 'blob:'],
-    objectSrc: ["'none'"],
-    baseUri: ["'self'"],
-    formAction: ["'self'", 'https://www.paystation.com.bd',
-      'https://*.paystation.com.bd'],
-    frameAncestors: ["'self'"]
-  }
-}));
+// ==================== ১. ডায়নামিক সিকিউরিটি (CSP) ও মিডলওয়্যার ====================
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'", "https://www.googletagmanager.com"],
+      connectSrc: [
+        "'self'", 
+        "http://localhost:*", 
+        "https://*", 
+        "wss://*", 
+        "ws://*",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
+        "https://stats.g.doubleclick.net",
+        "https://www.facebook.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.com"
+      ], 
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'", 
+        "https://cdnjs.cloudflare.com", 
+        "https://cdn.jsdelivr.net", 
+        "https://cdn.tailwindcss.com",
+        "https://www.googletagmanager.com", 
+        "https://unpkg.com",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.net",
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
+      ],
+      // Facebook Pixel এবং Google Tag ManagerScript লোডের জন্য scriptSrcElem স্পষ্ট করা হলো
+      scriptSrcElem: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'",
+        "https://cdnjs.cloudflare.com", 
+        "https://cdn.jsdelivr.net", 
+        "https://cdn.tailwindcss.com",
+        "https://www.googletagmanager.com", 
+        "https://unpkg.com",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.net",
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
+      ],
+      scriptSrcAttr: ["'unsafe-inline'"], 
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "https://cdnjs.cloudflare.com", 
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net", 
+        "https://unpkg.com",
+        "https://www.googletagmanager.com"
+      ],
+      styleSrcElem: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "https://cdnjs.cloudflare.com", 
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net", 
+        "https://unpkg.com",
+        "https://www.googletagmanager.com"
+      ],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://res.cloudinary.com",
+        "https://*.cloudinary.com",
+        "https://via.placeholder.com", 
+        "https://dummyimage.com", 
+        "https://*.dummyimage.com", 
+        "https://lh3.googleusercontent.com", 
+        "https://*.googleusercontent.com",
+        "https://ui-avatars.com",
+        "https://images.unsplash.com",
+        "https://*.unsplash.com",
+        "https://www.svgrepo.com",
+        "https://www.google.com.bd",
+        "https://www.google.com",
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
+        "https://fonts.gstatic.com", 
+        "https://www.facebook.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.com",
+        "https://cx.atdmt.com"
+      ],
+      mediaSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://res.cloudinary.com", 
+        "https://*.cloudinary.com"
+      ],
+      fontSrc: [
+        "'self'", 
+        "data:",
+        "https://cdnjs.cloudflare.com", 
+        "https://fonts.gstatic.com"
+      ],
+      frameSrc: [
+        "'self'", 
+        "https://adminnexkartbd-debug.github.io",
+        "https://www.facebook.com",
+        "https://tagassistant.google.com",
+        "https://*.facebook.com"
+      ],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["'self'", "blob:"]
+    },
+  })
+);
 
 // বডি পার্সার
 app.use(express.json({ limit: '100mb' }));
@@ -280,6 +330,7 @@ const startStockCron = require('./services/stockCalculator');
 const startMailCron = require('./services/mailService'); 
 const startCommissionCron = require('./services/commissionCalculator');
 const { initWithdrawCron } = require('./services/sendMailCorn');
+const startPaystationPendingCleanup = require('./services/paystationPendingCleanup');
 
 app.use('/auth', adminRoutes);
 
@@ -323,6 +374,7 @@ startStockCron();
 startMailCron(); 
 startCommissionCron();
 initWithdrawCron();
+startPaystationPendingCleanup(db);
 
 // ==================== ৫. পেজ ও এপিআই রাউটস ====================
 app.get('/', (req, res) => {
