@@ -254,15 +254,38 @@ router.post('/suspend-and-delete-admin', async (req, res) => {
             // A foreign key from orders/reports/reviews can block this DELETE. In that case roll back everything.
             await conn.query('DELETE FROM products WHERE admin_id=?',[id]);
         }
-        // Preserve the seller row/Google ID, consistent with existing suspended-account behavior.
-        const [result] = await conn.query(`UPDATE admins SET
-            name=NULL,email=NULL,password=NULL,picture=NULL,role=NULL,parent_admin_id=NULL,
-            shop_name=NULL,phone=NULL,address=NULL,facebook_link=NULL,slogan=NULL,shop_about=NULL,
-            payment_type='none',mobile_number=NULL,bank_acc_name=NULL,bank_acc_number=NULL,
-            bank_name=NULL,bank_branch=NULL,routing_number=NULL,status='rejected',is_verified=0,
-            super_admin='pending',verification_code=NULL,temp_data=NULL,verification_doc=NULL,
-            total_sales=0,total_withdraw=0,delete_requested_at=NULL,is_deletion_pending=0,
-            deletion_requested_at=NULL,action='suspended' WHERE id=?`,[id]);
+        // Respect the actual admins schema: do not assign NULL to NOT NULL fields.
+        // Keep the row and Google ID for audit; never wipe required fields blindly.
+        const [adminColumns] = await conn.query('SHOW COLUMNS FROM `admins`');
+        const nullable = new Map(adminColumns.map(c => [c.Field, c.Null === 'YES']));
+        const clearFields = ['email','password','picture','role','parent_admin_id',
+            'shop_name','phone','address','facebook_link','slogan','shop_about',
+            'mobile_number','bank_acc_name','bank_acc_number','bank_name','bank_branch',
+            'routing_number','verification_code','temp_data','verification_doc',
+            'delete_requested_at','deletion_requested_at'];
+        const assignments = ['`name`=?'];
+        const values = ['Deleted Seller'];
+        for (const field of clearFields) {
+            if (nullable.get(field) === true) {
+                assignments.push('`' + field + '`=NULL');
+            }
+            // Required columns are preserved rather than causing ER_BAD_NULL_ERROR.
+        }
+        const fixed = {
+            payment_type: 'none', status: 'rejected', is_verified: 0,
+            super_admin: 'pending', total_sales: 0, total_withdraw: 0,
+            is_deletion_pending: 0, action: 'suspended'
+        };
+        for (const [field, value] of Object.entries(fixed)) {
+            if (nullable.has(field)) {
+                assignments.push('`' + field + '`=?');
+                values.push(value);
+            }
+        }
+        values.push(id);
+        const [result] = await conn.query(
+            'UPDATE `admins` SET ' + assignments.join(', ') + ' WHERE `id`=?', values
+        );
         if (result.affectedRows !== 1) throw new Error('Seller account update failed');
         await conn.commit();
     } catch (err) {
