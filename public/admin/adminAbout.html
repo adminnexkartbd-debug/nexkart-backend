@@ -740,21 +740,6 @@
                   <label class="lang-text" data-bn="মোবাইল ব্যাংকিং নম্বর" data-en="Mobile Banking Number">মোবাইল ব্যাংকিং নম্বর</label>
                   <input type="text" id="mobile_number" placeholder="bKash/Nagad নম্বর">
                 </div>
-
-                <!-- 24/7 Support Toggle Option -->
-                <div class="form-group full-width">
-                  <div class="toggle-container">
-                    <div>
-                      <strong class="lang-text" data-bn="২৪ ঘণ্টা সাপোর্ট সার্ভিস (24/7 Support Active)" data-en="24 Hours Customer Support">২৪ ঘণ্টা সাপোর্ট সার্ভিস (24/7 Support Active)</strong>
-                      <p style="font-size:0.8rem; color:var(--text-muted);" class="lang-text" data-bn="আপনার স্টোর কি ২৪ ঘণ্টা গ্রাহক সেবা প্রদান করে?" data-en="Does your shop provide round-the-clock support?">আপনার স্টোর কি ২৪ ঘণ্টা গ্রাহক সেবা প্রদান করে?</p>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="is_24_7_support" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                </div>
-
                 <!-- Shop About Description -->
                 <div class="form-group full-width">
                   <label class="lang-text" data-bn="শপ বিবরণ / শপ সম্পর্কে" data-en="Shop Description">শপ বিবরণ / শপ সম্পর্কে</label>
@@ -1109,9 +1094,10 @@
             try {
                 const res = await fetch(`${this.apiBaseUrl}/profile`, {
                     method: 'GET',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        'Accept': 'application/json'
                     }
                 });
 
@@ -1135,13 +1121,6 @@
                     this.setInputValue('bank_name', data.bank_name);
                     this.setInputValue('bank_branch', data.bank_branch);
                     this.setInputValue('routing_number', data.routing_number);
-
-                    // Set 24/7 Support Switch Status
-                    const supportSwitch = document.getElementById('is_24_7_support');
-                    if (supportSwitch) {
-                        supportSwitch.checked = data.is_24_7_support === 1 || data.is_24_7_support === true;
-                    }
-
                     // Check Deletion Pending Status
                     if (data.is_deletion_pending) {
                         document.getElementById('deletionBanner').style.display = 'flex';
@@ -1180,7 +1159,6 @@
                 facebook_link: document.getElementById('facebook_link')?.value,
                 slogan: document.getElementById('slogan')?.value,
                 shop_about: document.getElementById('shop_about')?.value,
-                is_24_7_support: document.getElementById('is_24_7_support')?.checked ? 1 : 0,
                 mobile_number: document.getElementById('mobile_number')?.value,
                 bank_acc_name: document.getElementById('bank_acc_name')?.value,
                 bank_acc_number: document.getElementById('bank_acc_number')?.value,
@@ -1192,9 +1170,10 @@
             try {
                 const res = await fetch(`${this.apiBaseUrl}/profile/update`, {
                     method: 'PUT',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(payload)
                 });
@@ -1204,7 +1183,7 @@
                     alert('Profile updated successfully!');
                     await this.fetchAndSetProfile();
                 } else {
-                    alert(result.message || 'Update failed');
+                    alert(result.error ? `${result.message}: ${result.error}` : (result.message || 'Update failed'));
                 }
             } catch (err) {
                 console.error('Update error:', err);
@@ -1225,9 +1204,10 @@
         try {
             const response = await fetch('/api/admin/delete-account', {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    'Accept': 'application/json'
                 }
             });
 
@@ -1252,9 +1232,10 @@
         try {
             const response = await fetch('/api/admin/cancel-delete', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    'Accept': 'application/json'
                 }
             });
 
