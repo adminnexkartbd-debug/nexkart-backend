@@ -31,6 +31,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
     .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
   </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
 <!-- Google Tag Manager (noscript) -->
@@ -220,7 +222,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           : 'https://via.placeholder.com/80?text=No+Image';
 
         html += `
-          <div class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
+          <div data-love-row data-love-product="${item.product_id}" class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
             <img src="${imgPath}" alt="${item.product_name}" class="w-14 h-14 object-cover rounded-xl border border-pink-200 shrink-0" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=No+Image';">
             <div class="flex-1 overflow-hidden">
               <h4 class="text-xs font-bold text-gray-900 truncate">${item.product_name}</h4>

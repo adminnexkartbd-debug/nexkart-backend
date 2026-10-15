@@ -506,6 +506,8 @@ body{background:linear-gradient(180deg,#fff9fc 0%,#fff 500px);color:var(--text-d
 @media(max-width:768px){.category-header-banner{padding:15px;margin-bottom:18px}.category-header-banner h1{font-size:19px}}
 
 </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
@@ -715,7 +717,7 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
                 const starsHTML = renderStars(parseFloat(avgRating));
 
                 return `
-                    <article class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
+                    <article data-love-product="${product.id}" class="product-card" style="position:relative; cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
                         <div class="product-badges-container">
                             ${coinOfferBadge || badgeTag || '<span></span>'}
                             ${discountPercentTag}

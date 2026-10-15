@@ -1360,6 +1360,8 @@ body{background:linear-gradient(180deg,#fff9fc 0%,#fff 500px);color:var(--text-d
 @media(max-width:480px){.product-card{padding:10px}.product-grid{gap:9px}.product-title{line-height:1.4}.add-cart-btn{width:34px;height:34px;border-radius:10px}.banner-section{padding-top:12px}}
 
 </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body>
 
@@ -1953,7 +1955,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                 const starsHTML = renderStars(parseFloat(avgRating));
 
                 return `
-                    <div class="product-card" style="cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
+                    <div data-love-product="${product.id}" class="product-card" style="position:relative; cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
                         <div class="product-badges-container">
                             ${discountBadge ? `<span class="product-badge">${discountBadge}</span>` : '<span></span>'}
                             ${discountPercentTag}

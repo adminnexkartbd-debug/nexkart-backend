@@ -26,6 +26,8 @@
       box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
     }
   </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
 
@@ -397,7 +399,7 @@ function renderProducts(products) {
         let totalReviews = item.total_reviews || 0;
 
         grid.innerHTML += `
-            <div class="bg-white border border-pink-100 rounded-2xl p-3 flex flex-col justify-between hover:shadow-xl transition-all duration-300 cursor-pointer group"
+            <div data-love-product="${item.id}" style="position:relative" class="bg-white border border-pink-100 rounded-2xl p-3 flex flex-col justify-between hover:shadow-xl transition-all duration-300 cursor-pointer group"
                  onclick="window.location.href='/user/product-details?id=${item.product_id || item.id}'">
                 <div>
                     <!-- Image Container with Discount Badge -->

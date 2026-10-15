@@ -494,6 +494,8 @@
             }
         }
     </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body>
 
@@ -670,7 +672,7 @@
                             </div>
 
                             <div class="order-body">
-                                <div class="product-row">
+                                <div data-love-row data-love-product="${order.product_id}" class="product-row">
 <img src="${order.product_image || '/images/no-image.png'}" alt="Product Image" class="product-img">                                    <div class="product-details">
                                         <h4>${order.product_title || 'Product Title Unavailable'}</h4>
                                         <p>Quantity: ${order.quantity} ${order.variant ? '| Variant: ' + order.variant : ''}</p>

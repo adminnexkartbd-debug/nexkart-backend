@@ -143,6 +143,8 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
+<link rel="stylesheet" href="/users/love-list.css">
+<script src="/users/love-list.js" defer></script>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -985,7 +987,7 @@ function openGooglePopup() {
       const targetSlug = product.slug || product.product_id || product.id;
 
       return `
-        <div onclick="window.location.href='/user/product/${encodeURIComponent(targetSlug)}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div data-love-product="${product.id}" onclick="window.location.href='/user/product/${encodeURIComponent(targetSlug)}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1092,6 +1094,7 @@ function openGooglePopup() {
       window.currentLoadedProductSlug = currentProductSlug;
 
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
+      window.NexLove.attachDetails(product.id, document.getElementById('product-title'));
       document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
       document.getElementById('product-category').innerText = product.category || 'General';
 
