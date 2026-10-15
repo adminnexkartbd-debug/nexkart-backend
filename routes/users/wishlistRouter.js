@@ -16,7 +16,7 @@ router.get('/api/love-list', async (req,res) => {
       w.created_at FROM user_wishlist w JOIN products p ON p.id=w.product_id
       WHERE w.user_id=? ORDER BY w.created_at DESC, p.id DESC`, [res.locals.loveUserId]);
     res.json({success:true,items});
-  } catch(e) { console.error('Love list:',e.code);res.status(500).json({message:'Unable to load Love List. Please try again.'}); }
+  } catch(e) { console.error('Wishlist:',e.code);res.status(500).json({message:'Unable to load Wishlist. Please try again.'}); }
 });
 router.put('/api/love-list/:id', async(req,res) => {
   const id=Number(req.params.id);
@@ -28,6 +28,6 @@ router.put('/api/love-list/:id', async(req,res) => {
       await db.query('INSERT IGNORE INTO user_wishlist (user_id,product_id) VALUES (?,?)',[res.locals.loveUserId,id]);
     } else await db.query('DELETE FROM user_wishlist WHERE user_id=? AND product_id=?',[res.locals.loveUserId,id]);
     res.json({success:true,saved:req.body.saved});
-  }catch(e){console.error('Love list save:',e.code);res.status(500).json({message:'Could not update Love List. Please try again.'});}
+  }catch(e){console.error('Wishlist save:',e.code);res.status(500).json({message:'Could not update Wishlist. Please try again.'});}
 });
 module.exports=router;
