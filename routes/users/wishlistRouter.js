@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const path = require('path');
 const db = require('../../db');
-router.get(['/love-list', '/wishlist'], (req, res) => res.sendFile(path.join(__dirname, '../../public/users/love-list.html')));
+router.get(['/love-list', '/wishlist'], (req, res) => res.sendFile(path.join(__dirname, '../../public/users/wishlist.html')));
 router.use('/api/love-list', (req, res, next) => {
   const id = req.user?.id || req.session?.user?.id || req.session?.userId;
   if (!id) return res.status(401).json({message:'Please log in to save your favourites.'});
