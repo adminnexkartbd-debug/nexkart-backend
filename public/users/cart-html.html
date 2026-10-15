@@ -10,370 +10,67 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexKart - Shopping Cart & Checkout</title>
+  <title>Shopping Cart | NexKartBD</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    * { font-family: 'Poppins', 'Hind Siliguri', sans-serif; scroll-behavior: smooth; }
-    body { background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085); min-height: 100vh; }
-    .theme-glass-card {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
-    }
-    .theme-glass-input { background: rgba(255, 255, 255, 0.9); border: 1.5px solid #ffccd5; }
-    .gateway-card { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; cursor: pointer; }
-    .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
-    .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
-  </style>
+
+.nk-cart-page{margin:0;font-family:Poppins,Arial,sans-serif;color:#362333;background:#fff9fc;font-size:14px;line-height:1.5;min-height:100vh}.nk-cart-page *{box-sizing:border-box}.nk-cart-page .nk-nav{background:white;border-bottom:1px solid #f3e4ec;padding:19px 28px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.nk-cart-page .nk-brand{font-weight:800;font-size:23px;letter-spacing:-1px}.nk-cart-page .nk-brand em{color:#ee467b;font-style:normal}.nk-cart-page button{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:7px}.nk-cart-page .nk-nav button{border:0;background:white;color:#8c516b;padding:7px 0}.nk-cart-page .nk-content{padding:28px;max-width:1180px;margin:auto}.nk-cart-page .nk-hero{padding:27px 30px;background:linear-gradient(120deg,#fce6f0,#fff3e9);border:1px solid #f7dce8;border-radius:23px;margin-bottom:26px;position:relative}.nk-cart-page .nk-eyebrow{font-size:10px;letter-spacing:2.4px;color:#9c4465;font-weight:700}.nk-cart-page h1{font-size:34px;letter-spacing:-1.2px;line-height:1.2;margin:10px 0}.nk-cart-page .nk-hero p{margin:0;color:#866477;font-size:13px}.nk-cart-page .nk-layout{display:grid;grid-template-columns:minmax(0,1fr) 265px;gap:23px;align-items:start}.nk-cart-page .nk-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.nk-cart-page h2{font-size:16px;margin:0;font-weight:700}.nk-cart-page .nk-count{font-size:12px;color:#987487}.nk-cart-page .nk-item{padding:18px;background:white;border:1px solid #efe0e9;border-radius:19px;display:grid;grid-template-columns:95px minmax(0,1fr);gap:18px;margin-bottom:13px;box-shadow:0 5px 16px #65254305}.nk-cart-page .nk-thumb{height:115px;background:#faf2e8;border-radius:13px;display:flex;align-items:center;justify-content:center;position:relative}.nk-cart-page .nk-thumb.rose{background:#f9edf1}.nk-cart-page .nk-bottle{width:35px;height:62px;background:linear-gradient(90deg,#6f351a,#b67d35 40%,#7c4c21);border-radius:6px 6px 9px 9px;position:relative;box-shadow:4px 6px 7px #69422126;display:grid;place-items:center}.nk-cart-page .nk-bottle:before{content:'';position:absolute;width:24px;height:25px;background:#292429;border-radius:4px 4px 1px 1px;top:-22px;left:5px}.nk-cart-page .nk-bottle span{background:#f6e7cf;color:#574427;text-align:center;width:31px;font:7px Georgia;padding:8px 1px;line-height:1.4}.nk-cart-page .rose .nk-bottle{background:linear-gradient(90deg,#bf7e83,#e3b2b0 45%,#bd7b80)}.nk-cart-page .rose .nk-bottle:before{background:#e8d8bd}.nk-cart-page .nk-category{font-size:9px;letter-spacing:1.4px;color:#ac7d91;text-transform:uppercase}.nk-cart-page h3{font-size:14px;line-height:1.5;margin:4px 0 8px;font-weight:700;overflow-wrap:anywhere}.nk-cart-page .nk-price{color:#d93671;font-size:18px;font-weight:700}.nk-cart-page .nk-price small{color:#ad95a2;font-size:11px;text-decoration:line-through;margin-left:8px;font-weight:400}.nk-cart-page .nk-stock{font-size:10px;color:#41846a;margin-top:3px}.nk-cart-page .nk-item-bottom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:15px}.nk-cart-page .nk-quantity{display:flex;border:1px solid #ecd9e3;border-radius:9px;overflow:hidden;background:#fffafd}.nk-cart-page .nk-quantity button{height:32px;width:32px;background:transparent;border:0;color:#a44d70;font-size:18px}.nk-cart-page .nk-quantity output{min-width:28px;text-align:center;align-self:center;font-size:12px;font-weight:600}.nk-cart-page .nk-tool{border:0;background:white;color:#976d83;height:32px;min-width:32px;border-radius:8px}.nk-cart-page .nk-tool.is-saved{color:#df3d77;background:#fff0f5}.nk-cart-page .nk-remove{margin-left:auto;color:#b5a0ac}.nk-cart-page .nk-total{font-size:11px;color:#a18596;margin-left:5px}.nk-cart-page .nk-checkout{background:white;padding:24px;border:1px solid #eedee8;border-radius:21px;margin-top:38px;box-shadow:0 8px 24px #65254307}.nk-cart-page .nk-checkout .nk-symbol{background:#fff0f6;color:#d94a7d;display:inline-flex;padding:12px;border-radius:14px;margin-bottom:17px}.nk-cart-page .nk-checkout h2{font-size:19px;letter-spacing:-.5px}.nk-cart-page .nk-checkout p{font-size:12px;color:#947387;line-height:1.8;margin:10px 0 22px}.nk-cart-page .nk-primary{background:#e63e78;border:0;color:white;width:100%;border-radius:12px;padding:13px 9px;font-size:12px;font-weight:700;box-shadow:0 6px 15px #df3f7624}.nk-cart-page .nk-note{border-top:1px solid #f4e8ee;color:#9a7f8e;margin-top:21px;padding-top:15px;font-size:10px;display:flex;align-items:center;gap:6px}.nk-cart-page .nk-foot{font-size:11px;color:#ad91a1;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px}.nk-cart-page .nk-empty{background:white;padding:35px;border:1px dashed #edcedd;border-radius:20px;color:#896377;text-align:center}.nk-cart-page .nk-feedback{color:#a44870;font-size:12px;min-height:18px;margin-top:12px}.nk-cart-page [data-lucide]{width:16px;height:16px}.nk-cart-page .nk-disabled{opacity:.5}@media(max-width:730px){.nk-cart-page .nk-layout{grid-template-columns:1fr}.nk-cart-page .nk-checkout{margin-top:0}.nk-cart-page .nk-content{padding:18px}.nk-cart-page .nk-hero{padding:23px}.nk-cart-page .nk-nav{padding:16px 20px}}@media(max-width:400px){.nk-cart-page .nk-content{padding:12px}.nk-cart-page .nk-item{padding:12px;grid-template-columns:72px minmax(0,1fr);gap:12px}.nk-cart-page .nk-thumb{height:102px}.nk-cart-page h1{font-size:29px}.nk-cart-page .nk-total{display:none}}
+
+.nk-cart-page .nk-nav a{color:#8c516b;text-decoration:none;display:inline-flex;gap:8px;align-items:center}.nk-cart-page .nk-thumb img{width:100%;height:100%;object-fit:contain;border-radius:13px}.nk-cart-page .nk-inline-heart{display:flex;align-items:center}.nk-cart-page .nk-inline-heart .love-inline{margin:0;padding:6px;width:34px;height:34px;box-shadow:none;border:0}.nk-cart-page .nk-inline-heart .love-inline span{display:none}.nk-cart-page .nk-primary{text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px}.nk-cart-page .nk-primary[aria-disabled="true"]{opacity:.5;pointer-events:none}.nk-cart-page button:disabled{opacity:.5}.nk-cart-page .nk-item{grid-template-columns:95px minmax(0,1fr)}.nk-cart-page .nk-stock.out{color:#be4761}.nk-cart-page .nk-feedback:empty{display:none}.nk-cart-page .nk-item-bottom{gap:6px}.nk-cart-page .nk-image-fallback{font-size:28px;color:#bc93a5}@media(max-width:400px){.nk-cart-page .nk-item{grid-template-columns:72px minmax(0,1fr)}}
+
+</style>
 <link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
 <script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
 </head>
-<body class="text-gray-800 antialiased relative pb-10">
+<body class="nk-cart-page">
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
-    
-    <div class="flex items-center justify-between py-2">
-      <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
-        <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
-      </a>
-      <h1 class="text-xl md:text-2xl font-extrabold text-white drop-shadow-sm">My Shopping Cart</h1>
-      <div class="w-16"></div>
-    </div>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<nav class="nk-nav"><a href="/user/dashboard" class="nk-brand" style="color:#362333">NexKart<em>BD</em></a><a href="/user/dashboard"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Continue shopping</a></nav>
+<main class="nk-content"><header class="nk-hero"><div class="nk-eyebrow">A FEW GOOD FINDS</div><h1>Your shopping cart.</h1><p>A little closer to making them yours.</p></header>
+<div class="nk-layout"><section aria-label="Cart items"><div class="nk-heading"><h2>Cart items</h2><span id="cart-count" class="nk-count">Loading…</span></div><div id="cart-items-container" aria-busy="true"><div class="nk-empty" role="status">Loading your cart…</div></div><div id="cart-feedback" class="nk-feedback" role="status" aria-live="polite"></div></section>
+<aside class="nk-checkout"><div class="nk-symbol"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></div><h2>Ready when you are.</h2><p>Review your favourites, then add your shipping details and choose a payment method at checkout.</p><a id="checkout-link" href="/user/checkout?source=cart" class="nk-primary" aria-disabled="true">Proceed to Checkout <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a><div class="nk-note"><i class="fa-solid fa-truck" aria-hidden="true"></i> Delivery calculated at checkout</div></aside></div><footer class="nk-foot"><span>NexKartBD · Made for your everyday finds</span><a href="/user/wishlist" style="color:#a44870;text-decoration:none">♡ My Wishlist</a></footer></main>
+<script>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      
-      <div class="lg:col-span-12 space-y-6">
-        
-        <div class="theme-glass-card rounded-3xl p-6 space-y-4">
-          <h2 class="text-base font-bold text-gray-900 pb-3 border-b border-pink-100 flex items-center gap-2">
-            <i class="fa-solid fa-cart-shopping text-[#ff4b6e]"></i> Cart Items
-          </h2>
+let globalCartItems=[];
+const cartBusy=new Set();
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function money(value){return '৳ '+(Number(value)||0).toLocaleString('en-BD',{maximumFractionDigits:2});}
+function notice(message){document.getElementById('cart-feedback').textContent=message;}
+function imageUrl(raw){const value=String(raw||'').trim().replace(/^(\/?uploads\/)+/,'');if(/^https?:\/\//i.test(value))return value;if(value.includes('cloudinary.com'))return 'https://'+value;return value?'/uploads/'+value:'';}
+async function fetchCartItems(){
+ const container=document.getElementById('cart-items-container');container.setAttribute('aria-busy','true');
+ try{const response=await fetch('/user/api/cart-items',{cache:'no-store'});if(response.status===401){container.innerHTML='<div class="nk-empty">Please <a href="/user/cslogin">log in</a> to view your cart.</div>';document.getElementById('cart-count').textContent='Login required';return;}
+ const result=await response.json();if(!response.ok||!result.success||!Array.isArray(result.data))throw Error(result.message||'Unable to load your cart.');globalCartItems=result.data;renderCart();
+ }catch(error){document.getElementById('checkout-link').setAttribute('aria-disabled','true');document.getElementById('cart-count').textContent='Unavailable';container.innerHTML='<div class="nk-empty">Could not load your cart. <button type="button" id="retry-cart" class="nk-tool">Try again</button></div>';notice(error.message);}
+ finally{container.setAttribute('aria-busy','false');}
+}
+function renderCart(){
+ const container=document.getElementById('cart-items-container');document.getElementById('cart-count').textContent=globalCartItems.length+' product'+(globalCartItems.length===1?'':'s');
+ const checkout=document.getElementById('checkout-link');checkout.setAttribute('aria-disabled',String(!globalCartItems.length));
+ if(!globalCartItems.length){container.innerHTML='<div class="nk-empty"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><h2>Your cart is empty.</h2><p>Find something you love and add it here.</p><a href="/user/dashboard" style="color:#d93671">Explore products →</a></div>';return;}
+ container.innerHTML=globalCartItems.map(item=>{
+ const id=Number(item.cart_id),productId=Number(item.product_id),stock=Math.max(0,parseInt(item.stock_quantity)||0),qty=Math.max(1,parseInt(item.cart_quantity)||1),out=stock<=0||item.stock_status==='out_of_stock';
+ const price=Number(item.price??item.sale_price??item.regular_price)||0,old=Number(item.regular_price)||0,img=imageUrl(item.primary_image),name=escapeHtml(item.product_name||'Product');
+ return `<article class="nk-item"><div class="nk-thumb">${img?`<img src="${escapeHtml(img)}" alt="${name}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden class="nk-image-fallback" aria-label="Image unavailable"><i class="fa-solid fa-image" aria-hidden="true"></i></span>`:'<span class="nk-image-fallback"><i class="fa-solid fa-image" aria-hidden="true"></i></span>'}</div><div><div class="nk-category">${escapeHtml(item.category||'YOUR PICK')}</div><h3>${name}</h3><div class="nk-price">${money(price)} ${old>price?`<small>${money(old)}</small>`:''}</div><div class="nk-stock ${out?'out':''}">${out?'Out of stock':'● In stock · '+stock+' available'}</div><div class="nk-item-bottom"><div class="nk-quantity"><button type="button" data-cart-id="${id}" data-qty="${qty-1}" data-stock="${stock}" aria-label="Decrease quantity" ${cartBusy.has(id)?'disabled':''}>−</button><output aria-label="Quantity">${qty}</output><button type="button" data-cart-id="${id}" data-qty="${qty+1}" data-stock="${stock}" aria-label="Increase quantity" ${out||qty>=stock||cartBusy.has(id)?'disabled':''}>+</button></div><div class="nk-inline-heart" data-love-row data-love-product="${productId}"></div><span class="nk-total">${money(price*qty)}</span><button type="button" class="nk-tool nk-remove" data-remove="${id}" aria-label="Remove ${name}" ${cartBusy.has(id)?'disabled':''}><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></article>`;
+ }).join('');
+}
+async function mutateCart(id,action,quantity,stock){
+ if(!Number.isSafeInteger(id)||cartBusy.has(id))return;
+ if(action==='quantity'&&quantity>stock){notice('Cannot order more than available stock ('+stock+').');return;}
+ cartBusy.add(id);renderCart();notice('Updating cart…');
+ try{const removing=action==='remove'||quantity<1;const response=await fetch(removing?'/user/api/cart/remove/'+id:'/user/api/cart/update-qty',removing?{method:'DELETE'}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cart_id:id,quantity})});
+ const result=await response.json();if(!response.ok||result.success===false)throw Error(result.message||'Could not update cart.');await fetchCartItems();notice(removing?'Item removed from cart.':'Quantity updated.');
+ }catch(error){notice(error.message);}finally{cartBusy.delete(id);renderCart();}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ fetchCartItems();document.getElementById('cart-items-container').addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.id==='retry-cart')return fetchCartItems();if(button.hasAttribute('data-remove'))return mutateCart(Number(button.dataset.remove),'remove');if(button.hasAttribute('data-qty'))return mutateCart(Number(button.dataset.cartId),'quantity',Number(button.dataset.qty),Number(button.dataset.stock));});
+ document.getElementById('checkout-link').addEventListener('click',event=>{if(event.currentTarget.getAttribute('aria-disabled')==='true')event.preventDefault();});
+});
 
-          <div id="cart-items-container" class="space-y-3">
-            <p class="text-center text-xs text-gray-500 py-4">Loading cart items...</p>
-          </div>
-        </div>
-
-        <div class="theme-glass-card rounded-3xl p-6 space-y-4" style="text-align:center">
-          <h2 class="text-lg font-extrabold text-gray-900">Ready to checkout?</h2>
-          <p class="text-sm text-gray-600">Review your cart, then enter shipping details and select payment on the secure checkout page.</p>
-          <a href="/user/checkout?source=cart" class="block w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold py-4 px-6 rounded-2xl shadow-lg">Proceed to Checkout &rarr;</a>
-        </div>
-      </div>
-
-
-    </div>
-
-  </div>
-
-  <script>
-    let globalCartItems = [];
-    let appliedDiscount = 0;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchCartItems();
-      loadUserProfileData();
-      fetchPaySuiteGateways();
-    });
-
-    async function fetchCartItems() {
-      try {
-        const response = await fetch('/user/api/cart-items');
-        const result = await response.json();
-
-        if (result.success && result.data) {
-          globalCartItems = result.data;
-          renderCart();
-        }
-      } catch (err) {
-        console.error("Cart Fetch Error:", err);
-      }
-    }
-
-    function renderCart() {
-      const container = document.getElementById('cart-items-container');
-      if (globalCartItems.length === 0) {
-        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">Your cart is empty!</p>`;
-        updateTotals();
-        return;
-      }
-
-      let html = '';
-      let hasNonCod = false;
-
-      globalCartItems.forEach(item => {
-        if (Number(item.cod_available) === 0) hasNonCod = true;
-        const stockQty = parseInt(item.stock_quantity) || 0;
-        const isOutOfStock = stockQty <= 0 || item.stock_status === 'out_of_stock';
-        
-        // ইমেজ ইউআরএল ফিল্টারিং এবং ফলব্যাক চেক
-        const imgPath = (item.primary_image && item.primary_image !== '/uploads/' && item.primary_image !== '/uploads/null') 
-          ? item.primary_image 
-          : 'https://via.placeholder.com/80?text=No+Image';
-
-        html += `
-          <div data-love-row data-love-product="${item.product_id}" class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
-            <img src="${imgPath}" alt="${item.product_name}" class="w-14 h-14 object-cover rounded-xl border border-pink-200 shrink-0" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=No+Image';">
-            <div class="flex-1 overflow-hidden">
-              <h4 class="text-xs font-bold text-gray-900 truncate">${item.product_name}</h4>
-              <div class="text-[#ff4b6e] font-extrabold text-xs mt-1">৳ ${item.price}</div>
-              ${isOutOfStock ? `<span class="text-[10px] text-red-500 font-bold">Out of Stock</span>` : `<span class="text-[10px] text-gray-500">Stock: ${stockQty}</span>`}
-            </div>
-            
-            <div class="flex items-center border border-pink-300 rounded-lg bg-white overflow-hidden shadow-sm">
-              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity - 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">-</button>
-              <span class="px-2 text-xs font-bold text-[#ff4b6e]">${item.cart_quantity}</span>
-              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity + 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">+</button>
-            </div>
-
-            <button onclick="removeItem(${item.cart_id})" class="text-red-500 hover:text-red-700 text-xs px-2"><i class="fa-solid fa-trash-can"></i></button>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-
-      const codRadio = document.getElementById('payment-cod');
-      const codNotice = document.getElementById('cod-notice');
-      if (hasNonCod) {
-        codRadio.disabled = true;
-        codNotice.classList.remove('hidden');
-        document.getElementById('payment-paysuite').checked = true;
-        togglePaymentGateways();
-      } else {
-        codRadio.disabled = false;
-        codNotice.classList.add('hidden');
-      }
-
-      updateTotals();
-    }
-
-    async function changeQty(cartId, newQty, stockQty) {
-      if (newQty < 1) return removeItem(cartId);
-      
-      if (newQty > stockQty) {
-        alert(`Cannot order more than available stock (${stockQty} items left).`);
-        return;
-      }
-
-      try {
-        await fetch('/user/api/cart/update-qty', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cart_id: cartId, quantity: newQty })
-        });
-        fetchCartItems();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    async function removeItem(cartId) {
-      try {
-        await fetch(`/user/api/cart/remove/${cartId}`, { method: 'DELETE' });
-        fetchCartItems();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    async function loadUserProfileData() {
-      try {
-        const res = await fetch('/user/get-user-profile');
-        if (res.ok) {
-          const user = await res.json();
-          if (user.name) document.getElementById('cust-name').value = user.name;
-          if (user.email) document.getElementById('cust-email').value = user.email;
-          if (user.phone_number) document.getElementById('cust-phone').value = user.phone_number;
-          if (user.division) document.getElementById('cust-division').value = user.division;
-          if (user.district) document.getElementById('cust-district').value = user.district;
-          if (user.upazilla) document.getElementById('cust-upazilla').value = user.upazilla;
-          if (user.union_area) document.getElementById('cust-union').value = user.union_area;
-          if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
-          if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
-        }
-      } catch (e) {}
-    }
-
-    function togglePaymentGateways() {
-      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      const paysuiteContainer = document.getElementById('paysuite-gateways-container');
-      const bdgateContainer = document.getElementById('bdgate-gateways-container');
-
-      paysuiteContainer.classList.add('hidden');
-      bdgateContainer.classList.add('hidden');
-
-      if (paymentMethod === 'paysuite') {
-        paysuiteContainer.classList.remove('hidden');
-      } else if (paymentMethod === 'bdgate') {
-        bdgateContainer.classList.remove('hidden');
-      }
-    }
-
-    async function fetchPaySuiteGateways() {
-      try {
-        const res = await fetch('/user/get-paysuite-gateways');
-        const data = await res.json();
-        const grid = document.getElementById('paysuite-gateways-grid');
-        if (!grid) return;
-
-        if (data.success && data.gateways && data.gateways.length > 0) {
-          grid.innerHTML = '';
-          data.gateways.forEach((gw, index) => {
-            const isChecked = index === 0 ? 'checked' : '';
-            const cardSelected = index === 0 ? 'selected' : '';
-            const iconClass = gw.icon || 'fa-wallet';
-            const colorClass = gw.color || 'text-pink-600';
-            
-            const html = `
-              <label class="gateway-card ${cardSelected} p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
-                <input type="radio" name="online_gateway" value="${gw.id || gw.gateway}" ${isChecked} class="hidden" onchange="highlightGateway(this)">
-                <i class="fa-solid ${iconClass} ${colorClass} text-lg mb-1"></i>
-                <span class="text-[11px] font-bold text-gray-800">${gw.name || gw.gateway_name}</span>
-              </label>
-            `;
-            grid.insertAdjacentHTML('beforeend', html);
-          });
-        } else {
-          grid.innerHTML = `<p class="text-xs text-gray-500 col-span-full text-center">No online gateways found.</p>`;
-        }
-      } catch (err) {
-        console.error("Error fetching gateways:", err);
-      }
-    }
-
-    function highlightGateway(element) {
-      document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
-      element.closest('.gateway-card').classList.add('selected');
-    }
-
-    async function applyCoupon() {
-      const code = document.getElementById('coupon-code-input').value.trim();
-      const msgElem = document.getElementById('coupon-message');
-
-      if (!code) return;
-
-      try {
-        const res = await fetch('/user/api/cart/apply-coupon', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coupon_code: code })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          appliedDiscount = parseFloat(data.discount_amount || 0);
-          msgElem.className = "text-[11px] mt-1 text-green-600 font-bold";
-          msgElem.innerText = `Coupon applied successfully!`;
-          msgElem.classList.remove('hidden');
-
-          document.getElementById('discount-row').classList.remove('hidden');
-          document.getElementById('coupon-name-display').innerText = data.coupon_name;
-          document.getElementById('summary-discount').innerText = appliedDiscount;
-        } else {
-          appliedDiscount = 0;
-          msgElem.className = "text-[11px] mt-1 text-red-500";
-          msgElem.innerText = data.message;
-          msgElem.classList.remove('hidden');
-        }
-        updateTotals();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function updateTotals() {
-      let subtotal = 0;
-      let deliveryTotal = 0;
-
-      globalCartItems.forEach(item => {
-        subtotal += item.price * item.cart_quantity;
-
-        let baseDelivery = Number(item.delivery_charge) || 60;
-        if (Number(item.free_shipping) === 1) baseDelivery = 0;
-
-        let limit = Number(item.delivery_limit) || 1;
-        if (limit > 0 && baseDelivery > 0) {
-          deliveryTotal += baseDelivery * Math.ceil(item.cart_quantity / limit);
-        } else {
-          deliveryTotal += baseDelivery;
-        }
-      });
-
-      const grandTotal = Math.max(0, subtotal - appliedDiscount) + deliveryTotal;
-
-      document.getElementById('summary-subtotal').innerText = `৳ ${subtotal.toLocaleString()}`;
-      document.getElementById('summary-delivery').innerText = deliveryTotal === 0 ? 'Free' : `৳ ${deliveryTotal.toLocaleString()}`;
-      document.getElementById('summary-total').innerText = `৳ ${grandTotal.toLocaleString()}`;
-    }
-
-    async function submitCartOrder() {
-      const name = document.getElementById('cust-name').value.trim();
-      const email = document.getElementById('cust-email').value.trim();
-      const phone = document.getElementById('cust-phone').value.trim();
-      const district = document.getElementById('cust-district').value.trim();
-      const block_house = document.getElementById('cust-blockhouse').value.trim();
-
-      if (!name || !phone || !district || !block_house) {
-        alert('Please enter your shipping name, mobile number, district, and house/road number!');
-        return;
-      }
-
-      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-      let selectedGateway = null;
-      if (paymentMethod === 'paysuite' || paymentMethod === 'bdgate') {
-        const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
-        if (selectedGatewayRadio) {
-          selectedGateway = selectedGatewayRadio.value;
-        }
-      }
-
-      const payload = {
-        payment_method: paymentMethod,
-        selected_gateway: selectedGateway,
-        name, email, phone,
-        division: document.getElementById('cust-division').value.trim(),
-        district,
-        upazilla: document.getElementById('cust-upazilla').value.trim(),
-        union_area: document.getElementById('cust-union').value.trim(),
-        post_code: document.getElementById('cust-postcode').value.trim(),
-        block_house,
-        discount_amount: appliedDiscount
-      };
-
-      try {
-        const response = await fetch('/user/api/cart/place-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          if (result.payment_url) {
-            window.location.href = result.payment_url;
-          } else {
-            alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
-            window.location.href = '/user/dashboard';
-          }
-        } else {
-          alert(result.message || 'Error processing order!');
-        }
-      } catch (err) {
-        console.error("Order Submit Error:", err);
-        alert('Server error! Please try again.');
-      }
-    }
-  </script>
+</script>
 </body>
 </html>
