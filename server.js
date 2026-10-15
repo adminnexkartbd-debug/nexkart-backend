@@ -22,16 +22,20 @@ app.get('/api/config', (req, res) => {
         pixelId: process.env.FACEBOOK_PIXEL_ID
     });
 });
-// ==================== ১. ডায়নামিক সিকিউরিটি (CSP) ও মিডলওয়্যার ====================
+// ==================== CSP ও সিকিউরিটি মিডলওয়্যার ====================
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
-      defaultSrc: ["'self'", "https://www.googletagmanager.com"],
+      defaultSrc: [
+        "'self'",
+        "https://www.googletagmanager.com"
+      ],
+
       connectSrc: [
-        "'self'", 
-        "http://localhost:*", 
-        "https://*", 
-        "wss://*", 
+        "'self'",
+        "http://localhost:*",
+        "https://*",
+        "wss://*",
         "ws://*",
         "https://www.google-analytics.com",
         "https://*.google-analytics.com",
@@ -39,32 +43,16 @@ app.use(
         "https://www.facebook.com",
         "https://connect.facebook.net",
         "https://*.facebook.com"
-      ], 
+      ],
+
       scriptSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
-        "'unsafe-eval'", 
-        "https://cdnjs.cloudflare.com", 
-        "https://cdn.jsdelivr.net", 
-        "https://cdn.tailwindcss.com",
-        "https://www.googletagmanager.com", 
-        "https://unpkg.com",
-        "https://www.google-analytics.com",
-        "https://*.google-analytics.com",
-        "https://connect.facebook.net",
-        "https://*.facebook.net",
-        "https://*.facebook.com",
-        "https://static.cloudflareinsights.com"
-      ],
-      // Facebook Pixel এবং Google Tag ManagerScript লোডের জন্য scriptSrcElem স্পষ্ট করা হলো
-      scriptSrcElem: [
-        "'self'", 
-        "'unsafe-inline'", 
+        "'self'",
+        "'unsafe-inline'",
         "'unsafe-eval'",
-        "https://cdnjs.cloudflare.com", 
-        "https://cdn.jsdelivr.net", 
+        "https://cdnjs.cloudflare.com",
+        "https://cdn.jsdelivr.net",
         "https://cdn.tailwindcss.com",
-        "https://www.googletagmanager.com", 
+        "https://www.googletagmanager.com",
         "https://unpkg.com",
         "https://www.google-analytics.com",
         "https://*.google-analytics.com",
@@ -73,35 +61,55 @@ app.use(
         "https://*.facebook.com",
         "https://static.cloudflareinsights.com"
       ],
-      scriptSrcAttr: ["'unsafe-inline'"], 
+
+      scriptSrcElem: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
+        "https://cdn.jsdelivr.net",
+        "https://cdn.tailwindcss.com",
+        "https://www.googletagmanager.com",
+        "https://unpkg.com",
+        "https://www.google-analytics.com",
+        "https://*.google-analytics.com",
+        "https://connect.facebook.net",
+        "https://*.facebook.net",
+        "https://*.facebook.com",
+        "https://static.cloudflareinsights.com"
+      ],
+
+      scriptSrcAttr: ["'unsafe-inline'"],
+
       styleSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
-        "https://cdnjs.cloudflare.com", 
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
         "https://fonts.googleapis.com",
-        "https://cdn.jsdelivr.net", 
+        "https://cdn.jsdelivr.net",
         "https://unpkg.com",
         "https://www.googletagmanager.com"
       ],
+
       styleSrcElem: [
-        "'self'", 
-        "'unsafe-inline'", 
-        "https://cdnjs.cloudflare.com", 
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
         "https://fonts.googleapis.com",
-        "https://cdn.jsdelivr.net", 
+        "https://cdn.jsdelivr.net",
         "https://unpkg.com",
         "https://www.googletagmanager.com"
       ],
+
       imgSrc: [
-        "'self'", 
-        "data:", 
-        "blob:", 
+        "'self'",
+        "data:",
+        "blob:",
         "https://res.cloudinary.com",
         "https://*.cloudinary.com",
-        "https://via.placeholder.com", 
-        "https://dummyimage.com", 
-        "https://*.dummyimage.com", 
-        "https://lh3.googleusercontent.com", 
+        "https://via.placeholder.com",
+        "https://dummyimage.com",
+        "https://*.dummyimage.com",
+        "https://lh3.googleusercontent.com",
         "https://*.googleusercontent.com",
         "https://ui-avatars.com",
         "https://images.unsplash.com",
@@ -112,35 +120,46 @@ app.use(
         "https://www.googletagmanager.com",
         "https://www.google-analytics.com",
         "https://*.google-analytics.com",
-        "https://fonts.gstatic.com", 
+        "https://fonts.gstatic.com",
         "https://www.facebook.com",
         "https://connect.facebook.net",
         "https://*.facebook.com",
         "https://cx.atdmt.com"
       ],
+
       mediaSrc: [
-        "'self'", 
-        "data:", 
-        "blob:", 
-        "https://res.cloudinary.com", 
+        "'self'",
+        "data:",
+        "blob:",
+        "https://res.cloudinary.com",
         "https://*.cloudinary.com"
       ],
+
       fontSrc: [
-        "'self'", 
+        "'self'",
         "data:",
-        "https://cdnjs.cloudflare.com", 
+        "https://cdnjs.cloudflare.com",
         "https://fonts.gstatic.com"
       ],
+
       frameSrc: [
-        "'self'", 
+        "'self'",
         "https://adminnexkartbd-debug.github.io",
         "https://www.facebook.com",
         "https://tagassistant.google.com",
-        "https://*.facebook.com"
+        "https://*.facebook.com",
+        "https://www.googletagmanager.com"
       ],
+
+      // Facebook Pixel-এর /tr/ request-এর জন্য
+      formAction: [
+        "'self'",
+        "https://www.facebook.com"
+      ],
+
       workerSrc: ["'self'", "blob:"],
       childSrc: ["'self'", "blob:"]
-    },
+    }
   })
 );
 
