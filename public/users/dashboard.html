@@ -2053,6 +2053,19 @@ async function addToCart(productId) {
         }
 
         if (data.success) {
+          // Track only a successful cart API response; tracking must not interrupt the cart.
+          if (response.ok) {
+            try {
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({
+                event: 'nexkart_add_to_cart',
+                product_id: String(productId),
+                quantity: Number(1) || 1
+              });
+            } catch (trackingError) {
+              console.warn('AddToCart tracking unavailable.');
+            }
+          }
             alert(data.message);
             updateCartBadge(); 
         } else {

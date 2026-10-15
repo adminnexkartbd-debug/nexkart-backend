@@ -804,6 +804,19 @@ function openGooglePopup() {
         });
         const data = await response.json();
         if (data.success) {
+          // Track only a successful cart API response; tracking must not interrupt the cart.
+          if (response.ok) {
+            try {
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({
+                event: 'nexkart_add_to_cart',
+                product_id: String(activeProductId),
+                quantity: Number(productQuantity) || 1
+              });
+            } catch (trackingError) {
+              console.warn('AddToCart tracking unavailable.');
+            }
+          }
           alert('Product successfully added to cart!');
         } else {
           alert('Error: ' + data.message);
