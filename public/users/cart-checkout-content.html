@@ -33,6 +33,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </style>
 <link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
 <script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<script>
+// One checkout-start event per page, after checkout data is available.
+window.nexkartTrackCheckoutStart = (function () {
+  var sent = false;
+  return function (items) {
+    if (sent || !Array.isArray(items) || !items.length) return;
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'nexkart_initiate_checkout' });
+      sent = true;
+    } catch (error) {
+      console.warn('Checkout tracking unavailable.');
+    }
+  };
+})();
+</script>
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
 <!-- Google Tag Manager (noscript) -->
@@ -193,6 +209,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
         if (result.success && result.data) {
           globalCartItems = result.data;
+          if (response.ok && Array.isArray(globalCartItems) && globalCartItems.length) {
+            window.nexkartTrackCheckoutStart(globalCartItems);
+          }
           renderCart();
         }
       } catch (err) {
