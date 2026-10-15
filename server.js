@@ -160,9 +160,7 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
-app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'images', 'favicon.ico'));
-});
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -332,7 +330,6 @@ const startStockCron = require('./services/stockCalculator');
 const startMailCron = require('./services/mailService'); 
 const startCommissionCron = require('./services/commissionCalculator');
 const { initWithdrawCron } = require('./services/sendMailCorn');
-const startPaystationPendingCleanup = require('./services/paystationPendingCleanup');
 
 app.use('/auth', adminRoutes);
 
@@ -345,6 +342,7 @@ app.use('/admin', withdrawRouter);
 app.use('/admin', returnRefundRouter);
 app.use('/api/admin/payment-methods', paymentMethodsAdminRouter);
 
+app.use('/user', require('./routes/users/wishlistRouter'));
 app.use('/user', popRouter);
 app.use('/user', sellerProfileRouter);
 app.use('/user', userInboxRouter);
@@ -376,7 +374,6 @@ startStockCron();
 startMailCron(); 
 startCommissionCron();
 initWithdrawCron();
-startPaystationPendingCleanup(db);
 
 // ==================== ৫. পেজ ও এপিআই রাউটস ====================
 app.get('/', (req, res) => {
