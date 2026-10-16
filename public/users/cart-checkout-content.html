@@ -433,8 +433,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if (result.payment_url) {
             window.location.href = result.payment_url;
           } else {
-            alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
-            window.location.href = '/user/dashboard';
+            if (paymentMethod === 'online') throw new Error('PayStation did not return a payment URL.');
+            window.location.href = '/user/thank-you?method=cod&order_id=' + encodeURIComponent(result.order_id || '');
           }
         } else {
           alert(result.message || 'Error processing order!');

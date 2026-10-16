@@ -874,8 +874,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           placeOrderBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Order Placed Successfully!';
           placeOrderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
         }
-        alert(`Order placed successfully! Order ID: ${result.order_id || 'Created'}`);
-        window.location.replace('/user/dashboard?order=success&order_id=' + encodeURIComponent(result.order_id || ''));
+        window.location.replace('/user/thank-you?method=cod&order_id=' + encodeURIComponent(result.order_id || ''));
         return;
       } catch (err) {
         console.error('Order Submit Error:', err);
