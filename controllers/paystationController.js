@@ -49,7 +49,10 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
     try {
       const invoice=String(req.query.invoice_number || req.body?.invoice_number || '');
       const state=await reconcile(invoice);
-      return res.redirect('/user/dashboard?payment='+encodeURIComponent(state==='paid'?'success':'pending'));
+      if (state === 'paid') {
+        return res.redirect('/user/thank-you?method=paystation&payment=success&invoice=' + encodeURIComponent(invoice));
+      }
+      return res.redirect('/user/dashboard?payment=pending');
     } catch(e){console.error('PayStation callback:',e.message);return res.redirect('/user/dashboard?payment=unverified');}
   }
   async function ipn(req,res) {
