@@ -868,6 +868,20 @@ router.get('/ipr-report.html', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'ipr-report.html'));
 });
 
+// Public read-only feed. Admin writes remain in the PIN-protected banner manager.
+router.get('/offer-banners', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const [banners] = await db.query(`SELECT id,title,alt_text,image_url,target_url,sort_order
+            FROM offer_banners WHERE is_active=1 ORDER BY sort_order ASC,id DESC`);
+        return res.json({success:true,banners});
+    } catch (error) {
+        if (error.code === 'ER_NO_SUCH_TABLE') return res.json({success:true,banners:[]});
+        console.error('Public offer banners:', error.code || error.message);
+        return res.status(500).json({success:false,banners:[]});
+    }
+});
+
 router.get('/banner-products', async (req, res) => {
     try {
         const query = `
