@@ -444,4 +444,7 @@ router.post('/management-report/action',mrAuth,async(req,res)=>{
  }catch(e){if(conn)try{await conn.rollback();}catch(_){}console.error('management-report action:',e);res.status(500).json({success:false,message:e.code==='ER_ROW_IS_REFERENCED_2'?'Related product records prevent physical dump. Nothing was changed.':e.message});}finally{if(conn)conn.release();}
 });
 
+// Offer banner management shares the existing Control Employee PIN session.
+router.use('/offer-banners', require('./offerBannersRouter'));
+
 module.exports = router;
