@@ -78,6 +78,7 @@
                 <a href="/admin/home.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition-colors">
                     <i class="fa-solid fa-chart-pie w-6 text-white"></i> Dashboard
                 </a>
+                <button type="button" onclick="openBannerManager()" class="w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-images w-6"></i> Offer Banners</button>
                 <button type="button" onclick="openProductReports()" class="w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-flag w-6"></i> Product Reports</button>
                 <button type="button" onclick="openManagementReport()" class="w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-colors"><i class="fa-solid fa-box-archive w-6"></i> Management Report</button>
             </div>
@@ -952,5 +953,101 @@ async function mrAction(action,id){const target=action.includes('seller')?'selle
             return container;
         }
     </script>
+<style>
+#bannerManager[hidden]{display:none!important}#bannerManager{position:fixed;inset:0;z-index:80;background:#172033a8;display:flex;align-items:center;justify-content:center;padding:18px}#bannerManager *{box-sizing:border-box}.bm-shell{background:#f7f8fc;border-radius:22px;width:min(1260px,100%);height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 100px #10172a44}.bm-head{background:white;display:flex;align-items:center;justify-content:space-between;padding:20px 26px;border-bottom:1px solid #e4e8f0;gap:12px}.bm-head h2{font-size:22px;font-weight:750;color:#17213a}.bm-head p{font-size:12px;color:#778399;margin-top:3px}.bm-body{padding:22px 26px;overflow:auto}.bm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}.bm-stat{padding:17px 20px;background:white;border:1px solid #e6e9f2;border-radius:15px}.bm-stat span{display:block;font-size:12px;color:#718099}.bm-stat b{display:block;font-size:27px;color:#24334e;margin-top:5px}.bm-layout{display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start}.bm-form{padding:22px;background:white;border:1px solid #e5e9f2;border-radius:17px}.bm-form h3{font-size:17px;font-weight:700;margin-bottom:17px}.bm-form label{display:block;font-size:12px;font-weight:650;color:#526079;margin:12px 0 6px}.bm-form input,.bm-form select,.bm-toolbar input,.bm-toolbar select{width:100%;background:white;border:1px solid #dbe0eb;border-radius:9px;padding:10px;font-size:13px;color:#24314b}.bm-form input[type=file]{font-size:11px;padding:12px 8px;background:#f7f8fe;border-style:dashed}.bm-help{font-size:11px;color:#8390a6;line-height:1.6;margin-top:7px}.bm-btn{border:1px solid #dde2ee;background:white;color:#53627b;border-radius:9px;padding:9px 13px;font-size:12px;cursor:pointer}.bm-btn:hover{background:#eef0ff}.bm-btn:disabled{opacity:.5;cursor:wait}.bm-primary{background:#4f46e5;border-color:#4f46e5;color:white}.bm-primary:hover{background:#4338ca}.bm-danger{color:#c33c55}.bm-row{display:flex;gap:8px;align-items:center}.bm-toolbar{display:flex;gap:8px;margin-bottom:15px}.bm-toolbar input{flex:1;min-width:0}.bm-toolbar select{width:130px}.bm-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.bm-card{border:1px solid #e2e6f0;border-radius:15px;background:white;overflow:hidden}.bm-card img{width:100%;height:135px;object-fit:contain;background:#edf0f5}.bm-card-body{padding:15px}.bm-card h4{font-size:14px;font-weight:700;overflow-wrap:anywhere}.bm-card p{font-size:11px;color:#8a95a6;margin:8px 0;overflow-wrap:anywhere}.bm-badge{display:inline-block;border-radius:20px;background:#e5f6ee;color:#24855e;font-size:10px;padding:4px 8px;margin-top:8px}.bm-badge.off{background:#f1f2f6;color:#8791a3}.bm-card .bm-row{flex-wrap:wrap}.bm-empty{padding:45px 20px;border:1px dashed #cfd5e5;border-radius:14px;text-align:center;color:#8792a7;font-size:13px;grid-column:1/-1}.bm-message{padding:11px 14px;border-radius:10px;background:#edf0ff;color:#4e50a3;font-size:13px;margin-bottom:16px;white-space:pre-wrap}.bm-message:empty{display:none}.bm-pagination{display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:12px;color:#7a879d}.bm-sql{margin-top:24px;padding:17px 20px;border:1px solid #e1e5ef;border-radius:13px;background:white;font-size:12px;color:#62718a}.bm-sql summary{cursor:pointer;font-weight:700}.bm-sql pre{white-space:pre-wrap;font-size:11px;background:#f5f7fc;padding:15px;border-radius:8px;margin:13px 0;max-height:240px;overflow:auto}.bm-current{max-height:100px;width:100%;object-fit:contain;background:#f2f4f8;border-radius:9px;margin-top:10px}.bm-note{padding:10px 12px;margin-bottom:18px;background:#eef0ff;border:1px solid #e1e5ff;border-radius:10px;font-size:12px;color:#64689d;line-height:1.6}@media(max-width:900px){.bm-layout{grid-template-columns:1fr}.bm-shell{height:95vh}.bm-body{padding:16px}.bm-head{padding:17px}.bm-form{padding:18px}.bm-stats{gap:8px}.bm-stat{padding:12px}.bm-stat b{font-size:23px}}@media(max-width:520px){#bannerManager{padding:6px}.bm-list{grid-template-columns:1fr}.bm-toolbar{flex-wrap:wrap}.bm-toolbar input{flex-basis:100%}.bm-head h2{font-size:19px}.bm-shell{border-radius:15px}}
+</style>
+<div id="bannerManager" hidden role="dialog" aria-modal="true" aria-labelledby="bmTitle">
+ <div class="bm-shell">
+  <div class="bm-head"><div><h2 id="bmTitle">Offer Banner Manager</h2><p>Publish, organise and manage your shop’s offer banners</p></div><button type="button" class="bm-btn" id="bmClose" aria-label="Close Banner Manager">✕ Close</button></div>
+  <div class="bm-body">
+   <div id="bmMessage" class="bm-message" role="status" aria-live="polite"></div>
+   <div class="bm-stats"><div class="bm-stat"><span>Total banners</span><b id="bmTotal">—</b></div><div class="bm-stat"><span>Active</span><b id="bmActive">—</b></div><div class="bm-stat"><span>Inactive</span><b id="bmInactive">—</b></div></div>
+   <div class="bm-note">Admin management only. These banners are saved for the dashboard slider; the user dashboard will be connected in the next step.</div>
+   <div class="bm-layout">
+    <form class="bm-form" id="bmForm">
+     <h3 id="bmFormTitle">Post a new banner</h3>
+     <label for="bmName">Banner title *</label><input id="bmName" name="title" maxlength="150" placeholder="Weekend Beauty Offer" required>
+     <label for="bmImage">Banner image <span id="bmImageRequired">*</span></label><input id="bmImage" name="image" type="file" accept="image/jpeg,image/png,image/webp" required>
+     <p class="bm-help">JPG, PNG or WebP · Maximum 5 MB<br>Recommended: 1600 × 600 px. Minimum: 300 × 100 px.</p>
+     <img id="bmCurrentImage" class="bm-current" hidden alt="Current banner">
+     <label for="bmAlt">Image description</label><input id="bmAlt" name="alt_text" maxlength="200" placeholder="Describe the offer image">
+     <label for="bmLink">Click destination (optional)</label><input id="bmLink" name="target_url" maxlength="1000" placeholder="/user/product/product-slug"><p class="bm-help">Use a nexkartbd.com product/category link or a path starting with /. Leave blank for a non-clickable banner.</p>
+     <div class="bm-row"><div style="flex:1"><label for="bmOrder">Display order</label><input id="bmOrder" name="sort_order" type="number" min="0" max="999999" value="0" required></div><div style="flex:1"><label for="bmStatus">Status</label><select id="bmStatus" name="is_active"><option value="1">Active</option><option value="0">Inactive</option></select></div></div>
+     <p class="bm-help">Lower display order appears first.</p><div class="bm-row" style="margin-top:18px"><button class="bm-btn bm-primary" type="submit" id="bmSave">Post banner</button><button class="bm-btn" type="button" id="bmReset">Clear / Cancel edit</button></div>
+    </form>
+    <div><form id="bmSearchForm" class="bm-toolbar"><input id="bmSearch" type="search" placeholder="Search banner titles…" aria-label="Search banners"><select id="bmFilter" aria-label="Filter status"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select><button class="bm-btn" type="submit">Search</button><button class="bm-btn" id="bmRefresh" type="button">↻</button></form><div id="bmList" class="bm-list"></div><div class="bm-pagination"><button id="bmPrev" class="bm-btn" type="button">← Previous</button><span id="bmPage">Page 1</span><button id="bmNext" class="bm-btn" type="button">Next →</button></div></div>
+   </div>
+   <details class="bm-sql"><summary>Database setup SQL · defaultdb</summary><p style="margin-top:12px">Run once in DBeaver before posting banners.</p><pre id="bmSql">USE `defaultdb`;
+CREATE TABLE IF NOT EXISTS `offer_banners` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(150) NOT NULL,
+  `alt_text` VARCHAR(200) NOT NULL DEFAULT &#x27;&#x27;,
+  `image_url` VARCHAR(1000) NOT NULL,
+  `image_public_id` VARCHAR(255) NOT NULL,
+  `target_url` VARCHAR(1000) NOT NULL DEFAULT &#x27;&#x27;,
+  `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `version` INT UNSIGNED NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_offer_banners_active_order` (`is_active`,`sort_order`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+</pre><button type="button" class="bm-btn" id="bmCopySql">Copy SQL</button></details>
+  </div>
+ </div>
+</div>
+<script>
+(function(){
+'use strict';
+const api='/api/control-employee/offer-banners';
+const $=id=>document.getElementById(id);
+let page=1,pages=1,csrf='',rows=[],editing=null,busy=false,loadId=0,previousFocus;
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const message=text=>{$('bmMessage').textContent=text;};
+async function request(url,options={}){
+ const r=await fetch(url,{credentials:'same-origin',...options,headers:{...(options.headers||{}),...(options.method&&options.method!=='GET'?{'X-Banner-CSRF':csrf}:{})}});
+ let data;try{data=await r.json();}catch(e){throw Error('Server returned an unexpected response. Check deployment and admin session.');}
+ if(!r.ok||!data.success)throw Error(data.message||'Request failed.');return data;
+}
+async function load(){
+ const current=++loadId;
+ $('bmList').setAttribute('aria-busy','true');
+ try{
+ const data=await request(api+'?'+new URLSearchParams({page:String(page),q:$('bmSearch').value,status:$('bmFilter').value}));
+ if(current!==loadId)return;
+ csrf=data.csrf;rows=data.rows;pages=data.pages;
+ if(page>pages){page=pages;return load();}
+ $('bmTotal').textContent=data.stats.total;$('bmActive').textContent=data.stats.active;$('bmInactive').textContent=data.stats.inactive;
+ $('bmList').innerHTML=rows.length?rows.map(x=>'<article class="bm-card"><img src="'+esc(x.image_url)+'" alt="'+esc(x.alt_text||x.title)+'" loading="lazy"><div class="bm-card-body"><h4>'+esc(x.title)+'</h4><span class="bm-badge '+(Number(x.is_active)?'':'off')+'">'+(Number(x.is_active)?'Active':'Inactive')+'</span><p>#'+esc(x.id)+' · Order '+esc(x.sort_order)+' · '+esc(new Date(x.created_at).toLocaleDateString())+'</p><p>'+esc(x.target_url||'No click destination')+'</p><div class="bm-row"><button class="bm-btn" data-action="edit" data-id="'+x.id+'">Edit</button><button class="bm-btn" data-action="toggle" data-id="'+x.id+'">'+(Number(x.is_active)?'Deactivate':'Activate')+'</button><button class="bm-btn bm-danger" data-action="delete" data-id="'+x.id+'">Delete</button></div></div></article>').join(''):'<div class="bm-empty">No banners found. Post your first offer using the form.</div>';
+ $('bmPage').textContent='Page '+page+' / '+pages+' · '+data.matched+' found';$('bmPrev').disabled=page<=1;$('bmNext').disabled=page>=pages;
+ }catch(e){if(current===loadId){message(e.message);$('bmList').innerHTML='<div class="bm-empty">Unable to load banners. Check the message above.</div>';csrf='';}}
+ finally{if(current===loadId)$('bmList').removeAttribute('aria-busy');}
+}
+function reset(){editing=null;$('bmForm').reset();$('bmImage').required=true;$('bmImageRequired').textContent='*';$('bmCurrentImage').hidden=true;$('bmCurrentImage').removeAttribute('src');$('bmSave').textContent='Post banner';$('bmFormTitle').textContent='Post a new banner';}
+function lock(value){busy=value;document.querySelectorAll('#bmForm input,#bmForm select,#bmForm button,#bmList button').forEach(x=>x.disabled=value);}
+window.openBannerManager=async function(){previousFocus=document.activeElement;$('bannerManager').hidden=false;$('bmClose').focus();message('');await load();};
+function close(){if(busy){message('Please wait for the current action to finish.');return;}$('bannerManager').hidden=true;if(previousFocus)previousFocus.focus();}
+$('bmClose').addEventListener('click',close);
+$('bannerManager').addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const list=[...$('bannerManager').querySelectorAll('button,input,select,summary')].filter(x=>!x.disabled&&x.getClientRects().length);if(!list.length)return;const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+$('bmReset').addEventListener('click',()=>{if(!busy){reset();message('');}});
+$('bmForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(busy)return;if(!csrf){message('Reopen Banner Manager after verifying the admin PIN.');return;}
+ const file=$('bmImage').files[0];if(file&&file.size>5*1024*1024){message('Image must be 5 MB or smaller.');return;}
+ const form=new FormData($('bmForm'));if(!file)form.delete('image');if(editing)form.set('version',String(editing.version));
+ lock(true);$('bmSave').textContent='Saving…';message('');
+ try{const result=await request(api+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',body:form});reset();page=1;message(result.message);await load();}catch(err){message(err.message);}finally{lock(false);$('bmSave').textContent=editing?'Save changes':'Post banner';}
+});
+$('bmList').addEventListener('click',async e=>{
+ const button=e.target.closest('button[data-action]');if(!button||busy)return;const row=rows.find(x=>String(x.id)===button.dataset.id);if(!row)return;
+ if(button.dataset.action==='edit'){editing=row;$('bmName').value=row.title;$('bmAlt').value=row.alt_text;$('bmLink').value=row.target_url;$('bmOrder').value=row.sort_order;$('bmStatus').value=row.is_active;$('bmImage').value='';$('bmImage').required=false;$('bmImageRequired').textContent='(optional replacement)';$('bmCurrentImage').src=row.image_url;$('bmCurrentImage').hidden=false;$('bmSave').textContent='Save changes';$('bmFormTitle').textContent='Edit banner #'+row.id;$('bmForm').scrollIntoView({behavior:'smooth',block:'start'});$('bmName').focus();return;}
+ if(button.dataset.action==='delete'&&!confirm('Delete “'+row.title+'”? This permanently removes the banner.'))return;
+ lock(true);try{const deleting=button.dataset.action==='delete';const result=await request(api+'/'+row.id+(deleting?'':'/status'),{method:deleting?'DELETE':'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:row.version,is_active:Number(row.is_active)?0:1})});if(editing&&editing.id===row.id)reset();message(result.message);await load();}catch(err){message(err.message);}finally{lock(false);}
+});
+$('bmSearchForm').addEventListener('submit',e=>{e.preventDefault();if(!busy){page=1;load();}});$('bmFilter').addEventListener('change',()=>{if(!busy){page=1;load();}});$('bmRefresh').addEventListener('click',()=>{if(!busy)load();});$('bmPrev').addEventListener('click',()=>{if(!busy&&page>1){page--;load();}});$('bmNext').addEventListener('click',()=>{if(!busy&&page<pages){page++;load();}});
+$('bmCopySql').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('bmSql').textContent);message('SQL copied. Run it in DBeaver on defaultdb.');}catch(e){message('Select and copy the SQL text manually.');}});
+})();
+</script>
+
 </body>
 </html>
