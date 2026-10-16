@@ -1,87 +1,29 @@
-const express = require('express');
-const router = express.Router();
-const db = require('../db');
-const { create } = require('xmlbuilder2');
-
-router.get('/sitemap.xml', async (req, res) => {
-    try {
-        const baseUrl = 'https://www.nexkartbd.com';
-
-        // Static & Public Pages
-        const staticPages = [
-            '/',
-            '/user/index',
-            '/user/category',
-            '/user/dashboard',
-            '/user/My-Coupons',
-            '/user/seller-profile',
-            '/user/userAbout',
-            '/user/return-policy',
-            '/user/Return-Refund-Requests',
-            '/user/ipr-report',
-            '/user/cslogin',
-            '/user/cssignup'
-        ];
-
-        // 1. SELECT product data
-        const [products] = await db.query(`SELECT id, slug, updated_at FROM products`);
-
-        // 2. SELECT distinct categories and promo badges from products table
-        const [categories] = await db.query(`SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ''`);
-        const [promos] = await db.query(`SELECT DISTINCT promo_badge FROM products WHERE promo_badge IS NOT NULL AND promo_badge != ''`);
-
-        // Create XML Document
-        const root = create({ version: '1.0', encoding: 'UTF-8' })
-            .ele('urlset', { xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9' });
-
-        // Add Static Pages to Sitemap
-        staticPages.forEach(route => {
-            root.ele('url')
-                .ele('loc').txt(`${baseUrl}${route}`).up()
-                .ele('changefreq').txt('daily').up()
-                .ele('priority').txt(route === '/' ? '1.0' : '0.8').up();
-        });
-
-        // 3. Dynamic Category Pages (e.g., /user/category.html?category=...)
-        categories.forEach(cat => {
-            const encodedCategory = encodeURIComponent(cat.category);
-            root.ele('url')
-                .ele('loc').txt(`${baseUrl}/user/category.html?category=${encodedCategory}`).up()
-                .ele('changefreq').txt('weekly').up()
-                .ele('priority').txt('0.8').up();
-        });
-
-        // 4. Dynamic Promo Pages (e.g., /user/category.html?promo=super_deal)
-        promos.forEach(p => {
-            const encodedPromo = encodeURIComponent(p.promo_badge);
-            root.ele('url')
-                .ele('loc').txt(`${baseUrl}/user/category.html?promo=${encodedPromo}`).up()
-                .ele('changefreq').txt('weekly').up()
-                .ele('priority').txt('0.8').up();
-        });
-
-        // 5. Dynamic Product Pages with correct URL structure: /user/product/slug
-        products.forEach(product => {
-            const productPath = product.slug 
-                ? `/user/product/${product.slug}`
-                : `/user/product-details?id=${product.id}`;
-
-            root.ele('url')
-                .ele('loc').txt(`${baseUrl}${productPath}`).up()
-                .ele('lastmod').txt(product.updated_at ? new Date(product.updated_at).toISOString() : new Date().toISOString()).up()
-                .ele('changefreq').txt('weekly').up()
-                .ele('priority').txt('0.9').up();
-        });
-
-        const xml = root.end({ prettyPrint: true });
-
-        res.header('Content-Type', 'application/xml');
-        res.status(200).send(xml);
-
-    } catch (error) {
-        console.error('Error generating sitemap:', error);
-        res.status(500).send('Error generating sitemap');
-    }
+'use strict';
+const express=require('express');
+const db=require('../db');
+const router=express.Router();
+const BASE='https://www.nexkartbd.com';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+router.get('/sitemap.xml',async(req,res)=>{
+ try{
+  const [products]=await db.query('SELECT id,product_id,slug,updated_at FROM products ORDER BY id');
+  const [categories]=await db.query("SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ''");
+  const [promos]=await db.query("SELECT DISTINCT promo_badge FROM products WHERE promo_badge IS NOT NULL AND promo_badge != '' AND promo_badge != 'none'");
+  const entries=new Map();
+  function add(route,date){const entry={loc:BASE+route};if(date){const d=new Date(date);if(Number.isFinite(d.getTime()))entry.lastmod=d.toISOString();}entries.set(entry.loc,entry);}
+  ['/','/user/userAbout','/user/return-policy'].forEach(x=>add(x));
+  categories.forEach(x=>add('/user/category.html?type='+encodeURIComponent(x.category)));
+  promos.forEach(x=>add('/user/category.html?promo='+encodeURIComponent(x.promo_badge)));
+  products.forEach(p=>add(p.slug?'/user/product/'+encodeURIComponent(p.slug):'/user/product-details?id='+encodeURIComponent(p.product_id||p.id),p.updated_at));
+  const urls=[...entries.values()];
+  // Standard sitemap limits: shard large catalogues rather than truncate them.
+  const size=10000,chunks=Math.ceil(urls.length/size);
+  const requested=req.query.page===undefined?null:Number(req.query.page);
+  if(chunks>1&&requested===null){const index='<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+Array.from({length:chunks},(_,i)=>'<sitemap><loc>'+esc(BASE+'/sitemap.xml?page='+(i+1))+'</loc></sitemap>').join('')+'</sitemapindex>';return res.type('application/xml').send(index);}
+  if(requested!==null&&(!Number.isInteger(requested)||requested<1||requested>chunks))return res.status(404).send('Sitemap page not found');
+  const selected=requested===null?urls:urls.slice((requested-1)*size,requested*size);
+  const xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+selected.map(x=>'<url><loc>'+esc(x.loc)+'</loc>'+(x.lastmod?'<lastmod>'+x.lastmod+'</lastmod>':'')+'</url>').join('\n')+'\n</urlset>';
+  res.set('Cache-Control','public, max-age=300');return res.type('application/xml').send(xml);
+ }catch(error){console.error('Sitemap generation:',error.code||error.message);return res.status(503).send('Sitemap temporarily unavailable');}
 });
-
-module.exports = router;
+module.exports=router;
