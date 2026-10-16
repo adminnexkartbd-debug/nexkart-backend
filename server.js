@@ -179,8 +179,10 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
-app.get('/favicon.ico', (req, res) => res.status(204).end());
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
+// SEO HTML and indexing headers must run before static files.
+app.use(require('./routes/seoPages').createSeoMiddleware({db:require('./db'),root:__dirname}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
