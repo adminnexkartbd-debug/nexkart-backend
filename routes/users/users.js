@@ -2276,10 +2276,11 @@ router.get('/product-data/:slug', async (req, res) => {
             SELECT p.*, p.video_url, a.id AS seller_id, a.picture AS seller_picture, a.shop_name AS seller_shop_name,
                    a.slogan AS seller_slogan, a.is_verified AS seller_is_verified, a.status AS seller_status
             FROM products p LEFT JOIN admins a ON p.admin_id = a.id
-            WHERE p.slug = ?
+            WHERE p.slug = ? OR p.product_id = ? OR CAST(p.id AS CHAR) = ?
+            ORDER BY (p.slug = ?) DESC
             LIMIT 1
         `;
-        const [products] = await db.query(productQuery, [productSlug]);
+        const [products] = await db.query(productQuery, [productSlug, productSlug, productSlug, productSlug]);
         if (products.length === 0) {
             return res.status(404).json({ success: false, message: 'প্রোডাক্ট পাওয়া যায়নি!' });
         }
