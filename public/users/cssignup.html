@@ -253,21 +253,26 @@ html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflo
             <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Enter your details to get started.</p>
 
             <form id="signupForm">
+                <p id="signupMessage" role="status" aria-live="polite" style="font-size:13px;color:#b42318;margin-bottom:12px"></p>
                 <div class="input-group">
                     <i class="fa-regular fa-user"></i>
-                    <input type="text" name="name" placeholder="Full Name" required>
+                    <input type="text" name="name" placeholder="Full Name" autocomplete="name" maxlength="100" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-regular fa-envelope"></i>
-                    <input type="email" name="email" placeholder="Email Address" required>
+                    <input type="email" name="email" placeholder="Email Address" autocomplete="email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="tel" name="phone_number" placeholder="Mobile Number (01712345678)" aria-label="Mobile Number" autocomplete="tel" inputmode="tel" maxlength="20" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" name="password" placeholder="Password" required>
+                    <input type="password" name="password" placeholder="Password (at least 6 characters)" autocomplete="new-password" minlength="6" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+                    <input type="password" name="confirm_password" placeholder="Confirm Password" autocomplete="new-password" minlength="6" required>
                 </div>
                 <button type="submit" class="btn-submit">Sign Up</button>
             </form>
@@ -301,10 +306,10 @@ html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflo
 
             <div class="input-group" style="margin-bottom: 15px;">
                 <i class="fa-solid fa-key"></i>
-                <input type="text" id="enteredOtp" placeholder="------" maxlength="6" style="width: 100%; padding: 12px 15px 12px 42px; border: 1.5px solid #ffccd5; border-radius: 12px; outline: none; font-size: 18px; letter-spacing: 5px; text-align: center;">
+                <input type="text" id="enteredOtp" inputmode="numeric" autocomplete="one-time-code" aria-label="Email verification code" placeholder="------" maxlength="6" style="width: 100%; padding: 12px 15px 12px 42px; border: 1.5px solid #ffccd5; border-radius: 12px; outline: none; font-size: 18px; letter-spacing: 5px; text-align: center;">
             </div>
 
-            <button type="button" onclick="verifyOtp()" class="btn-submit" style="margin-bottom: 15px;">Verify & Register</button>
+            <button type="button" id="verifyOtpButton" onclick="verifyOtp()" class="btn-submit" style="margin-bottom: 15px;">Verify & Register</button>
             
             <div style="font-size: 12px; color: #666;">
                 Didn't receive code? <a href="#" onclick="resendOtp(event)" style="color: #ff4b6e; font-weight: 600; text-decoration: none;">Resend OTP</a>
@@ -339,62 +344,72 @@ html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflo
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const signupForm = document.getElementById('signupForm');
-
-        if (signupForm) {
-            signupForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const formData = new URLSearchParams(new FormData(signupForm));
-
-                try {
-                    const response = await fetch('/user/signup', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData
-                    });
-                    const result = await response.text();
-
-                    if (result === "OTP_SENT") {
-                        document.getElementById('otpModal').style.display = 'flex';
-                    } else {
-                        alert(result);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("Something went wrong!");
-                }
-            });
+    let signupBusy = false;
+    let verifyBusy = false;
+    let resendBusy = false;
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (signupBusy) return;
+        const form = e.currentTarget;
+        const msg = document.getElementById('signupMessage');
+        if (form.elements.password.value !== form.elements.confirm_password.value) {
+            msg.textContent = 'Passwords do not match!'; return;
         }
-    });
-
-    // ওটিপি ভেরিফাই ফাংশন
-    async function verifyOtp() {
-        const entered_otp = document.getElementById('enteredOtp').value;
-        const msgBox = document.getElementById('otpMessage');
-
+        signupBusy = true;
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true; button.textContent = 'Sending code…'; msg.textContent = '';
         try {
-            const response = await fetch('/user/verify-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ entered_otp })
+            const response = await fetch('/user/signup', {
+                method:'POST', credentials:'same-origin',
+                headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                body:new URLSearchParams(new FormData(form))
             });
             const result = await response.text();
-
-            if (result === "SUCCESS") {
-                msgBox.style.color = "green";
-                msgBox.innerText = "Registered successfully! Redirecting...";
-                setTimeout(() => {
-                    window.location.href = "/user/dashboard";
-                }, 1500);
-            } else {
-                msgBox.style.color = "red";
-                msgBox.innerText = result;
-            }
-        } catch (err) {
-            console.error(err);
-        }
+            if (response.ok && result === 'OTP_SENT') {
+                document.getElementById('otpMessage').textContent = '';
+                document.getElementById('enteredOtp').value = '';
+                document.getElementById('otpModal').style.display = 'flex';
+                document.getElementById('enteredOtp').focus();
+            } else msg.textContent = result;
+        } catch(err) { msg.textContent = 'Connection failed. Please try again.'; }
+        finally { signupBusy = false; button.disabled = false; button.textContent = 'Sign Up'; }
+    });
+    async function verifyOtp() {
+        if (verifyBusy) return;
+        const msg = document.getElementById('otpMessage');
+        const entered_otp = document.getElementById('enteredOtp').value.trim();
+        msg.style.color = '#b42318';
+        if (!/^\d{6}$/.test(entered_otp)) { msg.textContent = 'Enter the 6-digit email code.'; return; }
+        verifyBusy = true;
+        const button = document.getElementById('verifyOtpButton'); button.disabled = true;
+        try {
+            const response = await fetch('/user/verify-otp', {
+                method:'POST', credentials:'same-origin',
+                headers:{'Content-Type':'application/json'}, body:JSON.stringify({entered_otp})
+            });
+            const result = await response.text();
+            if(response.ok && result === 'SUCCESS') {
+                msg.style.color = 'green'; msg.textContent = 'Account created! Please log in with your email and password.';
+                setTimeout(function(){window.location.href='/user/cslogin';},1500);
+            } else { msg.textContent = result; button.disabled = false; }
+        } catch(err) { msg.textContent = 'Connection failed. Please try again.'; button.disabled = false; }
+        finally { verifyBusy = false; }
     }
+    async function resendOtp(e) {
+        e.preventDefault();
+        if (resendBusy || verifyBusy) return;
+        resendBusy = true;
+        const msg = document.getElementById('otpMessage');
+        msg.style.color = '#666'; msg.textContent = 'Sending a new code…';
+        try {
+            const response = await fetch('/user/resend-signup-otp', {method:'POST',credentials:'same-origin'});
+            const result = await response.text();
+            msg.style.color = response.ok ? 'green' : '#b42318';
+            msg.textContent = response.ok && result === 'OTP_SENT' ? 'New code sent. Check your email and spam folder.' : result;
+        } catch(err) { msg.textContent = 'Connection failed. Please try again.'; }
+        finally { resendBusy = false; }
+    }
+    document.getElementById('enteredOtp').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();verifyOtp();}});
 
     // Modal Functions
     function closeOtpModal() {
