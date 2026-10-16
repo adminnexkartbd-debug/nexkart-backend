@@ -906,52 +906,20 @@ router.get('/get-coupons', async (req, res) => {
     }
 });
 
-// ==================== [ AI ASSISTANT API ROUTE ] ====================
-router.post('/api/ai-chat', async (req, res) => {
-    try {
-        const { message, product_id } = req.body;
-        if (!message) {
-            return res.status(400).json({ success: false, message: 'Message is required!' });
-        }
-
-        let productContext = '';
-        if (product_id) {
-            const [products] = await db.query('SELECT title, description, sale_price, regular_price, category FROM products WHERE id = ? OR product_id = ?', [product_id, product_id]);
-            if (products.length > 0) {
-                const p = products[0];
-                productContext = `Product Context: Name: ${p.title}, Price: ৳${p.sale_price}, Category: ${p.category}, Description:${p.description}. `;
-            }
-        }
-
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.json({ 
-                success: true, 
-                reply: "AI Assistant is running in basic mode. How can I help you with NexKart products today?" 
-            });
-        }
-
-        const promptText = `You are NexKart AI Shopping Assistant. Be helpful, concise, and friendly. ${productContext}User question:${message}`;
-        
-        const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-            {
-                contents: [{ parts: [{ text: promptText }] }]
-            },
-            { headers: { 'Content-Type': 'application/json' } }
-        );
-
-        const aiReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "I am currently unable to answer. Please try again.";
-        return res.json({ success: true, reply: aiReply });
-
-    } catch (error) {
-        console.error("AI Chat Error:", error.message);
-        return res.json({ 
-            success: true, 
-            reply: "Hello! I am your NexKart AI Assistant. Feel free to ask me anything about this product or delivery process!" 
-        });
-    }
-});
+// Free catalogue assistant. No external AI requests or stored chat messages.
+const shopChatHandler = require('./shopChat').createHandler(db);
+const shopChatRates = new Map();
+function shopChatLimit(req, res, next) {
+    const now = Date.now(), key = String(req.ip || req.socket?.remoteAddress || 'unknown');
+    for (const [ip, entry] of shopChatRates) if (now-entry.start >= 60000) shopChatRates.delete(ip);
+    if (shopChatRates.size > 10000) shopChatRates.delete(shopChatRates.keys().next().value);
+    let entry = shopChatRates.get(key);
+    if (!entry) {entry={start:now,count:0};shopChatRates.set(key,entry);}
+    if (++entry.count > 30) return res.status(429).json({success:false,message:'অনেক প্রশ্ন হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।'});
+    next();
+}
+router.post('/api/shop-chat', shopChatLimit, shopChatHandler);
+router.post('/api/ai-chat', shopChatLimit, shopChatHandler);
 
 // ==================== [ CART ROUTES ] ====================
 router.post('/add-to-cart', async (req, res) => {
