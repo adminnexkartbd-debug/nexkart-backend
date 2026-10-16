@@ -37,24 +37,7 @@
 src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
-  <script id="product-json-ld" type="application/ld+json">
-  {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": "NexKartBD Product",
-    "description": "NexKartBD Product Description",
-    "brand": {
-      "@type": "Brand",
-      "name": "NexKartBD"
-    },
-    "offers": {
-      "@type": "Offer",
-      "priceCurrency": "BDT",
-      "price": "0",
-      "availability": "https://schema.org/InStock"
-    }
-  }
-  </script>
+  <script id="product-json-ld" type="application/ld+json">{}</script>
 
   <script>
     tailwind = {
@@ -991,7 +974,7 @@ function openGooglePopup() {
       }
       
       let discountBadge = '';
-      if (Number(product.regular_price) > Number(product.sale_price)) {
+      if (Number(product.sale_price) > 0 && Number(product.regular_price) > Number(product.sale_price)) {
           const discount = Math.round(((product.regular_price - product.sale_price) / product.regular_price) * 100);
           discountBadge = `<span class="absolute top-3 left-3 bg-[#ff4b6e] text-[#ffffff] text-[11px] font-semibold px-2 py-0.5 rounded-md z-10">${discount}% OFF</span>`;
       }
@@ -1041,7 +1024,7 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const canonicalUrl = `${window.location.origin}/user/product/${encodeURIComponent(product.slug || '')}`;
+      const canonicalUrl = 'https://www.nexkartbd.com' + (product.slug ? '/user/product/' + encodeURIComponent(product.slug) : '/user/product-details?id=' + encodeURIComponent(product.product_id || product.id));
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1083,17 +1066,21 @@ function openGooglePopup() {
           "@type": "Offer",
           "url": canonicalUrl,
           "priceCurrency": "BDT",
-          "price": product.sale_price || "0",
+          "price": Number(product.sale_price) > 0 ? Number(product.sale_price) : Number(product.regular_price),
           "itemCondition": "https://schema.org/NewCondition",
           "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
         }
       };
 
-      if (product.avg_rating && Number(product.avg_rating) > 0) {
+      const seoPrice = Number(product.sale_price) > 0 ? Number(product.sale_price) : (product.regular_price != null && product.regular_price !== '' ? Number(product.regular_price) : NaN);
+      if (!Number.isFinite(seoPrice) || seoPrice < 0) delete schemaData.offers;
+      if (!product.brand_name || product.brand_name === 'N/A') delete schemaData.brand;
+
+      if (Number(product.avg_rating) > 0 && Number(product.avg_rating) <= 5 && Number(product.review_count) > 0) {
         schemaData.aggregateRating = {
           "@type": "AggregateRating",
           "ratingValue": Number(product.avg_rating).toFixed(1),
-          "reviewCount": product.review_count || 1
+          "reviewCount": Number(product.review_count)
         };
       }
 
@@ -1117,7 +1104,7 @@ function openGooglePopup() {
 
       updateDynamicSEO(product, galleryImages);
 
-      currentStockPrice = parseFloat(product.sale_price || 0);
+      currentStockPrice = Number(product.sale_price) > 0 ? Number(product.sale_price) : Number(product.regular_price) || 0;
       availableUserCoins = userCoins || 0;
 
       if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
@@ -1203,7 +1190,7 @@ function openGooglePopup() {
         oldPriceElem.classList.add('hidden');
       }
 
-      if (Number(product.regular_price) > Number(product.sale_price)) {
+      if (Number(product.sale_price) > 0 && Number(product.regular_price) > Number(product.sale_price)) {
         document.getElementById('product-regular-price').innerText = `৳ ${parseFloat(product.regular_price).toLocaleString()}`;
       } else {
         document.getElementById('product-regular-price').innerText = '';

@@ -13,7 +13,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- On-Page SEO Meta Tags -->
-    <title>NexKartBD - Dashboard & Home | Best Online Shopping in Bangladesh</title>
+    <title>NexKartBD | Online Shopping in Bangladesh</title>
     <meta name="description" content="Discover trendy cosmetics, skincare, electronics, fashion, and exclusive beauty products on NexKartBD with fast delivery and best deals.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://www.nexkartbd.com/">
@@ -1894,7 +1894,7 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
                                  loading="lazy"
                                  onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
                             <span class="product-category">${product.category || 'General'}</span>
-                            <h3 class="product-title" title="${product.title}">${product.title}</h3>
+                            <h3 class="product-title" title="${product.title}"><a href="${targetSlug ? '/user/product/' + targetSlug : '/user/product-details?id=' + encodeURIComponent(targetId)}" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">${product.title}</a></h3>
                             
                             <div class="product-rating" aria-label="Rating ${avgRating} out of 5">
                                 ${starsHTML}
