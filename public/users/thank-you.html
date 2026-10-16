@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PCP7CR73');</script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
@@ -12,6 +15,7 @@
 </style>
 </head>
 <body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav class="nav"><a class="brand" href="/user/dashboard" aria-label="NexKartBD Home"><img class="brand-logo" src="/images/logo.png" alt="NexKartBD" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="brand-fallback" hidden>NexKart<span>BD</span></span></a><span class="nav-label">A little joy, on its way.</span></nav>
 <main><section class="card" aria-labelledby="thank-title"><header class="hero"><div class="check-circle" aria-hidden="true"><span class="check"></span></div><div class="eyebrow">THANK YOU FOR CHOOSING US</div><h1 id="thank-title">You made our day.</h1><p>Your next favourite find is one step closer.<br>Thank you for shopping with NexKartBD.</p></header><div class="details"><div class="status">Checkout complete</div><div id="receipt" class="receipt hidden"><span>Order reference</span><strong id="order-id"></strong></div><p class="message" id="order-message">You can check your order details and latest status in My Orders.</p><div class="actions"><a class="home" href="/user/dashboard">Back to Home &nbsp;→</a><a class="orders" href="/user/my-Order">View My Orders</a></div><div class="timer-section"><div class="timer-copy" id="timer-copy">Returning home in <b id="seconds">5</b> seconds</div><div class="track" aria-hidden="true"><div id="timer-bar" class="bar"></div></div><button type="button" class="pause" id="pause-timer">Stay on this page</button><span id="timer-status" class="hidden" role="status" aria-live="polite"></span></div></div></section></main>
 <footer>NexKartBD · A little something to look forward to.</footer>
@@ -23,9 +27,36 @@ var orderId=params.get('order_id') || params.get('invoice');
 if(params.get('invoice') && !params.get('order_id')){document.querySelector('#receipt span').textContent='Payment reference';}
 if(orderId){document.getElementById('order-id').textContent=orderId.slice(0,150);document.getElementById('receipt').classList.remove('hidden');}
 if(params.get('method')==='cod'){document.getElementById('order-message').textContent='Your order has been placed. Payment is due on delivery. Check My Orders for the latest status.';}
-// This page displays a confirmation; it does not verify payment or emit Purchase.
+// Resolve commerce data from the authenticated server, never from URL amounts.
+var trackingDone=false, pendingRedirect=false;
+function finishTracking(){trackingDone=true;if(pendingRedirect && !paused)window.location.replace('/user/dashboard');}
+async function trackPurchase(){
+  try {
+    var query=new URLSearchParams();
+    if(params.get('invoice'))query.set('invoice',params.get('invoice'));
+    else if(params.get('order_id'))query.set('order_id',params.get('order_id'));
+    else return finishTracking();
+    var response=await fetch('/user/api/purchase-tracking?'+query.toString(),{credentials:'same-origin',cache:'no-store'});
+    if(!response.ok)return finishTracking();
+    var data=await response.json();
+    if(!data.success || !data.ecommerce)return finishTracking();
+    var key='nxk_purchase_v1_'+data.ecommerce.transaction_id;
+    try{if(localStorage.getItem(key))return finishTracking();}catch(e){}
+    window.dataLayer=window.dataLayer||[];
+    window.dataLayer.push({ecommerce:null});
+    window.dataLayer.push({event:'purchase',event_id:data.event_id,ecommerce:data.ecommerce,eventCallback:function(){
+      try{localStorage.setItem(key,'sent');}catch(e){}
+      finishTracking();
+    },eventTimeout:2000});
+    // Still allow navigation if GTM is blocked. No sent marker in that case.
+    setTimeout(finishTracking,2500);
+  }catch(e){console.warn('Purchase tracking unavailable');finishTracking();}
+}
+trackPurchase();
+// Keep the existing five-second countdown; allow tracking at most ten seconds.
+setTimeout(finishTracking,10000);
 var remaining=5,deadline=Date.now()+5000,paused=false;
-var timer=setInterval(function(){if(paused)return;remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));document.getElementById('seconds').textContent=remaining;document.getElementById('timer-bar').style.width=(remaining/5*100)+'%';if(remaining===0){clearInterval(timer);window.location.replace('/user/dashboard');}},200);
+var timer=setInterval(function(){if(paused)return;remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));document.getElementById('seconds').textContent=remaining;document.getElementById('timer-bar').style.width=(remaining/5*100)+'%';if(remaining===0){clearInterval(timer);pendingRedirect=true;if(trackingDone)window.location.replace('/user/dashboard');}},200);
 document.getElementById('pause-timer').addEventListener('click',function(){paused=!paused;if(paused){clearInterval(timer);document.getElementById('timer-copy').textContent='Take your time. Your order details are above.';document.getElementById('timer-status').textContent='Automatic redirect stopped.';this.hidden=true;}});
 })();
 </script>
