@@ -1362,6 +1362,13 @@ body{background:linear-gradient(180deg,#fff9fc 0%,#fff 500px);color:var(--text-d
 </style>
 <link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
 <script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<style id="nx-offer-slider-style">
+#dynamicBannerSlider .slide{pointer-events:none;visibility:hidden}#dynamicBannerSlider .slide.active{pointer-events:auto;visibility:visible}#dynamicBannerSlider .nx-offer-slide{padding:0;background:#fff5f9;transform:none}#dynamicBannerSlider .nx-offer-image-wrap{width:100%;height:100%;display:block}#dynamicBannerSlider .nx-offer-image{display:block;width:100%;height:100%;object-fit:contain}.nx-slider-controls{position:absolute;inset:0;pointer-events:none;z-index:8}.nx-slider-controls[hidden]{display:none}.nx-slider-controls button{pointer-events:auto;cursor:pointer}.nx-slider-arrow{position:absolute;top:50%;transform:translateY(-50%);height:42px;width:42px;border:1px solid #ffffffb3;border-radius:50%;background:#fffdf5ed;box-shadow:0 3px 18px #35243e26;color:#c7215b;font-size:30px;line-height:1;display:grid;place-items:center}.nx-slider-prev{left:12px}.nx-slider-next{right:12px}.nx-slider-arrow:hover{background:#ff1760;color:white}.nx-slider-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);max-width:65%;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:7px 10px;border-radius:20px;background:#ffffffd9;pointer-events:auto}.nx-slider-dot{width:8px;height:8px;border:0;padding:0;border-radius:8px;background:#c8b9c0}.nx-slider-dot[aria-current=true]{width:22px;background:#ff1760}.nx-slider-pause{position:absolute;bottom:12px;right:14px;border-radius:20px;border:1px solid #ead1dc;padding:6px 11px;font-size:10px;font-weight:600;color:#9b3d60;background:#fffffff0}.nx-slider-controls button:focus-visible,#dynamicBannerSlider:focus-visible{outline:3px solid #c7215b;outline-offset:3px}.nx-slider-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}#dynamicBannerSlider button.banner-star-badge{border:0;font:inherit;cursor:pointer}
+@media(max-width:768px){.nx-slider-arrow{width:30px;height:36px;font-size:25px}.nx-slider-prev{left:5px}.nx-slider-next{right:5px}.nx-slider-dots{bottom:10px;gap:5px}.nx-slider-pause{font-size:9px;right:8px;bottom:8px}#dynamicBannerSlider .slide-content{margin-left:12px;margin-right:12px}}
+@media(prefers-reduced-motion:reduce){#dynamicBannerSlider .slide{transition:none;animation:none;transform:none}}
+</style>
+
+<script src="/users/offer-banner-slider.js" defer></script>
 </head>
 <body>
 
@@ -1737,94 +1744,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         document.getElementById('cookieBanner').classList.remove('show');
     }
 
-    async function loadBannerProducts() {
-        const sliderContainer = document.getElementById('dynamicBannerSlider');
-        if (!sliderContainer) return;
-
-        try {
-            const [prodRes, couponRes] = await Promise.all([
-                fetch('/user/banner-products'),
-                fetch('/user/get-coupons')
-            ]);
-            
-            const data = await prodRes.json();
-            const couponData = await couponRes.json();
-
-            if (data.success && data.products.length > 0) {
-                const coupons = couponData.success ? couponData.coupons : [];
-
-                sliderContainer.innerHTML = data.products.map((product, index) => {
-                    let imageSrc = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80';
-                    if (product.primary_image) {
-                        let rawImg = product.primary_image.trim();
-                        if (rawImg.includes('http://') || rawImg.includes('https://') || rawImg.includes('cloudinary.com')) {
-                            let cleanUrl = rawImg.replace(/^(\/?uploads\/)+/, '');
-                            imageSrc = cleanUrl.startsWith('http') ? cleanUrl : 'https://' + cleanUrl;
-                        } else {
-                            let cleanPath = rawImg.replace(/^(\/?uploads\/)+/, '');
-                            imageSrc = '/uploads/' + cleanPath;
-                        }
-                    }
-
-                    let matchedCoupon = coupons.find(c => 
-                        String(c.product_id) === String(product.id) || 
-                        String(c.product_id) === String(product.product_id)
-                    );
-
-                    let badgeHTML = '';
-                    if (matchedCoupon) {
-                        badgeHTML = `
-                            <div class="banner-star-badge" onclick="copyCouponCode('${matchedCoupon.coupon_name}')" title="Click to copy coupon">
-                                <span class="offer-title">Get Special Offer</span>
-                                <span class="coupon-code">${matchedCoupon.coupon_name}</span>
-                                <span class="discount-text">৳ ${matchedCoupon.discount_amount} OFF</span>
-                            </div>
-                        `;
-                    }
-
-                    const isActive = index === 0 ? 'active' : '';
-                    const targetId = product.product_id || product.id;
-                    const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
-
-                    return `
-                        <div class="slide ${isActive}" style="background-image: url('${imageSrc}');">
-                            <div class="slide-content">
-                                <h2>${product.title}</h2>
-                                <p>Special Price: ৳ ${product.sale_price}</p>
-                                <a href="#" onclick="checkLoginAndRedirect('${targetSlug}')" class="slide-btn">Shop Now</a>
-                            </div>
-                            ${badgeHTML}
-                        </div>
-                    `;
-                }).join('');
-
-                initSlider();
-            }
-        } catch (error) {
-            console.error("Error loading banner products or coupons:", error);
-        }
-    }
-    
     function copyCouponCode(code) {
         navigator.clipboard.writeText(code).then(() => {
             alert(`Coupon code "${code}" copied to clipboard!`);
         }).catch(err => {
             console.error('Failed to copy text: ', err);
         });
-    }
-
-    function initSlider() {
-        const slides = document.querySelectorAll('.slide');
-        if (slides.length === 0) return;
-        let currentSlide = 0;
-
-        if (window.bannerInterval) clearInterval(window.bannerInterval);
-
-        window.bannerInterval = setInterval(() => {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + 1) % slides.length;
-            slides[currentSlide].classList.add('active');
-        }, 4000);
     }
 
     function updateCartBadge() {
