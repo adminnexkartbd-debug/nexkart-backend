@@ -31,6 +31,8 @@ const TRACKING_CONFIG = {
 };
 
 async function sendFacebookCAPI(eventName, userData, customData) {
+    // Purchase is now emitted once by the thank-you page through GTM.
+    if (eventName === 'Purchase') return;
     if (!TRACKING_CONFIG.FB_PIXEL_ID || !TRACKING_CONFIG.FB_ACCESS_TOKEN) return;
     try {
         await axios.post(`https://graph.facebook.com/v18.0/${TRACKING_CONFIG.FB_PIXEL_ID}/events`, {
@@ -55,6 +57,8 @@ async function sendFacebookCAPI(eventName, userData, customData) {
 }
 
 async function sendGA4Measurement(eventName, clientId, payloadData) {
+    // Avoid a second Purchase alongside the browser GTM tag.
+    if (eventName === 'purchase') return;
     if (!TRACKING_CONFIG.GA4_MEASUREMENT_ID || !TRACKING_CONFIG.GA4_API_SECRET) return;
     try {
         await axios.post(`https://www.google-analytics.com/mp/collect?measurement_id=${TRACKING_CONFIG.GA4_MEASUREMENT_ID}&api_secret=${TRACKING_CONFIG.GA4_API_SECRET}`, {
@@ -842,7 +846,8 @@ router.get('/product-details.html', async (req, res) => {
 router.get('/checkout/:slug', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
 // Legacy checkout URL remains supported: /user/checkout?id=PRODUCT_ID&qty=1&variant=50ml
 router.get('/checkout', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'checkout.html')));
-// Confirmation display only; payment verification remains in the payment callback.
+// Payment verification remains in the existing payment callback.
+router.get('/api/purchase-tracking', require('./purchaseTracking').createPurchaseHandler(db));
 router.get('/thank-you', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'thank-you.html')));
 router.get('/seller-profile', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'seller-profile.html')));
 router.get('/cart-html', (req, res) => res.sendFile(path.join(process.cwd(), 'public', 'users', 'cart-html.html')));
