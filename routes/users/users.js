@@ -728,7 +728,7 @@ async function finalizeSuccessfulOrder(order, paymentType, paymentInfo = {}) {
     }
 }
 
-let temporaryUserData = {};
+// Pending manual signups are stored in the requesting session.
 
 router.get('/cssignup', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'users', 'cssignup.html'));
@@ -1537,60 +1537,14 @@ router.post('/pop-login', async (req, res) => {
     }
 });
 
-router.post('/signup', async (req, res) => {
-    const { name, email, password, confirm_password } = req.body;
-    if (password !== confirm_password) {
-        return res.status(400).send("Passwords do not match!");
-    }
-    try {
-        const [adminCheck] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
-        if (adminCheck.length > 0) {
-            return res.status(400).send("This email belongs to an Admin! Cannot register as User.");
-        }
-        const [userCheck] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (userCheck.length > 0) {
-            return res.status(400).send("Email already registered! Please login.");
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const otp_code = Math.floor(100000 + Math.random() * 900000).toString();
-        const otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
-
-        temporaryUserData[email] = { name, email, password: hashedPassword, otp_code, otp_expires_at };
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'mehedi.hasantanvir78@gmail.com',
-            to: email,
-            subject: 'NexKart - Verification OTP',
-            text: `Your OTP is ${otp_code}. Valid for 5 minutes.`
-        });
-        res.send("OTP_SENT");
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Server Error!");
-    }
+// Email OTP signup uses the existing Google OAuth Gmail API mail service.
+const manualSignup = require('./manualSignup').createManualSignup({
+    db, bcrypt,
+    sendMail: require('../../services/sellerMailService').sendEmailWithGoogle
 });
-
-router.post('/verify-otp', async (req, res) => {
-    const { email, entered_otp } = req.body; 
-    const userData = temporaryUserData[email];
-    if (!userData || new Date() > new Date(userData.otp_expires_at)) {
-        delete temporaryUserData[email];
-        return res.status(400).send("OTP has expired or invalid session.");
-    }
-    if (userData.otp_code !== entered_otp) {
-        return res.status(400).send("Invalid OTP!");
-    }
-    try {
-        await db.query(
-            'INSERT INTO users (name, email, password, is_verified, created_at) VALUES (?, ?, ?, 1, NOW())',
-            [userData.name, userData.email, userData.password]
-        );
-        delete temporaryUserData[email];
-        res.send("SUCCESS");
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Database Error!");
-    }
-});
+router.post('/signup', manualSignup.signup);
+router.post('/verify-otp', manualSignup.verify);
+router.post('/resend-signup-otp', manualSignup.resend);
 
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
