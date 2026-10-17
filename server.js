@@ -363,6 +363,7 @@ app.use('/admin', withdrawRouter);
 app.use('/admin', returnRefundRouter);
 app.use('/api/admin/payment-methods', paymentMethodsAdminRouter);
 
+app.use('/user', require('./routes/users/customerPolicies'));
 app.use('/user', require('./routes/users/wishlistRouter'));
 app.use('/user', popRouter);
 app.use('/user', sellerProfileRouter);
