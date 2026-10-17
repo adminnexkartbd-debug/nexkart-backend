@@ -9,3 +9,13 @@
 
 /* Final compact layout; scoped to the customer policy footer. */
 footer.nk-legal-footer{display:block!important;position:static!important;box-sizing:border-box!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:8px 0 0!important;padding:6px 10px!important;background:transparent!important;border-top:1px solid #efdde3!important;font:11px/16px system-ui,sans-serif!important;text-align:center!important;flex:none!important}footer.nk-legal-footer>div{display:block!important;height:auto!important;min-height:0!important;max-width:1150px!important;margin:0 auto!important;padding:0!important}footer.nk-legal-footer nav{display:flex!important;position:static!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;gap:2px 12px!important;width:auto!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;background:transparent!important}footer.nk-legal-footer nav a{display:inline-block!important;position:static!important;margin:0!important;padding:0!important;width:auto!important;height:auto!important;min-height:0!important;font:inherit!important;color:#a91646!important;text-decoration:none!important;white-space:nowrap!important}
+
+footer.nk-legal-footer .nk-footer-extras{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 24px;margin:0 0 5px;padding:0;font:inherit}
+footer.nk-legal-footer .nk-footer-payments,footer.nk-legal-footer .nk-footer-social{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px 10px;margin:0;padding:0;font:inherit}
+footer.nk-legal-footer .nk-footer-label{font-weight:600;color:#655560}
+footer.nk-legal-footer .nk-payment-badge,footer.nk-legal-footer .nk-payment-note,footer.nk-legal-footer .nk-footer-social a{display:inline-flex;align-items:center;gap:4px;margin:0;font:inherit;line-height:16px;color:#644453;text-decoration:none;white-space:nowrap}
+footer.nk-legal-footer .nk-payment-badge{padding:1px 6px;border:1px solid #eadce2;border-radius:5px;background:#fff}
+footer.nk-legal-footer svg{display:inline-block;flex-shrink:0;width:14px!important;height:14px!important;margin:0;padding:0;vertical-align:middle}
+footer.nk-legal-footer .nk-footer-social a:hover{text-decoration:underline}
+footer.nk-legal-footer a:focus-visible{outline:2px solid #a91646;outline-offset:3px}
+@media(max-width:600px){footer.nk-legal-footer .nk-footer-extras{gap:5px 16px}footer.nk-legal-footer .nk-footer-payments{gap:4px 7px}}
