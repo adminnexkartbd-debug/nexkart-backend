@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PCP7CR73');</script>
+<!-- End Google Tag Manager -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Dynamic Titles & Meta Tags -->
+    <title id="seoTitle">NexKartBD - Category Products & Deals</title>
+    <meta id="seoDescription" name="description" content="Browse quality products on NexKartBD. Find the best deals on categories, promos, and trending items with fast delivery.">
+    <meta id="seoRobots" name="robots" content="index, follow">
+    <link id="seoCanonical" rel="canonical" href="https://www.nexkartbd.com/user/category.html">
+
+    <!-- Open Graph / Social Media SEO -->
+    <meta property="og:type" content="website">
+    <meta id="ogTitle" property="og:title" content="NexKartBD - Category Products">
+    <meta id="ogDescription" property="og:description" content="Explore top-quality products on NexKartBD. Shop now for high discounts and affordable prices.">
+    <meta id="ogUrl" property="og:url" content="https://www.nexkartbd.com/user/category.html">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Structured Data (JSON-LD) for Search Engines -->
+    <script type="application/ld+json" id="categorySchema">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "NexKartBD Category Products",
+      "description": "Browse quality products on NexKartBD."
+    }
+    </script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #ff4b6e 0%, #ff758c 100%);
+            --primary-color: #ff4b6e;
+            --primary-light: #fff5f7;
+            --accent-pink: #ffccd5;
+            --text-dark: #2d3436;
+            --text-muted: #636e72;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* ---------------- Simple Header ---------------- */
+        .top-header {
+            background: #ffffff;
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            gap: 20px;
+        }
+
+        .home-btn {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .home-btn:hover {
+            opacity: 0.9;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 600px;
+            display: flex;
+            align-items: center;
+            background: #f3f3f3;
+            border: 1.5px solid #ffccd5;
+            border-radius: 30px;
+            padding: 8px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus-within {
+            background: #fff;
+            border-color: #ff4b6e;
+            box-shadow: 0 0 8px rgba(255, 75, 110, 0.2);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            color: #333;
+            width: 100%;
+        }
+
+        .search-box button {
+            background: transparent;
+            border: none;
+            color: #ff4b6e;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* ---------------- CATEGORY HEADER & IMAGE STYLE ---------------- */
+        .category-header-banner {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ffccd5;
+            padding-bottom: 12px;
+        }
+
+        .category-header-banner img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #ff4b6e;
+            box-shadow: 0 2px 8px rgba(255, 75, 110, 0.2);
+        }
+
+        .category-header-banner h1 {
+            font-size: 22px;
+            color: #333;
+            font-weight: 600;
+            text-transform: capitalize;
+            margin: 0;
+        }
+
+        /* ---------------- PRODUCTS SECTION ---------------- */
+        .products-section {
+            padding: 30px 40px 50px 40px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 75, 110, 0.15);
+            border-color: #ffccd5;
+        }
+
+        .product-badges-container {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .product-badge {
+            background: var(--primary-gradient);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(255,75,110,0.3);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .discount-badge {
+            background: #2ed573;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-left: auto;
+            box-shadow: 0 2px 5px rgba(46,213,115,0.3);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            background-color: #f1f1f1;
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .product-card:hover .product-img {
+            transform: scale(1.06);
+        }
+
+        .product-category {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .product-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 6px 0 10px 0;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            height: 40px;
+            line-height: 1.4;
+        }
+
+        .product-rating {
+            color: #ffa502;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .product-rating span {
+            color: var(--text-muted);
+            margin-left: 6px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .product-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #f1f1f1;
+        }
+
+        .price-box {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .current-price {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .old-price {
+            font-size: 12px;
+            color: #b2bec3;
+            text-decoration: line-through;
+            font-weight: 500;
+        }
+
+        .add-cart-btn {
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border: 1.5px solid var(--primary-color);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-cart-btn:hover {
+            background: var(--primary-gradient);
+            color: #fff;
+            border-color: transparent;
+            transform: scale(1.15) rotate(15deg);
+            box-shadow: 0 6px 15px rgba(255, 75, 110, 0.4);
+        }
+
+        .load-more-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-load-more {
+            background: linear-gradient(135deg, #ff4b6e, #ff758c);
+            color: #fff;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 75, 110, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-load-more:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 75, 110, 0.4);
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        /* ---------------- MOBILE & TABLET RESPONSIVE ---------------- */
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+
+            .home-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .search-box {
+                padding: 6px 14px;
+            }
+
+            .search-box input {
+                font-size: 13px;
+            }
+
+            .products-section {
+                padding: 15px 15px 30px 15px;
+            }
+
+            .category-header-banner {
+                margin-bottom: 15px;
+                gap: 10px;
+            }
+
+            .category-header-banner img {
+                width: 40px;
+                height: 40px;
+            }
+
+            .category-header-banner h1 {
+                font-size: 18px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .product-card {
+                padding: 10px;
+            }
+
+            .product-img {
+                height: 140px;
+                margin-bottom: 8px;
+            }
+
+            .product-title {
+                font-size: 12px;
+                height: 34px;
+                margin: 3px 0 5px 0;
+            }
+
+            .discount-badge {
+                font-size: 9px;
+                padding: 2px 5px;
+            }
+
+            .product-rating {
+                font-size: 10px;
+                margin-bottom: 5px;
+            }
+
+            .current-price {
+                font-size: 14px;
+            }
+
+            .old-price {
+                font-size: 11px;
+            }
+
+            .add-cart-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+
+            .btn-load-more {
+                padding: 10px 25px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .home-btn span {
+                display: none;
+            }
+            .home-btn {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+<style id="nexkart-modern-ui-2026">
+
+/* NexKartBD Modern Pink UI — presentation-only overrides; existing JS and IDs retained */
+:root{--primary-color:#ff1760;--primary-hover:#df0d50;--primary-gradient:linear-gradient(120deg,#ff1760,#ff6694);--primary-light:#fff0f5;--accent-pink:#ffd8e5;--bg-light:#fff8fb;--text-dark:#182039;--text-muted:#6d7385;--shadow-sm:0 5px 22px rgba(45,23,48,.045);--shadow-md:0 14px 38px rgba(245,38,103,.12)}
+body{background:linear-gradient(180deg,#fff9fc 0%,#fff 500px);color:var(--text-dark)}
+.top-header{background:rgba(255,255,255,.97);border-bottom:1px solid #ffe4ed;box-shadow:0 5px 22px rgba(45,23,48,.05);gap:18px}
+.search-box{border:1.5px solid #f8d8e3;background:#fffafd;box-shadow:0 2px 12px rgba(248,35,102,.025);border-radius:999px;min-height:46px}
+.search-box:focus-within{border-color:#ff4b7b;box-shadow:0 0 0 4px rgba(255,45,106,.08)}
+.search-box button{color:#ff1760}
+.sub-bar{background:#fff;box-shadow:0 4px 18px rgba(37,26,40,.035);border-bottom:1px solid #ffeaf1}
+.all-categories-btn{border-radius:12px 12px 0 0;box-shadow:none}
+.nav-links-list li a{font-weight:600}
+.banner-section{padding-top:22px;padding-bottom:20px}
+.slider-container{border-radius:22px;box-shadow:0 15px 42px rgba(96,29,63,.1)}
+.slide-content{border-radius:20px;box-shadow:0 12px 36px rgba(40,23,33,.09);border:1px solid rgba(255,255,255,.8)}
+.slide-btn,.btn-load-more,.btn-signup{border-radius:999px}
+.features-section{padding-top:0;padding-bottom:12px}
+.features-grid{border:1px solid #ffe9f0;box-shadow:var(--shadow-sm);border-radius:18px;gap:12px;padding:18px}
+.feature-card{border-radius:14px;gap:12px}
+.feature-card i{border-radius:14px}
+.products-section{padding-top:22px}
+.section-title{border-color:#ffe2ec}
+.section-title h1{letter-spacing:-.5px}
+.product-grid{gap:18px}
+.product-card{border:1px solid #f4e8ee;border-radius:18px;box-shadow:0 5px 20px rgba(25,17,35,.045);overflow:hidden;transform:translateZ(0)}
+.product-card:hover{transform:translateY(-5px);border-color:#ffc5d8;box-shadow:0 15px 32px rgba(245,45,110,.12)}
+.product-img{border-radius:13px;background:#fff8fb;object-fit:contain}
+.product-title{color:#1d2335;font-weight:600}
+.current-price{color:#fa165b}
+.product-badge{border-radius:999px}
+.discount-badge{border-radius:999px}
+.add-cart-btn{border-radius:12px;width:42px;height:40px;background:#fff0f5;color:#ff1760;border:1px solid #ffc5d8}
+.add-cart-btn:hover{transform:translateY(-2px);background:#ff1760;box-shadow:0 6px 15px rgba(255,23,96,.2)}
+.btn-load-more{box-shadow:0 8px 20px rgba(255,23,96,.18)}
+@media(max-width:768px){.top-header{gap:10px}.product-grid{gap:11px}.product-card{border-radius:14px}.product-img{object-fit:contain}.features-grid{gap:9px}.slider-container{border-radius:15px}}
+@media(max-width:480px){.product-card{padding:10px}.product-grid{gap:9px}.product-title{line-height:1.4}.add-cart-btn{width:34px;height:34px;border-radius:10px}.banner-section{padding-top:12px}}
+
+/* Matching category-page enhancements */
+.home-btn{border-radius:999px;box-shadow:0 6px 16px rgba(255,23,96,.15);background:linear-gradient(120deg,#ff1760,#ff6694)}
+.category-header-banner{background:linear-gradient(110deg,#fff0f6,#fffafc);border:1px solid #ffe0eb;border-radius:18px;padding:20px 22px;margin-bottom:24px;box-shadow:0 6px 24px rgba(255,23,96,.035)}
+.category-header-banner h1{color:#20243a;font-weight:700;letter-spacing:-.5px}
+.category-header-banner img{border:2px solid #ffc5da;border-radius:14px;width:58px;height:58px}
+@media(max-width:768px){.category-header-banner{padding:15px;margin-bottom:18px}.category-header-banner h1{font-size:19px}}
+
+</style>
+<link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
+<script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<link rel="stylesheet" href="/users/shop-chat.css">
+<script src="/users/shop-chat.js" defer></script>
+<link rel="stylesheet" href="/users/customer-policies.css">
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+   <!-- ১. সাধারণ হেডার (Semantic HTML) -->
+   <header class="top-header">
+        <a href="/user/dashboard" class="home-btn" title="Go to Dashboard Home">
+            <i class="fa-solid fa-house" aria-hidden="true"></i> <span>Home</span>
+        </a>
+
+        <form class="search-box" role="search" onsubmit="event.preventDefault(); handleSearch();">
+            <input type="search" id="searchInput" aria-label="Search products" placeholder="Search products...">
+            <button type="submit" aria-label="Submit Search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        </form>
+   </header>
+
+    <!-- ২. প্রোডাক্ট ক্যাটাগরি সেকশন (Semantic HTML Main Container) -->
+    <main class="products-section">
+        <div class="category-header-banner">
+            <img id="categoryHeaderImg" src="" alt="Category Image" class="d-none">
+            <h1 id="categoryNameHeading">Category Products</h1>
+        </div>
+
+        <section class="product-grid" id="categoryProductGrid" aria-live="polite">
+            <!-- ডাইনামিক প্রোডাক্ট কার্ড লোড হবে -->
+        </section>
+
+        <!-- Load More Container -->
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+            <button class="btn-load-more" id="loadMoreBtn" onclick="loadMoreCategoryProducts()">
+                <span>Load More</span> <i class="fa-solid fa-spinner fa-spin d-none" id="btnSpinner" aria-hidden="true"></i>
+            </button>
+        </div>
+    </main>
+
+<script>
+    let currentPage = 1;
+    let limit = 8;
+
+    // Fill roughly three product rows (or more on taller screens), based on
+    // the actual responsive grid columns. This keeps the existing UI intact.
+    function getResponsiveProductLimit(gridElement) {
+        if (!gridElement) return 8;
+
+        const styles = window.getComputedStyle(gridElement);
+        const columns = Math.max(1, styles.gridTemplateColumns.split(' ').filter(Boolean).length);
+        const minRows = 3;
+        const estimatedCardHeight = window.innerWidth <= 768 ? 310 : 360;
+        const rows = Math.max(minRows, Math.ceil(window.innerHeight / estimatedCardHeight));
+
+        return Math.max(3, columns * rows);
+    }
+
+    function updateResponsiveProductLimit() {
+        const grid = document.getElementById('categoryProductGrid');
+        limit = getResponsiveProductLimit(grid);
+        return limit;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const cat = urlParams.get('cat');
+        const type = urlParams.get('type');
+        const promo = urlParams.get('promo');
+        const search = urlParams.get('search'); 
+
+        const categoryVal = cat || type;
+
+        let headingText = "All Products";
+        if (search) {
+            headingText = `Search Results for "${search}"`; 
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = search; 
+        } else if (categoryVal && categoryVal !== 'all') {
+            headingText = categoryVal.replace(/_/g, ' ') + " Products";
+        } else if (promo) {
+            headingText = promo.replace(/_/g, ' ') + " Products";
+        }
+
+        const headingElem = document.getElementById('categoryNameHeading');
+        if (headingElem) headingElem.innerText = headingText;
+
+        // Dynamic SEO Tags Updating with Advanced Clean URLs
+        const seoTitle = document.getElementById('seoTitle');
+        const seoDesc = document.getElementById('seoDescription');
+        const seoRobots = document.getElementById('seoRobots');
+        const ogTitle = document.getElementById('ogTitle');
+        const ogDesc = document.getElementById('ogDescription');
+        const ogUrl = document.getElementById('ogUrl');
+        const seoCanonical = document.getElementById('seoCanonical');
+
+        const pageTitle = `${headingText} | NexKartBD Online Shopping`;
+        const pageDesc = `Discover ${headingText} at NexKartBD. Best deals, high quality items and fast shipping!`;
+
+        if (seoTitle) seoTitle.innerText = pageTitle;
+        if (ogTitle) ogTitle.setAttribute('content', pageTitle);
+        if (seoDesc) seoDesc.setAttribute('content', pageDesc);
+        if (ogDesc) ogDesc.setAttribute('content', pageDesc);
+        
+        const cleanCanonicalUrl = 'https://www.nexkartbd.com/user/category.html' + (cat ? `?cat=${encodeURIComponent(cat)}` : type ? `?type=${encodeURIComponent(type)}` : promo ? `?promo=${encodeURIComponent(promo)}` : '');
+        if (seoCanonical) seoCanonical.setAttribute('href', cleanCanonicalUrl);
+        if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+        if (search && seoRobots) {
+            seoRobots.setAttribute('content', 'noindex, follow');
+        }
+
+        updateResponsiveProductLimit();
+        fetchCategoryProducts(cat, type, promo, search, currentPage, false);
+    });
+
+async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadMore = false) {
+    const productGrid = document.getElementById('categoryProductGrid');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    if (btnSpinner) btnSpinner.classList.remove('d-none');
+
+    try {
+        let queryUrl = `/user/get-products-by-category?page=${page}&limit=${limit}`;
+
+        if (promo) {
+            queryUrl += `&promo=${encodeURIComponent(promo)}`;
+        } else {
+            if (cat) queryUrl += `&cat=${encodeURIComponent(cat)}`;
+            if (type) queryUrl += `&type=${encodeURIComponent(type)}`;
+        }
+        if (search) queryUrl += `&search=${encodeURIComponent(search)}`;
+
+        const response = await fetch(queryUrl);
+        const data = await response.json();
+
+        // Helper Function for Cleaning Image URL
+        const formatImageUrl = (rawImg) => {
+            if (!rawImg) return 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';
+            
+            let img = rawImg.trim();
+            
+            // 1. If absolute URL or Cloudinary URL exists inside path
+            if (img.includes('http://') || img.includes('https://')) {
+                const httpIndex = img.indexOf('http');
+                return img.substring(httpIndex);
+            }
+            if (img.includes('cloudinary.com')) {
+                const cloudIndex = img.indexOf('cloudinary.com');
+                return 'https://' + img.substring(cloudIndex);
+            }
+
+            // 2. Local uploads folder relative path
+            let cleanPath = img.replace(/^(\/?uploads\/)+/, '');
+            return '/uploads/' + cleanPath;
+        };
+
+        // ---------------- DYNAMIC CATEGORY IMAGE HANDLER ----------------
+        if (!isLoadMore) {
+            const headerImgElem = document.getElementById('categoryHeaderImg');
+            if (headerImgElem) {
+                let catImgSrc = '';
+                if (data.category_image) {
+                    catImgSrc = formatImageUrl(data.category_image);
+                } else if (data.products && data.products.length > 0 && data.products[0].primary_image) {
+                    catImgSrc = formatImageUrl(data.products[0].primary_image);
+                }
+
+                if (catImgSrc) {
+                    headerImgElem.src = catImgSrc;
+                    headerImgElem.classList.remove('d-none');
+                } else {
+                    headerImgElem.classList.add('d-none');
+                }
+            }
+        }
+
+        if (data.success && data.products.length > 0) {
+            const productsHTML = data.products.map((product) => {
+                let badgeTag = '';
+                if (product.promo_badge && product.promo_badge !== 'none') {
+                    badgeTag = `<span class="product-badge">${product.promo_badge.toUpperCase()}</span>`;
+                }
+
+                let coinOfferBadge = '';
+                if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
+                    coinOfferBadge = `<span class="product-badge" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #000;">-${product.coin_percentage_value}% Coin</span>`;
+                }
+
+                let oldPrice = parseFloat(product.old_price);
+                let salePrice = parseFloat(product.sale_price);
+                let discountPercentTag = '';
+                let oldPriceHTML = '';
+
+                if (!isNaN(oldPrice) && !isNaN(salePrice) && oldPrice > salePrice) {
+                    let discountPercent = Math.round(((oldPrice - salePrice) / oldPrice) * 100);
+                    if (discountPercent > 0) {
+                        discountPercentTag = `<span class="discount-badge">-${discountPercent}%</span>`;
+                    }
+                    oldPriceHTML = `<span class="old-price">৳ ${oldPrice}</span>`;
+                }
+
+                const imageSrc = formatImageUrl(product.primary_image);
+                const targetId = product.product_id || product.id;
+                const targetSlug = product.slug ? encodeURIComponent(String(product.slug)) : '';
+                const safeTitle = (product.title || 'Product Image').replace(/"/g, '&quot;');
+                const avgRating = parseFloat(product.avg_rating || 0).toFixed(1);
+                const starsHTML = renderStars(parseFloat(avgRating));
+
+                return `
+                    <article data-love-product="${product.id}" class="product-card" style="position:relative; cursor: pointer;" onclick="checkLoginAndRedirect('${targetSlug}')">
+                        <div class="product-badges-container">
+                            ${coinOfferBadge || badgeTag || '<span></span>'}
+                            ${discountPercentTag}
+                        </div>
+                        <div>
+                            <img src="${imageSrc}" 
+                                 alt="${safeTitle}" 
+                                 class="product-img" 
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80';">
+                            <span class="product-category">${product.category || 'General'}</span>
+                            <h2 class="product-title" title="${safeTitle}"><a href="${targetSlug ? '/user/product/' + targetSlug : '/user/product-details?id=' + encodeURIComponent(targetId)}" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">${product.title}</a></h2>
+                            
+                            <div class="product-rating" aria-label="Rating ${avgRating} out of 5">
+                                ${starsHTML}
+                                <span>(${avgRating})</span>
+                            </div>
+                        </div>
+                        <div class="product-bottom">
+                            <div class="price-box">
+                                <span class="current-price">৳ ${product.sale_price}</span>
+                                ${oldPriceHTML}
+                            </div>
+                            <button class="add-cart-btn" onclick="event.stopPropagation(); addToCart('${targetId}')" title="Add to Cart">
+                              <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            if (isLoadMore) {
+                productGrid.insertAdjacentHTML('beforeend', productsHTML);
+            } else {
+                productGrid.innerHTML = productsHTML;
+            }
+
+            if (loadMoreContainer) {
+                loadMoreContainer.style.display = data.hasMore ? 'block' : 'none';
+            }
+            injectItemListSchema(data.products);
+        } else {
+            if (!isLoadMore) {
+                productGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">We couldn't find any products in this category or promo right now. Please check back later!</div>`;
+                if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching category products:", error);
+    } finally {
+        if (btnSpinner) btnSpinner.classList.add('d-none');
+    }
+}
+window.addEventListener('resize', () => {
+        updateResponsiveProductLimit();
+    });
+
+function loadMoreCategoryProducts() {
+        currentPage++;
+        const urlParams = new URLSearchParams(window.location.search);
+        const cat = urlParams.get('cat');
+        const type = urlParams.get('type');
+        const promo = urlParams.get('promo');
+        const search = urlParams.get('search');
+
+        fetchCategoryProducts(cat, type, promo, search, currentPage, true);
+    }
+
+    function renderStars(rating) {
+        let starsHtml = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+        for (let i = 0; i < fullStars; i++) {
+            starsHtml += '<i class="fa-solid fa-star" aria-hidden="true"></i>';
+        }
+        if (hasHalfStar) {
+            starsHtml += '<i class="fa-solid fa-star-half-stroke" aria-hidden="true"></i>';
+        }
+        for (let i = 0; i < emptyStars; i++) {
+            starsHtml += '<i class="fa-regular fa-star" aria-hidden="true"></i>';
+        }
+
+        return starsHtml;
+    }
+
+    async function addToCart(productId) {
+        try {
+            const response = await fetch('/user/add-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 401 || data.message === 'unauthorized') {
+                window.location.href = '/user/cslogin';
+                return;
+            }
+
+            if (data.success) {
+          // Track only a successful cart API response; tracking must not interrupt the cart.
+          if (response.ok) {
+            try {
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({
+                event: 'nexkart_add_to_cart',
+                product_id: String(productId),
+                quantity: Number(1) || 1
+              });
+            } catch (trackingError) {
+              console.warn('AddToCart tracking unavailable.');
+            }
+          }
+                alert(data.message);
+            } else {
+                alert(data.message || 'Failed to add product to cart.');
+            }
+        } catch (error) {
+            console.error("Cart Error:", error);
+            alert("Something went wrong! Check your network connection.");
+        }
+    }
+
+    function checkLoginAndRedirect(productSlug) {
+        if (!productSlug) {
+            console.error('Product slug is missing.');
+            return;
+        }
+        window.location.href = `/user/product/${productSlug}`;
+    }
+
+    function handleSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        const query = searchInput.value.trim();
+        if (query) {
+            window.location.href = `/user/category.html?search=${encodeURIComponent(query)}`;
+        }
+    }
+
+    function injectItemListSchema(products) {
+        const schemaObj = {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "itemListElement": products.map((prod, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "name": prod.title,
+                "url": prod.slug
+                    ? window.location.origin + `/user/product/${encodeURIComponent(prod.slug)}`
+                    : window.location.origin + `/user/product-details`
+            }))
+        };
+        const schemaElem = document.getElementById('categorySchema');
+        if (schemaElem) {
+            schemaElem.textContent = JSON.stringify(schemaObj);
+        }
+    }
+</script>
+
+<footer class="nk-legal-footer" aria-label="Customer policies"><div><nav aria-label="Customer policies"><a href="/user/userAbout">About Us</a><a href="/users/contact.html">Contact & Address</a><a href="/users/terms.html">Terms & Conditions</a><a href="/user/return-policy">Return & Refund</a><a href="/users/privacy.html">Privacy Policy</a><a href="/users/delivery-policy.html">Delivery Policy</a></nav></div></footer>
+</body>
+</html>

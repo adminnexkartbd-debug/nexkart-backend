@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+   <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PCP7CR73');</script>
+<!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKart - Shopping Cart & Checkout</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * { font-family: 'Poppins', 'Hind Siliguri', sans-serif; scroll-behavior: smooth; }
+    body { background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085); min-height: 100vh; }
+    .theme-glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
+    }
+    .theme-glass-input { background: rgba(255, 255, 255, 0.9); border: 1.5px solid #ffccd5; }
+    .gateway-card { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; cursor: pointer; }
+    .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
+    .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
+  </style>
+<link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
+<script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<link rel="stylesheet" href="/users/shop-chat.css">
+<script src="/users/shop-chat.js" defer></script>
+<link rel="stylesheet" href="/users/customer-policies.css">
+</head>
+<body class="text-gray-800 antialiased relative pb-10">
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+    
+    <div class="flex items-center justify-between py-2">
+      <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
+        <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
+      </a>
+      <h1 class="text-xl md:text-2xl font-extrabold text-white drop-shadow-sm">My Shopping Cart</h1>
+      <div class="w-16"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <div class="lg:col-span-12 space-y-6">
+        
+        <div class="theme-glass-card rounded-3xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-gray-900 pb-3 border-b border-pink-100 flex items-center gap-2">
+            <i class="fa-solid fa-cart-shopping text-[#ff4b6e]"></i> Cart Items
+          </h2>
+
+          <div id="cart-items-container" class="space-y-3">
+            <p class="text-center text-xs text-gray-500 py-4">Loading cart items...</p>
+          </div>
+        </div>
+
+        <div class="theme-glass-card rounded-3xl p-6 space-y-4" style="text-align:center">
+          <h2 class="text-lg font-extrabold text-gray-900">Ready to checkout?</h2>
+          <p class="text-sm text-gray-600">Review your cart, then enter shipping details and select payment on the secure checkout page.</p>
+          <a href="/user/checkout?source=cart" class="block w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] text-white font-bold py-4 px-6 rounded-2xl shadow-lg">Proceed to Checkout &rarr;</a>
+        </div>
+      </div>
+
+
+    </div>
+
+  </div>
+
+  <script>
+    let globalCartItems = [];
+    let appliedDiscount = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchCartItems();
+      loadUserProfileData();
+      fetchPaySuiteGateways();
+    });
+
+    async function fetchCartItems() {
+      try {
+        const response = await fetch('/user/api/cart-items');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          globalCartItems = result.data;
+          renderCart();
+        }
+      } catch (err) {
+        console.error("Cart Fetch Error:", err);
+      }
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      if (globalCartItems.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">Your cart is empty!</p>`;
+        updateTotals();
+        return;
+      }
+
+      let html = '';
+      let hasNonCod = false;
+
+      globalCartItems.forEach(item => {
+        if (Number(item.cod_available) === 0) hasNonCod = true;
+        const stockQty = parseInt(item.stock_quantity) || 0;
+        const isOutOfStock = stockQty <= 0 || item.stock_status === 'out_of_stock';
+        
+        // ইমেজ ইউআরএল ফিল্টারিং এবং ফলব্যাক চেক
+        const imgPath = (item.primary_image && item.primary_image !== '/uploads/' && item.primary_image !== '/uploads/null') 
+          ? item.primary_image 
+          : 'https://via.placeholder.com/80?text=No+Image';
+
+        html += `
+          <div data-love-row data-love-product="${item.product_id}" class="flex items-center justify-between gap-3 bg-white/80 p-3 rounded-2xl border border-pink-100">
+            <img src="${imgPath}" alt="${item.product_name}" class="w-14 h-14 object-cover rounded-xl border border-pink-200 shrink-0" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=No+Image';">
+            <div class="flex-1 overflow-hidden">
+              <h4 class="text-xs font-bold text-gray-900 truncate">${item.product_name}</h4>
+              <div class="text-[#ff4b6e] font-extrabold text-xs mt-1">৳ ${item.price}</div>
+              ${isOutOfStock ? `<span class="text-[10px] text-red-500 font-bold">Out of Stock</span>` : `<span class="text-[10px] text-gray-500">Stock: ${stockQty}</span>`}
+            </div>
+            
+            <div class="flex items-center border border-pink-300 rounded-lg bg-white overflow-hidden shadow-sm">
+              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity - 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">-</button>
+              <span class="px-2 text-xs font-bold text-[#ff4b6e]">${item.cart_quantity}</span>
+              <button onclick="changeQty(${item.cart_id}, ${item.cart_quantity + 1}, ${stockQty})" class="px-2 py-0.5 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs">+</button>
+            </div>
+
+            <button onclick="removeItem(${item.cart_id})" class="text-red-500 hover:text-red-700 text-xs px-2"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      const codRadio = document.getElementById('payment-cod');
+      const codNotice = document.getElementById('cod-notice');
+      if (hasNonCod) {
+        codRadio.disabled = true;
+        codNotice.classList.remove('hidden');
+        document.getElementById('payment-paysuite').checked = true;
+        togglePaymentGateways();
+      } else {
+        codRadio.disabled = false;
+        codNotice.classList.add('hidden');
+      }
+
+      updateTotals();
+    }
+
+    async function changeQty(cartId, newQty, stockQty) {
+      if (newQty < 1) return removeItem(cartId);
+      
+      if (newQty > stockQty) {
+        alert(`Cannot order more than available stock (${stockQty} items left).`);
+        return;
+      }
+
+      try {
+        await fetch('/user/api/cart/update-qty', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cart_id: cartId, quantity: newQty })
+        });
+        fetchCartItems();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function removeItem(cartId) {
+      try {
+        await fetch(`/user/api/cart/remove/${cartId}`, { method: 'DELETE' });
+        fetchCartItems();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadUserProfileData() {
+      try {
+        const res = await fetch('/user/get-user-profile');
+        if (res.ok) {
+          const user = await res.json();
+          if (user.name) document.getElementById('cust-name').value = user.name;
+          if (user.email) document.getElementById('cust-email').value = user.email;
+          if (user.phone_number) document.getElementById('cust-phone').value = user.phone_number;
+          if (user.division) document.getElementById('cust-division').value = user.division;
+          if (user.district) document.getElementById('cust-district').value = user.district;
+          if (user.upazilla) document.getElementById('cust-upazilla').value = user.upazilla;
+          if (user.union_area) document.getElementById('cust-union').value = user.union_area;
+          if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
+          if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
+        }
+      } catch (e) {}
+    }
+
+    function togglePaymentGateways() {
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      const paysuiteContainer = document.getElementById('paysuite-gateways-container');
+      const bdgateContainer = document.getElementById('bdgate-gateways-container');
+
+      paysuiteContainer.classList.add('hidden');
+      bdgateContainer.classList.add('hidden');
+
+      if (paymentMethod === 'paysuite') {
+        paysuiteContainer.classList.remove('hidden');
+      } else if (paymentMethod === 'bdgate') {
+        bdgateContainer.classList.remove('hidden');
+      }
+    }
+
+    async function fetchPaySuiteGateways() {
+      try {
+        const res = await fetch('/user/get-paysuite-gateways');
+        const data = await res.json();
+        const grid = document.getElementById('paysuite-gateways-grid');
+        if (!grid) return;
+
+        if (data.success && data.gateways && data.gateways.length > 0) {
+          grid.innerHTML = '';
+          data.gateways.forEach((gw, index) => {
+            const isChecked = index === 0 ? 'checked' : '';
+            const cardSelected = index === 0 ? 'selected' : '';
+            const iconClass = gw.icon || 'fa-wallet';
+            const colorClass = gw.color || 'text-pink-600';
+            
+            const html = `
+              <label class="gateway-card ${cardSelected} p-2 rounded-xl bg-white flex flex-col items-center justify-center text-center">
+                <input type="radio" name="online_gateway" value="${gw.id || gw.gateway}" ${isChecked} class="hidden" onchange="highlightGateway(this)">
+                <i class="fa-solid ${iconClass} ${colorClass} text-lg mb-1"></i>
+                <span class="text-[11px] font-bold text-gray-800">${gw.name || gw.gateway_name}</span>
+              </label>
+            `;
+            grid.insertAdjacentHTML('beforeend', html);
+          });
+        } else {
+          grid.innerHTML = `<p class="text-xs text-gray-500 col-span-full text-center">No online gateways found.</p>`;
+        }
+      } catch (err) {
+        console.error("Error fetching gateways:", err);
+      }
+    }
+
+    function highlightGateway(element) {
+      document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
+      element.closest('.gateway-card').classList.add('selected');
+    }
+
+    async function applyCoupon() {
+      const code = document.getElementById('coupon-code-input').value.trim();
+      const msgElem = document.getElementById('coupon-message');
+
+      if (!code) return;
+
+      try {
+        const res = await fetch('/user/api/cart/apply-coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coupon_code: code })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          appliedDiscount = parseFloat(data.discount_amount || 0);
+          msgElem.className = "text-[11px] mt-1 text-green-600 font-bold";
+          msgElem.innerText = `Coupon applied successfully!`;
+          msgElem.classList.remove('hidden');
+
+          document.getElementById('discount-row').classList.remove('hidden');
+          document.getElementById('coupon-name-display').innerText = data.coupon_name;
+          document.getElementById('summary-discount').innerText = appliedDiscount;
+        } else {
+          appliedDiscount = 0;
+          msgElem.className = "text-[11px] mt-1 text-red-500";
+          msgElem.innerText = data.message;
+          msgElem.classList.remove('hidden');
+        }
+        updateTotals();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateTotals() {
+      let subtotal = 0;
+      let deliveryTotal = 0;
+
+      globalCartItems.forEach(item => {
+        subtotal += item.price * item.cart_quantity;
+
+        let baseDelivery = Number(item.delivery_charge) || 60;
+        if (Number(item.free_shipping) === 1) baseDelivery = 0;
+
+        let limit = Number(item.delivery_limit) || 1;
+        if (limit > 0 && baseDelivery > 0) {
+          deliveryTotal += baseDelivery * Math.ceil(item.cart_quantity / limit);
+        } else {
+          deliveryTotal += baseDelivery;
+        }
+      });
+
+      const grandTotal = Math.max(0, subtotal - appliedDiscount) + deliveryTotal;
+
+      document.getElementById('summary-subtotal').innerText = `৳ ${subtotal.toLocaleString()}`;
+      document.getElementById('summary-delivery').innerText = deliveryTotal === 0 ? 'Free' : `৳ ${deliveryTotal.toLocaleString()}`;
+      document.getElementById('summary-total').innerText = `৳ ${grandTotal.toLocaleString()}`;
+    }
+
+    async function submitCartOrder() {
+      const name = document.getElementById('cust-name').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+      const district = document.getElementById('cust-district').value.trim();
+      const block_house = document.getElementById('cust-blockhouse').value.trim();
+
+      if (!name || !phone || !district || !block_house) {
+        alert('Please enter your shipping name, mobile number, district, and house/road number!');
+        return;
+      }
+
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      let selectedGateway = null;
+      if (paymentMethod === 'paysuite' || paymentMethod === 'bdgate') {
+        const selectedGatewayRadio = document.querySelector('input[name="online_gateway"]:checked');
+        if (selectedGatewayRadio) {
+          selectedGateway = selectedGatewayRadio.value;
+        }
+      }
+
+      const payload = {
+        payment_method: paymentMethod,
+        selected_gateway: selectedGateway,
+        name, email, phone,
+        division: document.getElementById('cust-division').value.trim(),
+        district,
+        upazilla: document.getElementById('cust-upazilla').value.trim(),
+        union_area: document.getElementById('cust-union').value.trim(),
+        post_code: document.getElementById('cust-postcode').value.trim(),
+        block_house,
+        discount_amount: appliedDiscount
+      };
+
+      try {
+        const response = await fetch('/user/api/cart/place-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          if (result.payment_url) {
+            window.location.href = result.payment_url;
+          } else {
+            alert(`Your order has been placed successfully! Order ID: ${result.order_id}`);
+            window.location.href = '/user/dashboard';
+          }
+        } else {
+          alert(result.message || 'Error processing order!');
+        }
+      } catch (err) {
+        console.error("Order Submit Error:", err);
+        alert('Server error! Please try again.');
+      }
+    }
+  </script>
+
+<footer class="nk-legal-footer" aria-label="Customer policies"><div><nav aria-label="Customer policies"><a href="/user/userAbout">About Us</a><a href="/users/contact.html">Contact & Address</a><a href="/users/terms.html">Terms & Conditions</a><a href="/user/return-policy">Return & Refund</a><a href="/users/privacy.html">Privacy Policy</a><a href="/users/delivery-policy.html">Delivery Policy</a></nav></div></footer>
+</body>
+</html>

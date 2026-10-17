@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+   <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PCP7CR73');</script>
+<!-- End Google Tag Manager -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexKart - Checkout</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * { font-family: 'Poppins', 'Hind Siliguri', sans-serif; scroll-behavior: smooth; }
+    body { background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085); min-height: 100vh; }
+    .theme-glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.2);
+    }
+    .theme-glass-input { background: rgba(255, 255, 255, 0.9); border: 1.5px solid #ffccd5; }
+    .bg-animations { position: fixed; width: 100%; height: 100%; overflow: hidden; z-index: 1; top: 0; left: 0; pointer-events: none; }
+    .floating-item {
+      position: absolute; display: flex; align-items: center; justify-content: center;
+      list-style: none; width: 35px; height: 35px; background: rgba(255, 255, 255, 0.3);
+      bottom: -150px; border-radius: 50%; animation: animate 18s linear infinite; color: #fff; font-size: 18px; backdrop-filter: blur(4px);
+    }
+    .floating-item:nth-child(1) { left: 10%; width: 45px; height: 45px; animation-delay: 0s; animation-duration: 14s; }
+    .floating-item:nth-child(2) { left: 25%; width: 40px; height: 40px; animation-delay: 2s; animation-duration: 12s; }
+    .floating-item:nth-child(3) { left: 45%; width: 50px; height: 50px; animation-delay: 4s; animation-duration: 16s; }
+    .floating-item:nth-child(4) { left: 65%; width: 40px; height: 40px; animation-delay: 1s; animation-duration: 13s; }
+    .floating-item:nth-child(5) { left: 80%; width: 48px; height: 48px; animation-delay: 3s; animation-duration: 15s; }
+    @keyframes animate {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
+      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 30%; }
+    }
+    .gateway-card { border: 2px solid #e5e7eb; transition: all 0.2s ease-in-out; cursor: pointer; }
+    .gateway-card:hover { border-color: #ff4b6e; transform: translateY(-2px); }
+    .gateway-card.selected { border-color: #ff4b6e; background-color: #fff0f3; }
+    .checkout-header { background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,245,248,.92)); border: 1px solid rgba(255,255,255,.85); box-shadow: 0 18px 45px rgba(190, 35, 80, .18); }
+    .summary-highlight { background: linear-gradient(135deg, #fff0f4, #fff8fa); border: 1px solid #ffd3dc; }
+    .coin-card { background: linear-gradient(135deg, #fff9e8, #fff4cf); border: 1px solid #f5d78a; box-shadow: inset 0 1px 0 rgba(255,255,255,.8); }
+    .coin-card.disabled { filter: grayscale(.25); opacity: .68; background: #f8f8f8; border-color: #e5e7eb; }
+    .coin-badge { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; box-shadow: 0 7px 18px rgba(245,158,11,.24); }
+    .secure-strip { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.85); }
+  </style>
+<link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
+<script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<script>
+// One checkout-start event per page, after checkout data is available.
+window.nexkartTrackCheckoutStart = (function () {
+  var sent = false;
+  return function (items) {
+    if (sent || !Array.isArray(items) || !items.length) return;
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'nexkart_initiate_checkout' });
+      sent = true;
+    } catch (error) {
+      console.warn('Checkout tracking unavailable.');
+    }
+  };
+})();
+</script>
+<link rel="stylesheet" href="/users/customer-policies.css">
+<script src="/users/checkout-policies.js" defer></script>
+</head>
+<body class="text-gray-800 antialiased relative pb-10">
+
+  <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+  <ul class="bg-animations">
+    <li class="floating-item"><i class="fa-solid fa-wand-magic-sparkles"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-heart"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-spray-can-sparkles"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-gem"></i></li>
+    <li class="floating-item"><i class="fa-solid fa-star"></i></li>
+  </ul>
+
+  <div class="max-w-5xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+    
+    <div class="checkout-header rounded-3xl px-4 md:px-6 py-4 flex items-center justify-between gap-3">
+      <a href="javascript:history.back()" class="bg-white hover:bg-pink-50 text-[#d63384] font-semibold px-4 py-2.5 rounded-2xl transition-all flex items-center gap-2 shadow-sm text-xs md:text-sm border border-pink-100">
+        <i class="fa-solid fa-arrow-left text-[#ff4b6e]"></i> Back
+      </a>
+      <div class="text-center">
+        <p class="text-[10px] md:text-xs uppercase tracking-[.2em] text-[#d63384] font-bold">NexKartBD</p>
+        <h1 class="text-lg md:text-2xl font-extrabold text-gray-900">Secure Checkout</h1>
+      </div>
+      <div class="flex items-center gap-1.5 bg-green-50 text-green-700 border border-green-100 rounded-2xl px-3 py-2 text-[10px] md:text-xs font-bold">
+        <i class="fa-solid fa-shield-heart"></i><span class="hidden sm:inline">Safe Order</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT: Order Summary -->
+      <div class="lg:col-span-7 theme-glass-card rounded-3xl p-5 md:p-7 space-y-5 lg:sticky lg:top-6">
+        <div class="flex items-center justify-between gap-3 pb-3 border-b border-pink-100">
+          <div>
+            <h2 class="text-base md:text-lg font-extrabold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-bag-shopping text-[#ff4b6e]"></i> Order Summary
+            </h2>
+            <p class="text-[11px] text-gray-500 mt-1">আপনার অর্ডারের পণ্য, ডিসকাউন্ট ও মোট টাকা</p>
+          </div>
+          <span class="text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">Secure</span>
+        </div>
+
+        <div class="summary-highlight rounded-2xl p-4 flex items-center gap-4">
+          <div class="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-white border border-pink-100 shadow-sm overflow-hidden shrink-0">
+            <img id="summary-img" src="" alt="Product" class="w-full h-full object-contain p-2" onerror="this.style.display='none';">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[9px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
+            <h4 id="summary-title" class="text-sm md:text-base font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h4>
+            <div id="stock-status-badge" class="mt-1"></div>
+            <div class="flex flex-wrap items-center gap-3 mt-2">
+              <span class="text-[11px] text-gray-500">Qty:</span>
+              <div class="flex items-center border border-pink-300 rounded-lg bg-white overflow-hidden shadow-sm">
+                <button type="button" onclick="decreaseQuantity()" class="px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">−</button>
+                <span id="summary-qty" class="px-3 text-xs font-bold text-[#ff4b6e]">1</span>
+                <button type="button" onclick="increaseQuantity()" class="px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-[#ff4b6e] font-bold text-xs transition-all">+</button>
+              </div>
+            </div>
+            <p id="stock-error-msg" class="text-[11px] text-red-500 mt-1 hidden"></p>
+          </div>
+        </div>
+
+        <div id="variant-detail-box" class="space-y-1.5 pt-2 border-t border-pink-100 hidden">
+          <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-[#ff4b6e]"></i> Selected Option / Size:
+          </div>
+          <div class="bg-pink-50/80 border border-pink-200 rounded-xl p-2.5 flex items-center justify-between">
+            <span id="selected-variant-display" class="text-xs font-bold text-[#ff4b6e]"></span>
+            <span class="text-[10px] bg-pink-200 text-[#d63384] font-semibold px-2 py-0.5 rounded-md">Selected</span>
+          </div>
+        </div>
+
+        <div id="checkout-product-details" class="space-y-3 pt-3 border-t border-pink-100">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-[#ff4b6e]"></i>
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Product Information</h3>
+          </div>
+          <div class="bg-white/70 rounded-2xl border border-pink-100 p-3 space-y-2 text-[11px]">
+            <div class="grid grid-cols-2 gap-2">
+              <div><span class="text-gray-400 block">Category</span><strong id="checkout-category" class="text-gray-800">—</strong></div>
+              <div><span class="text-gray-400 block">SKU</span><strong id="checkout-sku" class="text-gray-800 font-mono">—</strong></div>
+              <div><span class="text-gray-400 block">Ships From</span><strong id="checkout-shipping-from" class="text-gray-800">—</strong></div>
+              <div><span class="text-gray-400 block">Delivery</span><strong id="checkout-delivery-time" class="text-gray-800">—</strong></div>
+            </div>
+            <div class="pt-2 border-t border-pink-100">
+              <span class="text-gray-400 block mb-1">Seller</span>
+              <strong id="checkout-seller" class="text-gray-800">NexKartBD</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-3 border-t border-pink-100">
+          <label class="block text-xs font-bold text-gray-700">Have a Coupon?</label>
+          <div class="flex gap-2">
+            <input type="text" id="coupon-code-input" placeholder="Enter coupon code" class="w-full theme-glass-input p-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e] uppercase">
+            <button type="button" onclick="applyCoupon()" class="bg-[#ff4b6e] hover:bg-[#e03a5b] text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-sm">Apply</button>
+          </div>
+          <p id="coupon-message" class="text-[11px] mt-1 hidden"></p>
+        </div>
+
+        <div id="checkout-coin-section" class="coin-card rounded-2xl p-3.5 space-y-3 hidden">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="coin-badge w-9 h-9 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-coins text-sm"></i></div>
+              <div class="min-w-0">
+                <h4 class="text-xs font-extrabold text-gray-900">Use Your NexKart Coins</h4>
+                <p id="coin-offer-help" class="text-[10px] text-gray-600 mt-0.5">Max discount: <strong id="coin-max-percent">0</strong>%</p>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0" id="coin-toggle-label" title="Apply coin discount">
+              <input type="checkbox" id="apply-coins-checkbox" onchange="toggleCoinDiscount()" class="sr-only peer" disabled>
+              <div id="coin-toggle-bg" class="w-10 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f59e0b]"></div>
+            </label>
+          </div>
+          <div class="flex items-center justify-between bg-white/60 border border-white/80 rounded-xl px-3 py-2 text-[10px]">
+            <span class="text-gray-600">Available balance</span>
+            <span class="font-extrabold text-amber-700"><span id="checkout-user-coins">0</span> Coins</span>
+          </div>
+          <p id="coin-status-msg" class="text-[10px] text-red-500 font-semibold hidden"></p>
+        </div>
+
+        <div class="space-y-2.5 text-xs text-gray-600 pt-3 border-t border-pink-100">
+          <div class="flex justify-between"><span>Subtotal Price:</span><span id="summary-subtotal" class="font-bold text-gray-900">৳ 0</span></div>
+          <div id="discount-row" class="flex justify-between text-green-600 hidden"><span>Discount (<span id="coupon-name-display"></span>):</span><span class="font-bold">- ৳ <span id="summary-discount">0</span></span></div>
+          <div id="coin-discount-row" class="flex justify-between text-amber-700 hidden"><span>Coin Discount:</span><span class="font-bold">- ৳ <span id="summary-coin-discount">0</span></span></div>
+          <div class="flex justify-between"><span>Delivery Charge:</span><span id="summary-delivery" class="font-bold text-gray-900">৳ 60</span></div>
+          <div class="flex justify-between text-sm pt-3 border-t border-pink-100 font-extrabold text-gray-900"><span>Total Amount:</span><span id="summary-total" class="text-[#ff4b6e] text-lg">৳ 0</span></div>
+        </div>
+
+        <div class="secure-strip rounded-2xl px-3 py-2.5 flex items-center gap-2 text-[10px] text-gray-600">
+          <i class="fa-solid fa-lock text-green-600"></i>
+          <span>আপনার অর্ডারের তথ্য সার্ভারে আবার যাচাই করে তারপর অর্ডার তৈরি হবে।</span>
+        </div>
+
+<div class="nk-consent"><label for="policy-acceptance"><input type="checkbox" id="policy-acceptance" required aria-describedby="policy-error"><span>আমি <a href="/users/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>, <a href="/user/return-policy" target="_blank" rel="noopener">Return &amp; Refund Policy</a> এবং <a href="/users/privacy.html" target="_blank" rel="noopener">Privacy Policy</a> পড়েছি ও সম্মতি দিচ্ছি।<br>I have read and agree to these policies.</span></label><p id="policy-error" class="nk-consent-error" role="alert" hidden>অর্ডার করার আগে নীতিমালায় সম্মতি দিন। Please accept the policies before ordering.</p><p>Currency: Bangladeshi Taka (BDT / ৳). <a href="/users/delivery-policy.html" target="_blank" rel="noopener">Delivery details</a></p></div>
+        <button id="place-order-btn" type="button" onclick="submitOrder()" class="w-full bg-gradient-to-r from-[#ff4b6e] to-[#ff758c] hover:from-[#ff758c] hover:to-[#ff4b6e] text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-pink-300 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm">
+          <i class="fa-solid fa-check-to-slot"></i> Place Order
+        </button>
+      </div>
+
+      <!-- RIGHT: Product image + shipping/contact -->
+      <div class="lg:col-span-5 theme-glass-card rounded-3xl p-5 md:p-7 space-y-5">
+        <div class="rounded-3xl bg-white border border-pink-100 shadow-sm overflow-hidden">
+          <div class="relative h-72 md:h-[390px] flex items-center justify-center bg-gradient-to-br from-white via-pink-50/40 to-white">
+            <img id="checkout-product-hero" src="" alt="Product" class="w-full h-full object-contain p-5 md:p-8" onerror="this.style.display='none';">
+            <span class="absolute top-4 left-4 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-full bg-white/90 text-[#d63384] border border-pink-100 shadow-sm">Product Preview</span>
+          </div>
+          <div class="p-4 border-t border-pink-100">
+            <p class="text-[9px] uppercase tracking-[.18em] font-bold text-[#d63384]">Your Product</p>
+            <h3 id="checkout-product-hero-title" class="text-base md:text-lg font-extrabold text-gray-900 mt-1 line-clamp-2">Loading product...</h3>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span id="checkout-product-hero-variant" class="hidden text-[10px] font-bold px-2 py-1 rounded-lg bg-pink-50 text-[#d63384] border border-pink-100"></span>
+              <span class="text-[10px] text-gray-500">Quantity: <strong id="checkout-product-hero-qty" class="text-gray-800">1</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pb-3 border-b border-pink-100 gap-3">
+          <div>
+            <h2 class="text-base font-bold text-gray-900 tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-truck-fast text-[#ff4b6e]"></i> Shipping & Contact Info
+            </h2>
+            <p class="text-[11px] text-gray-500 mt-0.5">প্রোফাইল থেকে তথ্য স্বয়ংক্রিয়ভাবে লোড করা হয়েছে</p>
+          </div>
+          <a href="/user/profile.html" class="shrink-0 bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] text-[11px] font-bold px-3 py-1.5 rounded-xl border border-pink-200 transition-all flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+          </a>
+        </div>
+
+        <!-- Only name and phone are editable here. Location/code fields stay hidden. -->
+        <form id="checkout-form" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3">
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Full Name</label>
+              <input type="text" id="cust-name" required class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="আপনার নাম">
+            </div>
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-gray-700">Phone Number</label>
+              <input type="tel" id="cust-phone" required class="w-full theme-glass-input p-3 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#ff4b6e]" placeholder="০১৭xxxxxxxx">
+            </div>
+          </div>
+
+          <!-- Hidden profile fields used for the authoritative order payload. -->
+          <input type="hidden" id="cust-email">
+          <input type="hidden" id="cust-division">
+          <input type="hidden" id="cust-district">
+          <input type="hidden" id="cust-upazilla">
+          <input type="hidden" id="cust-union">
+          <input type="hidden" id="cust-postcode">
+          <input type="hidden" id="cust-blockhouse">
+
+          <div id="active-shipping-address-card" class="summary-highlight rounded-2xl p-4 border border-pink-200 bg-white/80 shadow-sm">
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-location-dot text-[#ff4b6e]"></i>
+                <h3 class="text-xs md:text-sm font-extrabold text-gray-900">Shipping Address</h3>
+              </div>
+              <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">Selected</span>
+            </div>
+            <p id="active-shipping-address" class="text-xs md:text-sm font-semibold text-gray-800 leading-6">Address loading...</p>
+            <p id="active-shipping-postcode" class="text-[11px] md:text-xs text-gray-500 mt-1">Post Code: —</p>
+            <p id="active-shipping-address-status" class="text-[10px] text-gray-400 mt-2">Profile database থেকে address নেওয়া হয়েছে</p>
+          </div>
+
+          <div class="pt-1">
+            <label class="block text-xs font-bold text-gray-700 mb-2">Payment Method</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label id="cod-container" class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-[#ff4b6e] bg-white transition-all">
+                <input type="radio" name="payment" value="cod" id="payment-cod" checked onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                <span class="text-xs font-bold text-gray-800">COD</span>
+              </label>
+              <label class="theme-glass-input p-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer border-2 border-transparent bg-white/80 hover:border-pink-300 transition-all">
+                <input type="radio" name="payment" value="online" id="payment-online" onchange="togglePaymentGateways()" class="text-[#ff4b6e] focus:ring-[#ff4b6e]">
+                <span class="text-xs font-bold text-gray-800">PayStation Payment</span>
+              </label>
+            </div>
+            <p id="cod-notice" class="text-[11px] text-red-500 mt-1.5 hidden">এই পণ্যে COD নেই, তাই PayStation online payment নির্বাচন করুন।</p>
+          </div>
+
+          <div id="bkash-gateways-container" class="pt-3 hidden space-y-2 border-t border-pink-200">
+            <p class="text-[11px] text-gray-600">PayStation-এর নিরাপদ Checkout পেজে গিয়ে পেমেন্ট সম্পন্ন করুন।</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const checkoutSlug = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 2] === 'checkout'
+      ? decodeURIComponent(pathParts[pathParts.length - 1])
+      : (urlParams.get('slug') || null);
+    const legacyProductId = urlParams.get('id');
+    let productId = legacyProductId;
+    let selectedVariant = urlParams.get('variant');
+    let quantity = parseInt(urlParams.get('qty')) || 1;
+
+    let productPrice = 0;
+    let baseDeliveryCharge = 60;
+    let deliveryLimit = 1;
+    let deliveryCharge = 60;
+    let appliedDiscount = 0;
+    let appliedCouponName = '';
+    let availableStock = 0;
+
+    let userAvailableCoins = 0;
+    let coinDiscountAmount = 0;
+    let isCoinApplied = false;
+    let coinOfferEnabled = false;
+    let coinPercentageValue = 0;
+    const COIN_VALUE_BDT = 0.30;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (urlParams.get('source') === 'cart') return;
+      if (checkoutSlug || productId) {
+        fetchCheckoutProduct();
+      }
+      loadUserProfileData();
+
+      if (selectedVariant && selectedVariant.trim() !== '') {
+        const variantBox = document.getElementById('variant-detail-box');
+        const variantDisplay = document.getElementById('selected-variant-display');
+        if (variantBox && variantDisplay) {
+          variantDisplay.innerText = decodeURIComponent(selectedVariant);
+          variantBox.classList.remove('hidden');
+        }
+      }
+    });
+
+    function togglePaymentGateways() {
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+      const bkashContainer = document.getElementById('bkash-gateways-container');
+
+      bkashContainer.classList.add('hidden');
+
+      if (paymentMethod === 'online') {
+        bkashContainer.classList.remove('hidden');
+      }
+    }
+
+    function highlightGateway(element) {
+      document.querySelectorAll('.gateway-card').forEach(card => card.classList.remove('selected'));
+      element.closest('.gateway-card').classList.add('selected');
+    }
+
+    async function fetchCheckoutProduct() {
+      try {
+        const lookupKey = checkoutSlug || productId;
+        const response = await fetch(`/user/product-data/${encodeURIComponent(lookupKey)}`);
+        const data = await response.json();
+        if (data.success && data.product) {
+          const product = data.product;
+          // Keep the numeric product ID for cart/coupon/order APIs, but use slug for the URL.
+          productId = product.id || product.product_id;
+          if (!checkoutSlug && product.slug) {
+            const cleanPath = `/user/checkout/${encodeURIComponent(product.slug)}`;
+            const newQuery = new URLSearchParams();
+            newQuery.set('qty', quantity);
+            if (selectedVariant) newQuery.set('variant', selectedVariant);
+            window.history.replaceState({}, '', `${cleanPath}?${newQuery.toString()}`);
+          }
+          productPrice = parseFloat(product.sale_price || 0);
+          baseDeliveryCharge = Number(product.delivery_charge) || 60;
+          deliveryLimit = Number(product.delivery_limit) || 1;
+          availableStock = parseInt(product.stock_quantity) || 0;
+          
+          userAvailableCoins = Number(data.user_coins || 0);
+          coinOfferEnabled = String(product.coin_offer || '').toLowerCase() === 'yes';
+          coinPercentageValue = Math.max(0, Number(product.coin_percentage_value || 0));
+
+          const coinSection = document.getElementById('checkout-coin-section');
+          const coinCheckbox = document.getElementById('apply-coins-checkbox');
+          const coinToggleLabel = document.getElementById('coin-toggle-label');
+          const coinStatusMsg = document.getElementById('coin-status-msg');
+          const coinMaxPercent = document.getElementById('coin-max-percent');
+          const coinHelp = document.getElementById('coin-offer-help');
+
+          document.getElementById('checkout-user-coins').innerText = userAvailableCoins.toLocaleString();
+          coinMaxPercent.innerText = coinPercentageValue;
+          coinHelp.innerHTML = `Max discount: <strong>${coinPercentageValue}%</strong> · 1 Coin = ৳${COIN_VALUE_BDT.toFixed(2)}`;
+
+          // IMPORTANT: coin controls are available only when THIS product has coin_offer=yes.
+          if (coinOfferEnabled && coinPercentageValue > 0) {
+            coinSection.classList.remove('hidden');
+            coinSection.classList.remove('disabled');
+
+            if (userAvailableCoins > 0) {
+              coinCheckbox.disabled = false;
+              coinToggleLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+              coinStatusMsg.classList.add('hidden');
+            } else {
+              coinCheckbox.disabled = true;
+              coinCheckbox.checked = false;
+              isCoinApplied = false;
+              coinToggleLabel.classList.add('opacity-50', 'cursor-not-allowed');
+              coinStatusMsg.innerText = 'আপনার কোনো ব্যবহারযোগ্য Coin নেই।';
+              coinStatusMsg.classList.remove('hidden');
+            }
+          } else {
+            coinOfferEnabled = false;
+            coinPercentageValue = 0;
+            isCoinApplied = false;
+            coinDiscountAmount = 0;
+            coinCheckbox.checked = false;
+            coinCheckbox.disabled = true;
+            coinSection.classList.add('hidden');
+          }
+
+          const stockBadge = document.getElementById('stock-status-badge');
+          if (availableStock <= 0 || product.stock_status === 'out_of_stock') {
+            stockBadge.innerHTML = `<span class="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-md">Out of Stock</span>`;
+            document.querySelector('button[onclick="submitOrder()"]').disabled = true;
+            document.querySelector('button[onclick="submitOrder()"]').classList.add('opacity-50', 'cursor-not-allowed');
+          } else {
+            stockBadge.innerHTML = `<span class="px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-bold rounded-md">In Stock (${availableStock})</span>`;
+          }
+
+          if (quantity > availableStock && availableStock > 0) {
+            quantity = availableStock;
+          }
+
+          if (Number(product.free_shipping) === 1) {
+            baseDeliveryCharge = 0;
+          }
+
+          const codAvailable = Number(product.cod_available);
+          const codRadio = document.getElementById('payment-cod');
+          const codContainer = document.getElementById('cod-container');
+          const codNotice = document.getElementById('cod-notice');
+          const onlineRadio = document.getElementById('payment-online');
+
+          if (codAvailable === 0) {
+            codRadio.disabled = true;
+            codContainer.style.opacity = "0.5";
+            codContainer.style.cursor = "not-allowed";
+            codContainer.classList.remove('border-[#ff4b6e]', 'bg-white');
+            codNotice.classList.remove('hidden');
+            onlineRadio.checked = true;
+            togglePaymentGateways();
+          } else {
+            codRadio.disabled = false;
+            codContainer.style.opacity = "1";
+            codNotice.classList.add('hidden');
+          }
+
+          document.getElementById('summary-title').innerText = product.title || 'Product';
+          window.NexLove.attachDetails(product.id, document.getElementById('summary-title'));
+          document.getElementById('summary-qty').innerText = quantity;
+          document.getElementById('checkout-product-hero-title').innerText = product.title || 'Product';
+          document.getElementById('checkout-product-hero-qty').innerText = quantity;
+          const heroVariant = document.getElementById('checkout-product-hero-variant');
+          if (selectedVariant) {
+            heroVariant.innerText = selectedVariant;
+            heroVariant.classList.remove('hidden');
+          } else {
+            heroVariant.classList.add('hidden');
+          }
+
+          // Show non-sensitive product information used for checkout.
+          const categoryEl = document.getElementById('checkout-category');
+          if (categoryEl) categoryEl.innerText = product.category || 'General';
+          const skuEl = document.getElementById('checkout-sku');
+          if (skuEl) skuEl.innerText = product.sku || product.product_id || product.id || 'N/A';
+          const shippingFromEl = document.getElementById('checkout-shipping-from');
+          if (shippingFromEl) shippingFromEl.innerText = product.shipping_from || 'Main Warehouse';
+          const deliveryTimeEl = document.getElementById('checkout-delivery-time');
+          if (deliveryTimeEl) deliveryTimeEl.innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+          const sellerEl = document.getElementById('checkout-seller');
+          if (sellerEl) sellerEl.innerText = product.seller_shop_name || 'NexKartBD Official';
+
+          // Use the exact same image source returned to product-details.html:
+          // /user/product-data/:slug -> gallery_images[].
+          // Cloudinary/other absolute URLs are kept unchanged; local paths get a leading /.
+          const normalizeProductImageUrl = (raw) => {
+            let url = raw ? String(raw).trim() : '';
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url;
+            return url.startsWith('/') ? url : '/' + url;
+          };
+
+          const firstGalleryImage = Array.isArray(data.gallery_images) && data.gallery_images.length
+            ? data.gallery_images[0]
+            : null;
+          const fallbackImage = product.primary_image || product.image || product.image_url || '';
+          const imgUrl = normalizeProductImageUrl(firstGalleryImage || fallbackImage);
+
+          const summaryImg = document.getElementById('summary-img');
+          const heroImg = document.getElementById('checkout-product-hero');
+          if (imgUrl) {
+            if (summaryImg) {
+              summaryImg.src = imgUrl;
+              summaryImg.style.display = '';
+            }
+            if (heroImg) {
+              heroImg.src = imgUrl;
+              heroImg.style.display = '';
+            }
+          }
+
+          updateTotals();
+          if (response.ok && productId && quantity > 0) {
+            window.nexkartTrackCheckoutStart([product]);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading product for checkout:", err);
+      }
+    }
+
+    function calculateCoinDiscount() {
+      if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) return 0;
+      const subtotal = productPrice * quantity;
+      const maxAllowedDiscount = (subtotal * coinPercentageValue) / 100;
+      const maxCoinsAllowed = Math.max(0, Math.floor(maxAllowedDiscount / COIN_VALUE_BDT));
+      const coinsUsed = Math.min(Math.floor(userAvailableCoins), maxCoinsAllowed);
+      return coinsUsed * COIN_VALUE_BDT;
+    }
+
+    function toggleCoinDiscount() {
+      const checkbox = document.getElementById('apply-coins-checkbox');
+      if (!coinOfferEnabled || coinPercentageValue <= 0 || userAvailableCoins <= 0) {
+        checkbox.checked = false;
+        isCoinApplied = false;
+        coinDiscountAmount = 0;
+        document.getElementById('coin-discount-row').classList.add('hidden');
+        updateTotals();
+        return;
+      }
+      isCoinApplied = checkbox.checked;
+
+      if (isCoinApplied) {
+        coinDiscountAmount = calculateCoinDiscount();
+        document.getElementById('coin-discount-row').classList.remove('hidden');
+        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      } else {
+        coinDiscountAmount = 0;
+        document.getElementById('coin-discount-row').classList.add('hidden');
+      }
+      updateTotals();
+    }
+
+    function increaseQuantity() {
+      const errorMsg = document.getElementById('stock-error-msg');
+      if (quantity < availableStock) {
+        quantity += 1;
+        errorMsg.classList.add('hidden');
+      } else {
+        errorMsg.innerText = `Cannot order more than available stock (${availableStock} items left).`;
+        errorMsg.classList.remove('hidden');
+      }
+      document.getElementById('summary-qty').innerText = quantity;
+      if (isCoinApplied) {
+        coinDiscountAmount = calculateCoinDiscount();
+        document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+      updateTotals();
+    }
+
+    function decreaseQuantity() {
+      const errorMsg = document.getElementById('stock-error-msg');
+      if (quantity > 1) {
+        quantity -= 1;
+        errorMsg.classList.add('hidden');
+        document.getElementById('summary-qty').innerText = quantity;
+        if (isCoinApplied) {
+          coinDiscountAmount = calculateCoinDiscount();
+          document.getElementById('summary-coin-discount').innerText = coinDiscountAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        updateTotals();
+      }
+    }
+
+    async function loadUserProfileData() {
+      try {
+        const res = await fetch('/user/get-user-profile');
+        if (res.ok) {
+          const user = await res.json();
+          if (user.name) document.getElementById('cust-name').value = user.name;
+          if (user.email) document.getElementById('cust-email').value = user.email;
+          if (user.phone_number) document.getElementById('cust-phone').value = user.phone_number;
+          if (user.division) document.getElementById('cust-division').value = user.division;
+          if (user.district) document.getElementById('cust-district').value = user.district;
+          if (user.upazilla) document.getElementById('cust-upazilla').value = user.upazilla;
+          if (user.union_area) document.getElementById('cust-union').value = user.union_area;
+          if (user.post_code) document.getElementById('cust-postcode').value = user.post_code;
+          if (user.block_house) document.getElementById('cust-blockhouse').value = user.block_house;
+
+          // Convert stored Bangladesh location IDs to readable names for checkout.
+          // The same standard GeoCode dataset is used by the server when the order is saved.
+          const GEO_DATA_URLS = {
+            division: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/divisions/divisions.json',
+            district: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/districts/districts.json',
+            upazilla: 'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/upazilas/upazilas.json'
+        };
+          let checkoutGeoDataCache = null;
+
+          const checkoutGeoMaps = {
+            division: {
+              '1': 'Chattagram', '2': 'Rajshahi', '3': 'Khulna', '4': 'Barisal',
+              '5': 'Sylhet', '6': 'Dhaka', '7': 'Rangpur', '8': 'Mymensingh'
+            },
+            district: {
+              '22': 'Meherpur', '33': 'Barisal', '43': 'Narayanganj', '47': 'Dhaka'
+            },
+            upazilla: {
+              '331': 'Rupganj', '332': 'Sonargaon'
+            }
+          };
+
+          const checkoutIsNumericGeoCode = (value) => /^\d+$/.test(String(value ?? '').trim());
+
+          const checkoutLoadGeoData = async () => {
+            if (checkoutGeoDataCache) return checkoutGeoDataCache;
+            try {
+              const entries = await Promise.all(
+                Object.entries(GEO_DATA_URLS).map(async ([type, url]) => {
+                  const response = await fetch(url);
+                  if (!response.ok) throw new Error(`${type} geo data HTTP ${response.status}`);
+                  const json = await response.json();
+                  const table = Array.isArray(json)
+                    ? json.find(item => item.type === 'table')
+                    : null;
+                  return [type, table?.data || []];
+                })
+              );
+              checkoutGeoDataCache = Object.fromEntries(entries);
+              return checkoutGeoDataCache;
+            } catch (geoError) {
+              console.error('Checkout geo data load failed:', geoError);
+              return null;
+            }
+          };
+
+          const resolveLocationName = async (value, type) => {
+            const raw = String(value ?? '').trim();
+            if (!raw) return '';
+            if (!checkoutIsNumericGeoCode(raw)) return raw;
+
+            if (checkoutGeoMaps[type]?.[raw]) return checkoutGeoMaps[type][raw];
+
+            const geo = await checkoutLoadGeoData();
+            if (!geo) return '';
+
+            const rows = geo[type] || [];
+            const item = rows.find(entry => String(entry.id ?? '') === raw);
+            return item?.name || item?.bn_name || '';
+          };
+
+          const displayDivision = await resolveLocationName(user.division, 'division');
+          const displayDistrict = await resolveLocationName(user.district, 'district');
+          const displayUpazilla = await resolveLocationName(user.upazilla, 'upazilla');
+          const displayUnion = checkoutIsNumericGeoCode(user.union_area) ? '' : String(user.union_area || '').trim();
+          const displayBlockHouse = String(user.block_house || '').trim();
+
+          const addressParts = [displayBlockHouse, displayUnion, displayUpazilla, displayDistrict, displayDivision]
+            .filter(Boolean);
+          const addressText = addressParts.join(', ');
+          const addressEl = document.getElementById('active-shipping-address');
+          const postcodeEl = document.getElementById('active-shipping-postcode');
+          const statusEl = document.getElementById('active-shipping-address-status');
+
+          if (addressEl) addressEl.innerText = addressText || 'Shipping address profile-এ সেট করা নেই';
+          if (postcodeEl) postcodeEl.innerText = user.post_code ? `Post Code: ${user.post_code}` : 'Post Code: —';
+          if (statusEl) statusEl.innerText = addressText ? 'Profile database থেকে active address selected' : 'Profile থেকে address সেট করুন';
+        }
+      } catch (e) {
+        console.log("Could not prefill user profile data.");
+      }
+    }
+
+    async function applyCoupon() {
+      const code = document.getElementById('coupon-code-input').value.trim();
+      const msgElem = document.getElementById('coupon-message');
+      
+      if (!code) {
+        msgElem.className = "text-[11px] mt-1 text-red-500";
+        msgElem.innerText = "Please enter a coupon code!";
+        msgElem.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const response = await fetch('/user/apply-coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coupon_code: code, product_id: productId })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          appliedDiscount = parseFloat(result.discount_amount || 0);
+          appliedCouponName = result.coupon_name;
+
+          msgElem.className = "text-[11px] mt-1 text-green-600 font-bold";
+          msgElem.innerText = `Coupon applied successfully!`;
+          msgElem.classList.remove('hidden');
+
+          document.getElementById('discount-row').classList.remove('hidden');
+          document.getElementById('coupon-name-display').innerText = appliedCouponName;
+          document.getElementById('summary-discount').innerText = appliedDiscount.toLocaleString();
+
+          updateTotals();
+        } else {
+          appliedDiscount = 0;
+          appliedCouponName = '';
+          document.getElementById('discount-row').classList.add('hidden');
+          
+          msgElem.className = "text-[11px] mt-1 text-red-500";
+          msgElem.innerText = result.message || 'Invalid or expired coupon code!';
+          msgElem.classList.remove('hidden');
+
+          updateTotals();
+        }
+      } catch (err) {
+        console.error("Coupon Error:", err);
+      }
+    }
+
+    function updateTotals() {
+      const subtotal = productPrice * quantity;
+      
+      let calculatedDeliveryCharge = baseDeliveryCharge;
+      if (deliveryLimit > 0 && baseDeliveryCharge > 0) {
+        const multiplier = Math.ceil(quantity / deliveryLimit);
+        calculatedDeliveryCharge = baseDeliveryCharge * multiplier;
+      } else if (baseDeliveryCharge === 0) {
+        calculatedDeliveryCharge = 0;
+      }
+
+      deliveryCharge = calculatedDeliveryCharge;
+      
+      const safeCoinDiscount = isCoinApplied ? calculateCoinDiscount() : 0;
+      if (isCoinApplied) {
+        document.getElementById('summary-coin-discount').innerText = safeCoinDiscount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+      coinDiscountAmount = safeCoinDiscount;
+      const totalDiscount = appliedDiscount + safeCoinDiscount;
+      const finalSubtotal = Math.max(0, subtotal - totalDiscount);
+      const total = finalSubtotal + deliveryCharge;
+
+      document.getElementById('summary-subtotal').innerText = `৳ ${subtotal.toLocaleString()}`;
+      document.getElementById('summary-delivery').innerText = deliveryCharge === 0 ? 'Free' : `৳ ${deliveryCharge.toLocaleString()}`;
+      document.getElementById('summary-total').innerText = `৳ ${total.toLocaleString()}`;
+    }
+
+    async function submitOrder() {
+      if (!window.NexkartPolicies?.requireAcceptance()) return;
+      const placeOrderBtn = document.getElementById('place-order-btn');
+      if (placeOrderBtn?.disabled) return;
+
+      if (quantity > availableStock) {
+        alert(`Stock limit exceeded! Only ${availableStock} items available.`);
+        return;
+      }
+
+      const name = document.getElementById('cust-name').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+      const division = document.getElementById('cust-division').value.trim();
+      const district = document.getElementById('cust-district').value.trim();
+      const upazilla = document.getElementById('cust-upazilla').value.trim();
+      const union_area = document.getElementById('cust-union').value.trim();
+      const post_code = document.getElementById('cust-postcode').value.trim();
+      const block_house = document.getElementById('cust-blockhouse').value.trim();
+
+      const paymentRadio = document.querySelector('input[name="payment"]:checked');
+      const paymentMethod = paymentRadio ? paymentRadio.value : 'cod';
+
+      const selectedGateway = paymentMethod === 'online' ? 'paystation' : null;
+
+      if (!name || !phone) {
+        alert('নাম এবং ফোন নম্বর দিন।');
+        return;
+      }
+
+      // The address comes from the logged-in profile. Hidden fields carry the
+      // profile values; no division/district/upazilla code is shown to the user.
+      if (!district || !block_house) {
+        alert('আপনার Profile-এ shipping address সম্পূর্ণ নেই। Edit Profile থেকে address ঠিক করে আবার চেষ্টা করুন।');
+        return;
+      }
+
+      const totalCalculatedDiscount = appliedDiscount + (isCoinApplied ? coinDiscountAmount : 0);
+
+      const orderData = {
+        ...window.NexkartPolicies.payload(),
+        product_id: productId,
+        quantity: quantity,
+        variant: selectedVariant || null,
+        payment_method: paymentMethod,
+        selected_gateway: selectedGateway,
+        name: name,
+        email: email,
+        phone: phone,
+        division: division,
+        district: district,
+        upazilla: upazilla,
+        union_area: union_area,
+        post_code: post_code,
+        block_house: block_house,
+        discount_amount: appliedDiscount,
+        coupon_code: document.getElementById('coupon-code-input').value.trim(),
+        use_coins: Boolean(isCoinApplied),
+        client_coin_discount: isCoinApplied ? Number(coinDiscountAmount || 0) : 0,
+        client_delivery_charge: Number(deliveryCharge || 0)
+      };
+
+      try {
+        if (placeOrderBtn) {
+          placeOrderBtn.disabled = true;
+          placeOrderBtn.classList.add('opacity-60', 'cursor-not-allowed');
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Order...';
+        }
+
+        // COD uses the existing order endpoint. Online payment starts a pending
+        // PayStation attempt; no paid order should be created before verification.
+        const isPayStation = paymentMethod === 'online';
+        const endpoint = isPayStation ? '/user/paystation/start' : '/user/place-order';
+        const payload = isPayStation
+          ? { ...orderData, checkout_type: 'buy_now' }
+          : orderData;
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const rawText = await response.text();
+        const contentType = response.headers.get('content-type') || '';
+        let result;
+        if (!contentType.toLowerCase().includes('application/json')) {
+          console.error('Checkout API returned non-JSON:', {
+            endpoint, status: response.status, url: response.url,
+            contentType, preview: rawText.slice(0, 500)
+          });
+          throw new Error(`${endpoint} returned HTTP ${response.status} (non-JSON response). Check backend route and deployment.`);
+        }
+        try {
+          result = JSON.parse(rawText);
+        } catch (parseError) {
+          console.error('Checkout API invalid JSON:', { endpoint, status: response.status, preview: rawText.slice(0, 500) });
+          throw new Error(`${endpoint} returned invalid JSON (HTTP ${response.status}).`);
+        }
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || result.error || `${endpoint} failed (HTTP ${response.status})`);
+        }
+
+        if (isPayStation) {
+          if (!result.payment_url) throw new Error('PayStation did not return a payment URL.');
+          const paymentUrl = new URL(result.payment_url, window.location.origin);
+          if (paymentUrl.protocol !== 'https:') throw new Error('Invalid PayStation payment URL.');
+          window.location.assign(paymentUrl.href);
+          return;
+        }
+
+        // COD does not have a payment callback. Show a clear success state, then navigate.
+        if (placeOrderBtn) {
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Order Placed Successfully!';
+          placeOrderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+        window.location.replace('/user/thank-you?method=cod&order_id=' + encodeURIComponent(result.order_id || ''));
+        return;
+      } catch (err) {
+        console.error('Order Submit Error:', err);
+        alert(err.message || 'Server error! Please try again.');
+      } finally {
+        if (placeOrderBtn) {
+          placeOrderBtn.disabled = false;
+          placeOrderBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+          placeOrderBtn.innerHTML = '<i class="fa-solid fa-check-to-slot"></i> Place Order';
+        }
+      }
+    }
+  </script>
+<script>
+// Cart checkout must load as a full document, never inside an iframe.
+if (new URLSearchParams(window.location.search).get('source') === 'cart') {
+  window.location.replace('/user/cart-checkout-content.html');
+}
+</script>
+
+<footer class="nk-legal-footer" aria-label="Customer policies"><div><nav aria-label="Customer policies"><a href="/user/userAbout">About Us</a><a href="/users/contact.html">Contact & Address</a><a href="/users/terms.html">Terms & Conditions</a><a href="/user/return-policy">Return & Refund</a><a href="/users/privacy.html">Privacy Policy</a><a href="/users/delivery-policy.html">Delivery Policy</a></nav></div></footer>
+</body>
+</html>

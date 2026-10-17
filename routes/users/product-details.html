@@ -31,40 +31,13 @@
   <meta id="tw-description" name="twitter:description" content="NexKartBD theke sera dame ponno kinun.">
   <meta id="tw-image" name="twitter:image" content="">
 <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '2974825169520458');
-fbq('track', 'PageView');
-</script>
+
+
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
-  <script id="product-json-ld" type="application/ld+json">
-  {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": "NexKartBD Product",
-    "description": "NexKartBD Product Description",
-    "brand": {
-      "@type": "Brand",
-      "name": "NexKartBD"
-    },
-    "offers": {
-      "@type": "Offer",
-      "priceCurrency": "BDT",
-      "price": "0",
-      "availability": "https://schema.org/InStock"
-    }
-  }
-  </script>
+  <script id="product-json-ld" type="application/ld+json">{}</script>
 
   <script>
     tailwind = {
@@ -88,21 +61,21 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     }
 
     body { 
-      background: linear-gradient(135deg, #ff758c, #ff7eb3, #fda085);
+      background: #f8f3eb;
       min-height: 100vh;
     }
 
     .theme-glass-card {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 20px 40px rgba(255, 75, 110, 0.15);
+      background: #fffdf9;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: 1px solid #e9dfd2;
+      box-shadow: 0 7px 24px rgba(97, 72, 43, 0.065);
     }
 
     .theme-glass-input {
-      background: rgba(255, 255, 255, 0.95);
-      border: 1.5px solid #ffccd5;
+      background: #ffffff;
+      border: 1.5px solid #eee2d6;
     }
 
     .horizontal-scroll-slider {
@@ -136,59 +109,33 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
       overflow: hidden;
       cursor: pointer;
     }
-
-    .bg-animations {
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 1;
-      top: 0;
-      left: 0;
-      pointer-events: none;
+    /* Warm beige design 3: stable, responsive layout */
+    html, body { max-width: 100%; overflow-x: clip; }
+    #product-main-section, #section-description, #section-specification,
+    #section-reviews, #section-inquiries { min-width: 0; }
+    #product-main-section > div { min-width: 0; }
+    #main-product-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+    @media (max-width: 639px) {
+      .theme-glass-card { border-radius: 16px; }
+      .theme-glass-input { border-radius: 12px; }
+      #product-title { overflow-wrap: anywhere; }
+      #thumbnail-container { max-width: calc(100vw - 48px); }
+      #product-main-section { overflow: hidden; }
     }
-
-    .floating-item {
-      position: absolute;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      list-style: none;
-      width: 35px;
-      height: 35px;
-      background: rgba(255, 255, 255, 0.3);
-      bottom: -150px;
-      border-radius: 50%;
-      animation: animate 18s linear infinite;
-      color: #fff;
-      font-size: 18px;
-      backdrop-filter: blur(4px);
-    }
-
-    .floating-item:nth-child(1) { left: 10%; width: 45px; height: 45px; animation-delay: 0s; animation-duration: 14s; }
-    .floating-item:nth-child(2) { left: 25%; width: 40px; height: 40px; animation-delay: 2s; animation-duration: 12s; }
-    .floating-item:nth-child(3) { left: 45%; width: 50px; height: 50px; animation-delay: 4s; animation-duration: 16s; }
-    .floating-item:nth-child(4) { left: 65%; width: 40px; height: 40px; animation-delay: 1s; animation-duration: 13s; }
-    .floating-item:nth-child(5) { left: 80%; width: 48px; height: 48px; animation-delay: 3s; animation-duration: 15s; }
-
-    @keyframes animate {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; border-radius: 50%; }
-      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 30%; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
+<link rel="stylesheet" href="/users/love-list.css?v=wishlist-20261015-2">
+<script src="/users/love-list.js?v=wishlist-20261015-2" defer></script>
+<link rel="stylesheet" href="/users/shop-chat.css">
+<script src="/users/shop-chat.js" defer></script>
+<link rel="stylesheet" href="/users/customer-policies.css">
 </head>
 <body class="text-gray-800 antialiased relative pb-10">
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PCP7CR73" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-  <ul class="bg-animations">
-    <li class="floating-item"><i class="fa-solid fa-wand-magic-sparkles"></i></li>
-    <li class="floating-item"><i class="fa-solid fa-heart"></i></li>
-    <li class="floating-item"><i class="fa-solid fa-spray-can-sparkles"></i></li>
-    <li class="floating-item"><i class="fa-solid fa-gem"></i></li>
-    <li class="floating-item"><i class="fa-solid fa-star"></i></li>
-  </ul>
-
-  <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+  <div class="max-w-6xl mx-auto px-3 py-4 sm:p-5 md:p-8 space-y-5 md:space-y-6 relative z-10">
     <div class="flex items-center justify-between py-2">
       <a href="/user/dashboard" class="theme-glass-card hover:bg-white text-[#d63384] font-semibold px-5 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-2 shadow-sm text-sm">
         <i class="fa-solid fa-house text-[#ff4b6e]"></i> Home
@@ -198,9 +145,9 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
       </button>
     </div>
 
-    <div id="product-main-section" class="theme-glass-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-8 p-6 md:p-8 items-start">
+    <div id="product-main-section" class="theme-glass-card rounded-3xl overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 p-3 sm:p-5 md:p-8 items-start">
       <div class="space-y-4 md:sticky md:top-6">
-        <div id="img-zoom-box" class="img-zoom-container relative rounded-2xl overflow-hidden border border-pink-200 bg-white/80 h-[480px] md:h-[620px] flex items-center justify-center p-4 shadow-sm group">
+        <div id="img-zoom-box" class="img-zoom-container relative rounded-2xl overflow-hidden border border-pink-200 bg-white/80 h-[290px] min-[380px]:h-[340px] sm:h-[440px] md:h-[560px] lg:h-[620px] flex items-center justify-center p-4 shadow-sm group">
           <img id="main-product-image" src="" alt="Product Image" loading="lazy" class="object-contain max-h-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
           <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
             <i class="fa-solid fa-expand"></i> Click to Fullscreen
@@ -220,7 +167,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
       <div class="space-y-5">
         <div>
           <span id="product-category" class="text-[11px] uppercase tracking-widest font-bold text-[#d63384] bg-pink-100/90 px-3.5 py-1 rounded-full border border-pink-200"></span>
-          <h1 id="product-title" class="text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 leading-snug"></h1>
+          <h1 id="product-title" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 mt-3 leading-snug"></h1>
         </div>
 
         <div class="flex items-center justify-between theme-glass-input p-4 rounded-2xl shadow-sm">
@@ -265,7 +212,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
             </div>
             <div class="flex items-center gap-2.5 p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 sm:col-span-2">
               <i class="fa-regular fa-clock text-amber-600"></i>
-              <span>Estimated Delivery: <strong id="estimated-delivery-time">3-5 Business Days</strong></span>
+              <span>Estimated Delivery: <strong id="estimated-delivery-time">3-5 Business Days</strong><span id="estimated-delivery-dates" class="block mt-1 font-semibold text-amber-800"></span></span>
             </div>
           </div>
           <div id="delivery-options" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1"></div>
@@ -290,6 +237,14 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
               <i class="fa-solid fa-store"></i> Visit Store
             </a>
           </div>
+        </div>
+
+
+        <!-- Customer product reporting (separate from IPR reporting) -->
+        <div class="flex justify-end pt-2">
+          <button type="button" onclick="openProductReport()" class="text-xs font-semibold text-gray-600 hover:text-[#d63384] flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white/80 hover:bg-pink-50">
+            <i class="fa-regular fa-flag"></i> Report this Product
+          </button>
         </div>
 
         <div class="theme-glass-input p-4 rounded-2xl flex items-center justify-between border-2 border-pink-200 shadow-sm">
@@ -319,8 +274,8 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
       </div>
     </div>
 
-    <div class="sticky top-3 z-40 theme-glass-card rounded-2xl px-6 py-3.5 shadow-md border border-pink-200 my-6">
-      <div class="flex items-center gap-8 text-sm font-medium text-gray-500 overflow-x-auto whitespace-nowrap">
+    <div class="sticky top-2 md:top-3 z-40 theme-glass-card rounded-2xl px-3 sm:px-6 py-3 sm:py-3.5 shadow-md border border-pink-200 my-6">
+      <div class="flex items-center gap-5 sm:gap-8 text-xs sm:text-sm font-medium text-gray-500 overflow-x-auto whitespace-nowrap">
         <a href="#section-description" id="nav-description" class="hover:text-[#ff4b6e] transition-all pb-1 font-bold text-gray-900 border-b-2 border-[#ff4b6e]">Description</a>
         <a href="#section-specification" id="nav-specification" class="hover:text-[#ff4b6e] transition-all pb-1">Specifications</a>
         <a href="#section-reviews" id="nav-reviews" class="hover:text-[#ff4b6e] transition-all pb-1">Customer Reviews</a>
@@ -436,6 +391,20 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     </div>
   </div>
 
+
+  <!-- International shipping notice: displayed only for non-BD origins -->
+  <div id="international-shipping-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="international-shipping-title" onclick="if(event.target===this) closeInternationalShippingNotice()">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-pink-100" role="document">
+      <div class="flex justify-between items-start gap-3">
+        <div class="flex items-center gap-3"><span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 text-xl"><i class="fa-solid fa-plane"></i></span><div><h2 id="international-shipping-title" class="text-lg font-bold text-gray-900">International Shipping</h2><p class="text-xs text-gray-500">বিদেশ থেকে সরাসরি শিপিং</p></div></div>
+        <button type="button" onclick="closeInternationalShippingNotice()" class="rounded-xl p-2 text-gray-500 hover:bg-gray-100" aria-label="Close shipping notice"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="mt-4 text-sm leading-7 text-gray-700">এই পণ্যটি বাংলাদেশ থেকে নয়, <strong id="international-origin">বিদেশ</strong> থেকে পাঠানো হবে। এটি একটি <strong>International Shipping</strong> পণ্য। কাস্টমস ও আন্তর্জাতিক পরিবহনের কারণে ডেলিভারিতে কিছুটা বেশি সময় লাগতে পারে।</p>
+      <div class="mt-4 rounded-2xl bg-amber-50 border border-amber-100 p-4 text-sm"><div class="font-semibold text-amber-900">Estimated Delivery: <span id="international-delivery-days">—</span></div><div id="international-delivery-dates" class="mt-1 font-bold text-amber-800"></div><p class="mt-2 text-xs text-amber-700">তারিখগুলো আজ থেকে আনুমানিক হিসাব করা; অর্ডারের দিন ও শিপিং পরিস্থিতি অনুযায়ী পরিবর্তন হতে পারে।</p></div>
+      <button type="button" onclick="closeInternationalShippingNotice()" class="mt-5 w-full rounded-2xl bg-[#ff4b6e] py-3 text-sm font-bold text-white hover:bg-[#e63b5d]">বুঝেছি, পণ্যটি দেখুন</button>
+    </div>
+  </div>
+
   <div id="login-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-all duration-300">
     <div class="theme-glass-card bg-white/95 rounded-3xl max-w-md w-full p-6 md:p-8 space-y-5 relative shadow-2xl border border-pink-200 animate-fadeIn">
       <button onclick="closeLoginModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-pink-100 hover:bg-pink-200 text-[#ff4b6e] flex items-center justify-center transition-all">
@@ -502,6 +471,7 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     let currentStockPrice = 0;
     let productQuantity = 1;
     let selectedVariant = null;
+    let currentProductSlug = null;
     let pendingAction = null;
 
     let fullDescriptionText = '';
@@ -773,9 +743,10 @@ function openGooglePopup() {
 
     function executeOrderRedirect() {
       const activeIdentifier = window.currentLoadedProductId || currentProductId;
-      if (!activeIdentifier) return;
+      const activeSlug = currentProductSlug || window.currentLoadedProductSlug;
+      if (!activeIdentifier || !activeSlug) return;
       
-      let orderUrl = `/user/checkout?id=${encodeURIComponent(activeIdentifier)}&qty=${productQuantity}`;
+      let orderUrl = `/user/checkout/${encodeURIComponent(activeSlug)}?qty=${productQuantity}`;
       if (selectedVariant) {
         orderUrl += `&variant=${encodeURIComponent(selectedVariant)}`;
       }
@@ -819,6 +790,19 @@ function openGooglePopup() {
         });
         const data = await response.json();
         if (data.success) {
+          // Track only a successful cart API response; tracking must not interrupt the cart.
+          if (response.ok) {
+            try {
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({
+                event: 'nexkart_add_to_cart',
+                product_id: String(activeProductId),
+                quantity: Number(productQuantity) || 1
+              });
+            } catch (trackingError) {
+              console.warn('AddToCart tracking unavailable.');
+            }
+          }
           alert('Product successfully added to cart!');
         } else {
           alert('Error: ' + data.message);
@@ -991,7 +975,7 @@ function openGooglePopup() {
       }
       
       let discountBadge = '';
-      if (Number(product.regular_price) > Number(product.sale_price)) {
+      if (Number(product.sale_price) > 0 && Number(product.regular_price) > Number(product.sale_price)) {
           const discount = Math.round(((product.regular_price - product.sale_price) / product.regular_price) * 100);
           discountBadge = `<span class="absolute top-3 left-3 bg-[#ff4b6e] text-[#ffffff] text-[11px] font-semibold px-2 py-0.5 rounded-md z-10">${discount}% OFF</span>`;
       }
@@ -999,10 +983,10 @@ function openGooglePopup() {
       const avgRating = Number(product.avg_rating) ? Number(product.avg_rating).toFixed(1) : "0.0";
       const reviewCount = product.review_count || 0;
 
-      const targetParam = `id=${product.product_id || product.id}`;
+      const targetSlug = product.slug || product.product_id || product.id;
 
       return `
-        <div onclick="window.location.href='/user/product-details?${targetParam}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
+        <div data-love-product="${product.id}" onclick="window.location.href='/user/product/${encodeURIComponent(targetSlug)}'" class="bg-white/90 rounded-2xl p-4 border border-pink-100 cursor-pointer hover:shadow-lg transition-all flex flex-col justify-between relative group">
             ${discountBadge}
             <div>
                 <div class="relative w-full h-44 mb-3 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center">
@@ -1041,7 +1025,7 @@ function openGooglePopup() {
       const metaDescription = rawDesc ? rawDesc.substring(0, 160) : `${product.title || 'Product'} online kinun NexKartBD theke.`;
       const keywords = `${product.title || ''}, ${product.category || ''}, ${product.brand_name || ''}, online shopping bangladesh, buy online, NexKartBD`;
       
-      const canonicalUrl = `${window.location.origin}/user/product-details?id=${product.product_id || product.id}`;
+      const canonicalUrl = 'https://www.nexkartbd.com' + (product.slug ? '/user/product/' + encodeURIComponent(product.slug) : '/user/product-details?id=' + encodeURIComponent(product.product_id || product.id));
 
       let imageUrl = '';
       if (galleryImages && galleryImages.length > 0 && galleryImages[0]) {
@@ -1083,17 +1067,21 @@ function openGooglePopup() {
           "@type": "Offer",
           "url": canonicalUrl,
           "priceCurrency": "BDT",
-          "price": product.sale_price || "0",
+          "price": Number(product.sale_price) > 0 ? Number(product.sale_price) : Number(product.regular_price),
           "itemCondition": "https://schema.org/NewCondition",
           "availability": Number(product.stock_quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
         }
       };
 
-      if (product.avg_rating && Number(product.avg_rating) > 0) {
+      const seoPrice = Number(product.sale_price) > 0 ? Number(product.sale_price) : (product.regular_price != null && product.regular_price !== '' ? Number(product.regular_price) : NaN);
+      if (!Number.isFinite(seoPrice) || seoPrice < 0) delete schemaData.offers;
+      if (!product.brand_name || product.brand_name === 'N/A') delete schemaData.brand;
+
+      if (Number(product.avg_rating) > 0 && Number(product.avg_rating) <= 5 && Number(product.review_count) > 0) {
         schemaData.aggregateRating = {
           "@type": "AggregateRating",
           "ratingValue": Number(product.avg_rating).toFixed(1),
-          "reviewCount": product.review_count || 1
+          "reviewCount": Number(product.review_count)
         };
       }
 
@@ -1105,8 +1093,11 @@ function openGooglePopup() {
 
     function renderProductDetails(product, galleryImages, sellerProducts, suggestedProducts, userCoins) {
       window.currentLoadedProductId = product.product_id || product.id;
+      currentProductSlug = product.slug || currentProductSlug || null;
+      window.currentLoadedProductSlug = currentProductSlug;
 
       document.getElementById('product-title').innerText = product.title || 'Untitled Product';
+      window.NexLove.attachDetails(product.id, document.getElementById('product-title'));
       document.getElementById('product-sku').innerText = product.sku || product.product_id || product.id || 'N/A';
       document.getElementById('product-category').innerText = product.category || 'General';
 
@@ -1114,7 +1105,7 @@ function openGooglePopup() {
 
       updateDynamicSEO(product, galleryImages);
 
-      currentStockPrice = parseFloat(product.sale_price || 0);
+      currentStockPrice = Number(product.sale_price) > 0 ? Number(product.sale_price) : Number(product.regular_price) || 0;
       availableUserCoins = userCoins || 0;
 
       if (product.coin_offer && product.coin_offer.toLowerCase() === 'yes' && product.coin_percentage_value) {
@@ -1200,7 +1191,7 @@ function openGooglePopup() {
         oldPriceElem.classList.add('hidden');
       }
 
-      if (Number(product.regular_price) > Number(product.sale_price)) {
+      if (Number(product.sale_price) > 0 && Number(product.regular_price) > Number(product.sale_price)) {
         document.getElementById('product-regular-price').innerText = `৳ ${parseFloat(product.regular_price).toLocaleString()}`;
       } else {
         document.getElementById('product-regular-price').innerText = '';
@@ -1237,8 +1228,7 @@ function openGooglePopup() {
         variantSection.classList.add('hidden');
       }
 
-      document.getElementById('shipping-from-loc').innerText = product.shipping_from || 'Main Warehouse';
-      document.getElementById('estimated-delivery-time').innerText = product.delivery_time || product.estimated_delivery || '3-5 Business Days';
+      updateShippingAndDelivery(product);
 
       document.getElementById('seller-shop-name').innerText = product.seller_shop_name || 'NexKartBD Official';
       
@@ -1413,14 +1403,73 @@ function openGooglePopup() {
       }
     }
 
+
+    // Shipping origin and delivery ETA are read from the existing product API.
+    // Use Bangladesh calendar dates, not the visitor's computer timezone.
+    function bangladeshToday() {
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+      const v = Object.fromEntries(parts.map(p => [p.type, p.value]));
+      return new Date(Date.UTC(Number(v.year), Number(v.month) - 1, Number(v.day), 12));
+    }
+
+    function deliveryDateRange(value) {
+      const raw = String(value || '').trim();
+      // Accept 21-30, 21–30 Days, 21 to 30 days, or 21 days.
+      const match = raw.match(/(\d{1,3})\s*(?:-|–|—|to)\s*(\d{1,3})/i) || raw.match(/(\d{1,3})/);
+      if (!match) return '';
+      const start = Number(match[1]);
+      const end = Number(match[2] || match[1]);
+      if (start < 1 || end < start || end > 365) return '';
+      const today = bangladeshToday();
+      const fmt = d => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+      const a = new Date(today.getTime()); a.setUTCDate(a.getUTCDate() + start);
+      const b = new Date(today.getTime()); b.setUTCDate(b.getUTCDate() + end);
+      return fmt(a) + (end === start ? '' : ' – ' + fmt(b));
+    }
+
+    function closeInternationalShippingNotice() {
+      const modal = document.getElementById('international-shipping-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function updateShippingAndDelivery(product) {
+      const origin = String(product.shipping_from || '').trim();
+      const delivery = String(product.delivery_time || product.estimated_delivery || '3-5 Business Days').trim();
+      const dates = deliveryDateRange(delivery);
+      document.getElementById('shipping-from-loc').textContent = origin || 'Main Warehouse';
+      document.getElementById('estimated-delivery-time').textContent = delivery;
+      document.getElementById('estimated-delivery-dates').textContent = dates ? 'সম্ভাব্য তারিখ: ' + dates : '';
+
+      // BD / Bangladesh / বাংলাদেশের products are local; unknown origin is not assumed international.
+      const local = /^(BD|BGD|Bangladesh|বাংলাদেশ)$/i.test(origin);
+      if (!origin || local) return;
+      document.getElementById('international-origin').textContent = origin;
+      document.getElementById('international-delivery-days').textContent = delivery;
+      document.getElementById('international-delivery-dates').textContent = dates ? 'সম্ভাব্য ডেলিভারি: ' + dates : '';
+      const modal = document.getElementById('international-shipping-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
     async function fetchProductData() {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const slugFromPath = pathParts[pathParts.length - 1] && pathParts[pathParts.length - 2] === 'product'
+        ? decodeURIComponent(pathParts[pathParts.length - 1])
+        : null;
       const urlParams = new URLSearchParams(window.location.search);
-      const productId = urlParams.get('id');
+      const legacyProductId = urlParams.get('id');
+      const productSlug = slugFromPath || urlParams.get('slug');
 
-      if (!productId) return;
+      if (!productSlug && !legacyProductId) return;
 
-      currentProductId = productId;
-      const requestUrl = `/user/product/${encodeURIComponent(productId)}`;
+      currentProductSlug = productSlug || null;
+      currentProductId = legacyProductId || null;
+      const requestUrl = productSlug
+        ? `/user/product-data/${encodeURIComponent(productSlug)}`
+        : `/user/product-data/${encodeURIComponent(legacyProductId)}`;
 
       try {
         const response = await fetch(requestUrl);
@@ -1774,6 +1823,63 @@ function openGooglePopup() {
     document.addEventListener('DOMContentLoaded', () => {
       fetchProductData();
     });
+  
+    // Customer product reporting; intentionally independent from /user/ipr-report.
+    function openProductReport() {
+      const modal = document.getElementById('product-report-modal');
+      document.getElementById('report-feedback').classList.add('hidden');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      document.getElementById('report-reason').focus();
+    }
+    function closeProductReport() {
+      const modal = document.getElementById('product-report-modal');
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+    }
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeProductReport(); });
+    async function submitProductReport(event) {
+      event.preventDefault();
+      const productId = window.currentLoadedProductId;
+      const reason = document.getElementById('report-reason').value;
+      const details = document.getElementById('report-details').value.trim();
+      const feedback = document.getElementById('report-feedback');
+      const button = document.getElementById('report-submit-btn');
+      feedback.classList.remove('hidden');
+      if (!productId || !reason) { feedback.textContent = 'Product এবং কারণ নির্বাচন করুন।'; return; }
+      button.disabled = true; button.textContent = 'Submitting...';
+      try {
+        const response = await fetch('/user/report-product', {method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({product_id:productId,reason,details})});
+        const data = await response.json().catch(()=>({}));
+        if (response.status === 401) { feedback.textContent = 'Report করতে আগে Login করুন।'; return; }
+        if (!response.ok || !data.success) { feedback.textContent = data.message || 'Report জমা দেওয়া যায়নি। আবার চেষ্টা করুন।'; return; }
+        feedback.textContent = 'ধন্যবাদ! আপনার Report জমা হয়েছে। Admin যাচাই করবেন।';
+        feedback.className = 'text-sm text-green-700';
+        document.getElementById('product-report-form').reset();
+        button.textContent = 'Report Submitted';
+        return;
+      } catch (err) { feedback.textContent = 'Network সমস্যা। আবার চেষ্টা করুন।'; }
+      finally { button.disabled = false; if(button.textContent !== 'Report Submitted') button.textContent = 'Submit Report'; }
+    }
+
   </script>
+
+  <div id="product-report-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" onclick="if(event.target===this) closeProductReport()">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center gap-3"><h2 id="report-modal-title" class="text-xl font-extrabold text-gray-900"><i class="fa-regular fa-flag text-[#ff4b6e]"></i> Report Product</h2><button type="button" onclick="closeProductReport()" aria-label="Close report" class="text-gray-500 text-2xl">&times;</button></div>
+      <p class="text-sm text-gray-600">পণ্যের তথ্য ভুল বা সন্দেহজনক হলে জানান। এটি IPR / Copyright অভিযোগের ফর্ম নয়।</p>
+      <form id="product-report-form" class="space-y-3" onsubmit="submitProductReport(event)">
+        <label for="report-reason" class="block text-sm font-semibold">অভিযোগের কারণ</label>
+        <select id="report-reason" required class="w-full border border-pink-200 rounded-xl p-3 bg-white text-sm">
+          <option value="">কারণ নির্বাচন করুন</option><option value="wrong_info">ভুল বা বিভ্রান্তিকর তথ্য</option><option value="fake_product">নকল বা সন্দেহজনক পণ্য</option><option value="unsafe_product">অনিরাপদ বা নিষিদ্ধ পণ্য</option><option value="wrong_image">ভুল ছবি বা ক্যাটাগরি</option><option value="other">অন্যান্য</option>
+        </select>
+        <label for="report-details" class="block text-sm font-semibold">বিস্তারিত (ঐচ্ছিক)</label>
+        <textarea id="report-details" maxlength="1000" rows="4" placeholder="সমস্যাটি লিখুন..." class="w-full border border-pink-200 rounded-xl p-3 text-sm"></textarea>
+        <p id="report-feedback" role="status" aria-live="polite" class="text-sm hidden"></p>
+        <button id="report-submit-btn" type="submit" class="w-full rounded-xl bg-[#ff4b6e] text-white font-bold py-3 disabled:opacity-60">Submit Report</button>
+      </form>
+    </div>
+  </div>
+
+
+<footer class="nk-legal-footer" aria-label="Customer policies"><div><nav aria-label="Customer policies"><a href="/user/userAbout">About Us</a><a href="/users/contact.html">Contact & Address</a><a href="/users/terms.html">Terms & Conditions</a><a href="/user/return-policy">Return & Refund</a><a href="/users/privacy.html">Privacy Policy</a><a href="/users/delivery-policy.html">Delivery Policy</a></nav></div></footer>
 </body>
 </html>
