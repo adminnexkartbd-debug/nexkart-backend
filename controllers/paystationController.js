@@ -11,6 +11,7 @@ function createController({ db, buildCheckoutSnapshot, finalizePaidCheckout }) {
       if (!userId) return res.status(401).json({ success: false, message: 'Login required' });
       if (!['cart','buy_now'].includes(req.body.checkout_type)) return res.status(400).json({ success:false, message:'Invalid checkout type' });
       const checkout = await buildCheckoutSnapshot({ userId, type: req.body.checkout_type, input: req.body });
+      checkout.policy_acceptance = req.policyAcceptance;
       // buildCheckoutSnapshot must independently validate product price, coupon, coins, stock,
       // shipping address, delivery fee and return an integer payable amount in BDT.
       if (!Number.isFinite(checkout.amount_bdt) || checkout.amount_bdt <= 0) throw new Error('Invalid server calculated total');
