@@ -7,9 +7,9 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // Passport Google Strategy (Product Callback URL সহ)
 passport.use('google-user-product', new GoogleStrategy({
-    clientID: '45851651755-mqq8rap3sv2rc46p8265hrc8kgc2rbuh.apps.googleusercontent.com',
-    clientSecret: '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',
-    callbackURL: 'http://localhost:5000/user/auth/google/callback/product'
+    clientID: process.env.GOOGLE_USER_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_USER_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_USER_PRODUCT_CALLBACK_URL || 'https://www.nexkartbd.com/user/auth/google/callback/product'
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
