@@ -144,4 +144,4 @@ const sendReturnEmail = async (sellerEmail, orderData) => {
     }
 };
 
-module.exports = { sendReturnEmail };
+module.exports = { sendReturnEmail, sendViaGoogleOAuth };

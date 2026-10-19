@@ -113,7 +113,7 @@ const createBDGatePayment = async (orderData, totalAmount) => {
 };
 
 // ইমেইল সার্ভিস ইমপোর্ট
-const { sendReturnEmail } = require('../../services/ReturnPolicyMail');
+const { notifyReview, notifyReturn } = require('../../services/orderFeedbackMailService');
 
 // HTML পেজ রেন্ডার করার রাউট
 router.get('/my-orders-page', (req, res) => {
@@ -203,6 +203,14 @@ router.post('/submit-review', reviewUpload.single('review_image'), async (req, r
             return res.status(400).json({ success: false, message: 'Rating, Order ID, and Product ID are required!' });
         }
 
+        const [ownedOrders] = await db.query(
+            'SELECT seller_id FROM orders WHERE user_id = ? AND order_id = ? AND product_id = ? LIMIT 1',
+            [userId, order_id, product_id]
+        );
+        if (!ownedOrders.length) {
+            return res.status(403).json({ success: false, message: 'Order not found for your account.' });
+        }
+
         const [existingReview] = await db.query(
             `SELECT id FROM product_reviews WHERE user_id = ? AND order_id = ? AND product_id = ?`,
             [userId, order_id, product_id]
@@ -223,6 +231,11 @@ router.post('/submit-review', reviewUpload.single('review_image'), async (req, r
         `;
 
         await db.query(query, [product_id, userId, order_id, rating, review_text || '', review_imgUrl]);
+        // Notify only after the review is saved; mail failure must not undo it.
+        notifyReview({ seller_id: ownedOrders[0].seller_id, order_id, product_id, rating,
+            review_text: review_text || '', review_imgUrl }).catch(error => {
+            console.error('Review notification failed:', error.message);
+        });
         return res.json({ success: true, message: 'Your review has been saved successfully!' });
 
     } catch (error) {
@@ -240,12 +253,22 @@ router.post('/submit-return-request', upload.single('proof_file'), async (req, r
             return res.status(401).json({ success: false, message: 'Unauthorized! Please login first.' });
         }
 
-        const { order_id, product_id, seller_id, return_reason, return_details } = req.body;
+        const { order_id, product_id, return_reason, return_details } = req.body;
         const proofFile = req.file ? req.file.path : '';
 
-        if (!order_id || !product_id || !seller_id || !return_reason || !proofFile) {
-            return res.status(400).json({ success: false, message: 'All required fields including proof file and seller ID are missing!' });
+        if (!order_id || !product_id || !return_reason || !proofFile) {
+            return res.status(400).json({ success: false, message: 'Order, product, reason and proof file are required!' });
         }
+
+        // Seller identity comes from the customer's saved order, not form data.
+        const [ownedOrders] = await db.query(
+            'SELECT seller_id FROM orders WHERE user_id = ? AND order_id = ? AND product_id = ? LIMIT 1',
+            [userId, order_id, product_id]
+        );
+        if (!ownedOrders.length) {
+            return res.status(403).json({ success: false, message: 'Order not found for your account.' });
+        }
+        const seller_id = ownedOrders[0].seller_id;
 
         const [existingReturn] = await db.query(
             `SELECT id FROM order_returns WHERE user_id = ? AND order_id = ? AND product_id = ?`,
@@ -256,18 +279,6 @@ router.post('/submit-return-request', upload.single('proof_file'), async (req, r
             return res.status(400).json({ success: false, message: 'You have already requested a return and refund for this product!' });
         }
 
-        const [adminInfo] = await db.query(`SELECT email FROM admins WHERE id = ?`, [seller_id]);
-        if (adminInfo.length > 0) {
-            const sellerEmail = adminInfo[0].email;
-            sendReturnEmail(sellerEmail, { 
-                order_id, 
-                product_id, 
-                return_reason, 
-                return_details, 
-                proof_file: proofFile 
-            });
-        }
-
         const insertQuery = `
             INSERT INTO order_returns (user_id, order_id, product_id, seller_id, return_reason, return_details, proof_file, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
@@ -276,6 +287,11 @@ router.post('/submit-return-request', upload.single('proof_file'), async (req, r
         await db.query(insertQuery, [
             userId, order_id, product_id, seller_id, return_reason, return_details || '', proofFile
         ]);
+
+        notifyReturn({ seller_id, order_id, product_id, return_reason,
+            return_details: return_details || '', proof_file: proofFile }).catch(error => {
+            console.error('Return notification failed:', error.message);
+        });
 
         return res.json({ 
             success: true, 
