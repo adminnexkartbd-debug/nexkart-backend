@@ -16,7 +16,9 @@ router.get('/', async (req, res) => {
                 c.description AS coupon_description,
                 p.title AS original_product_name,
                 p.regular_price,
-                p.sale_price
+                p.sale_price,
+                (SELECT pi.image_path FROM product_images pi
+                 WHERE pi.product_id = p.id ORDER BY pi.id ASC LIMIT 1) AS product_image_path
             FROM coupons c
             LEFT JOIN products p ON TRIM(c.product_id) = TRIM(p.product_id)
             ORDER BY c.id DESC
@@ -48,6 +50,15 @@ router.get('/', async (req, res) => {
             let finalPrice = originalPrice - discount;
             if (finalPrice < 0) finalPrice = 0;
 
+            // Product images may be upload filenames, local paths, or hosted URLs.
+            const rawImage = String(coupon.product_image_path || '').trim().replace(/\\/g, '/');
+            let primaryImage = '';
+            if (/^https?:\/\//i.test(rawImage)) primaryImage = rawImage;
+            else if (rawImage && !/^[a-z][a-z0-9+.-]*:/i.test(rawImage) && !rawImage.startsWith('//')) {
+                primaryImage = rawImage.startsWith('/') ? rawImage
+                    : '/' + (rawImage.startsWith('uploads/') ? rawImage : 'uploads/' + rawImage);
+            }
+
             return {
                 id: coupon.id,
                 coupon_name: coupon.coupon_name || '',
@@ -56,6 +67,7 @@ router.get('/', async (req, res) => {
                 coupon_scope: coupon.coupon_scope || 'general',
                 product_id: coupon.product_id || '',
                 product_name: productName,
+                primary_image: primaryImage,
                 original_price: originalPrice,
                 final_price: finalPrice,
                 description: coupon.coupon_description || '',
