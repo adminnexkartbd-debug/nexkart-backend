@@ -91,13 +91,11 @@ router.get('/api/get-orders', ensureActiveSeller, async (req, res) => {
         const sqlQuery = `
             SELECT 
                 orders.*,
-                t.provider AS tracking_provider, t.auto_sync, t.courier_status, t.courier_detail, t.sync_error, 
                 products.title AS product_name,
                 admins.shop_name AS seller_shop_name,
                 admins.phone AS seller_phone,
                 admins.address AS seller_address
             FROM orders 
-            LEFT JOIN order_tracking17 t ON t.order_id=orders.order_id
             LEFT JOIN products ON orders.product_id = products.id 
             LEFT JOIN admins ON orders.seller_id = admins.id
             WHERE orders.seller_id = ? 
@@ -106,12 +104,37 @@ router.get('/api/get-orders', ensureActiveSeller, async (req, res) => {
         
         const [orders] = await db.query(sqlQuery, [Number(currentSellerId)]);
 
+        // Tracking enrichment must never prevent the original order list from loading.
+        let trackingWarning = null;
+        if (orders.length) {
+            try {
+                const trackingByOrder = new Map();
+                for (let start=0; start<orders.length; start+=200) {
+                    const ids=orders.slice(start,start+200).map(o=>String(o.order_id));
+                    const [trackingRows]=await db.query(
+                        `SELECT * FROM order_tracking17 WHERE order_id IN (${ids.map(()=>'?').join(',')})`,ids);
+                    for(const row of trackingRows) trackingByOrder.set(String(row.order_id),row);
+                }
+                for(const order of orders) {
+                    const t=trackingByOrder.get(String(order.order_id));
+                    if(t) Object.assign(order,{
+                        tracking_provider:t.provider || '17track',auto_sync:t.auto_sync,
+                        courier_status:t.courier_status,courier_detail:t.courier_detail,
+                        sync_error:t.sync_error
+                    });
+                }
+            } catch(trackingError) {
+                trackingWarning='Tracking information is temporarily unavailable. Orders are still available.';
+                console.warn('Optional tracking enrichment failed:',trackingError.code || trackingError.message);
+            }
+        }
         console.log(`✅ Seller (${currentSellerId}) - Total Orders Found:`, orders.length);
 
         return res.status(200).json({
             success: true,
             sellerId: currentSellerId,
             totalOrders: orders.length,
+            trackingWarning,
             data: orders
         });
 
@@ -134,7 +157,7 @@ router.post('/api/update-status', ensureActiveSeller, async (req, res) => {
         const currentSellerId = req.user ? (req.user.id || req.user.admin_id) : null;
 
         const [before] = await db.query('SELECT order_status FROM orders WHERE order_id=? AND seller_id=?',[order_id,Number(currentSellerId)]);
-        const updateQuery = `UPDATE orders o LEFT JOIN order_tracking17 t ON t.order_id=o.order_id SET o.order_status = ?, t.auto_sync=0 WHERE o.order_id = ? AND o.seller_id = ?`;
+        const updateQuery = `UPDATE orders o LEFT JOIN order_tracking17 t ON BINARY t.order_id=BINARY o.order_id SET o.order_status = ?, t.auto_sync=0 WHERE o.order_id = ? AND o.seller_id = ?`;
         const [result] = await db.query(updateQuery, [order_status, order_id, Number(currentSellerId)]);
 
         if (result.affectedRows > 0) {
@@ -152,7 +175,7 @@ router.post('/api/update-status', ensureActiveSeller, async (req, res) => {
 router.post('/api/tracking-auto', ensureActiveSeller, async(req,res)=>{
     try {
         const seller=Number(req.user.id || req.user.admin_id);
-        const [rows]=await db.query('SELECT o.order_id,o.tracking_number,t.provider FROM orders o JOIN order_tracking17 t ON t.order_id=o.order_id WHERE o.order_id=? AND o.seller_id=?',[req.body.order_id,seller]);
+        const [rows]=await db.query('SELECT o.order_id,o.tracking_number,t.provider FROM orders o JOIN order_tracking17 t ON BINARY t.order_id=BINARY o.order_id WHERE o.order_id=? AND o.seller_id=?',[req.body.order_id,seller]);
         if (!rows.length) return res.sendStatus(404);
         if(rows[0].provider==='17track') await tracking17.register(rows[0].order_id, rows[0].tracking_number);
         if(rows[0].provider==='manual') throw new Error('Select an automatic provider first');
