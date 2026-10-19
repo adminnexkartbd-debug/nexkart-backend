@@ -582,6 +582,21 @@
         let activeProductId = null;
         let activeOrderId = null;
         let activeSellerId = null;
+        let loadedOrders = [];
+
+        // Keep product titles out of inline JavaScript: HTML entities are decoded
+        // before an onclick handler runs, so apostrophes can break that handler.
+        document.getElementById('orders-container').addEventListener('click', event => {
+            const button = event.target.closest('button[data-order-action]');
+            if (!button || button.disabled) return;
+            const order = loadedOrders[Number(button.dataset.orderIndex)];
+            if (!order) return;
+            if (button.dataset.orderAction === 'review') {
+                openReviewModal(order.product_id, order.order_id, order.product_title || 'Product');
+            } else if (button.dataset.orderAction === 'return') {
+                openReturnModal(order.order_id, order.product_id, order.seller_id, order.product_title || 'Product');
+            }
+        });
 
         document.addEventListener("DOMContentLoaded", () => {
             fetchOrders();
@@ -614,7 +629,8 @@
 
                 container.innerHTML = '';
 
-                data.orders.forEach(order => {
+                loadedOrders = data.orders;
+                data.orders.forEach((order, orderIndex) => {
                     const createdDate = new Date(order.created_at).toLocaleDateString('en-US', {
                         year: 'numeric', month: 'short', day: 'numeric'
                     });
@@ -674,7 +690,7 @@
                             <div class="order-body">
                                 <div data-love-row data-love-product="${order.product_id}" class="product-row">
 <img src="${order.product_image || '/images/no-image.png'}" alt="Product Image" class="product-img">                                    <div class="product-details">
-                                        <h4>${order.product_title || 'Product Title Unavailable'}</h4>
+                                        <h4>${escapeHtml(order.product_title || 'Product Title Unavailable')}</h4>
                                         <p>Quantity: ${order.quantity} ${order.variant ? '| Variant: ' + order.variant : ''}</p>
                                         <p style="font-size: 12px; margin-top:3px;">Ship to: ${order.shipping_address}</p>
                                         ${isDelivered ? `<div><span class="return-tag"><i class="fa-solid fa-rotate-left"></i> ${hasAlreadyReturned ? 'Return Requested / Processed' : 'Return & Refund Available'}</span></div>` : ''}
@@ -716,14 +732,14 @@
 
                                     <!-- রিটার্ন বাটন -->
                                     ${isDelivered ? `
-                                        <button class="btn btn-return ${hasAlreadyReturned ? 'disabled' : ''}" ${hasAlreadyReturned ? 'disabled' : ''} onclick="openReturnModal('${order.order_id}', '${order.product_id}', '${order.seller_id}', '${escapeHtml(order.product_title)}')">
+                                        <button class="btn btn-return ${hasAlreadyReturned ? 'disabled' : ''}" ${hasAlreadyReturned ? 'disabled' : ''} data-order-action="return" data-order-index="${orderIndex}">
                                             <i class="fa-solid fa-arrow-rotate-left"></i> ${hasAlreadyReturned ? 'Return Requested' : 'Return & Refund'}
                                         </button>
                                     ` : ''}
 
                                     <!-- একবার রিভিউ দেওয়া হয়ে গেলে বাটন রিমুভ হয়ে যাবে -->
                                     ${isDelivered && !hasReviewed ? `
-                                        <button class="btn btn-review" onclick="openReviewModal('${order.product_id}', '${order.order_id}', '${escapeHtml(order.product_title)}')">
+                                        <button class="btn btn-review" data-order-action="review" data-order-index="${orderIndex}">
                                             <i class="fa-solid fa-star"></i> Rate & Review
                                         </button>
                                     ` : ''}
