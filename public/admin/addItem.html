@@ -376,12 +376,13 @@
 
           <div class="space-y-6">
             <div>
-              <label class="block text-sm font-medium text-slate-300 mb-2">Product Gallery Images (কমপক্ষে ৩ টি) <span class="text-pink-500">*</span></label>
+              <label class="block text-sm font-medium text-slate-300 mb-2">Product Gallery Images (কমপক্ষে ৩টি, সর্বোচ্চ ১০টি) <span class="text-pink-500">*</span></label>
               <div onclick="document.getElementById('imgInput').click();" class="border-2 border-dashed border-slate-800 hover:border-pink-500/60 bg-slate-950 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center min-h-[160px] transition group">
                 <i class="fa-solid fa-cloud-arrow-up text-3xl text-pink-500 group-hover:scale-110 transition-transform mb-2"></i>
-                <p id="upload-text" class="text-sm font-medium text-slate-200">ছবি সিলেক্ট করতে ক্লিক করুন (কমপক্ষে ৩ টি)</p>
+                <p id="upload-text" class="text-sm font-medium text-slate-200">ছবি সিলেক্ট করতে ক্লিক করুন (৩–১০টি ছবি)</p>
                 <input type="file" id="imgInput" name="images" multiple class="hidden" accept="image/*" onchange="handleImageSelection(this)">
               </div>
+              <p class="text-xs text-amber-400 mt-2">কমপক্ষে ৩টি এবং সর্বোচ্চ ১০টি ছবি দেওয়া যাবে। ১০টির বেশি ছবি দেওয়া যাবে না।</p>
               <div id="imagePreviewContainer" class="grid grid-cols-4 sm:grid-cols-6 gap-3 mt-4"></div>
             </div>
 
@@ -513,9 +514,8 @@
         const responseText = await response.text();
         let result;
         try { result = JSON.parse(responseText); }
-        catch (_) {
-          throw new Error(`সার্ভার সঠিক JSON response দেয়নি (HTTP ${response.status})। Render log দেখুন। আবার Save করার আগে product list পরীক্ষা করুন।`);
-        }
+        catch (_) { throw new Error(`সার্ভার সঠিক response দেয়নি (HTTP ${response.status})। আবার Save করার আগে product list দেখুন।`); }
+        setProductUploadLoading(false);
 
         if (response.ok && result.success) {
           const product = result.products.find(p => String(p.id) === String(id) || String(p.product_id) === String(id));
@@ -625,6 +625,11 @@
 
     function handleImageSelection(input) {
       const newFiles = Array.from(input.files);
+      if (existingImages.length + selectedFiles.length + newFiles.length > 10) {
+        alert('সর্বোচ্চ ১০টি ছবি দেওয়া যাবে। অতিরিক্ত ছবি বাদ দিয়ে আবার সিলেক্ট করুন।');
+        updateFileInputAndPreview();
+        return;
+      }
       selectedFiles = selectedFiles.concat(newFiles);
       updateFileInputAndPreview();
     }
@@ -686,10 +691,46 @@
       updateFileInputAndPreview();
     }
 
+    let productUploadBusy = false;
+    let uploadPreviousFocus = null;
+    let uploadPreviousOverflow = '';
+    function setProductUploadLoading(loading) {
+      const overlay = document.getElementById('productUploadOverlay');
+      const form = document.getElementById('productForm');
+      productUploadBusy = loading;
+      form.setAttribute('aria-busy', String(loading));
+      if (loading) {
+        uploadPreviousFocus = document.activeElement;
+        uploadPreviousOverflow = document.body.style.overflow;
+        overlay.hidden = false;
+        form.inert = true;
+        document.body.style.overflow = 'hidden';
+        overlay.querySelector('[role="dialog"]').focus();
+      } else {
+        overlay.hidden = true;
+        form.inert = false;
+        document.body.style.overflow = uploadPreviousOverflow;
+        if (uploadPreviousFocus && uploadPreviousFocus.isConnected) uploadPreviousFocus.focus();
+      }
+    }
+    document.addEventListener('keydown', function(e) {
+      if (!productUploadBusy) return;
+      if (e.key === 'Escape') e.preventDefault();
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        document.querySelector('#productUploadOverlay [role="dialog"]').focus();
+      }
+    });
+
     document.getElementById('productForm').addEventListener('submit', async function(e) {
       e.preventDefault();
+      if (productUploadBusy) return;
 
       const totalImagesCount = existingImages.length + selectedFiles.length;
+      if (totalImagesCount > 10) {
+        alert('সর্বোচ্চ ১০টি ছবি দেওয়া যাবে। অতিরিক্ত ছবি সরিয়ে Save করুন।');
+        return;
+      }
       if (totalImagesCount < 3) {
         alert("⚠️ অনুগ্রহ করে কমপক্ষে ৩টি প্রোডাক্টের ছবি সিলেক্ট করুন!");
         return;
@@ -703,15 +744,13 @@
 
       if (editMode) {
         formData.append('kept_image_ids', JSON.stringify(keptImageIds));
-        // Update routes accept new_images; retain all selected gallery files.
-        formData.delete('images');
-        selectedFiles.forEach(file => formData.append('new_images', file));
       }
 
       const url = editMode ? `/api/products/update/${editProductId}` : `/api/products/add`;
       const method = editMode ? 'PUT' : 'POST';
 
       try {
+        setProductUploadLoading(true);
         const response = await fetch(url, {
           method: method,
           body: formData,
@@ -721,9 +760,8 @@
         const responseText = await response.text();
         let result;
         try { result = JSON.parse(responseText); }
-        catch (_) {
-          throw new Error(`সার্ভার সঠিক JSON response দেয়নি (HTTP ${response.status})। Render log দেখুন। আবার Save করার আগে product list পরীক্ষা করুন।`);
-        }
+        catch (_) { throw new Error(`সার্ভার সঠিক response দেয়নি (HTTP ${response.status})। আবার Save করার আগে product list দেখুন।`); }
+        setProductUploadLoading(false);
 
         if (response.ok && result.success) {
           alert("🎉 " + result.message);
@@ -734,6 +772,7 @@
           submitBtn.textContent = editMode ? "Update Product" : "Save Product";
         }
       } catch (err) {
+        setProductUploadLoading(false);
         console.error('Submit Error:', err);
         alert("⚠️ " + err.message);
         submitBtn.disabled = false;
@@ -741,5 +780,24 @@
       }
     });
   </script>
+
+  <style>
+    #productUploadOverlay[hidden] { display: none !important; }
+    #productUploadOverlay { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(2,6,23,.82); backdrop-filter:blur(7px); }
+    .upload-dialog { width:100%; max-width:390px; padding:36px 26px; border:1px solid #334155; border-radius:24px; background:#0f172a; color:#f8fafc; text-align:center; box-shadow:0 24px 80px #0008; }
+    .upload-spinner { width:54px; height:54px; margin:0 auto 22px; border:4px solid #334155; border-top-color:#22d3ee; border-right-color:#ec4899; border-radius:50%; animation:product-upload-spin .9s linear infinite; }
+    @keyframes product-upload-spin { to { transform:rotate(360deg); } }
+    @media(prefers-reduced-motion:reduce) { .upload-spinner { animation-duration:2.5s; } }
+  </style>
+  <div id="productUploadOverlay" hidden>
+    <div class="upload-dialog" role="dialog" aria-modal="true" aria-labelledby="productUploadTitle" aria-describedby="productUploadDescription" tabindex="-1">
+      <div class="upload-spinner" aria-hidden="true"></div>
+      <div role="status" aria-live="polite">
+        <h2 id="productUploadTitle" style="font-size:21px;font-weight:700;margin:0 0 12px">আপলোড হচ্ছে…</h2>
+        <p id="productUploadDescription" style="font-size:14px;line-height:1.8;color:#cbd5e1;margin:0">আপনার ছবি, ভিডিও ও প্রোডাক্টের তথ্য সেভ হচ্ছে।<br>অনুগ্রহ করে অপেক্ষা করুন, পেজ বন্ধ বা রিফ্রেশ করবেন না।</p>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
