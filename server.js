@@ -164,8 +164,11 @@ app.use(
 );
 
 // বডি পার্সার
+// Raw webhook body must be captured before the global JSON parser.
+app.use('/webhooks/17track', require('./routes/users/tracking17').router);
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use('/webhooks/steadfast', require('./services/steadfastService').router);
 
 // ==================== ২. ডায়নামিক ডাটাবেজ কানেকশন ====================
 const db = mysql.createPool({
@@ -463,6 +466,9 @@ app.get('/logout', (req, res) => {
 
 // ==================== ৬. সার্ভার লিসেন (Server Listen) ====================
 const PORT = process.env.PORT || 5000;
+require('./services/orderStatusMail').start();
+require('./services/steadfastService').start();
+
 app.listen(PORT, () => {
     console.log(`🚀 NexKartBD Server is running on port ${PORT}`);
 });

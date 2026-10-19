@@ -662,10 +662,21 @@
                     </select>
                 </td>
                 <td>
+                    <select id="courier-${order.order_id}" class="select-status" aria-label="Courier provider">
+                        <option value="17track" ${(!order.tracking_provider || order.tracking_provider==='17track')?'selected':''}>International — 17TRACK</option>
+                        <option value="steadfast" ${order.tracking_provider==='steadfast'?'selected':''}>Bangladesh — Steadfast</option>
+                        <option value="manual" ${order.tracking_provider==='manual'?'selected':''}>Manual tracking</option>
+                    </select>
                     <div style="display: flex; align-items: center;">
                         <input type="text" id="tracking-${order.order_id}" class="tracking-input" value="${order.tracking_number || ''}" placeholder="Tracking No">
                         <button class="btn-save" onclick="saveTrackingNumber('${order.order_id}')" title="Save Tracking">Save</button>
                     </div>
+                    <small>${trackingText(order.tracking_provider || 'Tracking')}: ${trackingText(order.courier_status || (order.tracking_number ? 'Awaiting tracking update' : 'No tracking number'))}</small><br>
+                    <small>${trackingText(order.courier_detail)}</small>
+                    ${order.sync_error ? '<br><small style="color:#b91c1c">'+trackingText(order.sync_error)+'</small>' : ''}
+                    ${order.auto_sync != null ? '<br><small>Auto Sync: '+(Number(order.auto_sync) ? 'ON' : 'OFF (manual)')+'</small>' : ''}
+                    ${order.tracking_number ? `<button class="btn-save" onclick="checkCourier('${order.order_id}')">Check status</button>` : `<button class="btn-save" onclick="createSteadfast('${order.order_id}')">Send to Steadfast</button>`}
+                    ${order.auto_sync != null && !Number(order.auto_sync) ? `<button class="btn-save" onclick="enableTrackingAuto('${order.order_id}')">Enable Auto Sync</button>` : ''}
                 </td>
                 <td>${formattedDate}</td>
                 <td>
@@ -696,6 +707,23 @@
         document.getElementById('detailsModal').style.display = 'none';
     }
 
+    async function checkCourier(orderId) {
+        try {const r=await fetch('/admin/orders-list/api/tracking-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId})});const d=await r.json();alert(d.message);await fetchSellerOrders();}catch(e){alert('Could not check courier status');}
+    }
+    async function createSteadfast(orderId) {
+        const o=globalOrders.find(x=>x.order_id==orderId); if(!o)return;
+        const initial=o.payment_status==='paid'?0:(String(o.payment_method).toLowerCase()==='cod'?Number(o.total_amount):0);
+        const amount=prompt('Confirm COD collection amount for this parcel only (BDT). Paid orders must be 0. Do not include amounts already collected or another parcel.',String(initial));
+        if(amount===null)return;
+        if(!amount.trim() || !Number.isFinite(Number(amount)) || Number(amount)<0){alert('Enter a valid COD amount');return;}
+        if(!confirm(`Create a real Steadfast parcel?\nOrder: ${orderId}\nRecipient: ${o.customer_name}\nPhone: ${o.customer_phone}\nAddress: ${o.shipping_address}\nCOD: BDT ${amount}\nThis sends the recipient details to Steadfast. Confirm this parcel is for Bangladesh delivery.`))return;
+        try {const r=await fetch('/admin/orders-list/api/steadfast-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId,cod_amount:Number(amount)})});const d=await r.json();alert(d.message);await fetchSellerOrders();}catch(e){alert('Request failed. Check Steadfast merchant panel before trying again.');}
+    }
+    function trackingText(value) { const el=document.createElement('span'); el.textContent=value || ''; return el.innerHTML; }
+    async function enableTrackingAuto(orderId) {
+        try {const r=await fetch('/admin/orders-list/api/tracking-auto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId})}); const data=await r.json();alert(data.message);await fetchSellerOrders();} catch(e){alert('Could not enable Auto Sync');}
+    }
+    setInterval(()=>{if(!document.hidden && !document.activeElement.matches('input,select,textarea')) fetchSellerOrders();},60000);
     async function saveTrackingNumber(orderId) {
         const trackingInput = document.getElementById(`tracking-${orderId}`).value;
 
@@ -710,7 +738,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     order_id: orderId, 
-                    tracking_number: trackingInput 
+                    tracking_number: trackingInput,
+                    provider: document.getElementById(`courier-${orderId}`).value
                 })
             });
 
@@ -721,6 +750,7 @@
                 // গ্লোবাল ডাটাতে ট্র্যাকিং নম্বর আপডেট করে দেওয়া
                 const targetOrder = globalOrders.find(o => o.order_id == orderId);
                 if (targetOrder) targetOrder.tracking_number = trackingInput;
+                await fetchSellerOrders();
             }
         } catch (err) {
             console.error('Error updating tracking number:', err);
@@ -805,6 +835,7 @@
             if (res.success) {
                 const targetOrder = globalOrders.find(o => o.order_id == orderId);
                 if (targetOrder) targetOrder.order_status = newStatus;
+                await fetchSellerOrders();
             }
         } catch (err) {
             console.error(err);

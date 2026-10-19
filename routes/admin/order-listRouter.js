@@ -3,7 +3,10 @@ const router = express.Router();
 const path = require('path');
 
 // 💡 ডাটাবেজ ফাইল ইমপোর্ট
-const db = require('../../db'); 
+const db = require('../../db');
+const tracking17 = require('../users/tracking17');
+const statusMail = require('../../services/orderStatusMail');
+const steadfast = require('../../services/steadfastService'); 
 
 // ==========================================
 // ১. AUTHENTICATION MIDDLEWARE
@@ -24,14 +27,34 @@ function ensureActiveSeller(req, res, next) {
 // ==========================================
 router.post('/api/update-tracking', ensureActiveSeller, async (req, res) => {
     try {
-        const { order_id, tracking_number } = req.body;
+        const { order_id } = req.body;
+        const provider = req.body.provider || '17track';
+        if (!['17track','steadfast','manual'].includes(provider)) return res.status(400).json({success:false,message:'Invalid courier provider'});
+        const tracking_number = String(req.body.tracking_number || '').trim();
+        if (!/^[A-Za-z0-9-]{5,50}$/.test(tracking_number)) return res.status(400).json({success:false,message:'Tracking number must contain 5–50 letters, numbers or hyphens.'});
         const currentSellerId = req.user ? (req.user.id || req.user.admin_id) : null;
 
         const updateQuery = `UPDATE orders SET tracking_number = ? WHERE order_id = ? AND seller_id = ?`;
         const [result] = await db.query(updateQuery, [tracking_number, order_id, Number(currentSellerId)]);
 
         if (result.affectedRows > 0) {
-            return res.json({ success: true, message: 'ট্র্যাকিং নম্বর সফলভাবে সেভ হয়েছে।' });
+            await db.query(`INSERT INTO order_tracking17 (order_id,tracking_number,provider) VALUES (?,?,?)
+                ON DUPLICATE KEY UPDATE auto_sync=IF(tracking_number=VALUES(tracking_number) AND provider=VALUES(provider),auto_sync,1),
+                event_time=IF(tracking_number=VALUES(tracking_number) AND provider=VALUES(provider),event_time,NULL),
+                courier_status=IF(tracking_number=VALUES(tracking_number) AND provider=VALUES(provider),courier_status,NULL),
+                courier_detail=IF(tracking_number=VALUES(tracking_number) AND provider=VALUES(provider),courier_detail,NULL),
+                registered=0,consignment_id=NULL,last_checked=NULL,sync_error=NULL,
+                tracking_number=VALUES(tracking_number),provider=VALUES(provider)`, [order_id,tracking_number,provider]);
+            if(provider==='manual') await db.query('UPDATE order_tracking17 SET auto_sync=0 WHERE order_id=?',[order_id]);
+            let message='Tracking number saved.';
+            try {
+                if(provider==='17track') {await tracking17.register(order_id,tracking_number);message+=' Registered with 17TRACK.';}
+                if(provider==='steadfast') {await steadfast.sync(order_id);message+=' Steadfast status checked.';}
+            } catch(e) {
+                await db.query('UPDATE order_tracking17 SET sync_error=? WHERE order_id=? AND tracking_number=?',[e.message.slice(0,500),order_id,tracking_number]);
+                message+=' Auto tracking could not start: '+e.message;
+            }
+            return res.json({success:true,message});
         } else {
             return res.status(403).json({ success: false, message: 'অনুমতি নেই অথবা অর্ডারটি পাওয়া যায়নি।' });
         }
@@ -67,12 +90,14 @@ router.get('/api/get-orders', ensureActiveSeller, async (req, res) => {
         // products এবং admins উভয় টেবিলের ডাটা সঠিকভাবে আনার জন্য JOIN করা হয়েছে
         const sqlQuery = `
             SELECT 
-                orders.*, 
+                orders.*,
+                t.provider AS tracking_provider, t.auto_sync, t.courier_status, t.courier_detail, t.sync_error, 
                 products.title AS product_name,
                 admins.shop_name AS seller_shop_name,
                 admins.phone AS seller_phone,
                 admins.address AS seller_address
             FROM orders 
+            LEFT JOIN order_tracking17 t ON t.order_id=orders.order_id
             LEFT JOIN products ON orders.product_id = products.id 
             LEFT JOIN admins ON orders.seller_id = admins.id
             WHERE orders.seller_id = ? 
@@ -105,12 +130,15 @@ router.get('/api/get-orders', ensureActiveSeller, async (req, res) => {
 router.post('/api/update-status', ensureActiveSeller, async (req, res) => {
     try {
         const { order_id, order_status } = req.body;
+        if (!['pending','processing','shipped','delivered','cancelled'].includes(order_status)) return res.status(400).json({success:false,message:'Invalid order status'});
         const currentSellerId = req.user ? (req.user.id || req.user.admin_id) : null;
 
-        const updateQuery = `UPDATE orders SET order_status = ? WHERE order_id = ? AND seller_id = ?`;
+        const [before] = await db.query('SELECT order_status FROM orders WHERE order_id=? AND seller_id=?',[order_id,Number(currentSellerId)]);
+        const updateQuery = `UPDATE orders o LEFT JOIN order_tracking17 t ON t.order_id=o.order_id SET o.order_status = ?, t.auto_sync=0 WHERE o.order_id = ? AND o.seller_id = ?`;
         const [result] = await db.query(updateQuery, [order_status, order_id, Number(currentSellerId)]);
 
         if (result.affectedRows > 0) {
+            if (before.length && before[0].order_status !== order_status) await statusMail.enqueue(order_id,order_status);
             return res.json({ success: true, message: 'অর্ডার স্ট্যাটাস আপডেট হয়েছে।' });
         } else {
             return res.status(403).json({ success: false, message: 'অনুমতি নেই অথবা অর্ডারটি পাওয়া যায়নি।' });
@@ -121,4 +149,35 @@ router.post('/api/update-status', ensureActiveSeller, async (req, res) => {
     }
 });
 
+router.post('/api/tracking-auto', ensureActiveSeller, async(req,res)=>{
+    try {
+        const seller=Number(req.user.id || req.user.admin_id);
+        const [rows]=await db.query('SELECT o.order_id,o.tracking_number,t.provider FROM orders o JOIN order_tracking17 t ON t.order_id=o.order_id WHERE o.order_id=? AND o.seller_id=?',[req.body.order_id,seller]);
+        if (!rows.length) return res.sendStatus(404);
+        if(rows[0].provider==='17track') await tracking17.register(rows[0].order_id, rows[0].tracking_number);
+        if(rows[0].provider==='manual') throw new Error('Select an automatic provider first');
+        await db.query('UPDATE order_tracking17 SET auto_sync=1 WHERE order_id=?',[rows[0].order_id]);
+        res.json({success:true,message:'Auto Sync enabled. The next courier update will update the order.'});
+    } catch(e) {res.status(400).json({success:false,message:e.message});}
+});
+router.post('/api/steadfast-create',ensureActiveSeller,async(req,res)=>{
+    try {
+        const [rows]=await db.query('SELECT * FROM orders WHERE order_id=? AND seller_id=?',[req.body.order_id,Number(req.user.id || req.user.admin_id)]);
+        if(!rows.length)return res.sendStatus(404);
+        const order=rows[0];
+        if(order.tracking_number)throw new Error('This order already has a tracking number.');
+        if(req.body.cod_amount===undefined || req.body.cod_amount==='')throw new Error('Confirm the COD amount first.');
+        const parcel=await steadfast.create(order,Number(req.body.cod_amount));
+        res.json({success:true,message:'Steadfast parcel created. Tracking: '+parcel.tracking_code});
+    }catch(e){res.status(400).json({success:false,message:e.message});}
+});
+router.post('/api/tracking-check',ensureActiveSeller,async(req,res)=>{
+    try {
+        const [rows]=await db.query("SELECT t.* FROM order_tracking17 t JOIN orders o ON o.order_id=t.order_id WHERE t.order_id=? AND o.seller_id=?",[req.body.order_id,Number(req.user.id || req.user.admin_id)]);
+        if(!rows.length)return res.sendStatus(404);
+        if(rows[0].provider==='steadfast')await steadfast.sync(rows[0].order_id);
+        else if(rows[0].provider==='17track')await tracking17.register(rows[0].order_id,rows[0].tracking_number);
+        res.json({success:true,message:rows[0].provider==='17track'?'Registration checked. Updates arrive via webhook.':'Tracking checked.'});
+    }catch(e){res.status(400).json({success:false,message:e.message});}
+});
 module.exports = router;
