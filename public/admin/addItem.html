@@ -512,9 +512,8 @@
         const response = await fetch(`/api/products/all`, { credentials: 'include' });
         const responseText = await response.text();
         let result;
-        try {
-          result = JSON.parse(responseText);
-        } catch (_) {
+        try { result = JSON.parse(responseText); }
+        catch (_) {
           throw new Error(`সার্ভার সঠিক JSON response দেয়নি (HTTP ${response.status})। Render log দেখুন। আবার Save করার আগে product list পরীক্ষা করুন।`);
         }
 
@@ -701,17 +700,12 @@
       submitBtn.textContent = "Saving...";
 
       const formData = new FormData(this);
-      const video = formData.get('product_video');
-      if (video && video.size > 0) {
-        alert('এই API-তে ভিডিও আপলোড চালু নেই। ভিডিও বাদ দিয়ে ছবি দিয়ে Save করুন।');
-        submitBtn.disabled = false;
-        submitBtn.textContent = editMode ? 'Update Product' : 'Save Product';
-        return;
-      }
-      formData.delete('product_video');
 
       if (editMode) {
         formData.append('kept_image_ids', JSON.stringify(keptImageIds));
+        // Update routes accept new_images; retain all selected gallery files.
+        formData.delete('images');
+        selectedFiles.forEach(file => formData.append('new_images', file));
       }
 
       const url = editMode ? `/api/products/update/${editProductId}` : `/api/products/add`;
@@ -726,9 +720,8 @@
 
         const responseText = await response.text();
         let result;
-        try {
-          result = JSON.parse(responseText);
-        } catch (_) {
+        try { result = JSON.parse(responseText); }
+        catch (_) {
           throw new Error(`সার্ভার সঠিক JSON response দেয়নি (HTTP ${response.status})। Render log দেখুন। আবার Save করার আগে product list পরীক্ষা করুন।`);
         }
 
