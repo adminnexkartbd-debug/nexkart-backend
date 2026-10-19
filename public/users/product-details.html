@@ -848,6 +848,31 @@ function openGooglePopup() {
       }
     }
 
+    // Render inquiry text safely, with clickable web links.
+    function formatInquiryText(value) {
+      const escape = text => String(text).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+      const text = String(value ?? '');
+      const pattern = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+      let html = '', cursor = 0;
+      for (const match of text.matchAll(pattern)) {
+        let label = match[0].replace(/[.,!?;:،।]+$/u, '');
+        while (label.endsWith(')') && (label.match(/\)/g) || []).length > (label.match(/\(/g) || []).length) label = label.slice(0, -1);
+        const href = /^www\./i.test(label) ? 'https://' + label : label;
+        html += escape(text.slice(cursor, match.index));
+        try {
+          const url = new URL(href);
+          if (!['https:', 'http:'].includes(url.protocol) || !url.hostname) throw new Error('Invalid web link');
+          html += '<a href="' + escape(href) + '" target="_blank" rel="noopener noreferrer" style="color:#d63384;text-decoration:underline;overflow-wrap:anywhere">' + escape(label) + '</a>';
+        } catch (_) {
+          html += escape(label);
+        }
+        cursor = match.index + label.length;
+      }
+      return (html + escape(text.slice(cursor))).replace(/\r\n|\r|\n/g, '<br>');
+    }
+
     async function loadInquiries(targetProductId) {
       const activeId = targetProductId || window.currentLoadedProductId;
       if (!activeId) return;
@@ -889,7 +914,7 @@ function openGooglePopup() {
                <div class="flex items-center justify-between">
                  <span class="font-bold text-[11px] text-[#ff4b6e]"><i class="fa-solid fa-store"></i> Store Admin (Reply)</span>
                </div>
-               <p class="text-xs text-gray-600">${item.answer}</p>
+               <p class="text-xs text-gray-600">${formatInquiryText(item.answer)}</p>
              </div>`
           : `<p class="text-[11px] text-[#d63384] italic mt-2">Admin will reply to this question soon.</p>`;
 
@@ -900,7 +925,7 @@ function openGooglePopup() {
               <span class="text-[10px] text-gray-400 font-mono">${new Date(item.created_at).toLocaleDateString()}</span>
             </div>
             <p class="text-xs font-medium text-gray-800 bg-pink-50/60 p-2.5 rounded-xl border border-pink-100">
-              <strong>Q:</strong> ${item.question}
+              <strong>Q:</strong> ${formatInquiryText(item.question)}
             </p>
             ${answerSection}
           </div>
