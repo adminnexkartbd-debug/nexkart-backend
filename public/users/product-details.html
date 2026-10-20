@@ -118,7 +118,36 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
     @media (max-width: 639px) {
       .theme-glass-card { border-radius: 16px; }
       .theme-glass-input { border-radius: 12px; }
-      #product-title { overflow-wrap: anywhere; }
+      #product-title {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: auto;
+        max-height: none;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        text-overflow: clip;
+        overflow: visible;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        /* Leave room for Bangla vowel signs above and below each line. */
+        line-height: 1.65;
+        padding-block: 0.12em;
+      }
+      .related-product-title {
+        display: block;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+        -webkit-line-clamp: unset;
+        line-clamp: unset;
+        line-height: 1.6;
+      }
       #thumbnail-container { max-width: calc(100vw - 48px); }
       #product-main-section { overflow: hidden; }
     }
@@ -1027,7 +1056,7 @@ function openGooglePopup() {
                         <span class="text-gray-400 text-[10px]">(${reviewCount})</span>
                     </div>
                 </div>
-                <h3 class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 my-1 h-10" title="${product.title}">${product.title}</h3>
+                <h3 class="related-product-title text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 my-1 h-10" title="${product.title}">${product.title}</h3>
             </div>
 
             <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
