@@ -579,58 +579,149 @@ function openGooglePopup() {
       }
     }
 
-   async function shareProduct() {
-      const productTitle = document.getElementById('product-title').innerText || 'NexKartBD Product';
-      const salePrice = document.getElementById('product-sale-price').innerText || '';
-      const category = document.getElementById('product-category').innerText || '';
-      const sku = document.getElementById('product-sku').innerText || '';
-      const shareUrl = window.location.href;
-
-      let shareText = `📌 Product: ${productTitle}\n🏷️ Category: ${category}\n💰 Price: ${salePrice}\n🔑 SKU: ${sku}\n\n`;
-
-      if (currentVideoUrl) {
-        let formattedVidUrl = currentVideoUrl;
-        if (!formattedVidUrl.startsWith('http://') && !formattedVidUrl.startsWith('https://')) {
-          formattedVidUrl = window.location.origin + (formattedVidUrl.startsWith('/') ? formattedVidUrl : '/' + formattedVidUrl);
-        }
-        shareText += `🎥 Watch Video: ${formattedVidUrl}\n\n`;
-      }
-
-      shareText += `🔗 Buy Link: ${shareUrl}`;
-
-      if (navigator.share) {
-        try {
-          let shareData = {
-            title: productTitle,
-            text: shareText,
-            url: shareUrl
-          };
-
-          const mainImgSrc = currentProductImages[0] || (document.getElementById('main-product-image') ? document.getElementById('main-product-image').src : '');
-          if (mainImgSrc && !mainImgSrc.startsWith('data:image')) {
-            try {
-              const response = await fetch(mainImgSrc);
-              const blob = await response.blob();
-              const file = new File([blob], `product-${currentProductId || 'item'}.jpg`, { type: blob.type });
-
-              if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                shareData.files = [file];
-              }
-            } catch (e) {
-              console.warn('Image fetch failed, sharing link only:', e);
-            }
-          }
-
-          await navigator.share(shareData);
-        } catch (err) {
-          if (err.name !== 'AbortError') console.error('Share failed:', err);
-        }
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Product details copied to clipboard!');
-        });
-      }
-    } 
+   // Share public product content only; never include account/coin/order data.
+   let productShareMedia = [];
+   function publicMediaUrl(value) {
+     try {
+       const url = new URL(value, location.origin);
+       return /^https?:$/.test(url.protocol) ? url.href : '';
+     } catch (_) { return ''; }
+   }
+   function productShareContent() {
+     const read = id => document.getElementById(id)?.innerText.trim() || '';
+     const plain = html => {
+       const doc = new DOMParser().parseFromString(html || '', 'text/html');
+       doc.querySelectorAll('script,style').forEach(node => node.remove());
+       return doc.body.textContent.trim();
+     };
+     const title = read('product-title') || 'NexKartBD Product';
+     const url = currentProductSlug
+       ? location.origin + '/user/product/' + encodeURIComponent(currentProductSlug)
+       : location.origin + location.pathname + location.search;
+     const rows = [title, 'NexKartBD', '', 'Product Link: ' + url];
+     for (const [label, id] of [
+       ['Price (BDT)', 'product-sale-price'], ['Regular Price', 'product-regular-price'],
+       ['Category', 'product-category'], ['SKU', 'product-sku'],
+       ['Availability', 'stock-status-badge'], ['Variants', 'variant-container'],
+       ['Ships From', 'shipping-from-loc'], ['Estimated Delivery', 'estimated-delivery-time'],
+       ['Delivery Options', 'delivery-options'], ['Seller', 'seller-shop-name'],
+       ['Specifications / Highlights', 'product-highlights']
+     ]) {
+       const value = read(id);
+       if (value) rows.push(label + ': ' + value);
+     }
+     const description = plain(fullDescriptionText);
+     if (description) rows.push('\nDescription:\n' + description);
+     const images = [...new Set(currentProductImages.map(publicMediaUrl).filter(Boolean))];
+     images.forEach((image, index) => rows.push('\nImage ' + (index + 1) + ': ' + image));
+     const video = currentVideoUrl && publicMediaUrl(currentVideoUrl);
+     if (video) rows.push('\nVideo: ' + video);
+     rows.push('\nসব ছবি, ভিডিও, রিভিউ ও প্রশ্নোত্তর দেখতে Product Link খুলুন।');
+     return {title, url, text: rows.join('\n'), images, video};
+   }
+   function closeProductShare() {
+     document.getElementById('product-share-dialog')?.close();
+   }
+   function shareProduct() {
+     let dialog = document.getElementById('product-share-dialog');
+     if (!dialog) {
+       dialog = document.createElement('dialog');
+       dialog.id = 'product-share-dialog';
+       dialog.setAttribute('aria-labelledby', 'product-share-heading');
+       dialog.style.cssText = 'width:min(94vw,560px);max-height:90vh;border:1px solid #fbcfe8;border-radius:20px;padding:20px;background:#fff9fb;color:#31212b;overflow:auto';
+       dialog.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="product-share-heading" style="font-weight:800;font-size:20px">Share Product</h2><button type="button" onclick="closeProductShare()" aria-label="Close" style="font-size:28px">×</button></div>
+       <p style="font-size:13px;margin:12px 0">সব তথ্য ও ছবি/ভিডিওর লিংক নিচে আছে। Facebook/Messenger ফাইলের সঙ্গে লেখা বাদ দিতে পারে। সেক্ষেত্রে Copy All করে মেসেজ বা পোস্টে Paste করুন। Product Link খুললে সব পাবলিক তথ্য দেখা যাবে।</p>
+       <textarea id="product-share-text" aria-label="Product information to share" readonly style="width:100%;height:200px;padding:12px;border:1px solid #f9a8d4;border-radius:12px;background:white;font-size:13px"></textarea>
+       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
+       <button type="button" onclick="shareProductDetails()" style="padding:10px 16px;background:#d63384;color:white;border-radius:10px">Share Details & Links</button>
+       <button type="button" onclick="copyProductShare()" style="padding:10px 16px;background:#fce7f3;border-radius:10px">Copy All</button>
+       <button type="button" id="product-share-media-btn" onclick="prepareProductShareMedia()" style="padding:10px 16px;background:#fce7f3;border-radius:10px">Prepare Photos / Video</button></div>
+       <p id="product-share-status" role="status" aria-live="polite" style="font-size:13px;margin-top:12px"></p>`;
+       document.body.appendChild(dialog);
+       dialog.addEventListener('close', () => { productShareMedia = []; });
+     }
+     productShareMedia = [];
+     document.getElementById('product-share-text').value = productShareContent().text;
+     const button = document.getElementById('product-share-media-btn');
+     button.disabled = false;
+     button.textContent = 'Prepare Photos / Video';
+     button.onclick = prepareProductShareMedia;
+     document.getElementById('product-share-status').textContent = '';
+     if (!dialog.open) dialog.showModal();
+   }
+   async function copyProductShare() {
+     const area = document.getElementById('product-share-text');
+     try {
+       await navigator.clipboard.writeText(area.value);
+       document.getElementById('product-share-status').textContent = 'সব তথ্য কপি হয়েছে। মেসেজ বা পোস্টে Paste করুন।';
+     } catch (_) {
+       area.focus(); area.select();
+       document.getElementById('product-share-status').textContent = 'লেখা সিলেক্ট করা হয়েছে। Copy করে মেসেজে Paste করুন।';
+     }
+   }
+   async function shareProductDetails() {
+     if (!navigator.share) return copyProductShare();
+     const data = productShareContent();
+     try { await navigator.share({title: data.title, text: data.text}); }
+     catch (error) {
+       if (error.name !== 'AbortError') document.getElementById('product-share-status').textContent = 'শেয়ার করা যায়নি। Copy All ব্যবহার করুন।';
+     }
+   }
+   async function prepareProductShareMedia() {
+     const button = document.getElementById('product-share-media-btn');
+     const status = document.getElementById('product-share-status');
+     if (!navigator.share || !navigator.canShare) {
+       status.textContent = 'এই ব্রাউজারে media sharing নেই। Copy All-এ ছবি ও ভিডিওর লিংক পাবেন।'; return;
+     }
+     button.disabled = true;
+     status.textContent = 'ছবি ও ভিডিও প্রস্তুত হচ্ছে…';
+     const data = productShareContent();
+     const urls = [...data.images, ...(data.video ? [data.video] : [])];
+     const files = []; let skipped = 0; let total = 0;
+     // Bound downloads on mobile. Every media URL remains in Copy All.
+     for (const url of urls) {
+       const controller = new AbortController();
+       const timeout = setTimeout(() => controller.abort(), 20000);
+       try {
+         const response = await fetch(url, {signal: controller.signal, credentials: 'omit'});
+         if (!response.ok) throw new Error('Media unavailable');
+         const type = (response.headers.get('content-type') || '').split(';')[0];
+         if (!/^(image|video)\//.test(type)) throw new Error('Link only');
+         const limit = 50 * 1024 * 1024;
+         if (Number(response.headers.get('content-length')) > limit - total) throw new Error('Too large');
+         const reader = response.body.getReader(); const chunks = []; let size = 0;
+         try {
+           while (true) {
+             const part = await reader.read(); if (part.done) break;
+             size += part.value.byteLength;
+             if (total + size > limit) { await reader.cancel(); throw new Error('Too large'); }
+             chunks.push(part.value);
+           }
+         } finally { reader.releaseLock(); }
+         const extension = ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','video/mp4':'mp4','video/webm':'webm'})[type] || type.split('/')[1].replace(/[^a-z0-9]/gi, '');
+         const file = new File(chunks, 'nexkart-product-' + (files.length + 1) + '.' + extension, {type});
+         if (!navigator.canShare({files:[file]})) throw new Error('Unsupported');
+         files.push(file); total += size;
+       } catch (_) { skipped++; }
+       finally { clearTimeout(timeout); }
+     }
+     if (!document.getElementById('product-share-dialog').open) return;
+     button.disabled = false;
+     if (!files.length || !navigator.canShare({files})) {
+       status.textContent = 'এই মিডিয়া ফাইলগুলো একসঙ্গে শেয়ার করা যাচ্ছে না। Copy All থেকে সব মিডিয়ার লিংক পাঠান।'; return;
+     }
+     productShareMedia = files;
+     button.textContent = 'Share Photos / Video (' + files.length + ')';
+     button.onclick = sharePreparedProductMedia;
+     status.textContent = files.length + 'টি ফাইল প্রস্তুত।' + (skipped ? ' ' + skipped + 'টি ফাইল লিংক হিসেবে Copy All-এ আছে।' : '') + ' লেখা বাদ গেলে Copy All করে আলাদা মেসেজে Paste করুন।';
+   }
+   async function sharePreparedProductMedia() {
+     const data = productShareContent();
+     try { await navigator.share({files: productShareMedia, title: data.title, text: data.text}); }
+     catch (error) {
+       if (error.name !== 'AbortError') document.getElementById('product-share-status').textContent = 'মিডিয়া শেয়ার হয়নি। Share Details & Links অথবা Copy All ব্যবহার করুন।';
+     }
+   }
 
     function setupImageFullscreen() {
       const container = document.getElementById('img-zoom-box');
@@ -1027,7 +1118,7 @@ function openGooglePopup() {
                         <span class="text-gray-400 text-[10px]">(${reviewCount})</span>
                     </div>
                 </div>
-                <h3 class="text-xs sm:text-sm font-semibold text-gray-800 my-1" style="display:block; height:auto; max-height:none; overflow:visible; white-space:normal; overflow-wrap:anywhere; word-break:normal; line-height:1.6; -webkit-line-clamp:unset; line-clamp:unset;" title="${product.title}">${product.title}</h3>
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2 my-1 h-10" title="${product.title}">${product.title}</h3>
             </div>
 
             <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
