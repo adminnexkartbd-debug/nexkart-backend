@@ -552,6 +552,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script>
     let currentPage = 1;
+    let categorySeed = '';
     let limit = 8;
 
     // Fill roughly three product rows (or more on taller screens), based on
@@ -634,7 +635,10 @@ async function fetchCategoryProducts(cat, type, promo, search, page = 1, isLoadM
     if (btnSpinner) btnSpinner.classList.remove('d-none');
 
     try {
-        let queryUrl = `/user/get-products-by-category?page=${page}&limit=${limit}`;
+        if (page === 1) {
+            categorySeed = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-');
+        }
+        let queryUrl = `/user/get-products-by-category?page=${page}&limit=${limit}&seed=${encodeURIComponent(categorySeed)}`;
 
         if (promo) {
             queryUrl += `&promo=${encodeURIComponent(promo)}`;

@@ -1708,6 +1708,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     let currentDashPage = 1;
     let dashLimit = 8;
     let dashOffset = 0;
+    let dashSeed = '';
 
     // Use the responsive grid to load enough products for at least three rows.
     // The existing View All and Load More UI remain unchanged.
@@ -1840,10 +1841,11 @@ async function loadDashboardProducts(page = 1, isLoadMore = false) {
         if (page === 1) {
             updateDashboardProductLimit();
             dashOffset = 0;
+            dashSeed = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-');
         }
 
         const offsetParam = page > 1 ? `&offset=${dashOffset}` : '';
-        const response = await fetch(`/user/dashProduct?page=${page}&limit=${dashLimit}${offsetParam}`);
+        const response = await fetch(`/user/dashProduct?page=${page}&limit=${dashLimit}&seed=${encodeURIComponent(dashSeed)}${offsetParam}`);
         const data = await response.json();
 
         if (data.success && data.products.length > 0) {

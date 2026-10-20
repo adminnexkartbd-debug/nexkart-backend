@@ -2372,18 +2372,18 @@ router.get('/category.html', (req, res) => {
 
 router.get('/dashProduct', async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 8;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const seed = /^[a-zA-Z0-9_-]{1,80}$/.test(String(req.query.seed || ''))
+            ? String(req.query.seed) : require('crypto').randomBytes(16).toString('hex');
+        res.set('Cache-Control', 'no-store');
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 8));
 
         const [totalCountResult] = await db.query('SELECT COUNT(*) AS total FROM products');
         const totalProducts = totalCountResult[0].total;
 
-        const maxOffset = Math.max(0, totalProducts - limit);
         const requestedOffset = parseInt(req.query.offset);
-        const randomOffset = page === 1
-            ? Math.floor(Math.random() * (maxOffset + 1))
-            : (Number.isFinite(requestedOffset) ? requestedOffset : 0);
-        const offset = Math.min(Math.max(0, randomOffset), maxOffset);
+        const offset = page === 1 ? 0 : Math.max(0,
+            Number.isFinite(requestedOffset) ? requestedOffset : (page - 1) * limit);
 
         const query = `
             SELECT p.*, 
@@ -2393,10 +2393,11 @@ router.get('/dashProduct', async (req, res) => {
             FROM products p
             LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
             GROUP BY p.id
+            ORDER BY MD5(CONCAT(?, ':', p.id)), p.id
             LIMIT ? OFFSET ?
         `;
 
-        const [products] = await db.query(query, [limit, offset]);
+        const [products] = await db.query(query, [seed, limit, offset]);
         const nextOffset = offset + products.length;
         const hasMore = nextOffset < totalProducts;
 
@@ -2406,7 +2407,8 @@ router.get('/dashProduct', async (req, res) => {
             products: products,
             hasMore: hasMore,
             offset: offset,
-            nextOffset: nextOffset
+            nextOffset: nextOffset,
+            seed
         });
     } catch (error) {
         console.error("Dashboard Product Load Error:", error);
@@ -2417,8 +2419,11 @@ router.get('/dashProduct', async (req, res) => {
 // Dynamic Category, Promo Badge & Search Product Fetching Endpoint (Dashboard Matched)
 router.get('/get-products-by-category', async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 8;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const seed = /^[a-zA-Z0-9_-]{1,80}$/.test(String(req.query.seed || ''))
+            ? String(req.query.seed) : require('crypto').randomBytes(16).toString('hex');
+        res.set('Cache-Control', 'no-store');
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 8));
         const offset = (page - 1) * limit;
 
         const { cat, type, promo, search } = req.query;
@@ -2479,13 +2484,13 @@ router.get('/get-products-by-category', async (req, res) => {
             LEFT JOIN product_reviews r ON p.id = r.product_id AND (r.status = 'approved' OR r.status = '1' OR r.status IS NULL)
             ${whereSQL}
             GROUP BY p.id
-            ORDER BY p.id DESC 
+            ORDER BY MD5(CONCAT(?, ':', p.id)), p.id 
             LIMIT ? OFFSET ?
         `;
 
         const countSql = `SELECT COUNT(DISTINCT p.id) as total FROM products p ${whereSQL}`;
 
-        const [products] = await db.query(sql, [...queryParams, limit, offset]);
+        const [products] = await db.query(sql, [...queryParams, seed, limit, offset]);
         const [countResult] = await db.query(countSql, queryParams);
 
         const totalProducts = countResult[0].total;
@@ -2496,7 +2501,8 @@ router.get('/get-products-by-category', async (req, res) => {
             success: true,
             products,
             hasMore,
-            totalProducts
+            totalProducts,
+            seed
         });
     } catch (err) {
         console.error("Error in /get-products-by-category:", err);
