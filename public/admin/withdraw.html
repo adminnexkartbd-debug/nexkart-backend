@@ -43,6 +43,13 @@
         <span class="inline-block mt-3 bg-blue-50 text-blue-600 text-xs px-2.5 py-1 rounded-lg font-medium">সর্বমোট বিক্রয়</span>
       </div>
 
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-orange-100">
+        <p class="text-xs text-slate-500 font-medium"><i class="fa-solid fa-hourglass-half text-orange-500 mr-1"></i> Pending Online Sales</p>
+        <h3 class="text-2xl font-bold text-orange-600 mt-2">৳ <span id="pendingOnlineSales">0</span></h3>
+        <span class="inline-block mt-3 bg-orange-50 text-orange-700 text-xs px-2.5 py-1 rounded-lg font-medium">Delivered হলে Total Sales-এ যোগ হবে</span>
+        <p class="text-xs text-slate-500 mt-3">এই টাকা এখনো উত্তোলনযোগ্য নয়।</p>
+      </div>
+
       <!-- COD sales are recorded separately and are NOT withdrawable balance -->
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-amber-100">
         <p class="text-xs text-slate-500 font-medium"><i class="fa-solid fa-truck-fast text-amber-600 mr-1"></i> COD Total Sales</p>
@@ -172,7 +179,7 @@
 <script>
     let globalData = {};
 
-    async function fetchWithdrawInfo() {
+    async function fetchWithdrawInfo(refreshOnly = false) {
       try {
         const res = await fetch('/admin/api/withdraw/info');
         const data = await res.json();
@@ -189,6 +196,7 @@
           document.getElementById('totalSales').innerText = data.balanceInfo.totalSales.toLocaleString();
           document.getElementById('totalWithdrawn').innerText = data.balanceInfo.totalWithdrawn.toLocaleString();
           const money = value => Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          document.getElementById('pendingOnlineSales').innerText = money(data.balanceInfo.pendingSales);
           const cod = data.codSales || {};
           document.getElementById('codTotalSales').innerText = money(cod.totalSales);
           document.getElementById('codPendingSales').innerText = money(cod.pendingSales);
@@ -196,7 +204,7 @@
           document.getElementById('codOrderCount').innerText = Number(cod.orderCount || 0).toLocaleString('en-BD');
 
           const pType = globalData.payment_type;
-          if (pType) {
+          if (pType && !refreshOnly) {
             document.getElementById('paymentType').value = pType;
             togglePaymentFields();
           }
@@ -322,6 +330,11 @@
     window.onload = () => {
       fetchWithdrawInfo();
       fetchWithdrawHistory();
+      // Refresh cards without overwriting the payment form being edited.
+      setInterval(() => { if (!document.hidden) fetchWithdrawInfo(true); }, 15000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) fetchWithdrawInfo(true);
+      });
     };
   </script>
 </body>

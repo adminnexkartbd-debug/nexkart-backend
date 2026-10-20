@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../db');
+const { syncDeliveredSales } = require('../../services/commissionCalculator');
 const { sendWithdrawEmail } = require('../../services/withdrawmail'); 
 
 function ensureActiveAdmin(req, res, next) {
@@ -14,6 +15,7 @@ function ensureActiveAdmin(req, res, next) {
 router.get('/api/withdraw/info', ensureActiveAdmin, async (req, res) => {
   try {
     const adminId = req.user.id || req.user.admin_id;
+    await syncDeliveredSales();
 
     const [rows] = await db.query(
       `SELECT id, name, email, picture, total_sales, total_withdraw, payment_type, mobile_number, 
@@ -26,6 +28,22 @@ router.get('/api/withdraw/info', ensureActiveAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found!" });
     }
 
+    // The same commission amount and rounding used by the existing sales worker.
+    // One grouped row per commission prevents duplicate entries inflating pending.
+    const [pendingRows] = await db.query(
+      `SELECT COALESCE(SUM(ROUND(o.total_amount - c.commission_amount, 2)), 0) AS pendingSales
+       FROM orders o
+       JOIN (SELECT order_number, seller_id, MIN(commission_amount) AS commission_amount
+             FROM commission_table GROUP BY order_number, seller_id HAVING COUNT(*) = 1) c
+         ON BINARY c.order_number = BINARY o.order_id AND c.seller_id = o.seller_id
+       WHERE o.seller_id = ? AND (o.vat_cm = 0 OR o.vat_cm IS NULL)
+         AND LOWER(TRIM(COALESCE(o.payment_method, ''))) <> 'cod'
+         AND LOWER(TRIM(o.payment_status)) = 'paid'
+         AND LOWER(TRIM(COALESCE(o.order_status, ''))) NOT IN ('cancelled', 'canceled')
+         AND c.commission_amount >= 0 AND o.total_amount >= c.commission_amount`,
+      [adminId]
+    );
+    const pendingSales = Number(pendingRows[0]?.pendingSales || 0);
     const admin = rows[0];
     const totalSales = Number(admin.total_sales || 0);
     const totalWithdrawn = Number(admin.total_withdraw || 0);
@@ -56,6 +74,7 @@ router.get('/api/withdraw/info', ensureActiveAdmin, async (req, res) => {
       balanceInfo: {
         availableBalance: availableBalance > 0 ? availableBalance : 0,
         totalWithdrawn: totalWithdrawn,
+        pendingSales,
         totalSales: totalSales
       },
       paymentDetails: {
@@ -81,6 +100,7 @@ router.get('/api/withdraw/info', ensureActiveAdmin, async (req, res) => {
 router.post('/api/withdraw/submit', ensureActiveAdmin, async (req, res) => {
   try {
     const adminId = req.user.id || req.user.admin_id;
+    await syncDeliveredSales();
     const { amount, payment_type, mobile_number, bank_acc_name, bank_acc_number, bank_name, bank_branch, routing_number } = req.body;
 
     // ১. সর্বনিম্ন ১০০০ টাকা চেক

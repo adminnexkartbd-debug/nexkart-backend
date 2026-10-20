@@ -4,21 +4,22 @@ const db = require('../db');
 
 // Commission is created by checkout ONLY. This worker NEVER inserts commission.
 // vat_cm=1 marks accounting routed: online credited to total_sales, COD recorded in separate ledger.
-let running = false;
+let running = null;
 async function processOrderCommissionUpdates() {
-  if (running) return;
-  running = true;
   try {
     // Transaction + row lock prevents multiple workers from crediting twice.
     const [candidates] = await db.query(
-      `SELECT id FROM orders WHERE (vat_cm = 0 OR vat_cm IS NULL) ORDER BY id ASC LIMIT 100`
+      `SELECT id FROM orders WHERE (vat_cm = 0 OR vat_cm IS NULL)
+         AND (LOWER(TRIM(payment_method)) = 'cod' OR
+              (LOWER(TRIM(order_status)) = 'delivered' AND LOWER(TRIM(payment_status)) = 'paid'))
+         ORDER BY id ASC LIMIT 100`
     );
     for (const { id } of candidates) {
       const conn = await db.getConnection();
       try {
         await conn.beginTransaction();
         const [orders] = await conn.query(
-          `SELECT id, order_id, seller_id, total_amount, subtotal_price, delivery_charge, coupon_discount, coin_discount, payment_method, vat_cm
+          `SELECT id, order_id, seller_id, total_amount, subtotal_price, delivery_charge, coupon_discount, coin_discount, payment_method, payment_status, order_status, vat_cm
              FROM orders WHERE id = ? FOR UPDATE`, [id]
         );
         const order = orders[0];
@@ -59,6 +60,12 @@ async function processOrderCommissionUpdates() {
           console.log(`[Commission Cron] COD ledger recorded (not credited): ${order.order_id}`);
           continue;
         }
+        // Online money is withdrawable only after verified payment AND delivery.
+        if (String(order.payment_status || '').trim().toLowerCase() !== 'paid' ||
+            String(order.order_status || '').trim().toLowerCase() !== 'delivered') {
+          await conn.commit();
+          continue;
+        }
         const total = Number(order.total_amount);
         if (!Number.isFinite(total) || !Number.isFinite(commission) || total < 0 || commission < 0) {
           await conn.rollback();
@@ -87,12 +94,16 @@ async function processOrderCommissionUpdates() {
     }
   } catch (error) {
     console.error('[Commission Cron Error]', error);
-  } finally {
-    running = false;
   }
 }
+function syncDeliveredSales() {
+  if (!running) running = processOrderCommissionUpdates().finally(() => { running = null; });
+  return running;
+}
 function startCommissionCron() {
-  cron.schedule('*/30 * * * * *', () => { void processOrderCommissionUpdates(); });
+  cron.schedule('*/30 * * * * *', () => { void syncDeliveredSales(); });
   console.log('Seller sales update cron started (no commission inserts)');
 }
 module.exports = startCommissionCron;
+
+module.exports.syncDeliveredSales = syncDeliveredSales;
