@@ -8,13 +8,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #adminSidebar { display: flex; flex-shrink: 0; }
+        #sidebarBackdrop { display: none; }
+        @media (max-width: 767px) {
+            #adminSidebar {
+                position: fixed; inset: 0 auto 0 0; z-index: 50;
+                width: min(16rem, 85vw); height: 100dvh;
+                overflow-y: auto; visibility: hidden;
+                transform: translateX(-100%); transition: transform 200ms ease;
+            }
+            body.admin-drawer-open #adminSidebar { visibility: visible; transform: translateX(0); }
+            body.admin-drawer-open #sidebarBackdrop {
+                display: block; position: fixed; inset: 0; z-index: 40;
+                background: rgba(15, 23, 42, 0.5);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #adminSidebar { transition: none; }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 font-sans antialiased">
 
     <div class="flex h-screen overflow-hidden">
         
         <!-- ================= SIDEBAR ================= -->
-        <aside class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col justify-between border-r border-slate-800">
+        <div id="sidebarBackdrop" aria-hidden="true"></div>
+        <aside id="adminSidebar" aria-label="Admin navigation" class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col justify-between border-r border-slate-800">
             <div>
                 <!-- Brand Logo -->
                 <div class="p-6 flex items-center gap-3 border-b border-slate-800">
@@ -27,6 +48,9 @@
                     </div>
                 </div>
 
+                <button id="closeSidebar" type="button" aria-label="Close navigation" class="md:hidden self-end m-3 px-3 py-2 text-white rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
                 <!-- Navigation Links -->
                 <nav class="p-4 space-y-2">
                     <a href="/home.html" class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition">
@@ -52,12 +76,12 @@
         </aside>
 
         <!-- ================= MAIN CONTENT AREA ================= -->
-        <div class="flex-1 flex flex-col overflow-y-auto">
+        <div class="flex-1 min-w-0 flex flex-col overflow-y-auto">
             
             <!-- Top Header -->
             <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10">
                 <div class="flex items-center gap-4">
-                    <button class="md:hidden text-slate-600 text-xl"><i class="fa-solid fa-bars"></i></button>
+                    <button id="openSidebar" type="button" aria-label="Open navigation" aria-controls="adminSidebar" aria-expanded="false" class="md:hidden text-slate-600 text-xl p-2"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
                     <h2 class="text-xl font-bold text-slate-800">All Products</h2>
                 </div>
                 <div class="flex items-center gap-4">
@@ -109,6 +133,42 @@
     </div>
 
     <script>
+        // Bind navigation independently of authentication/product network requests.
+        const sidebar = document.getElementById('adminSidebar');
+        const openSidebar = document.getElementById('openSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileSidebar = window.matchMedia('(max-width: 767px)');
+
+        function setSidebarOpen(open, restoreFocus = true) {
+            const isOpen = open && mobileSidebar.matches;
+            document.body.classList.toggle('admin-drawer-open', isOpen);
+            openSidebar.setAttribute('aria-expanded', String(isOpen));
+            sidebar.inert = mobileSidebar.matches && !isOpen;
+            if (isOpen) closeSidebar.focus();
+            else if (restoreFocus && mobileSidebar.matches) openSidebar.focus();
+        }
+        openSidebar.addEventListener('click', () => setSidebarOpen(true));
+        closeSidebar.addEventListener('click', () => setSidebarOpen(false));
+        document.getElementById('sidebarBackdrop').addEventListener('click', () => setSidebarOpen(false));
+        sidebar.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => setSidebarOpen(false));
+        });
+        document.addEventListener('keydown', event => {
+            if (!document.body.classList.contains('admin-drawer-open')) return;
+            if (event.key === 'Escape') setSidebarOpen(false);
+            if (event.key === 'Tab') {
+                const controls = [...sidebar.querySelectorAll('a[href], button:not([disabled])')];
+                const first = controls[0], last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault(); last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault(); first.focus();
+                }
+            }
+        });
+        mobileSidebar.addEventListener('change', () => setSidebarOpen(false, false));
+        setSidebarOpen(false, false);
+
         let searchDebounceTimeout = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
