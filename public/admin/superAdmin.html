@@ -70,6 +70,9 @@
         <button onclick="openSellerStatusModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-store"></i> Seller Status List
         </button>
+        <button onclick="openRefundSettlementModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
+          <i class="fa-solid fa-rotate-left"></i> Refund &amp; Return
+        </button>
         <!-- WITHDRAWAL REQUESTS BUTTON -->
         <button onclick="openWithdrawalModal(); toggleMobileSidebarOnSelect();" class="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition text-left">
           <i class="fa-solid fa-money-bill-transfer"></i> Withdrawal Requests
@@ -225,6 +228,12 @@
           </div>
         </div>
 
+        <button type="button" onclick="openRefundSettlementModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group text-left">
+          <div class="flex items-center justify-between gap-4">
+            <div><p class="text-xs font-semibold text-slate-400 uppercase">Settlements</p><h3 class="text-base sm:text-lg font-bold text-slate-800 mt-1">Refund &amp; Return</h3><p class="text-xs text-slate-500 mt-1">Seller-approved requests</p></div>
+            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center text-xl"><i class="fa-solid fa-rotate-left"></i></div>
+          </div>
+        </button>
         <!-- 8. Withdrawal Requests Card -->
         <div onclick="openWithdrawalModal()" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition cursor-pointer group">
           <div class="flex items-center justify-between">
@@ -253,6 +262,22 @@
 
       </div>
     </main>
+  </div>
+
+  <div id="refundSettlementModal" role="dialog" aria-modal="true" aria-labelledby="refundSettlementTitle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="p-4 sm:p-6 border-b flex items-center justify-between gap-3">
+        <div><h2 id="refundSettlementTitle" class="font-bold text-lg text-slate-800">Refund &amp; Return</h2><p class="text-xs text-slate-500">Only seller-approved returns. Success deducts the original order total from seller balance. Reject makes no deduction.</p></div>
+        <button type="button" onclick="closeModal('refundSettlementModal')" aria-label="Close refund list" class="text-2xl px-2">&times;</button>
+      </div>
+      <div class="p-4 flex flex-wrap gap-3">
+        <input id="refundSearch" oninput="renderRefundSettlements()" placeholder="Search order, seller, product..." class="border rounded-lg px-3 py-2 text-sm flex-1 min-w-0">
+        <select id="refundFilter" onchange="renderRefundSettlements()" class="border rounded-lg px-3 py-2 text-sm"><option value="pending">Pending</option><option value="all">All</option><option value="success">Success</option><option value="reject">Reject</option></select>
+        <button type="button" onclick="loadRefundSettlements()" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm">Refresh</button>
+      </div>
+      <p id="refundSettlementMessage" role="status" class="px-4 pb-3 text-sm text-slate-600"></p>
+      <div class="overflow-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-slate-50"><tr><th class="p-3">Return / Order</th><th class="p-3">Seller</th><th class="p-3">Product / Customer</th><th class="p-3">Reason / Proof</th><th class="p-3">Refund Amount</th><th class="p-3">Settlement</th><th class="p-3">Action</th></tr></thead><tbody id="refundSettlementBody"></tbody></table></div>
+    </div>
   </div>
 
   <!-- POPUP MODALS -->
@@ -1719,12 +1744,76 @@
       }
     }
 
+
+    let refundSettlementRows = [];
+    const refundBusy = new Set();
+    async function openRefundSettlementModal() {
+      openModal('refundSettlementModal');
+      await loadRefundSettlements();
+    }
+    async function loadRefundSettlements() {
+      const message=document.getElementById('refundSettlementMessage');
+      message.textContent='Loading...';
+      try {
+        const response=await fetch('/admin/api/refund-settlements',{cache:'no-store'});
+        const data=await response.json();
+        if(!response.ok||!data.success)throw Error(data.error||'Failed to load returns');
+        refundSettlementRows=data.data||[];
+        renderRefundSettlements();
+        message.textContent=`${refundSettlementRows.length} seller-approved request(s).`;
+      }catch(error){message.textContent=error.message;document.getElementById('refundSettlementBody').textContent='';}
+    }
+    function refundProofLink(value) {
+      if(!value)return '';
+      try {
+        const url=new URL(value,location.origin);
+        if(!['http:','https:'].includes(url.protocol))return '';
+        return `<a class="text-blue-600 underline" href="${commEscape(url.href)}" target="_blank" rel="noopener noreferrer">View proof</a>`;
+      }catch(_){return '';}
+    }
+    function renderRefundSettlements() {
+      const query=document.getElementById('refundSearch').value.trim().toLowerCase();
+      const filter=document.getElementById('refundFilter').value;
+      const rows=refundSettlementRows.filter(r=>(filter==='all'||r.sattle_ment===filter)&&[r.id,r.order_id,r.seller_name,r.seller_email,r.product_title].join(' ').toLowerCase().includes(query));
+      document.getElementById('refundSettlementBody').innerHTML=rows.length?rows.map(r=>{
+        const id=Number(r.id),pending=r.sattle_ment==='pending',busy=refundBusy.has(id);
+        const amount=pending?r.refund_amount:r.settlement_amount;
+        const action=pending?`<button ${busy?'disabled':''} onclick="decideRefundSettlement(${id},'success')" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs disabled:opacity-50">Success</button> <button ${busy?'disabled':''} onclick="decideRefundSettlement(${id},'reject')" class="bg-red-600 text-white px-3 py-2 rounded-lg text-xs disabled:opacity-50">Reject</button>`:(r.sattle_ment==='success'&&!r.settlement_email_sent_at?`<button ${busy?'disabled':''} onclick="retryRefundEmail(${id})" class="border px-3 py-2 rounded-lg text-xs">Retry seller email</button>`:'Completed');
+        return `<tr class="border-b align-top"><td class="p-3"><b>#${id}</b><div>${commEscape(r.order_id)}</div><small>${commEscape(r.created_at||'')}</small></td><td class="p-3"><b>${commEscape(r.seller_name)}</b><div class="text-xs">${commEscape(r.seller_email)}</div><small>Balance: ${commMoney(r.available_balance)}</small></td><td class="p-3">${commEscape(r.product_title||r.product_id)}<div class="text-xs">${commEscape(r.customer_name||r.user_id)}</div></td><td class="p-3"><b>${commEscape(r.return_reason)}</b><div class="text-xs whitespace-pre-wrap">${commEscape(r.return_details||'')}</div>${refundProofLink(r.proof_file)}</td><td class="p-3 font-semibold">${amount==null?'Order unavailable':commMoney(amount)}</td><td class="p-3">${commEscape(r.sattle_ment)}<div class="text-xs">${commEscape(r.settled_at||'')}</div>${r.sattle_ment==='success'?`<small>Email: ${r.settlement_email_sent_at?'Sent':'Not sent'}</small>`:''}</td><td class="p-3 space-y-2 whitespace-nowrap">${action}</td></tr>`;
+      }).join(''):'<tr><td colspan="7" class="p-6 text-center text-slate-500">No matching approved returns.</td></tr>';
+    }
+    async function decideRefundSettlement(id,decision) {
+      if(refundBusy.has(id))return;
+      const row=refundSettlementRows.find(r=>Number(r.id)===id);
+      if(!row)return;
+      if(decision==='success'&&(!Number.isFinite(Number(row.refund_amount))||Number(row.refund_amount)<=0))return alert('Original order amount unavailable. Check the order first.');
+      const prompt=decision==='success'?`Mark return #${id} SUCCESS and deduct ${commMoney(row.refund_amount)} from ${row.seller_name}'s available balance? This records a refund settlement; customer payment must be handled separately.`:`REJECT settlement for return #${id}? No seller balance will be deducted.`;
+      if(!confirm(prompt))return;
+      refundBusy.add(id);renderRefundSettlements();
+      try {
+        const response=await fetch(`/admin/api/refund-settlements/${id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sattle_ment:decision})});
+        const data=await response.json();
+        if(!response.ok||!data.success)throw Error(data.error||'Settlement failed');
+        alert(decision==='reject'?'Settlement rejected. No deduction.':`Settlement successful. Deducted ${commMoney(data.deducted)}. ${data.email_sent?'Seller email sent.':'Seller email failed; use Retry seller email.'}`);
+      }catch(error){alert(error.message);}finally{refundBusy.delete(id);await loadRefundSettlements();}
+    }
+    async function retryRefundEmail(id) {
+      if(refundBusy.has(id))return;
+      refundBusy.add(id);renderRefundSettlements();
+      try {
+        const response=await fetch(`/admin/api/refund-settlements/${id}/retry-email`,{method:'POST'});
+        const data=await response.json();
+        if(!response.ok||!data.success)throw Error(data.error||'Email failed');
+        alert('Seller email sent.');
+      }catch(error){alert(error.message);}finally{refundBusy.delete(id);await loadRefundSettlements();}
+    }
+
     window.onload = function() {
       fetchCurrentSuperAdmin();
     };
 
     window.onclick = function(event) {
-      const modals = ['registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'codSettlementModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'withdrawalModal', 'logoutModal'];
+      const modals = ['refundSettlementModal', 'registerModal', 'verificationModal', 'orderModal', 'commissionModal', 'codSettlementModal', 'ticketModal', 'iprModal', 'sellerStatusModal', 'withdrawalModal', 'logoutModal'];
       modals.forEach(id => {
         const modal = document.getElementById(id);
         if (event.target === modal) {

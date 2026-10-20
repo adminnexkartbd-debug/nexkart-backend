@@ -1195,3 +1195,42 @@ router.post('/api/update-withdrawal-status', ensureSuperAdmin, async (req, res) 
 });
 
 module.exports = router;
+
+// Seller-approved returns only. Settlement is a separate Super Admin decision.
+const refundSettlement = require('../../services/refundSettlement')({ db, sendEmail: settlementEmail });
+router.get('/api/refund-settlements', ensureSuperAdmin, async (req, res) => {
+    try {
+        const [rows] = await db.query(`SELECT r.*, a.name AS seller_name, a.email AS seller_email,
+          COALESCE(a.total_sales,0)-COALESCE(a.total_withdraw,0) AS available_balance,
+          u.name AS customer_name, p.title AS product_title, o.total_amount AS refund_amount
+          FROM order_returns r JOIN admins a ON a.id=r.seller_id
+          LEFT JOIN users u ON u.id=r.user_id LEFT JOIN products p ON p.id=r.product_id
+          LEFT JOIN orders o ON BINARY o.order_id=BINARY r.order_id AND o.seller_id=r.seller_id
+            AND o.product_id=r.product_id AND o.user_id=r.user_id
+          WHERE LOWER(TRIM(r.status))='approved' ORDER BY r.created_at DESC,r.id DESC`);
+        res.set('Cache-Control','no-store').json({success:true,data:rows});
+    } catch (error) {
+        console.error('Refund settlement list:', error);
+        res.status(500).json({error:'Could not load returns. Run refund_settlement.sql first and check server logs.'});
+    }
+});
+router.post('/api/refund-settlements/:id', ensureSuperAdmin, async (req, res) => {
+    try {
+        const actorId = req.user.id || req.user.admin_id;
+        res.json(await refundSettlement.settle(Number(req.params.id), req.body.sattle_ment, actorId));
+    } catch (error) {
+        console.error('Refund settlement:', error);
+        res.status(error.status || 500).json({error:error.status ? error.message : 'Settlement failed; no changes committed'});
+    }
+});
+router.post('/api/refund-settlements/:id/retry-email', ensureSuperAdmin, async (req, res) => {
+    try {
+        const id=Number(req.params.id);
+        if(!Number.isSafeInteger(id)||id<=0)return res.status(400).json({error:'Invalid return ID'});
+        await refundSettlement.emailReceipt(id);
+        res.json({success:true});
+    } catch(error) {
+        console.error('Refund settlement email retry:',error);
+        res.status(error.status||500).json({error:'Seller email could not be sent. Check Gmail OAuth configuration and seller email.'});
+    }
+});
