@@ -170,6 +170,12 @@ src="https://www.facebook.com/tr?id=2974825169520458&ev=PageView&noscript=1"
           </div>
           <div id="variant-container" class="flex flex-wrap gap-2"></div>
         </div>
+        <div id="guarantee-section" class="hidden rounded-2xl border border-pink-200 bg-white/80 p-3 sm:p-4 space-y-1.5">
+          <div class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-[#ff4b6e]" aria-hidden="true"></i> Guarantee / Warranty
+          </div>
+          <p id="product-guarantee" class="text-sm text-gray-700 leading-relaxed break-words"></p>
+        </div>
       </div>
 
       <div class="space-y-5">
@@ -1226,6 +1232,20 @@ function openGooglePopup() {
       } else {
         variantSection.classList.add('hidden');
       }
+
+      const guaranteeLabels = {
+        "authentic": "🛡️ 100% Authentic Product (১০০% আসল প্রোডাক্ট)",
+        "official_warranty_1yr": "🏅 1 Year Official Brand Warranty (১ বছরের অফিশিয়াল ওয়ারেন্টি)",
+        "official_warranty_6mo": "⏱️ 6 Months Brand Warranty (৬ মাসের ওয়ারেন্টি)",
+        "store_warranty_1yr": "🏬 1 Year Store Warranty (১ বছরের শপ ওয়ারেন্টি)",
+        "replacement_7days": "🔄 7 Days Replacement Guarantee (৭ দিনের রিপ্লেসমেন্ট গ্যারান্টি)",
+        "money_back": "💰 100% Money Back Guarantee (টাকা ফেরত গ্যারান্টি)",
+        "original_imported": "🌐 100% Original Imported (বিদেশ থেকে আমদানিকৃত)",
+        "no_warranty": "❌ No Warranty / Non-Returnable (ওয়ারেন্টি প্রযোজ্য নয়)"
+};
+      const guaranteeValue = typeof product.guarantee === 'string' ? product.guarantee.trim() : '';
+      document.getElementById('product-guarantee').textContent = guaranteeLabels[guaranteeValue] || guaranteeValue;
+      document.getElementById('guarantee-section').classList.toggle('hidden', !guaranteeValue);
 
       updateShippingAndDelivery(product);
 

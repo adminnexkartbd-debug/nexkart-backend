@@ -36,6 +36,7 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage: storage });
+const productUpload = require('./productUpload');
 
 // ==========================================
 // 🛠️ HELPER: Short & SEO Friendly Unique Slug Generator
@@ -131,16 +132,30 @@ router.get('/all', async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized! অনুগ্রহ করে আবার লগইন করুন।" });
     }
 
-    const query = `
+    const { search } = req.query;
+    const queryParams = [adminId];
+
+    let query = `
       SELECT p.*, ANY_VALUE(pi.image_path) AS image_path 
       FROM products p 
       LEFT JOIN product_images pi ON p.id = pi.product_id 
-      WHERE p.admin_id = ? 
+      WHERE p.admin_id = ?
+    `;
+
+    if (typeof search === 'string' && search.trim() !== '') {
+      query += ` AND (LOWER(p.product_id) LIKE LOWER(?) OR LOWER(p.title) LIKE LOWER(?) OR CAST(p.id AS CHAR) LIKE ? OR CAST(p.id AS CHAR) LIKE ?)`;
+      // Accept the displayed label as well as the product ID itself.
+      const normalizedSearch = search.trim().replace(/^ID\s*:\s*/i, '').trim();
+      const searchTerm = `%${normalizedSearch}%`;
+      queryParams.push(searchTerm, searchTerm, searchTerm);
+    }
+
+    query += `
       GROUP BY p.id 
       ORDER BY p.created_at DESC
     `;
 
-    const [results] = await db.query(query, [adminId]);
+    const [results] = await db.query(query, queryParams);
     return res.status(200).json({ success: true, products: results });
 
   } catch (err) {
@@ -191,10 +206,10 @@ router.get('/:id', async (req, res) => {
 });
 
 // ৩. প্রোডাক্ট এড করার রাউট (এখানে Slug Auto Generate যুক্ত করা হয়েছে)
-router.post('/add', upload.fields([
+router.post('/add', productUpload(upload.fields([
   { name: 'images', maxCount: 10 },
   { name: 'product_video', maxCount: 1 }
-]), async (req, res) => {
+])), async (req, res) => {
   try {
     const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
 
@@ -283,11 +298,11 @@ router.post('/add', upload.fields([
 });
 
 // ৪. প্রোডাক্ট আপডেট করার রাউট (এখানে Slug update Logic যুক্ত করা হয়েছে)
-router.put('/update/:id', upload.fields([
+router.put('/update/:id', productUpload(upload.fields([
     { name: 'replaced_images', maxCount: 10 },
     { name: 'new_images', maxCount: 10 },
     { name: 'product_video', maxCount: 1 }
-]), async (req, res) => {
+])), async (req, res) => {
     try {
         const adminId = req.user ? req.user.id : (req.session && req.session.passport ? req.session.passport.user : (req.session && req.session.userId ? req.session.userId : null));
 
