@@ -1,7 +1,7 @@
 "use strict";
 const path = require('path');
 const VERSION = '2026-10-17';
-const pages = {'/terms':'terms.html','/terms.html':'terms.html','/privacy-policy':'privacy.html','/privacy-policy.html':'privacy.html','/delivery-policy':'delivery-policy.html','/delivery-policy.html':'delivery-policy.html','/contact':'contact.html','/contact.html':'contact.html'};
+const pages = {'/data-deletion':'data-deletion.html','/data-deletion.html':'data-deletion.html','/terms':'terms.html','/terms.html':'terms.html','/privacy-policy':'privacy.html','/privacy-policy.html':'privacy.html','/delivery-policy':'delivery-policy.html','/delivery-policy.html':'delivery-policy.html','/contact':'contact.html','/contact.html':'contact.html'};
 const orderPaths = new Set(['/place-order','/api/cart/place-order','/paystation/start']);
 module.exports = function customerPolicies(req, res, next) {
   const route = req.path.toLowerCase().replace(/\/+$/, '') || '/';
