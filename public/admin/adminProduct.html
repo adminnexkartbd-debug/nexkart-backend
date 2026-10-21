@@ -169,53 +169,24 @@
         mobileSidebar.addEventListener('change', () => setSidebarOpen(false, false));
         setSidebarOpen(false, false);
 
-        let searchDebounceTimeout = null;
+        let inventoryProducts = [];
+        let inventoryRequestId = 0;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            // ১. ভেরিফিকেশন ও ইউজার ডাটা চেক
-            await checkAdminVerification();
-
-            // ২. প্রথমবার প্রোডাক্ট লোড
-            loadProducts();
-
-            // ৩. সার্চ ইনপুট ইভেন্ট লিসেনার (Debounce সহ)
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    clearTimeout(searchDebounceTimeout);
-                    searchDebounceTimeout = setTimeout(() => {
-                        loadProducts(e.target.value.trim());
-                    }, 400); // 400ms ওয়েট করে সার্চ চালাবে
-                });
-            }
-        });
-
-        // প্রোডাক্ট ফেচ করার ফাংশন
-async function loadProducts(searchQuery = '') {
-    try {
-        let url = '/api/products/all';
-        if (searchQuery) {
-            url += `?search=${encodeURIComponent(searchQuery)}`;
+        function normalizeProductSearch(value) {
+            return String(value == null ? '' : value).trim().replace(/^ID\s*:\s*/i, '').toLowerCase();
         }
 
-        const res = await fetch(url, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' 
-        });
-
-        const data = await res.json();
-
-        // সার্ভার থেকে unauthorized বা অন্য কোন এরর আসলে
-        if (!res.ok || !data.success) {
-            throw new Error(data.message || "Server Error Status: " + res.status);
+        function renderInventory(searchQuery = '') {
+            const searchTerm = normalizeProductSearch(searchQuery);
+            const productsList = inventoryProducts.filter(product => !searchTerm ||
+                [product.product_id, product.id, product.title].some(value =>
+                    normalizeProductSearch(value).includes(searchTerm)));
+            const tbody = document.getElementById('productTableBody');
+            tbody.innerHTML = '';
+            renderInventoryRows(productsList, tbody);
         }
 
-        const tbody = document.getElementById('productTableBody');
-        tbody.innerHTML = ''; 
-
-        const productsList = data.products || [];
-
+        function renderInventoryRows(productsList, tbody) {
         if (productsList.length > 0) {
             productsList.forEach(product => {
                 let imgUrl = 'https://placehold.co/40';
@@ -254,6 +225,53 @@ async function loadProducts(searchQuery = '') {
         } else {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">কোনো প্রোডাক্ট পাওয়া যায়নি!</td></tr>`;
         }
+
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ১. ভেরিফিকেশন ও ইউজার ডাটা চেক
+            await checkAdminVerification();
+
+            // ২. প্রথমবার প্রোডাক্ট লোড
+            loadProducts();
+
+            // ৩. সার্চ ইনপুট ইভেন্ট লিসেনার (Debounce সহ)
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderInventory(e.target.value);
+                });
+            }
+        });
+
+        // প্রোডাক্ট ফেচ করার ফাংশন
+async function loadProducts() {
+    const requestId = ++inventoryRequestId;
+    try {
+        const url = '/api/products/all';
+
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        const data = await res.json();
+        if (requestId !== inventoryRequestId) return;
+
+        // সার্ভার থেকে unauthorized বা অন্য কোন এরর আসলে
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || "Server Error Status: " + res.status);
+        }
+
+        const tbody = document.getElementById('productTableBody');
+        tbody.innerHTML = ''; 
+
+        const productsList = data.products || [];
+
+        inventoryProducts = Array.isArray(data.products) ? data.products : [];
+        renderInventory(document.getElementById('searchInput').value);
     } catch (error) {
         console.error('Failed to load products:', error);
         document.getElementById('productTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-500">${error.message || 'প্রোডাক্ট লোড করতে সমস্যা হয়েছে!'}</td></tr>`;
