@@ -380,6 +380,7 @@ app.use('/user', userInboxRouter);
 app.use('/user', makePaystationRouter(paystationAdapters));
 app.use('/user', cartRouter);
 app.use('/user', myOrderRouter);
+app.use('/user', require('./routes/users/facebookLogin'));
 app.use('/user', userRoutes); 
 app.use('/user', profileRouter);
 app.use('/user', inquiryRouter);

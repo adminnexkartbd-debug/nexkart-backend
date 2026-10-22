@@ -282,6 +282,8 @@ html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflo
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width: 18px; height: 18px;">
                 Sign up with Google
             </a>
+            <a href="/user/auth/facebook" class="btn-google" style="margin-top:12px;background:#1877f2;color:white;border-color:#1877f2"><img src="/users/assets/brands/facebook.svg?v=real1" alt="" style="width:22px;height:22px">Continue with Facebook</a>
+            <p style="text-align:center;font-size:12px;margin-top:10px"><a href="/user/auth/facebook?link=1">Connect Facebook to your signed-in account</a></p>
 
             <div class="signup-link">
                 Already have an account? <a href="/user/cslogin">Login</a>
@@ -432,5 +434,26 @@ html{min-height:100%}body{min-height:100vh;height:auto;overflow-x:hidden;overflo
         document.getElementById('termsModal').style.display = 'none';
     }
     </script>
+<script>
+(function(){
+ const messages = {
+ config:'Facebook login is not configured. Please contact support.',
+ state:'Your login session expired. Please try again.',
+ cancelled:'Facebook login was cancelled. Please try again.',
+ email:'Facebook did not share an email address. Allow email access or use Google / email signup.',
+ existing:'This email already has an account. Sign in using Google or your password. Then return here and click Connect Facebook.',
+ admin:'Please use the admin login for this account.',
+ linked:'This Facebook account is already connected to another customer.',
+ server:'Facebook login could not be completed. Please try again later.'
+ };
+ const code = new URLSearchParams(location.search).get('facebook_error');
+ if(messages[code]) {
+  const box=document.createElement('p');box.setAttribute('role','alert');
+  box.style.cssText='background:#fff1f2;color:#9f1239;padding:12px;border-radius:10px;margin:12px 0;font-size:13px';
+  box.textContent=messages[code];
+  const button=document.querySelector('a[href="/user/auth/facebook"]');button.before(box);
+ }
+})();
+</script>
 </body>
 </html>

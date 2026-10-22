@@ -15,6 +15,7 @@ module.exports = function createLoginSubdomain(root) {
       // confined to login.nexkartbd.com. Local images and policy modals still
       // use this same backend's existing static routes.
       html = html.replace('action="/user/login"', 'action="https://www.nexkartbd.com/user/login"')
+        .replace('href="/user/auth/facebook"', 'href="https://www.nexkartbd.com/user/auth/facebook"')
         .replace('href="/user/auth/google"', 'href="https://www.nexkartbd.com/user/auth/google"')
         .replace('href="/user/cssignup"', 'href="https://www.nexkartbd.com/user/cssignup"')
         .replace('href="/user/psrst"', 'href="https://www.nexkartbd.com/user/psrst"');
