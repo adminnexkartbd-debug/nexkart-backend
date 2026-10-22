@@ -154,6 +154,7 @@ app.use(
       // Facebook Pixel-এর /tr/ request-এর জন্য
       formAction: [
         "'self'",
+        "https://www.nexkartbd.com",
         "https://www.facebook.com"
       ],
 
@@ -183,6 +184,9 @@ const db = mysql.createPool({
 });
 
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'public', 'images', 'favicon.ico')));
+
+// Login subdomain uses the existing customer login page and main-site auth.
+app.use(require('./services/loginSubdomain')(__dirname));
 
 // SEO HTML and indexing headers must run before static files.
 app.use(require('./routes/seoPages').createSeoMiddleware({db:require('./db'),root:__dirname}));
