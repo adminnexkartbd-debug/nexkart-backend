@@ -15,3 +15,29 @@ footer.nk-legal-footer{background:#fff;border-top:1px solid #e7edf3;padding:30px
 .product-card .add-cart-btn{position:absolute;right:13px;bottom:14px}.product-bottom{padding-right:76px}.nk-header-love b:empty{display:none}
 @media(max-width:600px){.product-card .add-cart-btn{right:11px;bottom:11px}.product-bottom{padding-right:63px}.product-card .love-heart{right:43px}}
 @media(max-width:370px){.product-card .add-cart-btn{right:10px}.product-card .love-heart{right:38px}.product-bottom{padding-right:55px}}
+
+/* Roomier desktop layout and readable type on large monitors. */
+@media(min-width:1200px){
+ .top-header,.sub-bar,.banner-section,.products-section,.features-section,.nk-category-tiles,.nk-bottom-collections,.nk-blog-preview,footer.nk-legal-footer{max-width:1840px;width:100%;padding-left:32px;padding-right:32px}
+ footer.nk-legal-footer{padding-left:32px!important;padding-right:32px!important}
+ .top-header{gap:24px;min-height:104px}.header-actions{gap:18px}
+ .nk-brand>span{font-size:27px}.nk-brand small{font-size:10px}.nk-brand img{width:54px;height:54px}
+ .search-box{height:50px}.search-box input{font-size:15px}.search-box button{width:52px;font-size:18px}
+ .language-select select{font-size:13px;height:40px}.auth-buttons,.user-greeting{font-size:14px}.btn-signup{font-size:11px}
+ .nk-action-caption,.cart-icon-container:after,.sms-icon-container:after{font-size:11px}.nk-header-chat{font-size:12px!important}
+ .sub-bar{min-height:62px;gap:22px}.all-categories-btn{font-size:14px;min-height:44px}.nav-links-list{gap:30px}.nav-links-list a{font-size:14px}
+ .category-drawer a,.user-dropdown-menu li a{font-size:14px}
+ .slider-container{height:clamp(420px,28vw,510px)}.nk-discovery-hero{gap:18px;padding-top:24px}.nk-hero-collections{gap:18px}
+ .slide-content{left:40px}.slide-content h1{font-size:clamp(40px,3vw,54px)}.slide-content .nk-eyebrow{font-size:12px}
+ .slide-content>p:not(.nk-eyebrow){font-size:16px;max-width:300px}.slide-btn{font-size:14px;min-height:48px;padding:13px 24px}
+ .slide-content h2{font-size:28px}.nk-slider-pause,.nx-slider-pause{font-size:12px}
+ .nk-hero-collections .nk-collection-tile>div{padding:26px;max-width:58%}.nk-collection-tile h2{font-size:clamp(24px,1.7vw,31px)}.nk-collection-tile p{font-size:14px;max-width:220px}.nk-collection-tile>div>span{font-size:13px}
+ .nk-category-tiles{gap:16px;padding-top:22px;padding-bottom:38px}.nk-category-tiles>a>div{height:clamp(100px,7vw,135px)}.nk-category-tiles>a>span{font-size:14px;padding:13px 5px}
+ .section-title h2{font-size:34px}.section-title .nk-eyebrow{font-size:11px}.nk-collection-filters button{font-size:13px;min-height:42px;padding:10px 20px}
+ .product-grid{gap:20px}.product-card{padding:16px}.product-category{font-size:11px}.product-title{font-size:16px;line-height:1.55;min-height:50px}.product-rating,.product-rating>span{font-size:12px}.current-price{font-size:21px}.old-price{font-size:13px}
+ .product-bottom{min-height:42px;padding-right:92px}.product-card .add-cart-btn{width:39px;height:39px;right:16px;bottom:16px;font-size:16px}.product-card .love-heart{width:36px;height:39px;right:62px;bottom:16px}.product-badge,.discount-badge{font-size:10px}.product-badges-container{top:22px;left:22px;right:22px}
+ .btn-load-more{font-size:14px;min-height:48px}.feature-info h3{font-size:16px}.feature-info p{font-size:13px}.features-section{padding-top:28px;padding-bottom:28px}
+ .nk-bottom-collections .nk-collection-tile{height:290px}.nk-bottom-collections h2{font-size:34px;max-width:300px}.nk-bottom-collections p{font-size:14px;max-width:250px}.nk-bottom-collections .nk-tile-cta{font-size:13px}
+ .nk-blog-heading h2{font-size:28px}.nk-blog-heading>a,.nk-blog-card span{font-size:13px}.nk-blog-card h3{font-size:15px}.nk-footer-brand p{font-size:13px}.nk-brand-heading{font-size:14px}footer.nk-legal-footer nav{font-size:13px!important}footer.nk-legal-footer nav:before{font-size:14px}.nk-license-number,.nk-copyright{font-size:12px!important}
+}
+@media(min-width:1200px) and (max-width:1399px){.top-header{gap:18px}.header-actions{gap:12px}.nk-brand>span{font-size:23px}.nk-brand img{width:44px;height:44px}.nk-hero-collections .nk-collection-tile>div{padding:22px}.nk-collection-tile h2{font-size:24px}}
