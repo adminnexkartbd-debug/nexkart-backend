@@ -58,3 +58,7 @@ footer.nk-legal-footer{background:#fff;border-top:1px solid #e7edf3;padding:30px
 .discount-badge{background:#178747;box-shadow:0 2px 6px #17874726;flex-shrink:0;white-space:nowrap;margin-left:auto}
 @media(min-width:1200px){.product-badge,.discount-badge{font-size:14px;padding:7px 11px}}
 @media(max-width:600px){.product-badges-container{top:14px;left:14px;right:14px;gap:4px}.product-badge,.discount-badge{font-size:11px;padding:5px 6px;letter-spacing:0}.product-badge{max-width:calc(100% - 43px)}}
+
+/* Category tiles rotate only products from their own fixed category. */
+.nk-category-tiles>a.nk-live-category>div{background:#fff}
+.nk-category-tiles>a.nk-live-category img{object-fit:contain;object-position:center;padding:5px}
