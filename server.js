@@ -469,6 +469,7 @@ app.get('/logout', (req, res) => {
 // ==================== ৬. সার্ভার লিসেন (Server Listen) ====================
 const PORT = process.env.PORT || 5000;
 require('./services/orderStatusMail').start();
+require('./services/orderRewardService').start();
 require('./services/steadfastService').start();
 
 app.listen(PORT, () => {
