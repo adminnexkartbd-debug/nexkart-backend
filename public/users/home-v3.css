@@ -41,3 +41,12 @@ footer.nk-legal-footer{background:#fff;border-top:1px solid #e7edf3;padding:30px
  .nk-blog-heading h2{font-size:28px}.nk-blog-heading>a,.nk-blog-card span{font-size:13px}.nk-blog-card h3{font-size:15px}.nk-footer-brand p{font-size:13px}.nk-brand-heading{font-size:14px}footer.nk-legal-footer nav{font-size:13px!important}footer.nk-legal-footer nav:before{font-size:14px}.nk-license-number,.nk-copyright{font-size:12px!important}
 }
 @media(min-width:1200px) and (max-width:1399px){.top-header{gap:18px}.header-actions{gap:12px}.nk-brand>span{font-size:23px}.nk-brand img{width:44px;height:44px}.nk-hero-collections .nk-collection-tile>div{padding:22px}.nk-collection-tile h2{font-size:24px}}
+
+/* Live category products occupy their own image area, keeping copy readable. */
+.nk-hero-collections{position:relative}
+.nk-hero-collections .nk-live-collection{background:linear-gradient(110deg,#fff1f5,#f0f5fa)}
+.nk-hero-collections .nk-live-collection>img{left:53%;width:47%;object-fit:contain;padding:10px;background:#fff}
+.nk-hero-collections .nk-live-collection>div{max-width:53%;padding-bottom:30px}
+.nk-live-collection p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.nk-collection-pause{position:absolute;right:8px;bottom:7px;z-index:3;border:1px solid #e4d8df;border-radius:14px;background:#fffffff2;color:#6a4352;font-size:11px;padding:3px 10px;min-height:26px}
+@media(max-width:600px){.nk-hero-collections .nk-live-collection>div{padding:12px 8px 30px;max-width:56%}.nk-hero-collections .nk-live-collection>img{left:56%;width:44%;padding:5px}.nk-collection-pause{font-size:9px;min-height:24px;bottom:4px;right:4px;padding:2px 7px}.nk-hero-collections .nk-live-collection h2{font-size:14px}}

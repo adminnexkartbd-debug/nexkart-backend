@@ -7,7 +7,44 @@ var copy={
 // Extend the existing language dictionary without replacing existing strings.
 if(typeof translations!=='undefined') Object.keys(copy).forEach(function(lang){Object.assign(translations[lang],copy[lang]);});
 window.nkHomeFilter='all';
+function initCollectionRotation(){
+ var group=document.querySelector('.nk-hero-collections');if(!group)return;
+ var cards=Array.from(group.querySelectorAll('.nk-collection-tile'));
+ var categories=[{query:'type=health',key:'beauty_care'},{query:'type=electronics',key:'electronics_short'},{query:'search=perfume',key:'fragrance'},{query:'type=fashion',key:'fashion_short'},{query:'type=home',key:'home_living'}];
+ var pools=[],cursor=0,busy=false,paused=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ var control=document.createElement('button');control.type='button';control.className='nk-collection-pause';group.appendChild(control);
+ function label(){var bn=document.getElementById('langChange').value==='bn';control.textContent=paused?(bn?'চালু করুন':'Play'):(bn?'বিরতি':'Pause');control.setAttribute('aria-label',paused?'Start collection rotation':'Pause collection rotation');control.setAttribute('aria-pressed',String(paused));}
+ control.addEventListener('click',function(){paused=!paused;label();});document.getElementById('langChange').addEventListener('change',label);label();
+ function imageUrl(product){
+  var raw=String(product.primary_image||'').trim().replace(/^(\/?uploads\/)+/,'');if(!raw)return null;
+  try{var url=new URL(/^https?:\/\//i.test(raw)?raw:raw.includes('cloudinary.com')?'https://'+raw:'/uploads/'+raw,location.origin);return /^https?:$/.test(url.protocol)?url.href:null;}catch(e){return null;}
+ }
+ function preload(src){return new Promise(function(resolve){var img=new Image(),done=false;var timer=setTimeout(function(){finish(false);},6000);function finish(ok){if(done)return;done=true;clearTimeout(timer);resolve(ok);}img.onload=function(){finish(true);};img.onerror=function(){finish(false);};img.src=src;});}
+ async function show(card,pool){
+  // Try another product if a removed or broken image is encountered.
+  for(var attempt=0;attempt<Math.min(pool.items.length,3);attempt++){
+   var product=pool.items[pool.index++%pool.items.length],src=imageUrl(product);if(!src||!await preload(src))continue;
+   var title=card.querySelector('h2'),description=card.querySelector('p'),img=card.querySelector('img');
+   card.href='/user/category.html?'+pool.category.query;title.dataset.i18n=pool.category.key;
+   var language=document.getElementById('langChange').value==='bn'?'bn':'en';title.textContent=copy[language][pool.category.key];
+   description.removeAttribute('data-i18n');description.textContent=product.title||'';
+   img.src=src;img.alt=product.title||title.textContent;card.classList.add('nk-live-collection');return;
+  }
+ }
+ async function rotate(){if(busy||!pools.length)return;busy=true;try{await Promise.all(cards.map(function(card,i){return show(card,pools[(cursor+i)%pools.length]);}));cursor=(cursor+cards.length)%pools.length;}finally{busy=false;}}
+ var seed=Date.now().toString(36);
+ Promise.all(categories.map(async function(category){
+  try{var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},10000);var response;
+   try{response=await fetch('/user/get-products-by-category?page=1&limit=12&seed='+seed+'&'+category.query,{signal:controller.signal});}finally{clearTimeout(timer);}
+   if(!response.ok)return null;var data=await response.json();if(!data.success||!Array.isArray(data.products))return null;
+   var items=data.products.filter(function(product){return imageUrl(product);});return items.length?{category:category,items:items,index:0}:null;
+  }catch(e){return null;}
+ })).then(function(results){pools=results.filter(Boolean);if(!pools.length){control.hidden=true;return;}rotate();});
+ setInterval(function(){if(!paused&&!document.hidden&&!group.matches(':hover')&&(!group.contains(document.activeElement)||document.activeElement===control))rotate();},10000);
+}
+
 function init(){
+ initCollectionRotation();
  var lang=document.getElementById('langChange');if(typeof applyLanguage==='function')applyLanguage(lang.value||'en');
  document.querySelectorAll('[data-home-filter]').forEach(function(button){button.addEventListener('click',function(){
   if(window.nkHomeFilter===button.dataset.homeFilter)return;
