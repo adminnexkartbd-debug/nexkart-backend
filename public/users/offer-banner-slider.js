@@ -41,6 +41,7 @@ window.loadBannerProducts=async function(){
  var productData=results[0].status==='fulfilled'?results[0].value:{},couponData=results[1].status==='fulfilled'?results[1].value:{},offerData=results[2].status==='fulfilled'?results[2].value:{};
  var products=productData.success&&Array.isArray(productData.products)?productData.products:[],coupons=couponData.success&&Array.isArray(couponData.coupons)?couponData.coupons:[],offers=offerData.success&&Array.isArray(offerData.banners)?offerData.banners:[];
  var offerSlides=offers.map(offerSlide).filter(Boolean),slides=[];
+ var intro=container.querySelector('[data-home-intro]');if(intro)slides.push(intro);
  // Alternate offer and product slides; offers retain the administrator's display order.
  for(var i=0;i<Math.max(offerSlides.length,products.length);i++){if(offerSlides[i])slides.push(offerSlides[i]);if(products[i])slides.push(productSlide(products[i],coupons));}
  if(slides.length){if(cleanup)cleanup();container.replaceChildren.apply(container,slides);}else{container.querySelectorAll('.slide-content p').forEach(function(x){if(x.textContent==='Loading exclusive products...')x.textContent='Explore our latest collections.';});}
