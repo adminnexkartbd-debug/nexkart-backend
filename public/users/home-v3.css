@@ -101,3 +101,13 @@ footer.nk-legal-footer{background:#fff;border-top:1px solid #e7edf3;padding:30px
  .nk-home-v3 #nk-chat-launcher.nk-header-chat span{display:inline!important}
  .nk-home-v3 .nk-header-love b{top:-3px;right:-2px;min-width:18px;height:18px;font-size:11px}
 }
+
+/* Place shopping help beside the language selector on phones. */
+.nk-home-v3 #nk-chat-launcher.nk-header-chat span{display:inline!important}
+@media(max-width:600px){
+ .nk-home-v3 .header-logo{grid-column:1/4}
+ .nk-home-v3 #nk-chat-launcher.nk-header-chat{grid-column:1/3;grid-row:2;justify-self:start}
+ .nk-home-v3 .language-select{grid-column:3/5;grid-row:2;justify-self:end}
+ .nk-home-v3 .language-select select{width:76px;font-size:11px}
+ .nk-home-v3 .search-box,.nk-home-v3 .nk-header-love,.nk-home-v3 .sms-icon-container,.nk-home-v3 .cart-icon-container{grid-row:3}
+}

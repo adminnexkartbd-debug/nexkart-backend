@@ -62,7 +62,7 @@ function init(){
  disclosure('.all-categories-btn','.all-categories-container');disclosure('.user-greeting','.user-profile-container');
  // Keep the existing chat click handlers, moving its launcher into the header.
  var launcher=document.getElementById('nk-chat-launcher');var actions=document.querySelector('.header-actions');
- if(launcher&&actions){launcher.classList.add('nk-header-chat');launcher.setAttribute('title','Product search help');actions.appendChild(launcher);}
+ if(launcher&&actions){launcher.classList.add('nk-header-chat');launcher.setAttribute('title','Product search help');actions.insertBefore(launcher,actions.querySelector('.language-select'));}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
