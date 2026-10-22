@@ -93,3 +93,11 @@ footer.nk-legal-footer{background:#fff;border-top:1px solid #e7edf3;padding:30px
  .nk-home-v3 .nk-action-caption,.nk-home-v3 .sms-icon-container:after,.nk-home-v3 .cart-icon-container:after{font-size:7px;line-height:10px}
  .nk-home-v3 .sms-badge,.nk-home-v3 .cart-badge,.nk-home-v3 .nk-header-love b{right:0;top:-2px}
 }
+
+/* Mobile shopping helper and readable wishlist quantity. */
+.nk-home-v3 .nk-header-love b{display:grid;place-items:center;min-width:18px;width:auto;height:18px;padding:0 4px;font-size:11px;line-height:1;font-weight:700;background:#ff4b6e;color:#fff;border-radius:12px}
+@media(max-width:600px){
+ .nk-home-v3 #nk-chat-launcher.nk-header-chat{display:flex!important;grid-column:1/-1;grid-row:3;align-items:center;justify-content:center;gap:5px;justify-self:stretch;min-height:36px;padding:7px 12px!important;background:#fff0f4!important;color:#c02d55!important;border:1px solid #ffd4df!important;font-size:12px!important;white-space:nowrap}
+ .nk-home-v3 #nk-chat-launcher.nk-header-chat span{display:inline!important}
+ .nk-home-v3 .nk-header-love b{top:-3px;right:-2px;min-width:18px;height:18px;font-size:11px}
+}
